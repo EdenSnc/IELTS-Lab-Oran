@@ -62,7 +62,8 @@ export async function POST(req: Request) {
     }
 
     // Upsert Prospect and Create Download record
-    await prisma.$transaction(async (tx) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await prisma.$transaction(async (tx: any) => {
       const prospect = await tx.prospect.upsert({
         where: { phone },
         update: { email: email || undefined }, // Update email if provided
