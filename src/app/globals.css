@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-crimson: #D91E36;
+  --color-charcoal: #0a0a0a;
+  --color-surface: #F3F4F6;
+  
+  --font-sans: var(--font-inter), sans-serif;
+  --font-cairo: var(--font-cairo), sans-serif;
+  
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2.5rem;
+  --radius-5xl: 3.5rem;
+  
+  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 20px rgba(192, 16, 32, 0.4);
+  --shadow-up: 0 -10px 30px rgba(0,0,0,0.1);
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  background-color: #ffffff;
+  color: var(--color-charcoal);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-charcoal);
+    border-radius: 2rem;
+}
+
+.highlight {
+    background: linear-gradient(104deg, rgba(255, 238, 100, 1) 0%, rgba(255, 226, 60, 1) 100%);
+    color: #0a0a0a;
+    padding: 0 0.25rem;
+    border-radius: 0.125rem;
+    font-weight: 600;
+}
+
+/* Testimonial Hover Animations */
+.testimonial-card {
+    transition: background-color 0.5s ease, border-color 0.5s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s ease;
+    will-change: transform, background-color;
+}
+.testimonial-card .glow-bg {
+    opacity: 0; transition: opacity 0.5s ease;
+}
+.testimonial-card .quote-mark {
+    opacity: 0.2; transition: opacity 0.5s ease;
+}
+.testimonial-card .body-text {
+    color: #4b5563; transition: color 0.5s ease;
+}
+.testimonial-card .bottom-border {
+    border-color: #e5e7eb; transition: border-color 0.5s ease;
+}
+.testimonial-card .avatar {
+    background-color: #0a0a0a; color: #ffffff; box-shadow: none; transition: all 0.5s ease;
+}
+.testimonial-card .name-text {
+    color: #0a0a0a; transition: color 0.5s ease;
+}
+.testimonial-card .title-text {
+    color: #6b7280; transition: color 0.5s ease;
+}
+/* Active/Hovered State */
+.testimonial-card.active-testimonial {
+    background-color: #0a0a0a;
+    border-color: transparent;
+    transform: translateY(-1rem);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+}
+.testimonial-card.active-testimonial .glow-bg {
+    opacity: 1;
+}
+.testimonial-card.active-testimonial .quote-mark {
+    opacity: 0.4;
+}
+.testimonial-card.active-testimonial .body-text {
+    color: #d1d5db;
+}
+.testimonial-card.active-testimonial .bottom-border {
+    border-color: #374151;
+}
+.testimonial-card.active-testimonial .avatar {
+    background-color: #c01020;
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(192, 16, 32, 0.5);
+}
+.testimonial-card.active-testimonial .name-text {
+    color: #ffffff;
+}
+.testimonial-card.active-testimonial .title-text {
+    color: #9ca3af;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}

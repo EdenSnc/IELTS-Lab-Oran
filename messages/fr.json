@@ -1,0 +1,107 @@
+{
+  "Navbar": {
+    "title": "IELTS Lab Oran",
+    "methodology": "Méthodologie",
+    "articles": "Articles",
+    "faq": "FAQ",
+    "applyNow": "POSTULER"
+  },
+  "Hero": {
+    "badge": "Oran • Labo Physique de 8 Places",
+    "title": "RÉUSSISSEZ L'IELTS SUR ORDINATEUR.",
+    "subtitle": "RESPECTEZ VOS DÉLAIS.",
+    "description": "Protégez vos frais de test de 40 000 DA grâce à un sprint sur PC encadré par un expert certifié IELTS 8.0.",
+    "reserve": "RÉSERVER VOTRE PLACE",
+    "details": "DÉTAILS DU PROGRAMME",
+    "noPayment": "Aucun paiement initial requis pour postuler."
+  },
+  "Methodology": {
+    "title": "La Méthodologie",
+    "subtitle": "La plupart des préparations à l'IELTS sont inefficaces car elles s'appuient sur des méthodes obsolètes sur papier qui ne reflètent pas la réalité de l'examen sur ordinateur.",
+    "corePhilosophy": "Nous diagnostiquons vos lacunes linguistiques avec une précision clinique. Au lieu de cours d'anglais génériques, vous recevez un plan d'étude hautement ciblé conçu pour maîtriser les critères de notation officiels et maximiser votre score sur l'interface numérique.",
+    "notForBeginners": "Pas pour les débutants."
+  },
+  "StopTraining": {
+    "title": "ARRÊTEZ DE VOUS <mark>ENTRAÎNER SUR PAPIER.</mark>",
+    "subtitle": "Le test officiel du British Council est numérique. <mark>Si vous vous entraînez avec des documents papier, vous vous désavantagez.</mark> Ce laboratoire est conçu exclusivement pour:",
+    "bullet1": "<strong>Les candidats à l'université</strong> visant des admissions à l'étranger",
+    "bullet2": "<strong>Les candidats aux études à l'étranger</strong> confrontés à des délais stricts",
+    "bullet3": "<strong>Les candidats à l'Entrée express</strong> nécessitant un score précis",
+    "proofBadge": "Résultats Prouvés",
+    "proofTitle": "Le Cadre Exact Utilisé Pour Obtenir 8.0",
+    "instructorTitle": "L'Instructeur",
+    "instructorQuote": "\"Vous n'apprenez pas avec un professeur de langue classique. Je combine ma formation en Intelligence Artificielle avec des années d'expérience pour traiter vos lacunes comme des bugs logiciels. Je vous fournis le plan précis que j'ai utilisé pour obtenir mon 8.0 officiel.\""
+  },
+  "Compare": {
+    "title": "Pourquoi Nous Sommes Différents",
+    "traditionalTitle": "Centres Traditionnels",
+    "traditionalSubtitle": "Écoles de langues standards.",
+    "traditional1": "Pratique sur papier qui ne correspond pas au véritable examen sur ordinateur.",
+    "traditional2": "Classes surpeuplées de plus de 20 élèves, limitant le suivi personnalisé.",
+    "traditional3": "Leçons d'anglais génériques au lieu de stratégies d'examen ciblées.",
+    "labTitle": "Le Laboratoire Physique",
+    "labSubtitle": "Préparation moderne et ciblée.",
+    "lab1": "Entraînement 100% sur PC reproduisant l'environnement de test officiel.",
+    "lab2": "Groupes intensifs de 8 personnes pour garantir une attention personnalisée.",
+    "lab3": "Retours clairs et exploitables pour améliorer votre expression écrite et orale."
+  },
+  "Testimonials": {
+    "title": "Résultats des Étudiants"
+  },
+  "Facility": {
+    "title": "L'Établissement",
+    "subtitle": "Situé à Bir El Djir. Un environnement calme et sécurisé conçu pour une concentration profonde.",
+    "location": "Bir El Djir, Oran",
+    "mapBtn": "Charger la Carte Interactive"
+  },
+  "FAQ": {
+    "title": "Questions Fréquemment Posées",
+    "q1": "Quelle est la différence entre l'IELTS sur papier et sur ordinateur ?",
+    "a1": "Le format du test et la difficulté sont identiques, mais le mécanisme de passation change tout. Sur PC, vous avez le copier-coller, le comptage automatique des mots et le surlignage numérique. Notre centre reproduit cette interface exacte pour que vous développiez les bons réflexes avant le jour J.",
+    "q2": "Comment puis-je payer mes frais d'inscription au test officiel en Algérie ?",
+    "a2": "Les frais du British Council sont d'environ 40 000 DZD. En raison des contraintes bancaires locales, la plupart des candidats paient par virement bancaire ou via des agences locales spécialisées. Nous vous accompagnons pas à pas pour sécuriser votre date de test.",
+    "q3": "Ce cours convient-il aux débutants complets en anglais ?",
+    "a3": "Non. C'est un sprint intensif conçu strictement pour les candidats à l'université et à l'immigration possédant déjà un niveau intermédiaire en anglais. Nous diagnostiquons vos faiblesses exactes et nous nous concentrons purement sur les stratégies pratiques d'examen et la gestion du temps.",
+    "q4": "Comment protégez-vous la progression d'apprentissage de chaque élève ?",
+    "a4": "Nous imposons une limite stricte de seulement 8 places par session. Cela garantit que chaque candidat reçoit une correction intensive ligne par ligne de ses essais et un retour personnalisé à l'oral par un instructeur ayant obtenu 8.0.",
+    "q5": "Puis-je rejoindre ce programme si je fais face à une échéance imminente pour un visa Capago ou TLScontact ?",
+    "a5": "Absolument. Les délais pour Campus France, les visas étudiants britanniques ou Entrée express Canada sont stricts. Notre programme de 32 heures est conçu pour une intervention rapide afin de sécuriser votre certificat avant votre rendez-vous.",
+    "q6": "Qu'est-ce qui est inclus dans les frais de scolarité de 32 000 DA ?",
+    "a6": "Les frais de 32 000 DZD couvrent 32 heures d'entraînement sur PC dans notre laboratoire d'Oran, des simulations diagnostiques, des modèles de rédaction structurés, et un retour détaillé à l'écrit et à l'oral pour garantir l'atteinte de votre score cible."
+  },
+  "LeadMagnet": {
+    "title": "Pas prêt à vous inscrire ?",
+    "subtitle": "Obtenez notre guide gratuit : IELTS sur Ordinateur vs Papier (PDF).",
+    "description": "Découvrez les différences exactes entre les deux formats, lequel est le plus facile, et comment choisir le bon test pour atteindre votre objectif.",
+    "placeholder": "Num WhatsApp (ex: +213 555 555 555)",
+    "submit": "ENVOYER MON GUIDE",
+    "successTitle": "Guide Envoyé !",
+    "successDesc": "Vous allez être redirigé vers WhatsApp.",
+    "invalidPhone": "Veuillez saisir un numéro WhatsApp algérien valide (ex: 0555123456)"
+  },
+  "Intake": {
+    "title": "Réservez Votre Place",
+    "badge": "Groupes de 8 | Places Limitées",
+    "feeTitle": "Frais & Places",
+    "fee": "32 000 DA",
+    "feeDesc": "Investissez une fois. Protégez vos frais de test de 40K DA.",
+    "feature1": "32 heures d'entraînement intensif sur PC",
+    "feature2": "Suivi personnalisé (Writing & Speaking)",
+    "feature3": "Votre propre poste de travail dédié",
+    "footerText": "Remplissez le formulaire ci-dessous. Si une place est disponible dans le prochain groupe, nous vous contacterons via WhatsApp."
+  },
+  "About": {
+    "title": "À Propos d'Amine",
+    "subtitle": "Le Guide Expert",
+    "hook": "Amine est un étudiant en Master de 23 ans en IA Appliquée et un instructeur expert IELTS avec un score officiel de 8.0.",
+    "pedigree": "Poussé par le profond dévouement à l'éducation laissé par son défunt père, professeur respecté à l'USTO-MB.",
+    "experience": "Vaste expérience d'enseignement dans des institutions locales de premier plan (MTI Metro, CEIL Univ Oran 1, Snai3i) et bénévolat actif à l'American Corner Oran. Titulaire de formations d'enseignement STEAM et STEM spécialisées.",
+    "edge": "Une approche très pragmatique et réaliste. Pas de positivité toxique — juste des feuilles de route concrètes. Soutenu par des années d'enseignement et une connaissance approfondie acquise en observant les sessions officielles du CEIL.",
+    "method": "Utilisation du Universal Design for Learning (UDL) et optimisation du Student Talk Time (STT) pour garantir les résultats."
+  },
+  "Articles": {
+    "title": "Articles & Actualités",
+    "article1Title": "Le passage officiel à l'IELTS sur ordinateur",
+    "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
+  }
+}

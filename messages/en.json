@@ -1,0 +1,105 @@
+{
+  "Navbar": {
+    "title": "IELTS Lab Oran",
+    "methodology": "Methodology",
+    "articles": "Articles",
+    "faq": "FAQ",
+    "applyNow": "APPLY NOW"
+  },
+  "Hero": {
+    "badge": "Oran • 8-Seat Physical Lab",
+    "title": "PASS THE COMPUTER-BASED IELTS.",
+    "subtitle": "MEET YOUR DEADLINE.",
+    "description": "Protect your 40,000 DA test fee with an elite, in-person PC sprint led by an IELTS 8.0 Scorer.",
+    "reserve": "RESERVE YOUR SEAT",
+    "details": "PROGRAM DETAILS",
+    "noPayment": "No upfront payment required to apply."
+  },
+  "Methodology": {
+    "title": "The Methodology",
+    "subtitle": "Most IELTS preparation is inefficient. It relies on outdated paper methods that completely fail to reflect the digital reality of the official test.",
+    "corePhilosophy": "We diagnose your exact language gaps with clinical precision. Instead of generic English tutoring, you receive a highly targeted study plan designed to master the official marking criteria and maximize your score on the computer-delivered test.",
+    "notForBeginners": "Not for beginners."
+  },
+  "StopTraining": {
+    "title": "STOP <mark>TRAINING ON PAPER.</mark>",
+    "subtitle": "The official British Council test is digital. <mark>If you are practicing with paper handouts, you are putting yourself at a disadvantage.</mark> This lab is designed exclusively for:",
+    "bullet1": "<strong>University Applicants</strong> aiming for foreign admissions",
+    "bullet2": "<strong>Study Abroad Candidates</strong> facing tight application deadlines",
+    "bullet3": "<strong>Express Entry Candidates</strong> requiring a strict band score",
+    "proofBadge": "Proven Results",
+    "proofTitle": "The Exact Framework Used To Secure Band 8.0"
+  },
+  "Compare": {
+    "title": "Why We Are Different",
+    "traditionalTitle": "Traditional Centers",
+    "traditionalSubtitle": "Standard language schools.",
+    "traditional1": "Paper-based practice that doesn't match the real computer exam.",
+    "traditional2": "Crowded classrooms of 20+ students, limiting personal feedback.",
+    "traditional3": "Generic English lessons instead of focused exam strategies.",
+    "labTitle": "The Physical Lab",
+    "labSubtitle": "Focused, modern preparation.",
+    "lab1": "100% PC-based training replicating the official test environment.",
+    "lab2": "Intensive 8-person groups to guarantee personalized attention.",
+    "lab3": "Clear, actionable feedback to improve your writing and speaking."
+  },
+  "Testimonials": {
+    "title": "Student Results"
+  },
+  "Facility": {
+    "title": "The Facility",
+    "subtitle": "Located in Bir El Djir. A quiet, secure environment engineered for deep focus and diagnostic training.",
+    "location": "Bir El Djir, Oran",
+    "mapBtn": "Load Interactive Map"
+  },
+  "FAQ": {
+    "title": "Frequently Asked Questions",
+    "q1": "What is the difference between Paper-Based and Computer-Based IELTS?",
+    "a1": "The test format and difficulty are identical, but the delivery mechanism changes everything. On a PC, you have copy-paste functionality, automatic word counts, and digital highlighting. Our facility replicates this exact interface with dedicated hardware so you build the right muscle memory before test day.",
+    "q2": "How can I pay my official test registration fee in Algeria?",
+    "a2": "The British Council fee is typically around 40,000 DZD. Due to local banking constraints, most candidates pay via offline bank transfer or specialized local agencies. We provide step-by-step guidance on securing your test date and handling the payment securely.",
+    "q3": "Is this course suitable for complete beginners in English?",
+    "a3": "No. This is an elite, intensive sprint designed strictly for university applicants and immigration candidates who already possess an intermediate grasp of English. We diagnose your exact weaknesses and focus purely on practical exam strategies and time management.",
+    "q4": "How do your class groups protect individual learning progress?",
+    "a4": "We enforce a strict physical boundary of only 8 seats per cohort. This ensures that every single candidate receives intensive, line-by-line correction of their essays and personalized speaking feedback directly from a Band 8.0 instructor.",
+    "q5": "Can I join this program if I am facing an imminent Capago or TLScontact visa deadline?",
+    "a5": "Absolutely. Visa dossier timelines for Campus France, UK Student Visas, and Canada Express Entry are unforgiving. Our intensive 32-hour program is built precisely for rapid intervention to secure your required language certificate before your consulate appointment.",
+    "q6": "What resources are included in the 32,000 DA tuition fee?",
+    "a6": "The 32,000 DZD tuition covers 32 hours of dedicated PC time in our Oran lab, proprietary diagnostic simulations, structured writing templates, and line-by-line speaking and writing feedback to ensure you hit your target band."
+  },
+  "LeadMagnet": {
+    "title": "Not Ready to Enroll?",
+    "subtitle": "Get our free guide: IELTS on Computer vs. Paper (PDF).",
+    "description": "Discover the exact differences between the two formats, which one is easier, and how to choose the right test to secure your target band.",
+    "placeholder": "WhatsApp No. (e.g. +213 555 555 555)",
+    "submit": "SEND MY CHEAT SHEET",
+    "successTitle": "Cheat Sheet Sent!",
+    "successDesc": "You will be redirected to WhatsApp to claim it.",
+    "invalidPhone": "Please enter a valid Algerian WhatsApp number (e.g. 0555123456)"
+  },
+  "Intake": {
+    "title": "Reserve Your Seat",
+    "badge": "Groups of 8 | Limited Seats",
+    "feeTitle": "Fees & Seats",
+    "fee": "32,000 DA",
+    "feeDesc": "Invest once. Protect your 40K DA test fee.",
+    "feature1": "32 hours intensive PC training",
+    "feature2": "Personalized writing and speaking feedback",
+    "feature3": "Your own dedicated PC station",
+    "footerText": "Fill out the application form below. If a seat is available in the next cohort, we will contact you via WhatsApp to complete your registration."
+  },
+  "About": {
+    "title": "About Amine",
+    "subtitle": "The Founder & Lead Instructor",
+    "hook": "Amine is the Founder of IELTS Lab Oran, a 23-year-old Master's student in Applied AI, and an expert IELTS instructor holding an official Band 8.0.",
+    "pedigree": "Driven by the profound dedication to education left by his late father, a respected professor at USTO-MB.",
+    "experience": "Extensive teaching background across premier local institutions (MTI Metro, CEIL Univ Oran 1, Snai3i) and active volunteer work at the American Corner Oran. Specialized STEAM and STEM teacher training credentials from World Learning Algeria and Snai3i.",
+    "edge": "A highly pragmatic and realistic approach. No toxic positivity—just actionable roadmaps. Backed by years of dedicated English teaching, informal IELTS coaching, and deep insider knowledge gained from shadowing official CEIL IELTS sessions to reverse-engineer the perfect curriculum.",
+    "method": "A system built on rigorous diagnostics and maximizing active speaking time, ensuring every minute translates into measurable progress."
+  },
+  "Articles": {
+    "title": "Articles & News",
+    "article1Title": "The Official Switch to IELTS on Computer",
+    "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
+  }
+}

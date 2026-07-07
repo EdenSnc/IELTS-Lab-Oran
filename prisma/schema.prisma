@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// -----------------------------------------------------------------------------
+// 1. CORE ENTITY: PROSPECT
+// -----------------------------------------------------------------------------
+// The central source of truth for every potential student. 
+model Prospect {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // Normalized to E.164 format (e.g., +213555555555)
+  phone     String     @unique 
+  
+  name      String?    
+  email     String?    // Optional: Only used if they fill out a general contact form
+  
+  status    LeadStatus @default(NEW)
+  
+  // Relational History
+  downloads LeadMagnetDownload[]
+  inquiries Inquiry[]
+  notes     SalesNote[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([phone])
+}
+
+// -----------------------------------------------------------------------------
+// 2. MARKETING ATTRIBUTION: LEAD MAGNETS
+// -----------------------------------------------------------------------------
+// Tracks every time a prospect downloads a resource (via Tally Webhook).
+model LeadMagnetDownload {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  prospectId  String   @db.Uuid
+  prospect    Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  magnetName  String   // e.g., "PDF_Academic_Vs_General"
+  
+  // UTM Tracking (Captured from Tally Hidden Fields)
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  
+  ipAddress   String?  
+
+  createdAt   DateTime @default(now())
+
+  @@index([prospectId])
+}
+
+// -----------------------------------------------------------------------------
+// 3. DIRECT COMMUNICATION: INQUIRIES
+// -----------------------------------------------------------------------------
+// For general contact form submissions (non-PDF downloads).
+model Inquiry {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  prospectId String   @db.Uuid
+  prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  message    String   @db.Text
+  isRead     Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+
+  @@index([prospectId])
+}
+
+// -----------------------------------------------------------------------------
+// 4. INTERNAL CRM: SALES NOTES
+// -----------------------------------------------------------------------------
+// For you to log WhatsApp conversation outcomes directly in your own database.
+model SalesNote {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  prospectId String   @db.Uuid
+  prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  content    String   @db.Text
+
+  createdAt  DateTime @default(now())
+
+  @@index([prospectId])
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+enum LeadStatus {
+  NEW
+  CONTACTED_VIA_WA
+  IN_CONVERSATION
+  CONVERTED
+  DEAD_LEAD
+}
