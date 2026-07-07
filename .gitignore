@@ -45,3 +45,5 @@ next-env.d.ts
 /IELTS-Lab-Oran-HTML
 
 *.txt
+
+test-db.ts
