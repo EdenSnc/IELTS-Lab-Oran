@@ -15,8 +15,8 @@
   "Hero": {
     "badge": "Oran • 8-Seat Physical Lab",
     "title": "We diagnose your English.",
-    "subtitle": "Then we engineer your score.",
-    "description": "Algeria's most rigorous IELTS course is launching in Oran, built for the computer-delivered test, not outdated paper practice.",
+    "subtitle": "Then we engineer <red>your score.</red>",
+    "description": "Algeria's most rigorous <highlight>IELTS course</highlight> is launching in <highlight>Oran</highlight>, built for the computer-delivered test, not outdated paper practice.",
     "reserve": "RESERVE YOUR SEAT",
     "details": "PROGRAM DETAILS",
     "noPayment": "No upfront payment required to apply."

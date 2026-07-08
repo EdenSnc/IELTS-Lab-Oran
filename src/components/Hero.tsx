@@ -29,12 +29,16 @@ export default function Hero({ cohortStatus }: HeroProps) {
       {/* Main heading */}
       <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-charcoal">
         {t('title')}<br />
-        {t('subtitle')}
+        {t.rich('subtitle', {
+          red: (chunks) => <span className="text-crimson">{chunks}</span>
+        })}
       </h1>
 
       {/* Sub-description */}
       <p className="text-xl md:text-2xl text-gray-500 max-w-2xl font-light leading-snug">
-        {t('description')}
+        {t.rich('description', {
+          highlight: (chunks) => <span className="highlight">{chunks}</span>
+        })}
       </p>
 
       {/* CTAs */}
