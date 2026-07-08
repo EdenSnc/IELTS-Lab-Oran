@@ -27,13 +27,14 @@ export default function Hero({ cohortStatus }: HeroProps) {
 
 
       {/* Main heading */}
-      <h1 className="text-5xl md:text-7xl font-black text-charcoal leading-none tracking-tighter">
-        Lab is <span className="text-crimson">Loading.</span>
+      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05]">
+        {t('title')}<br />
+        <span className="text-crimson">{t('subtitle')}</span>
       </h1>
 
       {/* Sub-description */}
-      <p className="text-gray-500 text-base md:text-lg font-medium leading-relaxed max-w-md text-center">
-        Preparing Algeria&apos;s most rigorous IELTS preparation course. Apply to the founding cohort now.
+      <p className="text-xl md:text-2xl text-gray-500 max-w-2xl font-light leading-snug">
+        {t('description')}
       </p>
 
       {/* CTAs */}

@@ -11,10 +11,21 @@ export default function Methodology() {
       <p className="text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
         {t('subtitle')}
       </p>
-      <div className="mt-12 bg-surface p-10 md:p-12 rounded-[2.5rem] border border-gray-100 shadow-soft relative">
-        <p className="text-lg md:text-xl text-charcoal leading-relaxed font-medium">
-          {t('corePhilosophy')}
-        </p>
+      <div className="mt-12 bg-surface p-10 md:p-12 rounded-[2.5rem] border border-gray-100 shadow-soft relative text-left">
+        <ul className="flex flex-col gap-6 text-lg text-charcoal leading-relaxed font-medium">
+          <li className="flex flex-col md:flex-row md:gap-3">
+            <strong className="text-crimson shrink-0">{t('bullet1Title')}</strong>
+            <span className="text-gray-600">{t('bullet1Desc')}</span>
+          </li>
+          <li className="flex flex-col md:flex-row md:gap-3">
+            <strong className="text-crimson shrink-0">{t('bullet2Title')}</strong>
+            <span className="text-gray-600">{t('bullet2Desc')}</span>
+          </li>
+          <li className="flex flex-col md:flex-row md:gap-3">
+            <strong className="text-crimson shrink-0">{t('bullet3Title')}</strong>
+            <span className="text-gray-600">{t('bullet3Desc')}</span>
+          </li>
+        </ul>
         <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-charcoal text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full whitespace-nowrap shadow-lg">
           {t('notForBeginners')}
         </div>

@@ -13,19 +13,24 @@
     "fullCta": "Rejoindre la liste d'attente générale"
   },
   "Hero": {
-    "badge": "Oran • Labo Physique de 8 Places",
-    "title": "RÉUSSISSEZ L'IELTS SUR ORDINATEUR.",
-    "subtitle": "RESPECTEZ VOS DÉLAIS.",
-    "description": "Protégez vos frais de test de 40 000 DA grâce à un sprint sur PC encadré par un expert certifié IELTS 8.0.",
-    "reserve": "RÉSERVER VOTRE PLACE",
+    "badge": "Oran • 8-Seat Physical Lab",
+    "title": "We diagnose your English.",
+    "subtitle": "Then we engineer your score.",
+    "description": "Algeria's most rigorous IELTS course is launching in Oran, built for the computer-delivered test, not outdated paper practice.",
+    "reserve": "RESERVER VOTRE PLACE",
     "details": "DÉTAILS DU PROGRAMME",
     "noPayment": "Aucun paiement initial requis pour postuler."
   },
   "Methodology": {
     "title": "La Méthodologie",
-    "subtitle": "La plupart des préparations à l'IELTS sont inefficaces car elles s'appuient sur des méthodes obsolètes sur papier qui ne reflètent pas la réalité de l'examen sur ordinateur.",
-    "corePhilosophy": "Nous diagnostiquons vos lacunes linguistiques avec une précision clinique. Au lieu de cours d'anglais génériques, vous recevez un plan d'étude hautement ciblé conçu pour maîtriser les critères de notation officiels et maximiser votre score sur l'interface numérique.",
-    "notForBeginners": "Pas pour les débutants."
+    "subtitle": "Most IELTS preparation is inefficient because it fails to reflect the digital reality of the official test. We do things differently:",
+    "bullet1Title": "Digital-First Training:",
+    "bullet1Desc": "Train exactly how you will test on exam day.",
+    "bullet2Title": "Diagnostic Targeting:",
+    "bullet2Desc": "We pinpoint your specific language gaps instead of offering generic tutoring.",
+    "bullet3Title": "Criteria Mastery:",
+    "bullet3Desc": "Your study plan is engineered exclusively around the official marking rubrics.",
+    "notForBeginners": "Strictly for non-beginners."
   },
   "StopTraining": {
     "title": "ARRÊTEZ DE VOUS <mark>ENTRAÎNER SUR PAPIER.</mark>",

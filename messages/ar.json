@@ -13,20 +13,24 @@
     "fullCta": "انضم إلى قائمة الانتظار العامة"
   },
   "Hero": {
-    "badge": "وهران • مخبر فعلي لـ 8 أشخاص",
-    "title": "اجتز اختبار الايلتس على الكمبيوتر.",
-    "subtitle": "وحقق هدفك في الوقت المحدد.",
-    "description": "احمِ رسوم اختبارك البالغة 40,000 دج ببرنامج مكثف وحضوري يقوده مدرب حاصل على 8.0 في الايلتس.",
+    "badge": "Oran • 8-Seat Physical Lab",
+    "title": "We diagnose your English.",
+    "subtitle": "Then we engineer your score.",
+    "description": "Algeria's most rigorous IELTS course is launching in Oran, built for the computer-delivered test, not outdated paper practice.",
     "reserve": "احجز مقعدك",
     "details": "تفاصيل البرنامج",
-    "noPayment": "لا يشترط الدفع المسبق للتسجيل."
+    "noPayment": "لا يلزم الدفع المسبق للتقديم."
   },
   "Methodology": {
     "title": "المنهجية",
-    "subtitle": "معظم دورات التحضير للايلتس غير فعالة لأنها تعتمد على الأساليب الورقية القديمة التي لا تعكس واقع الامتحان على الكمبيوتر.",
-    "corePhilosophy": "نشخّص فجواتك اللغوية بدقة إكلينيكية. بدلاً من دروس الإنجليزية العامة، تحصل على خطة دراسية موجّهة بدقة عالية، مصممة لإتقان معايير التنقيط الرسمية وتعظيم درجتك في الاختبار الرقمي.",
-    "quote": "\"أجمع بين خلفيتي التقنية في الذكاء الاصطناعي وهندسة النظم مع سنوات من الخبرة كمدرب ايلتس لأتعامل مع فجواتك اللغوية كأنها أخطاء برمجية. أنا لا أعلمك اللغة الإنجليزية فحسب؛ بل أقدم لك المخطط التكتيكي الذي استخدمته للحصول على 8.0.\"",
-    "notForBeginners": "ليس للمبتدئين."
+    "subtitle": "Most IELTS preparation is inefficient because it fails to reflect the digital reality of the official test. We do things differently:",
+    "bullet1Title": "Digital-First Training:",
+    "bullet1Desc": "Train exactly how you will test on exam day.",
+    "bullet2Title": "Diagnostic Targeting:",
+    "bullet2Desc": "We pinpoint your specific language gaps instead of offering generic tutoring.",
+    "bullet3Title": "Criteria Mastery:",
+    "bullet3Desc": "Your study plan is engineered exclusively around the official marking rubrics.",
+    "notForBeginners": "Strictly for non-beginners."
   },
   "StopTraining": {
     "title": "توقف عن <mark>التدريب على الورق.</mark>",

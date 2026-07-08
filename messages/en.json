@@ -14,18 +14,23 @@
   },
   "Hero": {
     "badge": "Oran • 8-Seat Physical Lab",
-    "title": "PASS THE COMPUTER-BASED IELTS.",
-    "subtitle": "MEET YOUR DEADLINE.",
-    "description": "Protect your 40,000 DA test fee with an elite, in-person PC sprint led by an IELTS 8.0 Scorer.",
+    "title": "We diagnose your English.",
+    "subtitle": "Then we engineer your score.",
+    "description": "Algeria's most rigorous IELTS course is launching in Oran, built for the computer-delivered test, not outdated paper practice.",
     "reserve": "RESERVE YOUR SEAT",
     "details": "PROGRAM DETAILS",
     "noPayment": "No upfront payment required to apply."
   },
   "Methodology": {
     "title": "The Methodology",
-    "subtitle": "Most IELTS preparation is inefficient. It relies on outdated paper methods that completely fail to reflect the digital reality of the official test.",
-    "corePhilosophy": "We diagnose your exact language gaps with clinical precision. Instead of generic English tutoring, you receive a highly targeted study plan designed to master the official marking criteria and maximize your score on the computer-delivered test.",
-    "notForBeginners": "Not for beginners."
+    "subtitle": "Most IELTS preparation is inefficient because it fails to reflect the digital reality of the official test. We do things differently:",
+    "bullet1Title": "Digital-First Training:",
+    "bullet1Desc": "Train exactly how you will test on exam day.",
+    "bullet2Title": "Diagnostic Targeting:",
+    "bullet2Desc": "We pinpoint your specific language gaps instead of offering generic tutoring.",
+    "bullet3Title": "Criteria Mastery:",
+    "bullet3Desc": "Your study plan is engineered exclusively around the official marking rubrics.",
+    "notForBeginners": "Strictly for non-beginners."
   },
   "StopTraining": {
     "title": "STOP <mark>TRAINING ON PAPER.</mark>",
