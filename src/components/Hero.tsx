@@ -27,9 +27,9 @@ export default function Hero({ cohortStatus }: HeroProps) {
 
 
       {/* Main heading */}
-      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05]">
+      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-charcoal">
         {t('title')}<br />
-        <span className="text-crimson">{t('subtitle')}</span>
+        {t('subtitle')}
       </h1>
 
       {/* Sub-description */}

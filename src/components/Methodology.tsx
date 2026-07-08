@@ -11,22 +11,38 @@ export default function Methodology() {
       <p className="text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
         {t('subtitle')}
       </p>
-      <div className="mt-12 bg-surface p-10 md:p-12 rounded-[2.5rem] border border-gray-100 shadow-soft relative text-left">
-        <ul className="flex flex-col gap-6 text-lg text-charcoal leading-relaxed font-medium">
-          <li className="flex flex-col md:flex-row md:gap-3">
-            <strong className="text-crimson shrink-0">{t('bullet1Title')}</strong>
-            <span className="text-gray-600">{t('bullet1Desc')}</span>
-          </li>
-          <li className="flex flex-col md:flex-row md:gap-3">
-            <strong className="text-crimson shrink-0">{t('bullet2Title')}</strong>
-            <span className="text-gray-600">{t('bullet2Desc')}</span>
-          </li>
-          <li className="flex flex-col md:flex-row md:gap-3">
-            <strong className="text-crimson shrink-0">{t('bullet3Title')}</strong>
-            <span className="text-gray-600">{t('bullet3Desc')}</span>
-          </li>
-        </ul>
-        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-charcoal text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full whitespace-nowrap shadow-lg">
+      {/* Features Grid */}
+      <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+        {/* Card 1 */}
+        <div className="bg-white border border-gray-100/50 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-300 transform hover:-translate-y-2 group">
+          <div className="w-14 h-14 bg-surface rounded-2xl flex items-center justify-center mb-6 text-crimson group-hover:bg-crimson group-hover:text-white transition-colors duration-300 shadow-sm">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+          </div>
+          <h3 className="text-xl font-bold text-charcoal mb-3 tracking-tight">{t('bullet1Title')}</h3>
+          <p className="text-gray-500 leading-relaxed font-medium">{t('bullet1Desc')}</p>
+        </div>
+
+        {/* Card 2 */}
+        <div className="bg-white border border-gray-100/50 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-300 transform hover:-translate-y-2 group">
+          <div className="w-14 h-14 bg-surface rounded-2xl flex items-center justify-center mb-6 text-crimson group-hover:bg-crimson group-hover:text-white transition-colors duration-300 shadow-sm">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
+          <h3 className="text-xl font-bold text-charcoal mb-3 tracking-tight">{t('bullet2Title')}</h3>
+          <p className="text-gray-500 leading-relaxed font-medium">{t('bullet2Desc')}</p>
+        </div>
+
+        {/* Card 3 */}
+        <div className="bg-white border border-gray-100/50 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-300 transform hover:-translate-y-2 group">
+          <div className="w-14 h-14 bg-surface rounded-2xl flex items-center justify-center mb-6 text-crimson group-hover:bg-crimson group-hover:text-white transition-colors duration-300 shadow-sm">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
+          </div>
+          <h3 className="text-xl font-bold text-charcoal mb-3 tracking-tight">{t('bullet3Title')}</h3>
+          <p className="text-gray-500 leading-relaxed font-medium">{t('bullet3Desc')}</p>
+        </div>
+      </div>
+
+      <div className="mt-12 flex justify-center">
+        <div className="bg-charcoal text-white text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-full shadow-lg border border-white/10">
           {t('notForBeginners')}
         </div>
       </div>
