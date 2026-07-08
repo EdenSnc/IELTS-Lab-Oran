@@ -14,23 +14,23 @@
   },
   "Hero": {
     "badge": "Oran • 8-Seat Physical Lab",
-    "title": "We diagnose your English.",
-    "subtitle": "Then we engineer <red>your score.</red>",
-    "description": "Algeria’s most rigorous <highlight>IELTS course is launching in Oran</highlight>, built for the computer-delivered test, not outdated paper practice.",
+    "title": "نشخّص لغتك الإنجليزية.",
+    "subtitle": "ثم نهندس <red>نتيجتك.</red>",
+    "description": "أكثر <highlight>دورات الايلتس صرامة في الجزائر تنطلق في وهران</highlight>، مصممة خصيصاً للاختبار على الكمبيوتر، وليس للممارسات الورقية القديمة.",
     "reserve": "احجز مقعدك",
     "details": "تفاصيل البرنامج",
     "noPayment": "لا يلزم الدفع المسبق للتقديم."
   },
   "Methodology": {
     "title": "المنهجية",
-    "subtitle": "Most IELTS preparation is inefficient because it fails to reflect the digital reality of the official test. We do things differently:",
-    "bullet1Title": "Digital-First Training:",
-    "bullet1Desc": "Train exactly how you will test on exam day.",
-    "bullet2Title": "Diagnostic Targeting:",
-    "bullet2Desc": "We pinpoint your specific language gaps instead of offering generic tutoring.",
-    "bullet3Title": "Criteria Mastery:",
-    "bullet3Desc": "Your study plan is engineered exclusively around the official marking rubrics.",
-    "notForBeginners": "Strictly for non-beginners."
+    "subtitle": "معظم دورات التحضير للايلتس غير فعالة لأنها تفشل في عكس الواقع الرقمي للاختبار الرسمي. نحن نفعل الأشياء بشكل مختلف:",
+    "bullet1Title": "تدريب رقمي أولاً:",
+    "bullet1Desc": "تدرّب تماماً كما سيتم اختبارك يوم الامتحان.",
+    "bullet2Title": "استهداف تشخيصي:",
+    "bullet2Desc": "نحدد فجواتك اللغوية بدقة بدلاً من تقديم دروس عامة.",
+    "bullet3Title": "إتقان المعايير:",
+    "bullet3Desc": "خطة دراستك مصممة حصرياً حول معايير التصحيح الرسمية.",
+    "notForBeginners": "مخصص لغير المبتدئين حصراً."
   },
   "StopTraining": {
     "title": "توقف عن <mark>التدريب على الورق.</mark>",
@@ -58,7 +58,7 @@
   },
   "Testimonials": {
     "title": "نتائج الطلاب",
-    "subtitle": "Results and feedback from Amine's past private 1-on-1 students. The physical 8-seat cohort is launching soon."
+    "subtitle": "نتائج وآراء طلاب أمين السابقين في الدروس الخصوصية (1 لـ 1). ستنطلق الدفعة الحضورية المكونة من 8 مقاعد قريباً."
   },
   "Facility": {
     "title": "المركز",

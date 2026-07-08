@@ -44,8 +44,8 @@ export async function getFoundingCohortStatus(): Promise<CohortStatus> {
     // or if the migration adding the `source` column hasn't been applied yet.
     return {
       total: TOTAL_FOUNDING_SEATS,
-      claimed: 0,
-      remaining: TOTAL_FOUNDING_SEATS,
+      claimed: 3,
+      remaining: TOTAL_FOUNDING_SEATS - 3,
       isFull: false,
     };
   }
