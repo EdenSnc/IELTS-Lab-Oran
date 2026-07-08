@@ -7,7 +7,8 @@
     "applyNow": "POSTULER"
   },
   "Cohort": {
-    "remaining": "{remaining} places fondatrices sur {total} disponibles",
+    "remaining": "{remaining} sur {total} places fondatrices disponibles",
+    "claimedText": "{claimed} sur {total} places fondatrices réservées",
     "full": "Cohorte Fondatrice — Complète",
     "discountNote": "Les membres fondateurs bénéficient d'une priorité de planification et du meilleur tarif.",
     "fullCta": "Rejoindre la liste d'attente générale"

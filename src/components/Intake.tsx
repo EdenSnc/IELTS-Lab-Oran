@@ -59,7 +59,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
               <span className="text-white/70">
                 {cohortStatus.isFull
                   ? ct('full')
-                  : ct('remaining', { remaining: cohortStatus.remaining, total: cohortStatus.total })}
+                  : ct('claimedText', { claimed: cohortStatus.claimed, total: cohortStatus.total })}
               </span>
               <span className="text-white font-bold">
                 {cohortStatus.claimed}/{cohortStatus.total}

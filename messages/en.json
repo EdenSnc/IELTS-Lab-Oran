@@ -8,6 +8,7 @@
   },
   "Cohort": {
     "remaining": "{remaining} of {total} founding seats available",
+    "claimedText": "{claimed} of {total} founding seats reserved",
     "full": "Founding Cohort — Full",
     "discountNote": "Founding members get priority scheduling & the best rate.",
     "fullCta": "Join the General Waitlist"
