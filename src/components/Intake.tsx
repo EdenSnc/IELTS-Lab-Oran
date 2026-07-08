@@ -54,7 +54,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
           </ul>
 
           {/* Founding Cohort Counter */}
-          <div className="w-full max-w-sm bg-white border border-gray-200/80 shadow-lg rounded-[2rem] px-8 py-6 flex flex-col items-center gap-3 mb-8">
+          <div className="w-full max-w-sm bg-white border border-gray-200/80 shadow-lg rounded-[2rem] px-8 py-6 flex flex-col items-center gap-3 mb-6">
             <div className="flex justify-between w-full text-xs font-medium">
               <span className="text-gray-500">
                 {cohortStatus.isFull
@@ -74,6 +74,19 @@ export default function Intake({ cohortStatus }: IntakeProps) {
             {!cohortStatus.isFull && (
               <p className="text-xs text-blue-500 text-center">{ct('discountNote')}</p>
             )}
+          </div>
+
+          {/* Status sub-tags */}
+          <div className="flex gap-3 flex-wrap justify-start mb-8">
+            <div className="bg-white text-charcoal text-xs font-bold px-4 py-2 rounded-full shadow-sm">
+              ✓ Lab Ready
+            </div>
+            <div className="bg-white text-charcoal text-xs font-bold px-4 py-2 rounded-full shadow-sm">
+              ✓ Curriculum Set
+            </div>
+            <div className="bg-crimson text-white text-xs font-bold px-4 py-2 rounded-full shadow-sm shadow-crimson/50">
+              ◷ Scheduling...
+            </div>
           </div>
 
           <p className="text-gray-400 leading-relaxed font-light text-sm border-l-2 border-white/10 pl-4 mt-auto">

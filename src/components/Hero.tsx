@@ -25,14 +25,6 @@ export default function Hero({ cohortStatus }: HeroProps) {
         {t('badge')}
       </div>
 
-      {/* Launching Soon status pill */}
-      <div className="flex items-center gap-2.5 bg-charcoal/90 text-white px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase shadow-xl border border-white/10">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-crimson opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-crimson"></span>
-        </span>
-        Launching Soon
-      </div>
 
       {/* Main heading */}
       <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05]">
@@ -45,20 +37,6 @@ export default function Hero({ cohortStatus }: HeroProps) {
         Protect your <span className="highlight">40,000 DA</span> test fee with an elite, in-person PC sprint led by an{' '}
         <span className="highlight">IELTS 8.0 Scorer</span>.
       </p>
-
-
-      {/* Status sub-tags */}
-      <div className="flex gap-3 flex-wrap justify-center">
-        <div className="bg-white border border-gray-200 text-charcoal text-xs font-bold px-4 py-2 rounded-full shadow-sm">
-          ✓ Lab Ready
-        </div>
-        <div className="bg-white border border-gray-200 text-charcoal text-xs font-bold px-4 py-2 rounded-full shadow-sm">
-          ✓ Curriculum Set
-        </div>
-        <div className="bg-crimson/10 border border-crimson/20 text-crimson text-xs font-bold px-4 py-2 rounded-full shadow-sm">
-          ◷ Scheduling...
-        </div>
-      </div>
 
       {/* CTAs */}
       <div className="flex flex-col items-center w-full sm:w-auto">
