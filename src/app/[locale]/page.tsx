@@ -23,7 +23,7 @@ export default async function Home() {
         <Compare />
         <Testimonials />
         <Facility />
-        <Intake />
+        <Intake cohortStatus={cohortStatus} />
         <FAQ />
         <LeadMagnet />
       </main>

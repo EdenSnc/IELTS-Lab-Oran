@@ -2,9 +2,19 @@
 
 import { useTranslations } from 'next-intl';
 import TallyForm from './TallyForm';
+import type { CohortStatus } from '@/lib/cohort';
 
-export default function Intake() {
+interface IntakeProps {
+  cohortStatus: CohortStatus;
+}
+
+export default function Intake({ cohortStatus }: IntakeProps) {
   const t = useTranslations('Intake');
+  const ct = useTranslations('Cohort');
+
+  const fillPct = cohortStatus.total > 0
+    ? Math.round((cohortStatus.claimed / cohortStatus.total) * 100)
+    : 0;
 
   return (
     <section id="intake" className="py-24 px-6 md:px-12 max-w-7xl mx-auto relative z-10">
@@ -42,6 +52,29 @@ export default function Intake() {
               <span className="text-[15px]">{t('feature3')}</span>
             </li>
           </ul>
+
+          {/* Founding Cohort Counter */}
+          <div className="w-full max-w-sm bg-white border border-gray-200/80 shadow-lg rounded-[2rem] px-8 py-6 flex flex-col items-center gap-3 mb-8">
+            <div className="flex justify-between w-full text-xs font-medium">
+              <span className="text-gray-500">
+                {cohortStatus.isFull
+                  ? ct('full')
+                  : ct('remaining', { remaining: cohortStatus.remaining, total: cohortStatus.total })}
+              </span>
+              <span className={cohortStatus.isFull ? 'text-crimson font-bold' : 'text-blue-600 font-bold'}>
+                {cohortStatus.claimed}/{cohortStatus.total}
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${cohortStatus.isFull ? 'bg-gradient-to-r from-crimson to-red-400' : 'bg-blue-600'}`}
+                style={{ width: `${fillPct}%` }}
+              />
+            </div>
+            {!cohortStatus.isFull && (
+              <p className="text-xs text-blue-500 text-center">{ct('discountNote')}</p>
+            )}
+          </div>
 
           <p className="text-gray-400 leading-relaxed font-light text-sm border-l-2 border-white/10 pl-4 mt-auto">
             {t('footerText')}
