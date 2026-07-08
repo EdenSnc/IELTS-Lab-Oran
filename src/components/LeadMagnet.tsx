@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
+// Algerian mobile number: 05x, 06x, 07x — with or without +213 prefix
 const phoneRegex = /^(?:\+213|0)[567]\d{8}$/;
 
 export default function LeadMagnet() {
@@ -11,45 +12,48 @@ export default function LeadMagnet() {
   const searchParams = useSearchParams();
 
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setStatus('idle');
     setErrorMessage('');
 
     const trimmedPhone = phone.trim().replace(/\s+/g, '');
-    const trimmedEmail = email.trim();
 
-    // Validate phone number format locally
+    // Client-side validation — clear, specific error message
+    if (!trimmedPhone) {
+      setStatus('error');
+      setErrorMessage(t('errorRequired'));
+      inputRef.current?.focus();
+      return;
+    }
+
     if (!phoneRegex.test(trimmedPhone)) {
       setStatus('error');
       setErrorMessage(t('invalidPhone'));
+      inputRef.current?.focus();
       return;
     }
 
     setStatus('submitting');
 
     try {
-      // Capture UTM parameters from URL
       const utmSource = searchParams.get('utm_source');
       const utmMedium = searchParams.get('utm_medium');
       const utmCampaign = searchParams.get('utm_campaign');
 
       const response = await fetch('/api/leads', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phone: trimmedPhone,
-          email: trimmedEmail || null,
           utmSource,
           utmMedium,
           utmCampaign,
           formName: 'Lead Magnet (Academic vs General)',
+          source: 'lead_magnet_pdf',
         }),
       });
 
@@ -60,7 +64,7 @@ export default function LeadMagnet() {
 
       setStatus('success');
 
-      // Trigger programmatics PDF download
+      // Trigger PDF download
       const link = document.createElement('a');
       link.href = '/academic_vs_general_guide.pdf';
       link.download = 'IELTS_Academic_vs_General_Guide.pdf';
@@ -68,20 +72,17 @@ export default function LeadMagnet() {
       link.click();
       document.body.removeChild(link);
 
-      // WhatsApp Redirect
+      // WhatsApp redirect
       const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '213780343103';
-      const message = "Hi Amine, I just downloaded the IELTS Academic vs. General guide and I would like more information...";
-      const encodedMessage = encodeURIComponent(message);
-      const waUrl = `https://wa.me/${waNumber}?text=${encodedMessage}`;
+      const message = 'Hi Amine, I just downloaded the IELTS Academic vs. General guide and I would like more information...';
+      const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
+      setTimeout(() => { window.location.href = waUrl; }, 1000);
 
-      setTimeout(() => {
-        window.location.href = waUrl;
-      }, 1000);
-
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.';
       console.error('Lead submission failed:', error);
       setStatus('error');
-      setErrorMessage(error.message || 'An unexpected error occurred. Please try again.');
+      setErrorMessage(msg);
     }
   };
 
@@ -92,13 +93,11 @@ export default function LeadMagnet() {
         
         <div className="md:w-1/2 relative z-10 text-center md:text-left">
           <h2 className="text-3xl font-extrabold tracking-tight mb-4">{t('title')}</h2>
-          <p className="text-gray-300 text-lg font-light leading-relaxed mb-4">
-            {t('subtitle')}
-          </p>
+          <p className="text-gray-300 text-lg font-light leading-relaxed mb-4">{t('subtitle')}</p>
           <p className="text-sm text-gray-400 font-medium">{t('description')}</p>
         </div>
         
-        <div className="md:w-1/2 w-full relative z-10 min-h-[140px] flex items-center justify-center">
+        <div className="md:w-1/2 w-full relative z-10 min-h-[120px] flex items-center justify-center">
           {status === 'success' ? (
             <div className="flex flex-col items-center justify-center text-center gap-2 animate-fade-in">
               <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mb-2">
@@ -110,37 +109,49 @@ export default function LeadMagnet() {
               <p className="text-sm text-gray-400">{t('successDesc')}</p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-sm mx-auto md:mx-0">
-              <div className="relative">
-                <input 
-                  type="text" 
-                  placeholder="Email Address" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={status === 'submitting'}
-                  required
-                  className="w-full bg-white/5 border border-white/10 text-white rounded-3xl px-6 py-4 focus:outline-none focus:border-crimson/50 focus:bg-white/10 transition-all placeholder-gray-500 text-center md:text-left text-lg font-medium mb-4"
-                />
-                <input 
-                  type="tel" 
-                  placeholder={t('placeholder')} 
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  disabled={status === 'submitting'}
-                  className="w-full bg-white/5 border border-white/10 text-white rounded-3xl px-6 py-4 focus:outline-none focus:border-crimson/50 focus:bg-white/10 transition-all placeholder-gray-500 text-center md:text-left text-lg font-medium"
-                />
-              </div>
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="relative w-full max-w-sm mx-auto md:mx-0"
+            >
+              {/* Visually-hidden label for screen readers */}
+              <label htmlFor="lm-phone" className="sr-only">
+                {t('phoneLabel')}
+              </label>
+
+              <input
+                ref={inputRef}
+                id="lm-phone"
+                type="tel"
+                autoFocus
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  if (status === 'error') setStatus('idle');
+                }}
+                disabled={status === 'submitting'}
+                aria-invalid={status === 'error'}
+                aria-describedby={status === 'error' ? 'lm-phone-error' : undefined}
+                placeholder={t('placeholder')}
+                className="w-full bg-white/5 border border-white/10 text-white rounded-3xl px-6 py-4 focus:outline-none focus:border-crimson/50 focus:bg-white/10 transition-all placeholder-gray-500 text-lg font-medium"
+              />
 
               {status === 'error' && (
-                <div className="text-crimson text-sm font-semibold bg-crimson/10 py-2.5 px-4 rounded-xl border border-crimson/20">
+                <p
+                  id="lm-phone-error"
+                  role="alert"
+                  className="mt-2 text-sm font-semibold text-crimson/90"
+                >
                   {errorMessage}
-                </div>
+                </p>
               )}
 
-              <button 
-                type="submit" 
+              {/* Full-width on mobile, auto-width on desktop, always large tap target */}
+              <button
+                type="submit"
                 disabled={status === 'submitting'}
-                className="w-full bg-crimson text-white font-bold rounded-3xl px-6 py-4 hover:bg-red-800 transition-colors shadow-glow flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
+                className="mt-4 w-full bg-crimson text-white font-bold rounded-3xl px-6 py-4 hover:bg-red-800 transition-colors shadow-glow flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed"
               >
                 {status === 'submitting' ? (
                   <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
@@ -150,7 +161,7 @@ export default function LeadMagnet() {
                 ) : (
                   <>
                     {t('submit')}
-                    <svg className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
                   </>

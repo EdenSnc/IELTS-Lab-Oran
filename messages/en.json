@@ -79,11 +79,14 @@
     "title": "Not Ready to Enroll?",
     "subtitle": "Get our free guide: IELTS on Computer vs. Paper (PDF).",
     "description": "Discover the exact differences between the two formats, which one is easier, and how to choose the right test to secure your target band.",
+    "phoneLabel": "Your WhatsApp number",
     "placeholder": "WhatsApp No. (e.g. +213 555 555 555)",
     "submit": "SEND MY CHEAT SHEET",
+    "submitting": "Sending...",
     "successTitle": "Cheat Sheet Sent!",
     "successDesc": "You will be redirected to WhatsApp to claim it.",
-    "invalidPhone": "Please enter a valid Algerian WhatsApp number (e.g. 0555123456)"
+    "invalidPhone": "Please enter a valid Algerian WhatsApp number (e.g. 0555123456)",
+    "errorRequired": "Please enter your WhatsApp number to continue."
   },
   "Intake": {
     "title": "Reserve Your Seat",

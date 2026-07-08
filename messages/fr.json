@@ -81,11 +81,14 @@
     "title": "Pas prêt à vous inscrire ?",
     "subtitle": "Obtenez notre guide gratuit : IELTS sur Ordinateur vs Papier (PDF).",
     "description": "Découvrez les différences exactes entre les deux formats, lequel est le plus facile, et comment choisir le bon test pour atteindre votre objectif.",
+    "phoneLabel": "Votre numéro WhatsApp",
     "placeholder": "Num WhatsApp (ex: +213 555 555 555)",
     "submit": "ENVOYER MON GUIDE",
+    "submitting": "Envoi en cours...",
     "successTitle": "Guide Envoyé !",
     "successDesc": "Vous allez être redirigé vers WhatsApp.",
-    "invalidPhone": "Veuillez saisir un numéro WhatsApp algérien valide (ex: 0555123456)"
+    "invalidPhone": "Veuillez saisir un numéro WhatsApp algérien valide (ex: 0555123456)",
+    "errorRequired": "Veuillez saisir votre numéro WhatsApp pour continuer."
   },
   "Intake": {
     "title": "Réservez Votre Place",
