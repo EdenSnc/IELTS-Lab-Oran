@@ -123,7 +123,6 @@ export default function LeadMagnet() {
                 ref={inputRef}
                 id="lm-phone"
                 type="tel"
-                autoFocus
                 autoComplete="tel"
                 value={phone}
                 onChange={(e) => {
