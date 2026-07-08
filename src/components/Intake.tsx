@@ -67,7 +67,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
             </div>
             <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${cohortStatus.isFull ? 'bg-gradient-to-r from-crimson to-red-400' : 'bg-crimson'}`}
+                className={`h-full rounded-full transition-all shadow-[0_0_10px_rgba(250,204,21,0.5)] ${cohortStatus.isFull ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-yellow-400'}`}
                 style={{ width: `${fillPct}%` }}
               />
             </div>

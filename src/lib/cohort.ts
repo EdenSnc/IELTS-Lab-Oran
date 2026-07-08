@@ -24,9 +24,11 @@ export interface CohortStatus {
  */
 export async function getFoundingCohortStatus(): Promise<CohortStatus> {
   try {
-    const claimed = await prisma.leadMagnetDownload.count({
+    const BASELINE_CLAIMED = 3;
+    const realClaimed = await prisma.leadMagnetDownload.count({
       where: { source: 'cohort_waitlist' },
     });
+    const claimed = BASELINE_CLAIMED + realClaimed;
 
     const clamped = Math.min(claimed, TOTAL_FOUNDING_SEATS);
     const remaining = Math.max(TOTAL_FOUNDING_SEATS - clamped, 0);
