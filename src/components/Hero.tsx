@@ -33,7 +33,7 @@ export default function Hero({ cohortStatus }: HeroProps) {
 
       {/* Sub-description */}
       <p className="text-gray-500 text-base md:text-lg font-medium leading-relaxed max-w-md text-center">
-        Preparing Algeria&apos;s most rigorous IELTS facility. Applications open soon.
+        Preparing Algeria&apos;s most rigorous IELTS preparation course. Apply to the founding cohort now.
       </p>
 
       {/* CTAs */}
