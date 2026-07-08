@@ -54,7 +54,10 @@ export default function Testimonials() {
       className="py-16 px-6 md:px-12 max-w-7xl mx-auto relative z-10"
       onMouseLeave={() => setActiveIndex(1)}
     >
-      <h2 className="text-4xl font-extrabold text-center mb-16 tracking-tight uppercase text-charcoal">{t('title')}</h2>
+      <h2 className="text-4xl font-extrabold text-center mb-4 tracking-tight uppercase text-charcoal">{t('title')}</h2>
+      <p className="text-gray-500 text-center max-w-2xl mx-auto mb-16 font-medium leading-relaxed">
+        {t('subtitle')}
+      </p>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {testimonials.map((t, index) => {
