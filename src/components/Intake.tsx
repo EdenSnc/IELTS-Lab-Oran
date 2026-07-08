@@ -54,37 +54,37 @@ export default function Intake({ cohortStatus }: IntakeProps) {
           </ul>
 
           {/* Founding Cohort Counter */}
-          <div className="w-full max-w-sm bg-white border border-gray-200/80 shadow-lg rounded-[2rem] px-8 py-6 flex flex-col items-center gap-3 mb-6">
+          <div className="w-full max-w-sm bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2rem] px-8 py-6 flex flex-col items-center gap-3 mb-8">
             <div className="flex justify-between w-full text-xs font-medium">
-              <span className="text-gray-500">
+              <span className="text-white/70">
                 {cohortStatus.isFull
                   ? ct('full')
                   : ct('remaining', { remaining: cohortStatus.remaining, total: cohortStatus.total })}
               </span>
-              <span className={cohortStatus.isFull ? 'text-crimson font-bold' : 'text-blue-600 font-bold'}>
+              <span className="text-white font-bold">
                 {cohortStatus.claimed}/{cohortStatus.total}
               </span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
               <div
-                className={`h-full rounded-full transition-all ${cohortStatus.isFull ? 'bg-gradient-to-r from-crimson to-red-400' : 'bg-blue-600'}`}
+                className={`h-full rounded-full transition-all ${cohortStatus.isFull ? 'bg-gradient-to-r from-crimson to-red-400' : 'bg-crimson'}`}
                 style={{ width: `${fillPct}%` }}
               />
             </div>
             {!cohortStatus.isFull && (
-              <p className="text-xs text-blue-500 text-center">{ct('discountNote')}</p>
+              <p className="text-xs text-white/50 text-center">{ct('discountNote')}</p>
             )}
           </div>
 
           {/* Status sub-tags */}
           <div className="flex gap-3 flex-wrap justify-start mb-8">
-            <div className="bg-white text-charcoal text-xs font-bold px-4 py-2 rounded-full shadow-sm">
+            <div className="bg-white/5 border border-white/10 text-white/90 text-xs font-bold px-4 py-2 rounded-full shadow-sm backdrop-blur-md">
               ✓ Lab Ready
             </div>
-            <div className="bg-white text-charcoal text-xs font-bold px-4 py-2 rounded-full shadow-sm">
+            <div className="bg-white/5 border border-white/10 text-white/90 text-xs font-bold px-4 py-2 rounded-full shadow-sm backdrop-blur-md">
               ✓ Curriculum Set
             </div>
-            <div className="bg-crimson text-white text-xs font-bold px-4 py-2 rounded-full shadow-sm shadow-crimson/50">
+            <div className="bg-crimson text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-crimson/30">
               ◷ Scheduling...
             </div>
           </div>
