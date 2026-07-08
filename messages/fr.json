@@ -6,6 +6,12 @@
     "faq": "FAQ",
     "applyNow": "POSTULER"
   },
+  "Cohort": {
+    "remaining": "{remaining} places fondatrices sur {total} disponibles",
+    "full": "Cohorte Fondatrice — Complète",
+    "discountNote": "Les membres fondateurs bénéficient d'une priorité de planification et du meilleur tarif.",
+    "fullCta": "Rejoindre la liste d'attente générale"
+  },
   "Hero": {
     "badge": "Oran • Labo Physique de 8 Places",
     "title": "RÉUSSISSEZ L'IELTS SUR ORDINATEUR.",
@@ -67,7 +73,9 @@
     "q5": "Puis-je rejoindre ce programme si je fais face à une échéance imminente pour un visa Capago ou TLScontact ?",
     "a5": "Absolument. Les délais pour Campus France, les visas étudiants britanniques ou Entrée express Canada sont stricts. Notre programme de 32 heures est conçu pour une intervention rapide afin de sécuriser votre certificat avant votre rendez-vous.",
     "q6": "Qu'est-ce qui est inclus dans les frais de scolarité de 32 000 DA ?",
-    "a6": "Les frais de 32 000 DZD couvrent 32 heures d'entraînement sur PC dans notre laboratoire d'Oran, des simulations diagnostiques, des modèles de rédaction structurés, et un retour détaillé à l'écrit et à l'oral pour garantir l'atteinte de votre score cible."
+    "a6": "Les frais de 32 000 DZD couvrent 32 heures d'entraînement sur PC dans notre laboratoire d'Oran, des simulations diagnostiques, des modèles de rédaction structurés, et un retour détaillé à l'écrit et à l'oral pour garantir l'atteinte de votre score cible.",
+    "q7": "Quand le Lab ouvre-t-il, et comment saurai-je si j'ai obtenu une place fondatrice ?",
+    "a7": "La cohorte fondatrice se lance une fois la planification finalisée — nous visons le court terme. Lorsqu'une place vous est confirmée, vous recevrez un message WhatsApp d'Amine directement avec la date exacte, l'heure et les instructions de paiement. Si vous n'avez pas eu de nouvelles, votre candidature est toujours en cours d'examen — nous traitons dans l'ordre de réception des candidatures."
   },
   "LeadMagnet": {
     "title": "Pas prêt à vous inscrire ?",

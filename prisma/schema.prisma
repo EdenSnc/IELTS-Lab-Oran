@@ -37,12 +37,13 @@ model Prospect {
 // -----------------------------------------------------------------------------
 // Tracks every time a prospect downloads a resource (via Tally Webhook).
 model LeadMagnetDownload {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id          String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   
-  prospectId  String   @db.Uuid
-  prospect    Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  prospectId  String     @db.Uuid
+  prospect    Prospect   @relation(fields: [prospectId], references: [id], onDelete: Cascade)
   
-  magnetName  String   // e.g., "PDF_Academic_Vs_General"
+  magnetName  String     // e.g., "PDF_Academic_Vs_General"
+  source      LeadSource @default(unknown) // Structured source tag for funnel attribution
   
   // UTM Tracking (Captured from Tally Hidden Fields)
   utmSource   String?
@@ -51,9 +52,10 @@ model LeadMagnetDownload {
   
   ipAddress   String?  
 
-  createdAt   DateTime @default(now())
+  createdAt   DateTime   @default(now())
 
   @@index([prospectId])
+  @@index([source])
 }
 
 // -----------------------------------------------------------------------------
@@ -100,4 +102,14 @@ enum LeadStatus {
   IN_CONVERSATION
   CONVERTED
   DEAD_LEAD
+}
+
+enum LeadSource {
+  cohort_waitlist
+  workshop
+  diagnostic_qualified
+  diagnostic_below_threshold
+  lead_magnet_pdf
+  tally_intake
+  unknown
 }

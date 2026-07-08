@@ -2,9 +2,19 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
+import type { CohortStatus } from '@/lib/cohort';
 
-export default function Hero() {
+interface HeroProps {
+  cohortStatus: CohortStatus;
+}
+
+export default function Hero({ cohortStatus }: HeroProps) {
   const t = useTranslations('Hero');
+  const ct = useTranslations('Cohort');
+
+  const fillPct = cohortStatus.total > 0
+    ? Math.round((cohortStatus.claimed / cohortStatus.total) * 100)
+    : 0;
 
   return (
     <header className="pt-40 pb-20 px-6 md:px-12 max-w-5xl mx-auto flex flex-col items-center text-center gap-6 min-h-[80vh] justify-center">
@@ -47,18 +57,27 @@ export default function Hero() {
                       Preparing Algeria&apos;s most rigorous IELTS facility. Applications open soon.
                     </p>
 
-                    {/* Progress bar */}
+                    {/* Founding Cohort Counter — real data, no fake numbers */}
                     <div className="w-full mt-2">
-                      <div className="flex justify-between text-gray-400 text-xs mb-1.5 font-medium">
-                        <span>Setup Progress</span>
-                        <span>78%</span>
+                      <div className="flex justify-between text-xs mb-1.5 font-medium">
+                        <span className="text-gray-500">
+                          {cohortStatus.isFull
+                            ? ct('full')
+                            : ct('remaining', { remaining: cohortStatus.remaining, total: cohortStatus.total })}
+                        </span>
+                        <span className={cohortStatus.isFull ? 'text-crimson font-bold' : 'text-blue-600 font-bold'}>
+                          {cohortStatus.claimed}/{cohortStatus.total}
+                        </span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-crimson to-red-400"
-                          style={{ width: '78%', boxShadow: '0 0 8px rgba(217,30,54,0.5)' }}
+                          className={`h-full rounded-full transition-all ${cohortStatus.isFull ? 'bg-gradient-to-r from-crimson to-red-400' : 'bg-blue-600'}`}
+                          style={{ width: `${fillPct}%` }}
                         />
                       </div>
+                      {!cohortStatus.isFull && (
+                        <p className="text-xs text-blue-500 mt-1.5 text-center">{ct('discountNote')}</p>
+                      )}
                     </div>
                   </div>
 
@@ -91,12 +110,21 @@ export default function Hero() {
 
         <div className="flex flex-col items-center mt-6 w-full sm:w-auto">
             <div className="flex flex-col sm:flex-row gap-4 w-full">
-                <Link href="/#intake" className="bg-crimson text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-red-800 transition-all shadow-glow hover:shadow-2xl transform hover:-translate-y-1 w-full sm:w-auto flex justify-center items-center gap-2">
+                {cohortStatus.isFull ? (
+                  <Link href="/#intake" className="bg-charcoal text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-gray-800 transition-all shadow-lg transform hover:-translate-y-1 w-full sm:w-auto flex justify-center items-center gap-2">
+                    {ct('fullCta')}
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                    </svg>
+                  </Link>
+                ) : (
+                  <Link href="/#intake" className="bg-crimson text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-red-800 transition-all shadow-glow hover:shadow-2xl transform hover:-translate-y-1 w-full sm:w-auto flex justify-center items-center gap-2">
                     {t('reserve')}
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
-                </Link>
+                  </Link>
+                )}
                 <Link href="/#compare" className="bg-surface text-charcoal px-10 py-5 rounded-full font-bold text-lg hover:bg-gray-200 transition-all w-full sm:w-auto text-center">
                     {t('details')}
                 </Link>

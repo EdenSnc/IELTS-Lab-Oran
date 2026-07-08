@@ -8,13 +8,16 @@ import Facility from '@/components/Facility';
 import FAQ from '@/components/FAQ';
 import Intake from '@/components/Intake';
 import LeadMagnet from '@/components/LeadMagnet';
+import { getFoundingCohortStatus } from '@/lib/cohort';
 
-export default function Home() {
+export default async function Home() {
+  const cohortStatus = await getFoundingCohortStatus();
+
   return (
     <>
       <Navbar />
       <main className="flex flex-col">
-        <Hero />
+        <Hero cohortStatus={cohortStatus} />
         <Methodology />
         <StopTraining />
         <Compare />
@@ -36,3 +39,4 @@ export default function Home() {
     </>
   );
 }
+
