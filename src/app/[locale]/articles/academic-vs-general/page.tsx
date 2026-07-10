@@ -2,11 +2,16 @@ import Navbar from '@/components/Navbar';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getAcademicVsGeneralContent, ArticleLocale } from '@/lib/articleContent';
+import { buildAlternates } from '@/lib/seo';
 
-export const metadata = {
-  title: 'IELTS Academic vs General Training | IELTS Lab Oran',
-  description: 'Learn the differences between IELTS Academic and General Training to choose the right test for your goals.',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'IELTS Academic vs General Training | IELTS Lab Oran',
+    description: 'Learn the differences between IELTS Academic and General Training to choose the right test for your goals.',
+    alternates: buildAlternates('articles/academic-vs-general'),
+  };
+}
 
 export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;

@@ -2,11 +2,16 @@ import Navbar from '@/components/Navbar';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getIeltsVsToeflContent, ArticleLocale } from '@/lib/articleContent';
+import { buildAlternates } from '@/lib/seo';
 
-export const metadata = {
-  title: 'IELTS vs TOEFL vs TCF for Canada | IELTS Lab Oran',
-  description: 'A comprehensive guide comparing IELTS, TOEFL, and TCF for Canadian immigration and Express Entry for Algerian applicants.',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'IELTS vs TOEFL vs TCF for Canada | IELTS Lab Oran',
+    description: 'A comprehensive guide comparing IELTS, TOEFL, and TCF for Canadian immigration and Express Entry for Algerian applicants.',
+    alternates: buildAlternates('articles/ielts-vs-toefl-canada'),
+  };
+}
 
 export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;

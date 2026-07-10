@@ -2,11 +2,17 @@ import Navbar from '@/components/Navbar';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getComputerVsPaperContent, ArticleLocale } from '@/lib/articleContent';
+import { buildAlternates } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Computer-Based vs. Paper-Based IELTS | IELTS Lab Oran',
-  description: 'Understand the crucial differences between taking the IELTS on a computer versus on paper, and why computer-delivered is better.',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'Computer-Based vs. Paper-Based IELTS | IELTS Lab Oran',
+    description: 'Understand the crucial differences between taking the IELTS on a computer versus on paper, and why computer-delivered is better.',
+    alternates: buildAlternates('articles/computer-vs-paper-ielts'),
+  };
+}
+
 
 export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;

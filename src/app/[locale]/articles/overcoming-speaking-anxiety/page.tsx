@@ -2,11 +2,16 @@ import Navbar from '@/components/Navbar';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getSpeakingAnxietyContent, ArticleLocale } from '@/lib/articleContent';
+import { buildAlternates } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Overcoming IELTS Speaking Anxiety | IELTS Lab Oran',
-  description: 'A tactical guide for Algerian candidates to overcome nervousness and perform confidently in the IELTS Speaking test.',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'Overcoming IELTS Speaking Anxiety | IELTS Lab Oran',
+    description: 'A tactical guide for Algerian candidates to overcome nervousness and perform confidently in the IELTS Speaking test.',
+    alternates: buildAlternates('articles/overcoming-speaking-anxiety'),
+  };
+}
 
 export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;

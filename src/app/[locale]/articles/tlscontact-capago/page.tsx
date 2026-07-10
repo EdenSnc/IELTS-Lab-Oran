@@ -2,11 +2,16 @@ import Navbar from '@/components/Navbar';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getTlscontactContent, ArticleLocale } from '@/lib/articleContent';
+import { buildAlternates } from '@/lib/seo';
 
-export const metadata = {
-  title: 'TLScontact & Capago: Language Requirements | IELTS Lab Oran',
-  description: 'Learn the exact English language requirements for UK and France student visas when applying through TLScontact or Capago in Algeria.',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'TLScontact & Capago: Language Requirements | IELTS Lab Oran',
+    description: 'Learn the exact English language requirements for UK and France student visas when applying through TLScontact or Capago in Algeria.',
+    alternates: buildAlternates('articles/tlscontact-capago'),
+  };
+}
 
 export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;

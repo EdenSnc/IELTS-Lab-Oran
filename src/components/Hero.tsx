@@ -17,7 +17,7 @@ export default function Hero({ cohortStatus }: HeroProps) {
     : 0;
 
   return (
-    <header className="pt-40 pb-20 px-6 md:px-12 max-w-5xl mx-auto flex flex-col items-center text-center gap-6 min-h-[80vh] justify-center">
+    <header className="pt-32 pb-16 px-6 md:px-12 max-w-5xl mx-auto flex flex-col items-center text-center gap-6 min-h-[75vh] justify-center">
 
       {/* Top badge */}
       <div className="inline-flex items-center gap-2 bg-surface text-charcoal px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase shadow-sm">

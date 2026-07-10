@@ -2,11 +2,16 @@ import Navbar from '@/components/Navbar';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getWritingTask2Content, ArticleLocale } from '@/lib/articleContent';
+import { buildAlternates } from '@/lib/seo';
 
-export const metadata = {
-  title: 'IELTS Writing Task 2 Tactics | IELTS Lab Oran',
-  description: 'Learn exactly how to structure an IELTS Writing Task 2 essay to achieve a Band 7.0 or higher.',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'IELTS Writing Task 2 Tactics | IELTS Lab Oran',
+    description: 'Learn exactly how to structure an IELTS Writing Task 2 essay to achieve a Band 7.0 or higher.',
+    alternates: buildAlternates('articles/writing-task-2-tactics'),
+  };
+}
 
 export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;

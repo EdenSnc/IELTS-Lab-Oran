@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import TallyForm from './TallyForm';
+import TrustBadges from './TrustBadges';
 import type { CohortStatus } from '@/lib/cohort';
 
 interface IntakeProps {
@@ -52,6 +53,11 @@ export default function Intake({ cohortStatus }: IntakeProps) {
               <span className="text-[15px]">{t('feature3')}</span>
             </li>
           </ul>
+
+          {/* Trust row */}
+          <div className="mb-6 w-full flex justify-center md:justify-start">
+            <TrustBadges variant="light" />
+          </div>
 
           {/* Founding Cohort Counter */}
           <div className="w-full max-w-sm bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2rem] px-8 py-6 flex flex-col items-center gap-3 mb-8">

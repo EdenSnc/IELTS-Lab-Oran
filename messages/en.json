@@ -74,7 +74,7 @@
     "q3": "Is this course suitable for complete beginners in English?",
     "a3": "No. This is an elite, intensive sprint designed strictly for university applicants and immigration candidates who already possess an intermediate grasp of English. We diagnose your exact weaknesses and focus purely on practical exam strategies and time management.",
     "q4": "How do your class groups protect individual learning progress?",
-    "a4": "We enforce a strict physical boundary of only 8 seats per cohort. This ensures that every single candidate receives intensive, line-by-line correction of their essays and personalized speaking feedback directly from a Band 8.0 instructor.",
+    "a4": "We enforce a strict physical boundary of only 8 seats per cohort. This ensures that every single candidate receives intensive, line-by-line correction of their essays and personalized speaking feedback directly from a certified instructor.",
     "q5": "Can I join this program if I am facing an imminent Capago or TLScontact visa deadline?",
     "a5": "Absolutely. Visa dossier timelines for Campus France, UK Student Visas, and Canada Express Entry are unforgiving. Our intensive 32-hour program is built precisely for rapid intervention to secure your required language certificate before your consulate appointment.",
     "q6": "What resources are included in the 32,000 DA tuition fee?",
@@ -94,6 +94,11 @@
     "successDesc": "You will be redirected to WhatsApp to claim it.",
     "invalidPhone": "Please enter a valid Algerian WhatsApp number (e.g. 0555123456)",
     "errorRequired": "Please enter your WhatsApp number to continue."
+  },
+  "TrustBadges": {
+    "cash": "Cash",
+    "baridimob": "Baridimob",
+    "certified": "Certified Instructor"
   },
   "Intake": {
     "title": "Reserve Your Seat",

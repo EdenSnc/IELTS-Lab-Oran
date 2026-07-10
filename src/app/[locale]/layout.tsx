@@ -5,6 +5,8 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
+import LocalSchema from '@/components/LocalSchema';
+import { SITE_URL, buildAlternates } from '@/lib/seo';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -14,9 +16,16 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Navbar' });
   return {
-    metadataBase: new URL('https://www.ieltslaboran.com'),
+    metadataBase: new URL(SITE_URL),
     title: `${t('title')} | IELTS Preparation Oran`,
-    description: 'Pass the computer-based IELTS with an official Band 8.0 instructor in Oran (Bir El Djir).',
+    description:
+      "Algeria's most rigorous computer-based IELTS preparation course. An 8-seat physical PC lab in Oran — diagnostic targeting, certified instruction, and criteria-focused training.",
+    alternates: buildAlternates(),
+    openGraph: {
+      type: 'website',
+      locale,
+      siteName: t('title'),
+    },
   };
 }
 
@@ -38,6 +47,9 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} className={`scroll-smooth ${fontClass}`}>
+      <head>
+        <LocalSchema />
+      </head>
       <body className="bg-surface text-charcoal selection:bg-crimson selection:text-white pb-20 md:pb-0 antialiased">
         <NextIntlClientProvider messages={messages}>
           {children}

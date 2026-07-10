@@ -42,7 +42,7 @@
     "proofBadge": "Résultats Prouvés",
     "proofTitle": "Le Cadre Exact Utilisé Pour Obtenir 8.0",
     "instructorTitle": "L'Instructeur",
-    "instructorQuote": "\"Vous n'apprenez pas avec un professeur de langue classique. Je combine ma formation en Intelligence Artificielle avec des années d'expérience pour traiter vos lacunes comme des bugs logiciels. Je vous fournis le plan précis que j'ai utilisé pour obtenir mon 8.0 officiel.\""
+    "instructorQuote": "\"Vous n'apprenez pas avec un professeur de langue classique. Je combine ma formation en Intelligence Artificielle avec des années d'expérience pour traiter vos lacunes comme des bugs logiciels. Je vous fournis le plan précis que j'ai utilisé pour obtenir ma certification officielle.\""
   },
   "Compare": {
     "title": "Pourquoi Nous Sommes Différents",
@@ -76,7 +76,7 @@
     "q3": "Ce cours convient-il aux débutants complets en anglais ?",
     "a3": "Non. C'est un sprint intensif conçu strictement pour les candidats à l'université et à l'immigration possédant déjà un niveau intermédiaire en anglais. Nous diagnostiquons vos faiblesses exactes et nous nous concentrons purement sur les stratégies pratiques d'examen et la gestion du temps.",
     "q4": "Comment protégez-vous la progression d'apprentissage de chaque élève ?",
-    "a4": "Nous imposons une limite stricte de seulement 8 places par session. Cela garantit que chaque candidat reçoit une correction intensive ligne par ligne de ses essais et un retour personnalisé à l'oral par un instructeur ayant obtenu 8.0.",
+    "a4": "Nous imposons une limite stricte de seulement 8 places par session. Cela garantit que chaque candidat reçoit une correction intensive ligne par ligne de ses essais et un retour personnalisé à l'oral par un instructeur certifié.",
     "q5": "Puis-je rejoindre ce programme si je fais face à une échéance imminente pour un visa Capago ou TLScontact ?",
     "a5": "Absolument. Les délais pour Campus France, les visas étudiants britanniques ou Entrée express Canada sont stricts. Notre programme de 32 heures est conçu pour une intervention rapide afin de sécuriser votre certificat avant votre rendez-vous.",
     "q6": "Qu'est-ce qui est inclus dans les frais de scolarité de 32 000 DA ?",
@@ -96,6 +96,11 @@
     "successDesc": "Vous allez être redirigé vers WhatsApp.",
     "invalidPhone": "Veuillez saisir un numéro WhatsApp algérien valide (ex: 0555123456)",
     "errorRequired": "Veuillez saisir votre numéro WhatsApp pour continuer."
+  },
+  "TrustBadges": {
+    "cash": "Espèces",
+    "baridimob": "Baridimob",
+    "certified": "Instructeur Certifié"
   },
   "Intake": {
     "title": "Réservez Votre Place",

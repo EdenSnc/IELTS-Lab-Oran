@@ -2,11 +2,16 @@ import Navbar from '@/components/Navbar';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getHowToRegisterContent, ArticleLocale } from '@/lib/articleContent';
+import { buildAlternates } from '@/lib/seo';
 
-export const metadata = {
-  title: 'How to Register for IELTS in Algeria | IELTS Lab Oran',
-  description: 'Step-by-step guide to registering for the British Council IELTS in Algeria, including test locations, fees, and payment methods.',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'How to Register for IELTS in Algeria | IELTS Lab Oran',
+    description: 'Step-by-step guide to registering for the British Council IELTS in Algeria, including test locations, fees, and payment methods.',
+    alternates: buildAlternates('articles/how-to-register-algeria'),
+  };
+}
 
 export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;

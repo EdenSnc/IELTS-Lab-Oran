@@ -2,11 +2,16 @@ import Navbar from '@/components/Navbar';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getFreeResourcesContent, ArticleLocale } from '@/lib/articleContent';
+import { buildAlternates } from '@/lib/seo';
 
-export const metadata = {
-  title: 'Free IELTS Resources in Algeria | IELTS Lab Oran',
-  description: 'Discover the best free IELTS practice tests and resources available to candidates in Algeria.',
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: 'Free IELTS Resources in Algeria | IELTS Lab Oran',
+    description: 'Discover the best free IELTS practice tests and resources available to candidates in Algeria.',
+    alternates: buildAlternates('articles/free-ielts-resources-algeria'),
+  };
+}
 
 export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;
