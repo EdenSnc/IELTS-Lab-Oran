@@ -34,16 +34,24 @@ export default async function ArticlePage() {
               
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_1}</h2>
               
-              <div className="space-y-6 my-10 not-prose">
-                  {c.steps.map((step, i) => (
-                    <div key={i} className="flex gap-5">
-                        <div className="w-12 h-12 bg-charcoal text-white rounded-full flex items-center justify-center font-bold text-xl shrink-0 shadow-md">{i + 1}</div>
-                        <div>
-                            <h4 className="font-bold text-charcoal text-xl mb-2">{step.title}</h4>
-                            <p className="text-gray-600" dangerouslySetInnerHTML={{ __html: step.desc }} />
-                        </div>
-                    </div>
-                  ))}
+              {/* Visual Infographic: Timeline Flowchart */}
+              <div className="my-10 not-prose relative">
+                  {/* Connecting vertical line */}
+                  <div className={`absolute top-0 bottom-0 w-0.5 bg-gray-200 ${isRtl ? 'right-6' : 'left-6'} transform ${isRtl ? 'translate-x-1/2' : '-translate-x-1/2'} z-0`}></div>
+                  
+                  <div className="space-y-8 relative z-10">
+                    {c.steps.map((step: any, i: number) => (
+                      <div key={i} className="flex gap-6 items-start group">
+                          <div className="w-12 h-12 bg-charcoal text-white rounded-full flex items-center justify-center font-bold text-xl shrink-0 shadow-[0_0_0_4px_white] group-hover:bg-crimson group-hover:scale-110 transition-all z-10">
+                            {i + 1}
+                          </div>
+                          <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-sm flex-1 group-hover:shadow-md transition-shadow">
+                              <h4 className="font-bold text-charcoal text-xl mb-2">{step.title}</h4>
+                              <p className="text-gray-600 leading-relaxed text-sm" dangerouslySetInnerHTML={{ __html: step.desc }} />
+                          </div>
+                      </div>
+                    ))}
+                  </div>
               </div>
 
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_2}</h2>

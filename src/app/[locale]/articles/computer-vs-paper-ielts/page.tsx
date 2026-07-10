@@ -42,11 +42,28 @@ export default async function ArticlePage() {
               <p className="lead text-xl text-gray-600 mb-8 font-medium">{c.lead}</p>
               
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_1}</h2>
-              <ul className="list-disc pl-5 my-6 space-y-4">
-                  {c.bullets.map((b, i) => (
-                    <li key={i} dangerouslySetInnerHTML={{ __html: b }} />
-                  ))}
-              </ul>
+              
+              {/* Visual Infographic: Feature Matrix */}
+              <div className="grid md:grid-cols-2 gap-4 my-8 not-prose">
+                {c.bullets.map((b, i) => {
+                  // Extract the bold title (e.g. "Faster results:") and the rest of the text
+                  const match = b.match(/<strong>(.*?)<\/strong>([\s\S]*)/);
+                  const title = match ? match[1] : `Feature ${i+1}`;
+                  const text = match ? match[2].replace(/^:\s*/, '') : b;
+                  
+                  return (
+                    <div key={i} className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm hover:border-crimson/50 transition-colors">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-crimson/10 flex items-center justify-center text-crimson font-bold text-sm">
+                          {i + 1}
+                        </div>
+                        <h3 className="font-bold text-charcoal text-lg" dangerouslySetInnerHTML={{ __html: title }} />
+                      </div>
+                      <p className="text-gray-600 text-sm ml-11" dangerouslySetInnerHTML={{ __html: text }} />
+                    </div>
+                  );
+                })}
+              </div>
 
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_2}</h2>
               

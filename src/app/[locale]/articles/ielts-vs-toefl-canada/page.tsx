@@ -78,9 +78,50 @@ export default async function ArticlePage() {
                 {locale === 'ar' ? 'إذا كنت تتقدم للدخول السريع باللغة الإنجليزية كلغتك الأساسية، فهدفك هو CLB 9. الوصول إلى CLB 9 يُحدث قفزة هائلة في درجة نظام التصنيف الشامل (CRS) (في الغالب نقاط إضافية 50)، وهو ما يُحدد الفارق بين الحصول على دعوة للتقديم والبقاء في قائمة الانتظار.' : locale === 'fr' ? 'Si vous postulez à l\'Entrée Express avec l\'anglais comme langue principale, votre objectif est CLB 9. Atteindre CLB 9 déclenche un énorme gain dans votre score CRS (souvent 50 points supplémentaires), ce qui fait généralement la différence entre obtenir une ITA et rester dans le bassin.' : 'If you are applying for Express Entry with English as your primary language, your goal is CLB 9. Reaching CLB 9 triggers a massive jump in your Comprehensive Ranking System (CRS) score (often an extra 50 points), which is usually the difference between getting an ITA (Invitation to Apply) and being stuck in the pool.'}
               </p>
               
-              <p className="bg-gray-100 p-4 rounded-xl border border-gray-200 text-sm text-gray-800 font-medium">
-                {clbLabel}<br/>{clbScores}
-              </p>
+              {/* Visual Infographic: CLB Score Mapping Table */}
+              <div className="overflow-x-auto my-10 not-prose rounded-2xl border border-gray-200 shadow-sm">
+                <table className="w-full text-center border-collapse">
+                  <thead>
+                    <tr className="bg-charcoal text-white">
+                      <th className="p-4 font-bold border-b border-white/10">CLB Level</th>
+                      <th className="p-4 font-bold border-b border-white/10">{locale === 'ar' ? 'الاستماع' : locale === 'fr' ? 'Écoute' : 'Listening'}</th>
+                      <th className="p-4 font-bold border-b border-white/10">{locale === 'ar' ? 'القراءة' : locale === 'fr' ? 'Lecture' : 'Reading'}</th>
+                      <th className="p-4 font-bold border-b border-white/10">{locale === 'ar' ? 'الكتابة' : locale === 'fr' ? 'Écriture' : 'Writing'}</th>
+                      <th className="p-4 font-bold border-b border-white/10">{locale === 'ar' ? 'المحادثة' : locale === 'fr' ? 'Expression' : 'Speaking'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white">
+                    <tr className="bg-gray-50 text-gray-600">
+                      <td className="p-3 border-b border-gray-100 font-bold">CLB 7</td>
+                      <td className="p-3 border-b border-gray-100">6.0</td>
+                      <td className="p-3 border-b border-gray-100">6.0</td>
+                      <td className="p-3 border-b border-gray-100">6.0</td>
+                      <td className="p-3 border-b border-gray-100">6.0</td>
+                    </tr>
+                    <tr className="bg-white text-gray-600">
+                      <td className="p-3 border-b border-gray-100 font-bold">CLB 8</td>
+                      <td className="p-3 border-b border-gray-100">7.5</td>
+                      <td className="p-3 border-b border-gray-100">6.5</td>
+                      <td className="p-3 border-b border-gray-100">6.5</td>
+                      <td className="p-3 border-b border-gray-100">6.5</td>
+                    </tr>
+                    <tr className="bg-crimson/10 text-charcoal relative">
+                      <td className="p-4 border-b border-crimson/20 font-extrabold text-crimson border-l-4 border-l-crimson">CLB 9 (Target)</td>
+                      <td className="p-4 border-b border-crimson/20 font-bold">8.0</td>
+                      <td className="p-4 border-b border-crimson/20 font-bold">7.0</td>
+                      <td className="p-4 border-b border-crimson/20 font-bold">7.0</td>
+                      <td className="p-4 border-b border-crimson/20 font-bold">7.0</td>
+                    </tr>
+                    <tr className="bg-gray-50 text-gray-600">
+                      <td className="p-3 border-b border-gray-100 font-bold">CLB 10</td>
+                      <td className="p-3 border-b border-gray-100">8.5+</td>
+                      <td className="p-3 border-b border-gray-100">8.0+</td>
+                      <td className="p-3 border-b border-gray-100">7.5+</td>
+                      <td className="p-3 border-b border-gray-100">7.5+</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
               <div className="bg-white p-8 md:p-10 rounded-[2.5rem] mt-16 border border-gray-200 shadow-xl shadow-gray-200/50 flex flex-col md:flex-row items-center gap-8 justify-between relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-crimson/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all duration-500 group-hover:bg-crimson/10 pointer-events-none"></div>

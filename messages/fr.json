@@ -20,18 +20,19 @@
     "description": "Le <highlight>cours IELTS le plus rigoureux d'Algérie est lancé à Oran</highlight>, conçu pour le test sur ordinateur, et non pour les méthodes obsolètes sur papier.",
     "reserve": "RESERVER VOTRE PLACE",
     "details": "DÉTAILS DU PROGRAMME",
-    "noPayment": "Aucun paiement initial requis pour postuler."
+    "noPayment": "Aucun paiement initial requis pour postuler.",
+    "programBadge": "Le Programme IELTS Success"
   },
   "Methodology": {
-    "title": "La Méthodologie",
-    "subtitle": "La plupart des préparations à l'IELTS sont inefficaces car elles ne reflètent pas la réalité numérique du test officiel. Nous procédons différemment :",
+    "title": "Le Système IELTS Success",
+    "subtitle": "La plupart des préparations ne reflètent pas la réalité numérique du test. Nous procédons différemment :",
     "bullet1Title": "Formation 100% Numérique :",
     "bullet1Desc": "Entraînez-vous exactement comme vous serez testé le jour de l'examen.",
     "bullet2Title": "Ciblage Diagnostique :",
-    "bullet2Desc": "Nous ciblons vos lacunes linguistiques spécifiques au lieu de cours génériques.",
+    "bullet2Desc": "Nous ciblons vos lacunes linguistiques au lieu de cours génériques.",
     "bullet3Title": "Maîtrise des Critères :",
     "bullet3Desc": "Votre plan d'étude est exclusivement conçu autour des grilles d'évaluation officielles.",
-    "notForBeginners": "Strictement pour les non-débutants."
+    "notForBeginners": "Strictement pour les non-débutants"
   },
   "StopTraining": {
     "title": "ARRÊTEZ DE VOUS <mark>ENTRAÎNER SUR PAPIER.</mark>",
@@ -40,22 +41,20 @@
     "bullet2": "<strong>Les candidats aux études à l'étranger</strong> confrontés à des délais stricts",
     "bullet3": "<strong>Les candidats à l'Entrée express</strong> nécessitant un score précis",
     "proofBadge": "Résultats Prouvés",
-    "proofTitle": "Le Cadre Exact Utilisé Pour Obtenir 8.0",
-    "instructorTitle": "L'Instructeur",
-    "instructorQuote": "\"Vous n'apprenez pas avec un professeur de langue classique. Je combine ma formation en Intelligence Artificielle avec des années d'expérience pour traiter vos lacunes comme des bugs logiciels. Je vous fournis le plan précis que j'ai utilisé pour obtenir ma certification officielle.\""
+    "proofTitle": "Le Cadre Exact Utilisé Pour Obtenir 8.0"
   },
   "Compare": {
     "title": "Pourquoi Nous Sommes Différents",
     "traditionalTitle": "Centres Traditionnels",
     "traditionalSubtitle": "Écoles de langues standards.",
-    "traditional1": "Pratique sur papier qui ne correspond pas au véritable examen sur ordinateur.",
-    "traditional2": "Classes surpeuplées de plus de 20 élèves, limitant le suivi personnalisé.",
-    "traditional3": "Leçons d'anglais génériques au lieu de stratégies d'examen ciblées.",
+    "traditional1": "Pratique sur papier ignorant l'examen sur ordinateur.",
+    "traditional2": "Classes surpeuplées de plus de 20 élèves.",
+    "traditional3": "Leçons d'anglais génériques sans stratégie.",
     "labTitle": "Le Laboratoire Physique",
     "labSubtitle": "Préparation moderne et ciblée.",
-    "lab1": "Entraînement 100% sur PC reproduisant l'environnement de test officiel.",
-    "lab2": "Groupes intensifs de 8 personnes pour garantir une attention personnalisée.",
-    "lab3": "Retours clairs et exploitables pour améliorer votre expression écrite et orale."
+    "lab1": "Entraînement 100% sur PC reproduisant le test.",
+    "lab2": "Groupes de 8 pour un suivi garanti.",
+    "lab3": "Retours exploitables (Writing & Speaking)."
   },
   "Testimonials": {
     "title": "Résultats des Étudiants",
@@ -70,24 +69,24 @@
   "FAQ": {
     "title": "Questions Fréquemment Posées",
     "q1": "Quelle est la différence entre l'IELTS sur papier et sur ordinateur ?",
-    "a1": "Le format du test et la difficulté sont identiques, mais le mécanisme de passation change tout. Sur PC, vous avez le copier-coller, le comptage automatique des mots et le surlignage numérique. Notre centre reproduit cette interface exacte pour que vous développiez les bons réflexes avant le jour J.",
+    "a1": "Le format est identique, mais le mécanisme change tout. Le PC offre le copier-coller et le comptage de mots. Nous reproduisons cette interface pour développer vos réflexes.",
     "q2": "Comment puis-je payer mes frais d'inscription au test officiel en Algérie ?",
-    "a2": "Les frais du British Council sont d'environ 40 000 DZD. En raison des contraintes bancaires locales, la plupart des candidats paient par virement bancaire ou via des agences locales spécialisées. Nous vous accompagnons pas à pas pour sécuriser votre date de test.",
+    "a2": "Les frais sont d'environ 40 000 DZD. Nous vous accompagnons pas à pas pour le paiement (virement ou agence locale).",
     "q3": "Ce cours convient-il aux débutants complets en anglais ?",
-    "a3": "Non. C'est un sprint intensif conçu strictement pour les candidats à l'université et à l'immigration possédant déjà un niveau intermédiaire en anglais. Nous diagnostiquons vos faiblesses exactes et nous nous concentrons purement sur les stratégies pratiques d'examen et la gestion du temps.",
+    "a3": "Non. Ce sprint intensif est strictement pour ceux ayant un niveau intermédiaire. Nous nous concentrons purement sur la stratégie d'examen.",
     "q4": "Comment protégez-vous la progression d'apprentissage de chaque élève ?",
-    "a4": "Nous imposons une limite stricte de seulement 8 places par session. Cela garantit que chaque candidat reçoit une correction intensive ligne par ligne de ses essais et un retour personnalisé à l'oral par un instructeur certifié.",
+    "a4": "Strictement 8 places par cohorte. Cela garantit une correction ligne par ligne et un retour personnalisé à l'oral.",
     "q5": "Puis-je rejoindre ce programme si je fais face à une échéance imminente pour un visa Capago ou TLScontact ?",
-    "a5": "Absolument. Les délais pour Campus France, les visas étudiants britanniques ou Entrée express Canada sont stricts. Notre programme de 32 heures est conçu pour une intervention rapide afin de sécuriser votre certificat avant votre rendez-vous.",
+    "a5": "Absolument. Notre programme de 32 heures est conçu pour une intervention rapide afin de sécuriser votre certificat avant votre rendez-vous visa.",
     "q6": "Qu'est-ce qui est inclus dans les frais de scolarité de 32 000 DA ?",
-    "a6": "Les frais de 32 000 DZD couvrent 32 heures d'entraînement sur PC dans notre laboratoire d'Oran, des simulations diagnostiques, des modèles de rédaction structurés, et un retour détaillé à l'écrit et à l'oral pour garantir l'atteinte de votre score cible.",
+    "a6": "Couvre 32 heures d'entraînement sur PC, des simulations diagnostiques, des modèles de rédaction, et un retour détaillé.",
     "q7": "Quand le Lab ouvre-t-il, et comment saurai-je si j'ai obtenu une place fondatrice ?",
-    "a7": "La cohorte fondatrice se lance une fois la planification finalisée — nous visons le court terme. Lorsqu'une place vous est confirmée, vous recevrez un message WhatsApp d'Amine directement avec la date exacte, l'heure et les instructions de paiement. Si vous n'avez pas eu de nouvelles, votre candidature est toujours en cours d'examen — nous traitons dans l'ordre de réception des candidatures."
+    "a7": "Nous lançons bientôt. Si une place se libère, vous recevrez un WhatsApp avec les dates et détails de paiement. Nous traitons par ordre de réception."
   },
   "LeadMagnet": {
     "title": "Pas prêt à vous inscrire ?",
     "subtitle": "Obtenez notre guide gratuit : IELTS sur Ordinateur vs Papier (PDF).",
-    "description": "Découvrez les différences exactes entre les deux formats, lequel est le plus facile, et comment choisir le bon test pour atteindre votre objectif.",
+    "description": "Découvrez les différences exactes, quel format est le plus facile, et comment choisir le bon test.",
     "phoneLabel": "Votre numéro WhatsApp",
     "placeholder": "Num WhatsApp (ex: +213 555 555 555)",
     "submit": "ENVOYER MON GUIDE",
@@ -111,16 +110,22 @@
     "feature1": "32 heures d'entraînement intensif sur PC",
     "feature2": "Suivi personnalisé (Writing & Speaking)",
     "feature3": "Votre propre poste de travail dédié",
-    "footerText": "Remplissez le formulaire ci-dessous. Si une place est disponible dans le prochain groupe, nous vous contacterons via WhatsApp."
+    "footerText": "Remplissez le formulaire ci-dessous. Si une place se libère, nous vous contacterons via WhatsApp."
+  },
+  "Bypass": {
+    "label": "Vous ne pouvez pas attendre la cohorte ?",
+    "text": "Si votre examen approche, contactez directement pour une session privée 1-à-1.",
+    "cta": "Écrire sur WhatsApp",
+    "waMessage": "Bonjour Amine, j'ai trouvé IELTS Lab Oran en ligne. Ma date d'examen approche et je ne peux pas attendre la cohorte fondatrice. Je suis intéressé(e) par une session de préparation privée 1-à-1. Pouvons-nous en discuter ?"
   },
   "About": {
     "title": "À Propos d'Amine",
     "subtitle": "Le Guide Expert",
-    "hook": "Amine est un étudiant en Master de 23 ans en IA Appliquée et un instructeur expert IELTS avec un score officiel de 8.0.",
+    "hook": "Fondateur de IELTS Lab Oran, étudiant en Master IA Appliquée, et instructeur certifié (Score 8.0).",
     "pedigree": "Poussé par le profond dévouement à l'éducation laissé par son défunt père, professeur respecté à l'USTO-MB.",
-    "experience": "Vaste expérience d'enseignement dans des institutions locales de premier plan (MTI Metro, CEIL Univ Oran 1, Snai3i) et bénévolat actif à l'American Corner Oran. Titulaire de formations d'enseignement STEAM et STEM spécialisées.",
-    "edge": "Une approche très pragmatique et réaliste. Pas de positivité toxique — juste des feuilles de route concrètes. Soutenu par des années d'enseignement et une connaissance approfondie acquise en observant les sessions officielles du CEIL.",
-    "method": "Utilisation du Universal Design for Learning (UDL) et optimisation du Student Talk Time (STT) pour garantir les résultats."
+    "experience": "Vaste expérience d'enseignement (MTI Metro, CEIL, Snai3i) avec formations STEAM spécialisées.",
+    "edge": "Une approche pragmatique. Soutenu par une connaissance approfondie acquise en observant les sessions officielles du CEIL pour créer le curriculum parfait.",
+    "method": "Basé sur des diagnostics rigoureux et l'optimisation du temps de parole."
   },
   "Articles": {
     "title": "Articles & Actualités",

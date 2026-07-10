@@ -20,25 +20,26 @@
     "description": "Algeria’s most rigorous <highlight>IELTS course is launching in Oran</highlight>, built for the computer-delivered test, not outdated paper practice.",
     "reserve": "RESERVE YOUR SEAT",
     "details": "PROGRAM DETAILS",
-    "noPayment": "No upfront payment required to apply."
+    "noPayment": "No upfront payment required to apply.",
+    "programBadge": "The IELTS Success Program"
   },
   "Methodology": {
-    "title": "The Methodology",
-    "subtitle": "Most IELTS preparation is inefficient because it fails to reflect the digital reality of the official test. We do things differently:",
+    "title": "The IELTS Success System",
+    "subtitle": "Most IELTS prep fails to reflect the digital reality of the test. We do things differently:",
     "bullet1Title": "Digital-First Training:",
     "bullet1Desc": "Train exactly how you will test on exam day.",
     "bullet2Title": "Diagnostic Targeting:",
-    "bullet2Desc": "We pinpoint your specific language gaps instead of offering generic tutoring.",
+    "bullet2Desc": "We pinpoint specific language gaps instead of generic tutoring.",
     "bullet3Title": "Criteria Mastery:",
-    "bullet3Desc": "Your study plan is engineered exclusively around the official marking rubrics.",
-    "notForBeginners": "Strictly for non-beginners."
+    "bullet3Desc": "Your study plan is engineered exclusively around the official rubrics.",
+    "notForBeginners": "Strictly for non-beginners"
   },
   "StopTraining": {
     "title": "STOP <mark>TRAINING ON PAPER.</mark>",
     "subtitle": "The official British Council test is digital. <mark>If you are practicing with paper handouts, you are putting yourself at a disadvantage.</mark> This lab is designed exclusively for:",
     "bullet1": "<strong>University Applicants</strong> aiming for foreign admissions",
-    "bullet2": "<strong>Study Abroad Candidates</strong> facing tight application deadlines",
-    "bullet3": "<strong>Express Entry Candidates</strong> requiring a strict band score",
+    "bullet2": "<strong>Study Abroad Candidates</strong> facing tight deadlines",
+    "bullet3": "<strong>Express Entry Candidates</strong> requiring strict band scores",
     "proofBadge": "Proven Results",
     "proofTitle": "The Exact Framework Used To Secure Band 8.0"
   },
@@ -46,18 +47,18 @@
     "title": "Why We Are Different",
     "traditionalTitle": "Traditional Centers",
     "traditionalSubtitle": "Standard language schools.",
-    "traditional1": "Paper-based practice that doesn't match the real computer exam.",
-    "traditional2": "Crowded classrooms of 20+ students, limiting personal feedback.",
-    "traditional3": "Generic English lessons instead of focused exam strategies.",
+    "traditional1": "Paper practice that ignores the computer exam.",
+    "traditional2": "Crowded classrooms of 20+ students.",
+    "traditional3": "Generic English lessons over exam strategy.",
     "labTitle": "The Physical Lab",
     "labSubtitle": "Focused, modern preparation.",
-    "lab1": "100% PC-based training replicating the official test environment.",
-    "lab2": "Intensive 8-person groups to guarantee personalized attention.",
-    "lab3": "Clear, actionable feedback to improve your writing and speaking."
+    "lab1": "100% PC training replicating the official test.",
+    "lab2": "8-person groups for guaranteed attention.",
+    "lab3": "Actionable writing and speaking feedback."
   },
   "Testimonials": {
     "title": "Student Results",
-    "subtitle": "Results and feedback from Amine's past private 1-on-1 students. The physical 8-seat cohort is launching soon."
+    "subtitle": "Results and feedback from Amine's past private students. The physical 8-seat cohort is launching soon."
   },
   "Facility": {
     "title": "The Facility",
@@ -68,24 +69,24 @@
   "FAQ": {
     "title": "Frequently Asked Questions",
     "q1": "What is the difference between Paper-Based and Computer-Based IELTS?",
-    "a1": "The test format and difficulty are identical, but the delivery mechanism changes everything. On a PC, you have copy-paste functionality, automatic word counts, and digital highlighting. Our facility replicates this exact interface with dedicated hardware so you build the right muscle memory before test day.",
+    "a1": "The format is identical, but delivery changes everything. PC tests offer copy-paste, word counts, and digital highlighting. We replicate this exact interface so you build muscle memory.",
     "q2": "How can I pay my official test registration fee in Algeria?",
-    "a2": "The British Council fee is typically around 40,000 DZD. Due to local banking constraints, most candidates pay via offline bank transfer or specialized local agencies. We provide step-by-step guidance on securing your test date and handling the payment securely.",
+    "a2": "The fee is ~40,000 DZD. Due to banking constraints, most pay via offline transfer or local agencies. We provide step-by-step registration guidance.",
     "q3": "Is this course suitable for complete beginners in English?",
-    "a3": "No. This is an elite, intensive sprint designed strictly for university applicants and immigration candidates who already possess an intermediate grasp of English. We diagnose your exact weaknesses and focus purely on practical exam strategies and time management.",
+    "a3": "No. This intensive sprint is strictly for candidates with intermediate English. We focus purely on exam strategy, not basic grammar.",
     "q4": "How do your class groups protect individual learning progress?",
-    "a4": "We enforce a strict physical boundary of only 8 seats per cohort. This ensures that every single candidate receives intensive, line-by-line correction of their essays and personalized speaking feedback directly from a certified instructor.",
-    "q5": "Can I join this program if I am facing an imminent Capago or TLScontact visa deadline?",
-    "a5": "Absolutely. Visa dossier timelines for Campus France, UK Student Visas, and Canada Express Entry are unforgiving. Our intensive 32-hour program is built precisely for rapid intervention to secure your required language certificate before your consulate appointment.",
+    "a4": "Strictly 8 seats per cohort. This guarantees line-by-line essay correction and personalized speaking feedback from a certified instructor.",
+    "q5": "Can I join if I am facing an imminent Capago or TLScontact deadline?",
+    "a5": "Absolutely. Visa timelines are unforgiving. Our 32-hour program is built for rapid intervention to secure your certificate before your appointment.",
     "q6": "What resources are included in the 32,000 DA tuition fee?",
-    "a6": "The 32,000 DZD tuition covers 32 hours of dedicated PC time in our Oran lab, proprietary diagnostic simulations, structured writing templates, and line-by-line speaking and writing feedback to ensure you hit your target band.",
-    "q7": "When does the Lab open, and how do I know if I got a founding seat?",
-    "a7": "The founding cohort launches once scheduling is finalized — we are targeting the near term. When your seat is confirmed, you will receive a WhatsApp message directly from Amine with the exact date, time, and payment instructions. If you have not heard back, your application is still under review — we process in the order applications were received."
+    "a6": "Covers 32 hours of dedicated PC time, diagnostic simulations, writing templates, and line-by-line feedback.",
+    "q7": "When does the Lab open, and how do I know if I got a seat?",
+    "a7": "We launch soon. If a seat opens, you'll receive a WhatsApp message with dates and payment details. We process applications in order of receipt."
   },
   "LeadMagnet": {
     "title": "Not Ready to Enroll?",
     "subtitle": "Get our free guide: IELTS on Computer vs. Paper (PDF).",
-    "description": "Discover the exact differences between the two formats, which one is easier, and how to choose the right test to secure your target band.",
+    "description": "Discover the exact differences, which format is easier, and how to choose the right test.",
     "phoneLabel": "Your WhatsApp number",
     "placeholder": "WhatsApp No. (e.g. +213 555 555 555)",
     "submit": "SEND MY CHEAT SHEET",
@@ -107,18 +108,24 @@
     "fee": "32,000 DA",
     "feeDesc": "Invest once. Protect your 40K DA test fee.",
     "feature1": "32 hours intensive PC training",
-    "feature2": "Personalized writing and speaking feedback",
+    "feature2": "Personalized writing & speaking feedback",
     "feature3": "Your own dedicated PC station",
-    "footerText": "Fill out the application form. If a seat is available in the next cohort, we will contact you via WhatsApp to complete your registration."
+    "footerText": "Fill out the application. If a seat is available, we will contact you via WhatsApp."
+  },
+  "Bypass": {
+    "label": "Can't wait for the cohort?",
+    "text": "If your exam is soon, message directly for a private 1-on-1 session.",
+    "cta": "Message on WhatsApp",
+    "waMessage": "Hi Amine, I found IELTS Lab Oran online. My exam date is approaching and I can't wait for the founding cohort. I'm interested in a private 1-on-1 preparation session. Can we discuss this?"
   },
   "About": {
     "title": "About Amine",
     "subtitle": "The Founder & Lead Instructor",
-    "hook": "Amine is the Founder of IELTS Lab Oran, a 23-year-old Master's student in Applied AI, and an expert IELTS instructor holding an official Band 8.0.",
+    "hook": "Founder of IELTS Lab Oran, Applied AI Master's student, and certified instructor holding an official Band 8.0.",
     "pedigree": "Driven by the profound dedication to education left by his late father, a respected professor at USTO-MB.",
-    "experience": "Extensive teaching background across premier local institutions (MTI Metro, CEIL Univ Oran 1, Snai3i) and active volunteer work at the American Corner Oran. Specialized STEAM and STEM teacher training credentials from World Learning Algeria and Snai3i.",
-    "edge": "A highly pragmatic and realistic approach. No toxic positivity—just actionable roadmaps. Backed by years of dedicated English teaching, informal IELTS coaching, and deep insider knowledge gained from shadowing official CEIL IELTS sessions to reverse-engineer the perfect curriculum.",
-    "method": "A system built on rigorous diagnostics and maximizing active speaking time, ensuring every minute translates into measurable progress."
+    "experience": "Extensive teaching background (MTI Metro, CEIL, Snai3i) with specialized STEAM credentials from World Learning Algeria.",
+    "edge": "A highly pragmatic approach. Backed by deep insider knowledge from shadowing official CEIL sessions to reverse-engineer the perfect curriculum.",
+    "method": "Built on rigorous diagnostics and maximizing active speaking time."
   },
   "Articles": {
     "title": "Articles & News",

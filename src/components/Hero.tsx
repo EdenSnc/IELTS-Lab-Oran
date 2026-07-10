@@ -19,10 +19,19 @@ export default function Hero({ cohortStatus }: HeroProps) {
   return (
     <header className="pt-32 pb-16 px-6 md:px-12 max-w-5xl mx-auto flex flex-col items-center text-center gap-6 min-h-[75vh] justify-center">
 
-      {/* Top badge */}
-      <div className="inline-flex items-center gap-2 bg-surface text-charcoal px-5 py-2 rounded-full text-xs font-bold tracking-widest uppercase shadow-sm">
-        <span className="w-2 h-2 rounded-full bg-crimson animate-pulse"></span>
-        {t('badge')}
+      {/* Top badges */}
+      <div className="flex flex-col md:flex-row gap-2 items-center justify-center">
+        <div className="inline-flex items-center gap-2 bg-charcoal text-white px-5 py-2 rounded-full text-[11px] sm:text-xs font-bold tracking-[0.2em] uppercase shadow-sm border border-charcoal/90">
+          <svg className="w-3.5 h-3.5 text-crimson" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+          {t('programBadge')}
+        </div>
+
+        <div className="inline-flex items-center gap-2 bg-surface text-charcoal px-4 py-2 rounded-full text-[11px] sm:text-xs font-bold tracking-widest uppercase">
+          <span className="w-2 h-2 rounded-full bg-crimson animate-pulse shrink-0"></span>
+          {t('badge')}
+        </div>
       </div>
 
 

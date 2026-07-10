@@ -43,19 +43,52 @@ export default async function ArticlePage() {
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_2}</h2>
               <p dangerouslySetInnerHTML={{ __html: c.formatIntro }} />
               
-              <h3 className="font-bold text-xl mt-8 mb-4 text-charcoal">{c.readingTitle}</h3>
-              <ul className="list-disc pl-5 my-6 space-y-4">
-                  {c.readingBullets.map((b, i) => (
-                    <li key={i} dangerouslySetInnerHTML={{ __html: b }} />
-                  ))}
-              </ul>
-
-              <h3 className="font-bold text-xl mt-8 mb-4 text-charcoal">{c.writingTitle}</h3>
-              <ul className="list-disc pl-5 my-6 space-y-4">
-                  {c.writingBullets.map((b, i) => (
-                    <li key={i} dangerouslySetInnerHTML={{ __html: b }} />
-                  ))}
-              </ul>
+              {/* Visual Infographic: Comparison Table */}
+              <div className="overflow-x-auto my-10 not-prose rounded-2xl border border-gray-200 shadow-sm">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-charcoal text-white">
+                      <th className="p-4 font-bold border-b border-white/10 w-1/4">
+                        {locale === 'ar' ? 'المهارة' : locale === 'fr' ? 'Compétence' : 'Skill'}
+                      </th>
+                      <th className="p-4 font-bold border-b border-white/10 w-3/8 bg-blue-900/40">IELTS Academic</th>
+                      <th className="p-4 font-bold border-b border-white/10 w-3/8 bg-green-900/40">IELTS General Training</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white">
+                    <tr>
+                      <td className="p-4 border-b border-gray-100 font-bold text-charcoal bg-gray-50">
+                        {locale === 'ar' ? 'الاستماع (Listening)' : 'Listening'}
+                      </td>
+                      <td className="p-4 border-b border-gray-100 text-gray-600 text-sm italic text-center" colSpan={2}>
+                        {locale === 'ar' ? 'نفس الاختبار تماماً' : locale === 'fr' ? 'Test exactement identique' : 'Exactly the same test'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-4 border-b border-gray-100 font-bold text-charcoal bg-gray-50">
+                        {locale === 'ar' ? 'المحادثة (Speaking)' : 'Speaking'}
+                      </td>
+                      <td className="p-4 border-b border-gray-100 text-gray-600 text-sm italic text-center" colSpan={2}>
+                        {locale === 'ar' ? 'نفس الاختبار تماماً' : locale === 'fr' ? 'Test exactement identique' : 'Exactly the same test'}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-4 border-b border-gray-100 font-bold text-charcoal bg-gray-50">
+                        {locale === 'ar' ? 'القراءة (Reading)' : 'Reading'}
+                      </td>
+                      <td className="p-4 border-b border-gray-100 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.readingBullets[0].replace('<strong>Academic Reading:</strong>', '') }} />
+                      <td className="p-4 border-b border-gray-100 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.readingBullets[1].replace('<strong>General Training Reading:</strong>', '') }} />
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-bold text-charcoal bg-gray-50">
+                        {locale === 'ar' ? 'الكتابة (Writing)' : 'Writing'}
+                      </td>
+                      <td className="p-4 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.writingBullets[0].replace('<strong>Academic Writing:</strong><br/>', '') }} />
+                      <td className="p-4 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.writingBullets[1].replace('<strong>General Training Writing:</strong><br/>', '') }} />
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_3}</h2>
               <p>{c.scoringText}</p>

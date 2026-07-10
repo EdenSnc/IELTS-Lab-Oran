@@ -7,7 +7,12 @@ export default function Methodology() {
 
   return (
     <section id="methodology" className="py-24 px-6 md:px-12 max-w-4xl mx-auto text-center relative z-10">
-      <h2 className="text-4xl font-extrabold tracking-tight uppercase text-charcoal mb-8">{t('title')}</h2>
+      <div className="mb-10 flex flex-col items-center">
+        <div className="w-12 h-1 bg-crimson mb-6 rounded-full"></div>
+        <h2 className="text-3xl md:text-5xl font-black tracking-tight text-charcoal uppercase">
+          {t('title')}
+        </h2>
+      </div>
       <p className="text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
         {t('subtitle')}
       </p>

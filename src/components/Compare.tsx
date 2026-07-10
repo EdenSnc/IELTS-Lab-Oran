@@ -15,11 +15,14 @@ export default function Compare() {
             <p className="text-gray-500 font-medium">{t('traditionalSubtitle')}</p>
           </div>
           <ul className="flex flex-col gap-6 text-gray-600 text-lg">
-            <li className="flex items-start gap-4"><span className="text-gray-400 font-bold mt-1 text-xl">×</span>
+            <li className="flex items-start gap-4">
+              <svg className="w-6 h-6 text-gray-300 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" /></svg>
               <span>{t('traditional1')}</span></li>
-            <li className="flex items-start gap-4"><span className="text-gray-400 font-bold mt-1 text-xl">×</span>
+            <li className="flex items-start gap-4">
+              <svg className="w-6 h-6 text-gray-300 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" /></svg>
               <span>{t('traditional2')}</span></li>
-            <li className="flex items-start gap-4"><span className="text-gray-400 font-bold mt-1 text-xl">×</span>
+            <li className="flex items-start gap-4">
+              <svg className="w-6 h-6 text-gray-300 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" /></svg>
               <span>{t('traditional3')}</span></li>
           </ul>
         </div>
@@ -30,11 +33,14 @@ export default function Compare() {
             <p className="text-gray-300 font-medium">{t('labSubtitle')}</p>
           </div>
           <ul className="flex flex-col gap-6 text-gray-100 text-lg relative z-10">
-            <li className="flex items-start gap-4"><span className="text-crimson font-bold mt-1 text-xl">✓</span>
+            <li className="flex items-start gap-4">
+              <svg className="w-6 h-6 text-crimson shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
               <span>{t('lab1')}</span></li>
-            <li className="flex items-start gap-4"><span className="text-crimson font-bold mt-1 text-xl">✓</span>
+            <li className="flex items-start gap-4">
+              <svg className="w-6 h-6 text-crimson shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
               <span>{t('lab2')}</span></li>
-            <li className="flex items-start gap-4"><span className="text-crimson font-bold mt-1 text-xl">✓</span>
+            <li className="flex items-start gap-4">
+              <svg className="w-6 h-6 text-crimson shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
               <span>{t('lab3')}</span></li>
           </ul>
         </div>

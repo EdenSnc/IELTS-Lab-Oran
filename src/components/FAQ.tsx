@@ -33,9 +33,14 @@ export default function FAQ() {
               className="w-full text-left font-bold text-lg text-charcoal flex justify-between items-center p-6 focus:outline-none focus:bg-gray-50 transition-colors"
             >
               {faq.q}
-              <span className={`icon text-crimson text-2xl font-light transition-transform duration-300 ${openIndex === index ? 'rotate-45' : ''}`}>
-                +
-              </span>
+              <svg
+                className={`w-5 h-5 text-crimson shrink-0 transition-transform duration-300 ${openIndex === index ? 'rotate-180' : ''}`}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+              </svg>
             </button>
             <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openIndex === index ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
               <div className="overflow-hidden">

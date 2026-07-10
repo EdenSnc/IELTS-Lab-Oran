@@ -33,11 +33,30 @@ export default async function ArticlePage() {
               <p>{c.p1}</p>
 
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_2}</h2>
-              <ul className="list-disc pl-5 my-4 space-y-2">
-                  {c.bullets.map((b, i) => (
-                    <li key={i} dangerouslySetInnerHTML={{ __html: b }} />
-                  ))}
-              </ul>
+              {/* Visual Infographic: Resource Cards */}
+              <div className="grid md:grid-cols-2 gap-6 my-8 not-prose">
+                  {c.bullets.map((b, i) => {
+                    const match = b.match(/<strong>(.*?)<\/strong>([\s\S]*)/);
+                    const title = match ? match[1] : `Resource ${i+1}`;
+                    const text = match ? match[2].replace(/^:\s*/, '') : b;
+                    return (
+                      <div key={i} className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-blue-100 transition-colors z-0"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                              </svg>
+                            </div>
+                            <h3 className="font-bold text-charcoal text-lg leading-tight" dangerouslySetInnerHTML={{ __html: title }} />
+                          </div>
+                          <p className="text-gray-600 text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: text }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
 
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_3}</h2>
               <p>{c.p2}</p>

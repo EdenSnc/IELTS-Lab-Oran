@@ -48,6 +48,27 @@ export default async function ArticlePage() {
                 <div key={i}>
                   <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{section.title}</h2>
                   <p>{section.body}</p>
+                  
+                  {i === 1 && (
+                    <div className="grid md:grid-cols-2 gap-4 mt-8 not-prose">
+                      <div className="bg-charcoal text-white p-5 rounded-xl border-l-4 border-crimson shadow-md hover:-translate-y-1 transition-transform">
+                        <h4 className="font-bold text-lg mb-1">{locale === 'ar' ? '1. المقدمة' : locale === 'fr' ? '1. Introduction' : '1. Introduction'}</h4>
+                        <p className="text-sm text-gray-300">{locale === 'ar' ? 'أعد صياغة الموضوع + أطروحة واضحة' : locale === 'fr' ? 'Paraphrasez le sujet + Thèse claire' : 'Paraphrase prompt + Clear thesis'}</p>
+                      </div>
+                      <div className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm hover:-translate-y-1 transition-transform">
+                        <h4 className="font-bold text-charcoal text-lg mb-1">{locale === 'ar' ? '2. فقرة الجسد 1' : locale === 'fr' ? '2. Corps 1' : '2. Body Paragraph 1'}</h4>
+                        <p className="text-sm text-gray-600">{locale === 'ar' ? 'جملة موضوع ➔ شرح ➔ مثال' : locale === 'fr' ? 'Phrase d\'accroche ➔ Explication ➔ Exemple' : 'Topic sentence ➔ Explanation ➔ Example'}</p>
+                      </div>
+                      <div className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm hover:-translate-y-1 transition-transform">
+                        <h4 className="font-bold text-charcoal text-lg mb-1">{locale === 'ar' ? '3. فقرة الجسد 2' : locale === 'fr' ? '3. Corps 2' : '3. Body Paragraph 2'}</h4>
+                        <p className="text-sm text-gray-600">{locale === 'ar' ? 'نفس هيكل الجسد 1' : locale === 'fr' ? 'Même structure (pour le second point)' : 'Same structure (for the second point)'}</p>
+                      </div>
+                      <div className="bg-gray-100 p-5 rounded-xl border border-gray-200 shadow-sm hover:-translate-y-1 transition-transform">
+                        <h4 className="font-bold text-charcoal text-lg mb-1">{locale === 'ar' ? '4. الخاتمة' : locale === 'fr' ? '4. Conclusion' : '4. Conclusion'}</h4>
+                        <p className="text-sm text-gray-600">{locale === 'ar' ? 'أعد صياغة الأطروحة + لخص (لا أفكار جديدة)' : locale === 'fr' ? 'Réitérez la thèse + Résumez (sans nouveauté)' : 'Reiterate thesis + Summarize (no new ideas)'}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
           

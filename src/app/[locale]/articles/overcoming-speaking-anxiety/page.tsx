@@ -44,12 +44,23 @@ export default async function ArticlePage() {
                   {c.lead} <Link href="/" className="text-crimson font-bold hover:underline">{locale === 'ar' ? 'التحضير للايلتس في وهران' : locale === 'fr' ? 'préparation IELTS à Oran' : 'IELTS preparation in Oran'}</Link>.
               </p>
 
-              {sections.map((section, i) => (
-                <div key={i}>
-                  <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{section.title}</h2>
-                  <p>{section.body}</p>
-                </div>
-              ))}
+              {/* Visual Infographic: Quick Tips Cards */}
+              <div className="space-y-8 my-12 not-prose">
+                {sections.map((section, i) => (
+                  <div key={i} className="bg-white border border-gray-100 p-8 rounded-3xl shadow-sm hover:shadow-lg transition-all relative overflow-hidden group">
+                    <div className="absolute -right-4 -top-4 w-24 h-24 bg-crimson/5 rounded-full blur-xl group-hover:bg-crimson/10 transition-colors z-0"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start">
+                      <div className="w-16 h-16 bg-charcoal text-white rounded-2xl flex items-center justify-center font-black text-2xl shrink-0 shadow-md transform group-hover:rotate-6 transition-transform">
+                        {i + 1}
+                      </div>
+                      <div>
+                        <h2 className="text-2xl font-bold text-charcoal mb-3 leading-tight">{section.title}</h2>
+                        <p className="text-gray-600 leading-relaxed m-0">{section.body}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
           
               <div className="bg-white p-8 md:p-10 rounded-[2.5rem] mt-16 border border-gray-200 shadow-xl shadow-gray-200/50 flex flex-col md:flex-row items-center gap-8 justify-between relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-crimson/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all duration-500 group-hover:bg-crimson/10 pointer-events-none"></div>

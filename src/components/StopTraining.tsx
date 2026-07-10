@@ -21,15 +21,15 @@ export default function StopTraining() {
         </p>
         <ul className="mt-6 space-y-3">
           <li className="flex items-start gap-3 text-gray-400">
-            <div className="w-2 h-2 bg-crimson rounded-full shrink-0 mt-2"></div>
+            <svg className="w-5 h-5 text-crimson shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
             <span>{t.rich('bullet1', { strong: (chunks) => <strong className="text-white font-bold">{chunks}</strong> })}</span>
           </li>
           <li className="flex items-start gap-3 text-gray-400">
-            <div className="w-2 h-2 bg-crimson rounded-full shrink-0 mt-2"></div>
+            <svg className="w-5 h-5 text-crimson shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
             <span>{t.rich('bullet2', { strong: (chunks) => <strong className="text-white font-bold">{chunks}</strong> })}</span>
           </li>
           <li className="flex items-start gap-3 text-gray-400">
-            <div className="w-2 h-2 bg-crimson rounded-full shrink-0 mt-2"></div>
+            <svg className="w-5 h-5 text-crimson shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
             <span>{t.rich('bullet3', { strong: (chunks) => <strong className="text-white font-bold">{chunks}</strong> })}</span>
           </li>
         </ul>
