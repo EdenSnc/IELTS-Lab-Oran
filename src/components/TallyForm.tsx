@@ -47,7 +47,7 @@ export default function TallyForm({ formId, hideTitle = true, alignLeft = false 
           iframeRef.current.style.height = `${data.payload.height}px`;
         }
       } catch {
-        // Not a JSON message — check for FormSubmitted
+        // Not a JSON message - check for FormSubmitted
       }
 
       // Listen for form submission to trigger WhatsApp redirect

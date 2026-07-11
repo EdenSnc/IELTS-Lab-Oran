@@ -72,7 +72,7 @@ export default function WaitlistUI({ locale }: WaitlistUIProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const msg = encodeURIComponent(
-      `${c.whatsapp_msg}${phone ? ` — My number: ${phone}` : ''}`
+      `${c.whatsapp_msg}${phone ? ` - My number: ${phone}` : ''}`
     );
     window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank', 'noopener,noreferrer');
   }

@@ -9,7 +9,7 @@
   "Cohort": {
     "remaining": "{remaining} sur {total} places fondatrices disponibles",
     "claimedText": "{claimed} sur {total} places fondatrices réservées",
-    "full": "Cohorte Fondatrice — Complète",
+    "full": "Cohorte Fondatrice - Complète",
     "discountNote": "Les membres fondateurs bénéficient d'une priorité de planification et du meilleur tarif.",
     "fullCta": "Rejoindre la liste d'attente générale"
   },
@@ -64,7 +64,10 @@
     "title": "L'Établissement",
     "subtitle": "Situé à Bir El Djir. Un environnement calme et sécurisé conçu pour une concentration profonde.",
     "location": "Bir El Djir, Oran",
-    "mapBtn": "Charger la Carte Interactive"
+    "mapBtn": "Charger la Carte Interactive",
+    "contact": "Contactez-nous",
+    "social": "Suivez-nous",
+    "copyright": "© {year} IELTS Lab Oran. Tous droits réservés."
   },
   "FAQ": {
     "title": "Questions Fréquemment Posées",
@@ -120,16 +123,20 @@
   },
   "About": {
     "title": "À Propos d'Amine",
-    "subtitle": "Le Guide Expert",
-    "hook": "Fondateur de IELTS Lab Oran, étudiant en Master IA Appliquée, et instructeur certifié (Score 8.0).",
-    "pedigree": "Poussé par le profond dévouement à l'éducation laissé par son défunt père, professeur respecté à l'USTO-MB.",
-    "experience": "Vaste expérience d'enseignement (MTI Metro, CEIL, Snai3i) avec formations STEAM spécialisées.",
-    "edge": "Une approche pragmatique. Soutenu par une connaissance approfondie acquise en observant les sessions officielles du CEIL pour créer le curriculum parfait.",
-    "method": "Basé sur des diagnostics rigoureux et l'optimisation du temps de parole."
+    "subtitle": "Fondateur & Instructeur Principal",
+    "hook": "Instructeur d'anglais certifié avec un score officiel de Band 8.0 et un 9.0 parfait en Compréhension Orale.",
+    "pedigree": "A tiré parti d'une formation en IA et Génie Logiciel pour créer la première plateforme de simulation IELTS sur ordinateur d'Oran.",
+    "experience": "Des années d'expérience dans l'enseignement de l'anglais, employant une gamme complète de cadres pédagogiques avancés pour favoriser une acquisition rapide de la langue.",
+    "edge": "Strictement réaliste. Nous fixons des attentes honnêtes basées sur votre diagnostic - pas de fausses promesses.",
+    "method": "Basé sur des diagnostics rigoureux et l'ingénierie inversée des critères d'évaluation officiels de l'IELTS."
   },
   "Articles": {
     "title": "Articles & Actualités",
     "article1Title": "Le passage officiel à l'IELTS sur ordinateur",
     "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
+  },
+  "EventWidget": {
+    "badge": "Événement à venir",
+    "title": "Atelier AIESEC (17 juillet)"
   }
 }

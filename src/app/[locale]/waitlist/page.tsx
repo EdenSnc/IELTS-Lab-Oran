@@ -6,7 +6,7 @@ export async function generateMetadata() {
   return {
     title: 'Join the Waitlist | IELTS Lab Oran',
     description:
-      "The founding cohort is full. Join the waitlist for the next IELTS Lab Oran session — Algeria's most rigorous computer-based IELTS prep program.",
+      "The founding cohort is full. Join the waitlist for the next IELTS Lab Oran session - Algeria's most rigorous computer-based IELTS prep program.",
     alternates: buildAlternates('waitlist'),
     robots: { index: false, follow: false },
   };

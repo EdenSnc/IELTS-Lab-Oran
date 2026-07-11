@@ -9,7 +9,7 @@
   "Cohort": {
     "remaining": "{remaining} of {total} founding seats available",
     "claimedText": "{claimed} of {total} founding seats reserved",
-    "full": "Founding Cohort — Full",
+    "full": "Founding Cohort - Full",
     "discountNote": "Founding members get priority scheduling & the best rate.",
     "fullCta": "Join the General Waitlist"
   },
@@ -64,7 +64,10 @@
     "title": "The Facility",
     "subtitle": "Located in Bir El Djir. A quiet, secure environment engineered for deep focus and diagnostic training.",
     "location": "Bir El Djir, Oran",
-    "mapBtn": "Load Interactive Map"
+    "mapBtn": "Load Interactive Map",
+    "contact": "Contact Us",
+    "social": "Follow Us",
+    "copyright": "© {year} IELTS Lab Oran. All rights reserved."
   },
   "FAQ": {
     "title": "Frequently Asked Questions",
@@ -120,16 +123,20 @@
   },
   "About": {
     "title": "About Amine",
-    "subtitle": "The Founder & Lead Instructor",
-    "hook": "Founder of IELTS Lab Oran, Applied AI Master's student, and certified instructor holding an official Band 8.0.",
-    "pedigree": "Driven by the profound dedication to education left by his late father, a respected professor at USTO-MB.",
-    "experience": "Extensive teaching background (MTI Metro, CEIL, Snai3i) with specialized STEAM credentials from World Learning Algeria.",
-    "edge": "A highly pragmatic approach. Backed by deep insider knowledge from shadowing official CEIL sessions to reverse-engineer the perfect curriculum.",
-    "method": "Built on rigorous diagnostics and maximizing active speaking time."
+    "subtitle": "Founder & Lead Instructor",
+    "hook": "Certified English instructor with an official Band 8.0 and a perfect 9.0 in Listening.",
+    "pedigree": "Leveraged an Applied AI and Software Engineering background to build Oran's first computer-delivered IELTS simulation platform.",
+    "experience": "Years of practical English teaching experience, employing a comprehensive suite of advanced pedagogical frameworks to drive rapid language acquisition.",
+    "edge": "Strictly realistic. We set honest expectations based on your diagnostic - no false promises.",
+    "method": "Built on rigorous diagnostics and reverse-engineered official IELTS band criteria."
   },
   "Articles": {
     "title": "Articles & News",
     "article1Title": "The Official Switch to IELTS on Computer",
     "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
+  },
+  "EventWidget": {
+    "badge": "Upcoming Event",
+    "title": "AIESEC Workshop (July 17th)"
   }
 }

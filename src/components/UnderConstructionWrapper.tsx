@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 
@@ -33,7 +33,7 @@ export default function UnderConstructionWrapper({ children }: { children: React
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-crimson opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-crimson"></span>
               </span>
-              IELTS Lab Oran — Launching Soon
+              IELTS Lab Oran - Launching Soon
             </div>
 
             {/* Main heading */}
@@ -74,7 +74,7 @@ export default function UnderConstructionWrapper({ children }: { children: React
                   }`}
                 >
                   <span className={`text-lg ${done ? 'text-green-400' : 'text-crimson'}`}>
-                    {done ? '✓' : '◷'}
+                    {done ? 'âœ“' : 'â - ·'}
                   </span>
                   {label}
                 </div>
@@ -83,7 +83,7 @@ export default function UnderConstructionWrapper({ children }: { children: React
 
             {/* Bottom detail line */}
             <p className="text-white/25 text-xs tracking-widest uppercase font-medium">
-              Bir El Djir, Oran • Digital IELTS Lab
+              Bir El Djir, Oran â€¢ Digital IELTS Lab
             </p>
 
           </div>

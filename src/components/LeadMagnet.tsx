@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
-// Algerian mobile number: 05x, 06x, 07x — with or without +213 prefix
+// Algerian mobile number: 05x, 06x, 07x - with or without +213 prefix
 const phoneRegex = /^(?:\+213|0)[567]\d{8}$/;
 
 export default function LeadMagnet() {
@@ -22,7 +22,7 @@ export default function LeadMagnet() {
 
     const trimmedPhone = phone.trim().replace(/\s+/g, '');
 
-    // Client-side validation — clear, specific error message
+    // Client-side validation - clear, specific error message
     if (!trimmedPhone) {
       setStatus('error');
       setErrorMessage(t('errorRequired'));

@@ -14,7 +14,7 @@ export function getAcademicVsGeneralContent(locale: ArticleLocale) {
       generalTitle: 'IELTS General Training',
       generalDesc: 'Intended for those migrating to English-speaking countries (such as Canada, Australia, New Zealand, or the UK) or applying for secondary education, training programs, and work experience. The Express Entry system for Canada, for example, strictly requires the General Training test.',
       h2_2: '2. Test Format Differences',
-      formatIntro: 'Both tests assess all four language skills—Listening, Reading, Writing, and Speaking. The <strong>Listening and Speaking sections are exactly the same</strong> for both tests. The differences lie entirely in the Reading and Writing sections.',
+      formatIntro: 'Both tests assess all four language skills - Listening, Reading, Writing, and Speaking. The <strong>Listening and Speaking sections are exactly the same</strong> for both tests. The differences lie entirely in the Reading and Writing sections.',
       readingTitle: 'The Reading Section',
       readingBullets: [
         '<strong>Academic Reading:</strong> Contains three long texts which range from descriptive and factual to discursive and analytical. These are taken from books, journals, magazines, and newspapers.',
@@ -44,7 +44,7 @@ export function getAcademicVsGeneralContent(locale: ArticleLocale) {
       readingTitle: 'La section Reading',
       readingBullets: [
         '<strong>Academic Reading :</strong> Trois longs textes allant du descriptif-factuel à l\'analytique-discursif, issus de livres, revues, magazines et journaux.',
-        '<strong>General Training Reading :</strong> Des extraits de livres, magazines, journaux, annonces, manuels d\'entreprise et directives — des documents que vous pourriez rencontrer au quotidien dans un pays anglophone.',
+        '<strong>General Training Reading :</strong> Des extraits de livres, magazines, journaux, annonces, manuels d\'entreprise et directives - des documents que vous pourriez rencontrer au quotidien dans un pays anglophone.',
       ],
       writingTitle: 'La section Writing',
       writingBullets: [
@@ -70,7 +70,7 @@ export function getAcademicVsGeneralContent(locale: ArticleLocale) {
       readingTitle: 'قسم القراءة',
       readingBullets: [
         '<strong>القراءة الأكاديمية:</strong> ثلاثة نصوص طويلة تتراوح بين الوصفي والتحليلي، مستخرجة من كتب ومجلات وصحف علمية.',
-        '<strong>قراءة التدريب العام:</strong> مقاطع من كتب ومجلات وإعلانات وأدلة شركات — مواد قد تصادفها يومياً في بيئة ناطقة بالإنجليزية.',
+        '<strong>قراءة التدريب العام:</strong> مقاطع من كتب ومجلات وإعلانات وأدلة شركات - مواد قد تصادفها يومياً في بيئة ناطقة بالإنجليزية.',
       ],
       writingTitle: 'قسم الكتابة',
       writingBullets: [
@@ -92,8 +92,8 @@ export function getComputerVsPaperContent(locale: ArticleLocale) {
     en: {
       title: 'The Official Switch to Computer-Based IELTS (2026)',
       alertTitle: 'Official Announcement:',
-      alertText: '"We are pleased to announce that from <strong>30 April 2026</strong>, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient and streamlined testing experience. IELTS on computer offers the same test format, questions and scoring as IELTS on paper." <br/><br/><em>— The British Council</em>',
-      lead: 'The era of the paper-based IELTS is officially ending. As the test transitions to a fully digital format, understanding the new system is no longer optional—it is mandatory.',
+      alertText: '"We are pleased to announce that from <strong>30 April 2026</strong>, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient and streamlined testing experience. IELTS on computer offers the same test format, questions and scoring as IELTS on paper." <br/><br/><em> -  The British Council</em>',
+      lead: 'The era of the paper-based IELTS is officially ending. As the test transitions to a fully digital format, understanding the new system is no longer optional - it is mandatory.',
       h2_1: 'The New Advantages of Computer-Delivered IELTS',
       bullets: [
         '<strong>Faster results:</strong> Typically receive your results in just 1-2 days instead of two weeks.',
@@ -110,8 +110,8 @@ export function getComputerVsPaperContent(locale: ArticleLocale) {
     fr: {
       title: 'Le Passage Officiel à l\'IELTS sur Ordinateur (2026)',
       alertTitle: 'Annonce Officielle :',
-      alertText: '\"Nous sommes heureux d\'annoncer qu\'à partir du <strong>30 avril 2026</strong>, tous les tests IELTS seront administrés exclusivement sur ordinateur, offrant une expérience de test plus rapide, plus efficace et rationalisée.\" <br/><br/><em>— The British Council</em>',
-      lead: 'L\'ère de l\'IELTS sur papier prend officiellement fin. Comprendre le nouveau système numérique n\'est plus optionnel — c\'est obligatoire.',
+      alertText: '\"Nous sommes heureux d\'annoncer qu\'à partir du <strong>30 avril 2026</strong>, tous les tests IELTS seront administrés exclusivement sur ordinateur, offrant une expérience de test plus rapide, plus efficace et rationalisée.\" <br/><br/><em> -  The British Council</em>',
+      lead: 'L\'ère de l\'IELTS sur papier prend officiellement fin. Comprendre le nouveau système numérique n\'est plus optionnel - c\'est obligatoire.',
       h2_1: 'Les Nouveaux Avantages de l\'IELTS sur Ordinateur',
       bullets: [
         '<strong>Résultats plus rapides :</strong> Obtenez vos résultats en 1 à 2 jours au lieu de deux semaines.',
@@ -128,8 +128,8 @@ export function getComputerVsPaperContent(locale: ArticleLocale) {
     ar: {
       title: 'التحول الرسمي للايلتس على الكمبيوتر (2026)',
       alertTitle: 'إعلان رسمي:',
-      alertText: '"يسعدنا الإعلان أنه اعتباراً من <strong>30 أبريل 2026</strong>، سيُقدَّم اختبار الايلتس حصرياً على أجهزة الكمبيوتر، مما يوفر تجربة أسرع وأكثر كفاءة." <br/><br/><em>— المجلس الثقافي البريطاني</em>',
-      lead: 'عصر الايلتس الورقي ينتهي رسمياً. فهم النظام الرقمي الجديد لم يعد اختيارياً — بل أصبح إلزامياً.',
+      alertText: '"يسعدنا الإعلان أنه اعتباراً من <strong>30 أبريل 2026</strong>، سيُقدَّم اختبار الايلتس حصرياً على أجهزة الكمبيوتر، مما يوفر تجربة أسرع وأكثر كفاءة." <br/><br/><em> -  المجلس الثقافي البريطاني</em>',
+      lead: 'عصر الايلتس الورقي ينتهي رسمياً. فهم النظام الرقمي الجديد لم يعد اختيارياً - بل أصبح إلزامياً.',
       h2_1: 'المزايا الجديدة للايلتس على الكمبيوتر',
       bullets: [
         '<strong>نتائج أسرع:</strong> احصل على نتائجك في 1-2 يوم بدلاً من أسبوعين.',

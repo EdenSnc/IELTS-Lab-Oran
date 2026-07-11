@@ -64,7 +64,10 @@
     "title": "المركز",
     "subtitle": "يقع في بئر الجير. بيئة هادئة وآمنة مصممة للتركيز العميق والتدريب التشخيصي.",
     "location": "Bir El Djir, Oran",
-    "mapBtn": "عرض الخريطة"
+    "mapBtn": "عرض الخريطة",
+    "contact": "اتصل بنا",
+    "social": "تابعنا",
+    "copyright": "© {year} IELTS Lab Oran. جميع الحقوق محفوظة."
   },
   "FAQ": {
     "title": "الأسئلة الشائعة",
@@ -119,17 +122,21 @@
     "waMessage": "مرحباً أمين، وجدت IELTS Lab Oran عبر الإنترنت. موعد اختباري يقترب ولا أستطيع الانتظار حتى انطلاق الدفعة التأسيسية. أنا مهتم بجلسة تحضير خاصة 1-على-1. هل يمكننا التحدث عن ذلك؟"
   },
   "About": {
-    "title": "عن أمين",
-    "subtitle": "المدرب والخبير",
-    "hook": "مؤسس IELTS Lab Oran، طالب ماجستير في الذكاء الاصطناعي التطبيقي، ومدرب معتمد بدرجة 8.0.",
-    "pedigree": "مدفوعاً بالتفاني العميق في التعليم الذي تركه والده الراحل، الأستاذ المحترم في USTO-MB.",
-    "experience": "خلفية تعليمية واسعة (MTI Metro، CEIL، Snai3i) مع شهادات تدريب STEAM متخصصة.",
-    "edge": "نهج عملي. مدعوم بمعرفة عميقة مكتسبة من متابعة جلسات CEIL لبناء المنهج المثالي.",
-    "method": "مبني على التشخيص الدقيق وتعظيم وقت التحدث النشط."
+    "title": "نبذة عن أمين",
+    "subtitle": "المؤسس والمدرب الرئيسي",
+    "hook": "مدرس لغة إنجليزية معتمد حاصل على درجة 8.0 رسمية وعلامة كاملة 9.0 في الاستماع.",
+    "pedigree": "استفاد من خلفيته في الذكاء الاصطناعي وهندسة البرمجيات لبناء أول منصة محاكاة لاختبار IELTS المحوسب في وهران.",
+    "experience": "سنوات من الخبرة العملية في تدريس اللغة الإنجليزية، مع توظيف مجموعة شاملة من الأطر التربوية المتقدمة لتعزيز اكتساب اللغة بسرعة.",
+    "edge": "واقعية تامة. نضع توقعات صادقة بناءً على تشخيص مستواك - لا وعود كاذبة.",
+    "method": "يعتمد على تشخيصات دقيقة وهندسة عكسية لمعايير تقييم IELTS الرسمية."
   },
   "Articles": {
     "title": "المقالات والأخبار",
     "article1Title": "التحول الرسمي للايلتس على الكمبيوتر",
     "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
+  },
+  "EventWidget": {
+    "badge": "حدث قادم",
+    "title": "ورشة عمل AIESEC (17 يوليو)"
   }
 }

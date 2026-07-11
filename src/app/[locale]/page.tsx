@@ -5,6 +5,7 @@ import StopTraining from '@/components/StopTraining';
 import Compare from '@/components/Compare';
 import Testimonials from '@/components/Testimonials';
 import Facility from '@/components/Facility';
+import About from '@/components/About';
 import FAQ from '@/components/FAQ';
 import Intake from '@/components/Intake';
 import LeadMagnet from '@/components/LeadMagnet';
@@ -22,9 +23,10 @@ export default async function Home() {
         <StopTraining />
         <Compare />
         <Testimonials />
-        <Facility />
         <Intake cohortStatus={cohortStatus} />
+        <About />
         <FAQ />
+        <Facility />
         <LeadMagnet />
       </main>
       <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-50 shadow-up flex justify-between items-center">

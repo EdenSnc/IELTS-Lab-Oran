@@ -1,5 +1,5 @@
 /**
- * SEO configuration — single source of truth.
+ * SEO configuration - single source of truth.
  * 
  * TODO: Once the final domain is decided, update NEXT_PUBLIC_SITE_URL in .env
  * and restart the dev server. Every hreflang tag and JSON-LD block derives from it.

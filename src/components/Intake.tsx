@@ -22,7 +22,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
 
   return (
     <section id="intake" className="py-24 px-6 md:px-12 max-w-7xl mx-auto relative z-10">
-      {/* Outer card — always column so bypass sits below the two columns */}
+      {/* Outer card - always column so bypass sits below the two columns */}
       <div className="bg-charcoal text-white rounded-5xl p-8 md:p-14 flex flex-col gap-10 shadow-2xl relative overflow-hidden">
 
         {/* Background Accents */}
@@ -117,7 +117,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
           </div>
         </div>
 
-        {/* Bypass CTA — full-width row BELOW the two columns */}
+        {/* Bypass CTA - full-width row BELOW the two columns */}
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-3">
             {/* WhatsApp icon */}

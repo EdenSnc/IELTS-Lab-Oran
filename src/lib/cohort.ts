@@ -40,7 +40,7 @@ export async function getFoundingCohortStatus(): Promise<CohortStatus> {
       isFull: remaining === 0,
     };
   } catch {
-    // Graceful fallback — do not crash the page if the DB is unavailable
+    // Graceful fallback - do not crash the page if the DB is unavailable
     // or if the migration adding the `source` column hasn't been applied yet.
     return {
       total: TOTAL_FOUNDING_SEATS,

@@ -2,8 +2,8 @@ import { SITE_URL, SITE_NAME } from '@/lib/seo';
 
 /**
  * Injects structured data (JSON-LD) into <head> for:
- * 1. LocalBusiness — helps Google Surface the lab in local search results
- * 2. Course — enables rich results for the IELTS preparation offering
+ * 1. LocalBusiness - helps Google Surface the lab in local search results
+ * 2. Course - enables rich results for the IELTS preparation offering
  *
  * Uses real data only. Coordinates omitted (not verified).
  * TODO: Add telephone once a public number is decided.
@@ -35,7 +35,7 @@ export default function LocalSchema() {
           '@type': 'Offer',
           itemOffered: {
             '@type': 'Course',
-            name: 'Founding Cohort — IELTS Lab Oran',
+            name: 'Founding Cohort - IELTS Lab Oran',
             description:
               '32-hour intensive, computer-based IELTS preparation program in a dedicated 8-seat PC lab. Diagnostic targeting, criteria mastery, and certified instruction.',
             provider: {
