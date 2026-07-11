@@ -26,8 +26,8 @@ export default async function Home() {
         <Intake cohortStatus={cohortStatus} />
         <About />
         <FAQ />
-        <Facility />
         <LeadMagnet />
+        <Facility />
       </main>
       <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-50 shadow-up flex justify-between items-center">
         <div>

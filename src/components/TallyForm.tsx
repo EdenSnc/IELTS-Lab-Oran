@@ -83,11 +83,7 @@ export default function TallyForm({ formId, hideTitle = true, alignLeft = false 
         ref={iframeRef}
         data-tally-src={iframeSrc} 
         loading="lazy" 
-        width="100%" 
         height="600"
-        frameBorder="0" 
-        marginHeight={0} 
-        marginWidth={0} 
         title="IELTS Lab Oran Form"
         className="w-full border-none m-0 p-0 block"
         style={{ minHeight: '600px', display: 'block' }}

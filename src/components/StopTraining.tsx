@@ -45,8 +45,7 @@ export default function StopTraining() {
           </h3>
         </div>
         <div className="w-full bg-white rounded-2xl p-2 shadow-soft overflow-hidden group border border-white/10">
-          <Image src="/ielts_cropped.png" alt="Official IELTS Test Report Form Band 8.0" width={800} height={600}
-            className="w-full h-auto object-contain rounded-xl shadow-sm" priority />
+          <Image src="/ielts_cropped.png" alt="Official IELTS Test Report Form Band 8.0" width={800} height={600} className="w-full h-auto object-contain rounded-xl shadow-sm" style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }} sizes="(max-width: 768px) 100vw, 50vw" />
         </div>
       </div>
     </section>

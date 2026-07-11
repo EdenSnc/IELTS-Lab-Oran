@@ -2,6 +2,7 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
+import Image from 'next/image';
 
 export default function Navbar() {
   const t = useTranslations('Navbar');
@@ -12,7 +13,7 @@ export default function Navbar() {
     <nav className="fixed top-6 left-1/2 transform -translate-x-1/2 z-40 w-[90%] max-w-4xl bg-white/90 backdrop-blur-lg border border-gray-100 shadow-soft rounded-full px-3 py-2.5 flex justify-between items-center">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-3 pl-3 group shrink-0">
-        <img src="/logo_rounded.png" alt="IELTS Lab Oran Logo" width="32" height="32" className="w-8 h-8 object-contain" />
+        <Image src="/logo_rounded.png" alt="IELTS Lab Oran Logo" width={32} height={32} className="w-8 h-8 object-contain" />
         <span className="font-bold tracking-tight text-sm hidden sm:block group-hover:text-crimson transition-colors">IELTS Lab Oran</span>
       </Link>
       

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
+import Image from 'next/image';
 
 export default function FloatingWidget() {
   const t = useTranslations('EventWidget');
@@ -25,6 +26,7 @@ export default function FloatingWidget() {
           href="/articles/aiesec-workshop"
           className={`absolute inset-0 z-10 transition-all duration-500 ${isExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           aria-hidden={!isExpanded}
+          aria-label="AIESEC Workshop"
         />
 
         {/* Glow & Text Layer (Isolated overflow-hidden to prevent clipping the notification dot) */}
@@ -48,8 +50,7 @@ export default function FloatingWidget() {
             : 'left-[8px] top-[8px] md:left-[8px] md:top-[8px] w-10 h-10 md:w-12 md:h-12 scale-100 group-hover:scale-105'
         }`}>
           <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white shadow-md">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/aiesec-logo.png" alt="AIESEC" className="w-full h-full object-contain scale-[1.3] -translate-y-1" />
+            <Image src="/aiesec-logo.png" alt="AIESEC" width={64} height={64} className="w-full h-full object-contain scale-[1.3] -translate-y-1" />
           </div>
           {/* Notification Dot (Only visible when minimized) */}
           <span className={`absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 transition-all duration-500 ${!isExpanded ? 'opacity-100 scale-100 delay-200' : 'opacity-0 scale-0'}`}>
