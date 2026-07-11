@@ -27,11 +27,6 @@ export default function Hero({ cohortStatus }: HeroProps) {
           </svg>
           {t('programBadge')}
         </div>
-
-        <div className="inline-flex items-center gap-2 bg-surface text-charcoal px-4 py-2 rounded-full text-[11px] sm:text-xs font-bold tracking-widest uppercase">
-          <span className="w-2 h-2 rounded-full bg-crimson animate-pulse shrink-0"></span>
-          {t('badge')}
-        </div>
       </div>
 
 

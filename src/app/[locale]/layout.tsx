@@ -7,7 +7,7 @@ import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
 import LocalSchema from '@/components/LocalSchema';
 import CourseSchema from '@/components/CourseSchema';
-import FloatingWidget from '@/components/FloatingWidget';
+import FloatingWidgetClient from '@/components/FloatingWidgetClient';
 import { SITE_URL, buildAlternates } from '@/lib/seo';
 import '../globals.css';
 
@@ -53,10 +53,10 @@ export default async function LocaleLayout({
         <LocalSchema />
         <CourseSchema />
       </head>
-      <body className="bg-surface text-charcoal selection:bg-crimson selection:text-white pb-20 md:pb-0 antialiased">
+      <body className="bg-surface text-charcoal selection:bg-crimson selection:text-white antialiased">
         <NextIntlClientProvider messages={messages}>
           {children}
-          <FloatingWidget />
+          <FloatingWidgetClient />
         </NextIntlClientProvider>
         <Analytics />
         <SpeedInsights />

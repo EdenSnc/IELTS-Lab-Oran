@@ -33,8 +33,8 @@ export default function TallyForm({ formId, hideTitle = true, alignLeft = false 
 
   useEffect(() => {
     // If Tally is already loaded (e.g. fast navigation), force an embed reload
-    if (typeof window !== 'undefined' && (window as any).Tally) {
-      (window as any).Tally.loadEmbeds();
+    if (typeof window !== 'undefined' && (window as unknown as { Tally: unknown }).Tally) {
+      ((window as unknown as { Tally: { loadEmbeds: () => void } }).Tally).loadEmbeds();
     }
 
     const handleMessage = (e: MessageEvent) => {
@@ -74,8 +74,8 @@ export default function TallyForm({ formId, hideTitle = true, alignLeft = false 
         src="https://tally.so/widgets/embed.js" 
         strategy="afterInteractive"
         onLoad={() => {
-          if (typeof window !== 'undefined' && (window as any).Tally) {
-            (window as any).Tally.loadEmbeds();
+          if (typeof window !== 'undefined' && (window as unknown as { Tally: unknown }).Tally) {
+            ((window as unknown as { Tally: { loadEmbeds: () => void } }).Tally).loadEmbeds();
           }
         }}
       />

@@ -69,7 +69,7 @@ export default function Testimonials() {
               className={`testimonial-card bg-surface rounded-4xl p-8 md:p-10 flex flex-col gap-6 relative border border-gray-100 overflow-hidden ${isActive ? 'active-testimonial' : ''}`}
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-crimson/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none glow-bg"></div>
-              <div className="text-crimson text-6xl font-serif absolute top-4 left-6 leading-none quote-mark">"</div>
+              <div className="text-crimson text-6xl font-serif absolute top-4 left-6 leading-none quote-mark">&quot;</div>
               <p className="font-medium leading-relaxed relative z-10 pt-4 body-text">
                 {t.quote}
               </p>
