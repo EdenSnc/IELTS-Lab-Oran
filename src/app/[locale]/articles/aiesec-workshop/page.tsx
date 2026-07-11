@@ -76,29 +76,11 @@ export default async function AiesecWorkshopPage() {
                 })}
               </div>
           
-              <div className="bg-white p-8 md:p-10 rounded-[2.5rem] mt-16 border border-gray-200 shadow-xl shadow-gray-200/50 flex flex-col md:flex-row items-center gap-8 justify-between relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all duration-500 group-hover:bg-blue-500/10 pointer-events-none"></div>
-                  <div className="relative z-10 md:w-2/3">
-                      <h3 className="text-2xl font-extrabold mb-3 text-charcoal">{t.ctaTitle}</h3>
-                      <p className="text-gray-600 leading-relaxed m-0">{t.ctaDesc}</p>
-                  </div>
-                  <div className="relative z-10 md:w-1/3 w-full flex flex-col gap-3 items-end">
-                      <a href="#" className="w-full md:w-auto text-center inline-flex justify-center items-center gap-2 bg-charcoal text-white px-8 py-4 rounded-full font-bold hover:bg-blue-600 transition-colors shadow-soft">
-                          {t.ctaBtn} <span aria-hidden="true">&rarr;</span>
-                      </a>
-                  </div>
-              </div>
+
           </div>
       </article>
       
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-50 shadow-up flex justify-between items-center">
-        <div>
-            <div className="text-sm font-bold text-charcoal">AIESEC Workshop</div>
-        </div>
-        <a href="#" className="bg-charcoal text-white px-6 py-3 rounded-full font-bold text-sm shadow-glow active:scale-95 transition-transform">
-            {t.ctaBtn}
-        </a>
-      </div>
+
     </>
   );
 }
