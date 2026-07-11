@@ -21,12 +21,6 @@ function getPillW(): number {
   return Math.min(340, window.innerWidth - GAP * 2 - 4);
 }
 
-// Compute root X so the pill is anchored to the correct screen edge
-function computeX(side: Side, expanded: boolean, pillW: number): number {
-  if (side === 'left') return GAP;
-  return window.innerWidth - GAP - (expanded ? pillW : SZ);
-}
-
 function clampY(y: number): number {
   return Math.max(GAP, Math.min(window.innerHeight - SZ - GAP, y));
 }
@@ -37,144 +31,131 @@ export default function FloatingWidget() {
 
   const [expanded, setExpanded] = useState(false);
   const [side, setSide]         = useState<Side>('left');
-  const [pillW, setPillW]       = useState(290);
+  const [pillW, setPillW]       = useState(320);
+  
+  // Base Y position (X is strictly handled by side = left/right)
+  const [top, setTop] = useState(0);
 
-  // Root position — always via transform: translate(x,y) from left:0 top:0
-  // so CSS transition: transform is equally smooth in every direction
-  const [x, setX] = useState(GAP);
-  const [y, setY] = useState(0); // set in useEffect after mount
+  // Transform offsets (used ONLY for dragging and FLIP snapping)
+  const [tx, setTx] = useState(0);
+  const [ty, setTy] = useState(0);
 
-  // True while a snap animation should run on the transform
-  const [animTx, setAnimTx] = useState(false);
+  const [isSnapAnim, setIsSnapAnim] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // Drag deltas (added to x/y during drag)
-  const [dx, setDx] = useState(0);
-  const [dy, setDy] = useState(0);
-
-  // Refs (never stale in callbacks)
-  const dragging   = useRef(false);
+  // Refs
   const moved      = useRef(false);
   const origin     = useRef({ cx: 0, cy: 0 });
   const liveΔ      = useRef({ dx: 0, dy: 0 });
-  const snapXRef   = useRef(GAP);
-  const snapYRef   = useRef(0);
   const sideRef    = useRef<Side>('left');
+  const topRef     = useRef(0);
   const expandedRef = useRef(false);
-  const pillWRef   = useRef(290);
 
-  // Mount: set real Y and real pillW
   useEffect(() => {
-    const pw = getPillW();
-    setPillW(pw);
-    pillWRef.current = pw;
+    setPillW(getPillW());
     const initY = window.innerHeight * 0.82 - SZ / 2;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    setY(initY);
-    snapYRef.current = initY;
+    setTop(initY);
+    topRef.current = initY;
   }, []);
 
-  // When expanded or side changes → shift X (especially right-side anchor)
-  // We do NOT call setAnimTx here — the pill CSS transition handles the size,
-  // and the transform shift on expand (right side) is handled below.
-  useEffect(() => {
-    const newX = computeX(side, expanded, pillWRef.current);
-    expandedRef.current = expanded;
-    sideRef.current = side;
-    if (newX !== snapXRef.current) {
-      // X actually moves (right-side expand/collapse) → animate the transform too
-      setAnimTx(true);
-      const tid = setTimeout(() => setAnimTx(false), SNAP_MS + 100);
-      setX(newX);
-      snapXRef.current = newX;
-      return () => clearTimeout(tid);
-    }
-    // Left side: X doesn't move, pill just grows in place — no transform animation needed
-    setX(newX);
-    snapXRef.current = newX;
-  }, [expanded, side]);
-
-  // Resize handler
   useEffect(() => {
     const onResize = () => {
-      const pw = getPillW();
-      setPillW(pw);
-      pillWRef.current = pw;
-      const nx = computeX(sideRef.current, expandedRef.current, pw);
-      setX(nx); snapXRef.current = nx;
-      setY(cy => { const ny = clampY(cy); snapYRef.current = ny; return ny; });
+      setPillW(getPillW());
+      setTop(cy => { const ny = clampY(cy); topRef.current = ny; return ny; });
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // ── Pointer handlers (all stable callbacks, read from refs) ─────────────────
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button,a')) return;
-    dragging.current  = true;
+    setIsDragging(true);
+    setIsSnapAnim(false); // Disable transitions while dragging
     moved.current     = false;
     origin.current    = { cx: e.clientX, cy: e.clientY };
     liveΔ.current     = { dx: 0, dy: 0 };
-    setDx(0); setDy(0);
+    setTx(0); setTy(0);
     (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     e.preventDefault();
   }, []);
 
   const onPointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragging.current) return;
+    if (!liveΔ.current) return; 
+    if (e.buttons === 0) return;
     const ddx = e.clientX - origin.current.cx;
     const ddy = e.clientY - origin.current.cy;
     if (Math.abs(ddx) > 3 || Math.abs(ddy) > 3) moved.current = true;
+    
+    // Prevent dragging if expanded
+    if (expandedRef.current) return;
+
     liveΔ.current = { dx: ddx, dy: ddy };
-    setDx(ddx);
-    setDy(ddy);
+    setTx(ddx); setTy(ddy);
   }, []);
 
   const onPointerUp = useCallback(() => {
-    if (!dragging.current) return;
-    dragging.current = false;
+    setIsDragging(false);
 
     if (!moved.current) {
-      setDx(0); setDy(0);
       liveΔ.current = { dx: 0, dy: 0 };
-      setExpanded(p => !p);
+      setTx(0); setTy(0);
+      setIsSnapAnim(true); // Re-enable transitions for expansion
+      const newExp = !expandedRef.current;
+      setExpanded(newExp);
+      expandedRef.current = newExp;
       return;
     }
 
-    const { dx: fdx, dy: fdy } = liveΔ.current;
-    const finalX  = snapXRef.current + fdx;
-    const finalY  = snapYRef.current + fdy;
-    const centerX = finalX + SZ / 2;
-    const newSide: Side = centerX < window.innerWidth / 2 ? 'left' : 'right';
-    const clampedY = clampY(finalY);
-    const newX     = computeX(newSide, expandedRef.current, pillWRef.current);
+    // --- FLIP Animation Logic for flawless snap ---
+    const { dx, dy } = liveΔ.current;
+    // 1. Where is the pill visually right now on the screen?
+    const baseX = sideRef.current === 'left' ? GAP : window.innerWidth - GAP - SZ;
+    const currentX = baseX + dx;
+    const currentY = topRef.current + dy;
 
-    setSide(newSide);        sideRef.current = newSide;
-    setY(clampedY);          snapYRef.current = clampedY;
-    setX(newX);              snapXRef.current = newX;
-    setDx(0); setDy(0);
+    // 2. Where should it snap to?
+    const centerX = currentX + SZ / 2;
+    const newSide: Side = centerX < window.innerWidth / 2 ? 'left' : 'right';
+    const newTop = clampY(currentY);
+    const newBaseX = newSide === 'left' ? GAP : window.innerWidth - GAP - SZ;
+
+    // 3. How far is the new snapped base from the current visual position?
+    const invertX = currentX - newBaseX;
+    const invertY = currentY - newTop;
+
+    // 4. instantly move the base to the new edge, but apply the invert transform
+    // so it visually stays EXACTLY under the user's cursor (no flickering)
+    sideRef.current = newSide; setSide(newSide);
+    topRef.current = newTop;   setTop(newTop);
+    setTx(invertX);
+    setTy(invertY);
     liveΔ.current = { dx: 0, dy: 0 };
 
-    setAnimTx(true);
-    setTimeout(() => setAnimTx(false), SNAP_MS + 100);
+    // 5. In the next frame, turn the spring transition back on and animate transform to 0
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setIsSnapAnim(true);
+        setTx(0);
+        setTy(0);
+      });
+    });
   }, []);
 
-  // ── Derived ─────────────────────────────────────────────────────────────────
-  const liveX   = x + dx;
-  const liveY   = y + dy;
-  const isDrag  = dx !== 0 || dy !== 0;
-  const isRight = side === 'right' && !isDrag;
+  const isRight = side === 'right';
 
   return (
     <div
       style={{
         position: 'fixed',
-        left: 0,
-        top: 0,
+        left: side === 'left' ? GAP : 'auto',
+        right: side === 'right' ? GAP : 'auto',
+        top: Math.round(top),
         zIndex: 100,
-        // Use Math.round and translate (not translate3d) to prevent blurry layer rasterization on Windows
-        transform: `translate(${Math.round(liveX)}px, ${Math.round(liveY)}px)`,
+        // GPU transform for dragging and snapping
+        transform: `translate(${Math.round(tx)}px, ${Math.round(ty)}px)`,
         // Animate transform only during snap/expand-right-shift — never during drag
-        transition: !isDrag && animTx ? `transform ${SNAP_MS}ms ${SPRING}` : 'none',
+        transition: isSnapAnim ? `transform ${SNAP_MS}ms ${SPRING}` : 'none',
         touchAction: 'none',
         userSelect: 'none',
       }}
@@ -187,76 +168,83 @@ export default function FloatingWidget() {
       <div style={{ position: 'relative', width: SZ, height: SZ }}>
 
         {/* ── Notification dot ── */}
+        {/* Positioned absolutely outside the inner container flow */}
         <span
-          aria-hidden="true"
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 1, 
+          // If on the right side, the dot should still probably be on the top-right of the logo.
+          // Since the logo is always on the right when isRight, right: 1 works perfectly.
+          right: isRight ? 1 : 1,
+          left: isRight ? 'auto' : 'auto', // wait, if it's on left side, logo is on left, we want dot on top right of logo. So left: SZ - 14? 
+          // Actually, let's keep it anchored to the logo wrapper's position!
+          zIndex: 40,
+          width: 13, height: 13,
+          display: 'flex',
+          pointerEvents: 'none',
+          transition: 'opacity 0.25s ease, transform 0.25s ease',
+          opacity: expanded ? 0 : 1,
+          transform: expanded ? 'scale(0)' : 'scale(1)',
+        }}
+      >
+        <span
+          className="animate-ping"
           style={{
-            position: 'absolute',
-            // Inset slightly so it sits ON the bubble edge, not outside it
-            top: 1, right: 1,
-            zIndex: 40,
-            width: 13, height: 13,
-            display: 'flex',
-            pointerEvents: 'none',
-            transition: 'opacity 0.25s ease, transform 0.25s ease',
-            opacity: expanded ? 0 : 1,
-            transform: expanded ? 'scale(0)' : 'scale(1)',
-          }}
-        >
-          <span
-            className="animate-ping"
-            style={{
-              position: 'absolute', inset: 0,
-              borderRadius: '50%',
-              backgroundColor: '#dc2626',
-              opacity: 0.7,
-            }}
-          />
-          <span style={{
-            position: 'relative', width: '100%', height: '100%',
+            position: 'absolute', inset: 0,
             borderRadius: '50%',
             backgroundColor: '#dc2626',
-            border: '2px solid #111',
-          }} />
-        </span>
-
-        {/* ── Pill shell ──
-            KEY FIX: transition is ALWAYS on (just disabled during drag).
-            This means when `expanded` changes, the width/height instantly
-            has a from-state (the current size) and the browser animates
-            to the new size. No React batching issue. */}
-        <div
-          style={{
-            position: 'absolute',
-            left: 0, top: 0,
-            width: expanded ? pillW : SZ,
-            height: expanded ? PILL_H : SZ,
-            borderRadius: expanded ? 32 : SZ / 2,
-            backgroundColor: 'rgba(26, 26, 26, 0.94)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3)',
-            overflow: 'hidden',
-            // Always animated except during drag — this is what makes expand/collapse smooth
-            transition: isDrag
-              ? 'none'
-              : `width ${SNAP_MS}ms ${SPRING}, height ${SNAP_MS}ms ${SPRING}, border-radius ${SNAP_MS * 0.85}ms ${SPRING}`,
+            opacity: 0.7,
           }}
-        >
-          {/* Link overlay */}
-          <Link
-            href="/articles/aiesec-workshop"
-            style={{
-              position: 'absolute', inset: 0, zIndex: 10,
-              borderRadius: 'inherit',
-              opacity: expanded ? 1 : 0,
-              pointerEvents: expanded ? 'auto' : 'none',
-            }}
-            aria-label="AIESEC Workshop"
-            tabIndex={expanded ? 0 : -1}
-          />
+        />
+        <span style={{
+          position: 'relative', width: '100%', height: '100%',
+          borderRadius: '50%',
+          backgroundColor: '#dc2626',
+          border: '2px solid #111',
+        }} />
+      </span>
 
-          {/* Inner container */}
+      {/* ── Pill shell ──
+          KEY FIX: transition is ALWAYS on (just disabled during drag).
+          This means when `expanded` changes, the width/height instantly
+          has a from-state (the current size) and the browser animates
+          to the new size. No React batching issue. */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: side === 'left' ? 0 : 'auto',
+          right: side === 'right' ? 0 : 'auto',
+          width: expanded ? pillW : SZ,
+          height: expanded ? PILL_H : SZ,
+          borderRadius: expanded ? 32 : SZ / 2,
+          backgroundColor: 'rgba(26, 26, 26, 0.94)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.3)',
+          overflow: 'hidden',
+          // Always animated except during drag — this is what makes expand/collapse smooth
+          transition: (isDragging || !isSnapAnim)
+            ? 'none'
+            : `width ${SNAP_MS}ms ${SPRING}, height ${SNAP_MS}ms ${SPRING}, border-radius ${SNAP_MS * 0.85}ms ${SPRING}`,
+        }}
+      >
+        {/* ── Link overlay ── */}
+        <Link
+        href="/articles/aiesec-workshop"
+        style={{
+          position: 'absolute', inset: 0, zIndex: 10,
+          borderRadius: 'inherit',
+          opacity: expanded ? 1 : 0,
+          pointerEvents: expanded ? 'auto' : 'none',
+        }}
+        aria-label="AIESEC Workshop"
+        tabIndex={expanded ? 0 : -1}
+      />
+
+      {/* ── Inner container ── */}
           <div style={{
             position: 'relative',
             width: '100%',
@@ -267,8 +255,8 @@ export default function FloatingWidget() {
               position: 'absolute',
               top: '50%',
               marginTop: -(SZ / 2),
-              left: isRight ? 'auto' : 0,
-              right: isRight ? 0 : 'auto',
+              left: isRight ? 'auto' : -1,
+              right: isRight ? -1 : 'auto',
               width: SZ, height: SZ,
               padding: 6,
               zIndex: 20,
@@ -282,14 +270,13 @@ export default function FloatingWidget() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <Image
-                  src="/aiesec-logo.png"
+                  src="/aiesec-logo-centered.png"
                   alt="AIESEC"
                   width={48}
                   height={48}
                   style={{
                     width: '100%', height: '100%',
                     objectFit: 'contain',
-                    transform: 'scale(1.2) translateY(-1px)',
                   }}
                 />
               </div>
@@ -299,8 +286,8 @@ export default function FloatingWidget() {
             <div style={{
               position: 'absolute',
               top: 0, bottom: 0,
-              left: isRight ? 44 : SZ,
-              right: isRight ? SZ : 44,
+              width: pillW - SZ - 44, // Fixed width prevents jitter during expansion
+              ...(isRight ? { right: SZ } : { left: SZ }),
               display: 'flex', flexDirection: 'column', justifyContent: 'center',
               textAlign: isRight ? 'right' : 'left',
               padding: isRight ? '0 6px 0 0' : '0 0 0 4px',
@@ -333,7 +320,12 @@ export default function FloatingWidget() {
             {/* Dismiss */}
             <button
               onPointerDown={e => e.stopPropagation()}
-              onClick={e => { e.preventDefault(); e.stopPropagation(); setExpanded(false); }}
+              onClick={e => {
+                e.preventDefault(); 
+                e.stopPropagation(); 
+                setExpanded(false);
+                expandedRef.current = false;
+              }}
               aria-label="Minimize"
               style={{
                 position: 'absolute',
