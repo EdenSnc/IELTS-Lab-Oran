@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import TallyForm from './TallyForm';
 import TrustBadges from './TrustBadges';
+import { useState, useEffect } from 'react';
 import type { CohortStatus } from '@/lib/cohort';
 
 interface IntakeProps {
@@ -16,8 +17,20 @@ export default function Intake({ cohortStatus }: IntakeProps) {
 
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '213780343103';
 
+  const [localClaimed, setLocalClaimed] = useState(cohortStatus.claimed);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (window.localStorage.getItem('ielts_cohort_signed_up')) {
+          setLocalClaimed(Math.min(cohortStatus.claimed + 1, cohortStatus.total));
+        }
+      } catch (e) {}
+    }
+  }, [cohortStatus.claimed, cohortStatus.total]);
+
   const fillPct = cohortStatus.total > 0
-    ? Math.round((cohortStatus.claimed / cohortStatus.total) * 100)
+    ? Math.round((localClaimed / cohortStatus.total) * 100)
     : 0;
 
   return (
@@ -73,10 +86,10 @@ export default function Intake({ cohortStatus }: IntakeProps) {
                 <span className="text-white/70">
                   {cohortStatus.isFull
                     ? ct('full')
-                    : ct('claimedText', { claimed: cohortStatus.claimed, total: cohortStatus.total })}
+                    : ct('claimedText', { claimed: localClaimed, total: cohortStatus.total })}
                 </span>
                 <span className="text-white font-bold">
-                  {cohortStatus.claimed}/{cohortStatus.total}
+                  {localClaimed}/{cohortStatus.total}
                 </span>
               </div>
               <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">

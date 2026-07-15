@@ -52,6 +52,12 @@ export default function TallyForm({ formId, hideTitle = true, alignLeft = false 
 
       // Listen for form submission to trigger WhatsApp redirect
       if (e.data.includes('Tally.FormSubmitted')) {
+        try {
+          window.localStorage.setItem('ielts_cohort_signed_up', 'true');
+        } catch (err) {
+          // Ignore localStorage errors
+        }
+
         const message = "Hi Amine, I just submitted my application for the IELTS Lab Oran and I would like to confirm my seat.";
         const encodedMessage = encodeURIComponent(message);
         const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '213780343103';
