@@ -39,6 +39,7 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if (!routing.locales.includes(locale as any)) {
     notFound();
   }
@@ -48,7 +49,7 @@ export default async function LocaleLayout({
   const fontClass = isRtl ? cairo.className : inter.className;
 
   return (
-    <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} className={`scroll-smooth ${fontClass}`}>
+    <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} className={`scroll-smooth ${fontClass}`} data-scroll-behavior="smooth">
       <head>
         <LocalSchema />
         <CourseSchema />

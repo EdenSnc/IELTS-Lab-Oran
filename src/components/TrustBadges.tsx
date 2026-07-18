@@ -17,9 +17,8 @@ export default function TrustBadges({ variant = 'dark' }: TrustBadgesProps) {
   return (
     <div className={`flex items-center justify-center flex-wrap gap-x-4 gap-y-2 text-xs font-medium ${textColor}`}>
 
-      {/* Cash in-person badge */}
+      {/* PAYMENT BADGES HIDDEN TEMPORARILY
       <span className="flex items-center gap-1.5">
-        {/* Banknote icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className={`w-3.5 h-3.5 ${iconColor}`}
@@ -38,9 +37,7 @@ export default function TrustBadges({ variant = 'dark' }: TrustBadgesProps) {
 
       <span className={dividerColor} aria-hidden="true">·</span>
 
-      {/* Baridimob badge */}
       <span className="flex items-center gap-1.5">
-        {/* Mobile payment icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className={`w-3.5 h-3.5 ${iconColor}`}
@@ -58,6 +55,7 @@ export default function TrustBadges({ variant = 'dark' }: TrustBadgesProps) {
       </span>
 
       <span className={dividerColor} aria-hidden="true">·</span>
+      */}
 
       {/* Band 8.0 Certified badge */}
       <span className="flex items-center gap-1.5">

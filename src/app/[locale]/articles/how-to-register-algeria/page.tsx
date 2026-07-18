@@ -40,6 +40,7 @@ export default async function ArticlePage() {
                   <div className={`absolute top-0 bottom-0 w-0.5 bg-gray-200 ${isRtl ? 'right-6' : 'left-6'} transform ${isRtl ? 'translate-x-1/2' : '-translate-x-1/2'} z-0`}></div>
                   
                   <div className="space-y-8 relative z-10">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {c.steps.map((step: any, i: number) => (
                       <div key={i} className="flex gap-6 items-start group">
                           <div className="w-12 h-12 bg-charcoal text-white rounded-full flex items-center justify-center font-bold text-xl shrink-0 shadow-[0_0_0_4px_white] group-hover:bg-crimson group-hover:scale-110 transition-all z-10">
@@ -81,7 +82,7 @@ export default async function ArticlePage() {
       <div className="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 p-4 z-50 shadow-up flex justify-between items-center">
         <div>
             <div className="text-sm font-bold text-charcoal">IELTS Lab Oran</div>
-            <div className="text-xs text-crimson font-semibold">32,000 DA</div>
+            <div className="text-xs text-crimson font-semibold">25,000 DA</div>
         </div>
         <Link href="/#intake" className="bg-crimson text-white px-6 py-3 rounded-full font-bold text-sm shadow-glow active:scale-95 transition-transform">
             APPLY NOW

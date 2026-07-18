@@ -23,9 +23,12 @@ export default function Intake({ cohortStatus }: IntakeProps) {
     if (typeof window !== 'undefined') {
       try {
         if (window.localStorage.getItem('ielts_cohort_signed_up')) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setLocalClaimed(Math.min(cohortStatus.claimed + 1, cohortStatus.total));
         }
-      } catch (e) {}
+      } catch {
+        // ignore
+      }
     }
   }, [cohortStatus.claimed, cohortStatus.total]);
 

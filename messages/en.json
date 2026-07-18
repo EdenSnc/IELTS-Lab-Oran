@@ -81,7 +81,7 @@
     "a4": "Strictly 8 seats per cohort. This guarantees line-by-line essay correction and personalized speaking feedback from a certified instructor.",
     "q5": "Can I join if I am facing an imminent Capago or TLScontact deadline?",
     "a5": "Absolutely. Visa timelines are unforgiving. Our 32-hour program is built for rapid intervention to secure your certificate before your appointment.",
-    "q6": "What resources are included in the 32,000 DA tuition fee?",
+    "q6": "What resources are included in the 25,000 DA tuition fee?",
     "a6": "Covers 32 hours of dedicated PC time, diagnostic simulations, writing templates, and line-by-line feedback.",
     "q7": "When does the Lab open, and how do I know if I got a seat?",
     "a7": "We launch soon. If a seat opens, you'll receive a WhatsApp message with dates and payment details. We process applications in order of receipt."
@@ -108,11 +108,11 @@
     "title": "Reserve Your Seat",
     "badge": "Groups of 8 | Limited Seats",
     "feeTitle": "Fees & Seats",
-    "fee": "32,000 DA",
+    "fee": "25,000 DA",
     "feeDesc": "Invest once. Protect your 40K DA test fee.",
     "feature1": "32 hours intensive PC training",
     "feature2": "Personalized writing & speaking feedback",
-    "feature3": "Your own dedicated PC station",
+    "feature3": "Your own dedicated PC",
     "footerText": "Fill out the application. If a seat is available, we will contact you via WhatsApp."
   },
   "Bypass": {
@@ -136,7 +136,7 @@
     "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
   },
   "EventWidget": {
-    "badge": "Upcoming Event",
-    "title": "AIESEC Workshop (July 17th)"
+    "badge": "Status Update",
+    "title": "Platform in Development"
   }
 }

@@ -4,7 +4,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import Image from 'next/image';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GAP     = 20;   // px from screen edge when snapped
@@ -52,9 +51,10 @@ export default function FloatingWidget() {
   const expandedRef = useRef(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPillW(getPillW());
     const initY = window.innerHeight * 0.82 - SZ / 2;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
     setTop(initY);
     topRef.current = initY;
   }, []);
@@ -233,7 +233,7 @@ export default function FloatingWidget() {
       >
         {/* ── Link overlay ── */}
         <Link
-        href="/articles/aiesec-workshop"
+        href="/articles/simulation-platform"
         style={{
           position: 'absolute', inset: 0, zIndex: 10,
           borderRadius: 'inherit',
@@ -268,17 +268,11 @@ export default function FloatingWidget() {
                 background: '#fff',
                 boxShadow: '0 1px 6px rgba(0,0,0,0.25)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#f59e0b',
               }}>
-                <Image
-                  src="/aiesec-logo-centered.png"
-                  alt="AIESEC"
-                  width={48}
-                  height={48}
-                  style={{
-                    width: '100%', height: '100%',
-                    objectFit: 'contain',
-                  }}
-                />
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
               </div>
             </div>
 

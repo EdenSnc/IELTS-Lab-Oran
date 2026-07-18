@@ -81,7 +81,7 @@
     "a4": "Strictement 8 places par cohorte. Cela garantit une correction ligne par ligne et un retour personnalisé à l'oral.",
     "q5": "Puis-je rejoindre ce programme si je fais face à une échéance imminente pour un visa Capago ou TLScontact ?",
     "a5": "Absolument. Notre programme de 32 heures est conçu pour une intervention rapide afin de sécuriser votre certificat avant votre rendez-vous visa.",
-    "q6": "Qu'est-ce qui est inclus dans les frais de scolarité de 32 000 DA ?",
+    "q6": "Qu'est-ce qui est inclus dans les frais de scolarité de 25 000 DA ?",
     "a6": "Couvre 32 heures d'entraînement sur PC, des simulations diagnostiques, des modèles de rédaction, et un retour détaillé.",
     "q7": "Quand le Lab ouvre-t-il, et comment saurai-je si j'ai obtenu une place fondatrice ?",
     "a7": "Nous lançons bientôt. Si une place se libère, vous recevrez un WhatsApp avec les dates et détails de paiement. Nous traitons par ordre de réception."
@@ -108,11 +108,11 @@
     "title": "Réservez Votre Place",
     "badge": "Groupes de 8 | Places Limitées",
     "feeTitle": "Frais & Places",
-    "fee": "32 000 DA",
+    "fee": "25 000 DA",
     "feeDesc": "Investissez une fois. Protégez vos frais de test de 40K DA.",
     "feature1": "32 heures d'entraînement intensif sur PC",
     "feature2": "Suivi personnalisé (Writing & Speaking)",
-    "feature3": "Votre propre poste de travail dédié",
+    "feature3": "Votre propre PC dédié",
     "footerText": "Remplissez le formulaire ci-dessous. Si une place se libère, nous vous contacterons via WhatsApp."
   },
   "Bypass": {
@@ -136,7 +136,7 @@
     "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
   },
   "EventWidget": {
-    "badge": "Événement à venir",
-    "title": "Atelier AIESEC (17 juillet)"
+    "badge": "Mise à jour d'état",
+    "title": "Plateforme en développement"
   }
 }
