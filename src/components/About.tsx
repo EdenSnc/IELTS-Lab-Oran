@@ -11,7 +11,7 @@ export default function About() {
     "@context": "https://schema.org",
     "@type": "Person",
     "@id": `${SITE_URL}/#instructor`,
-    "name": "Amine",
+    "name": "Mr.Senouci",
     "jobTitle": "Lead Instructor & Founder",
     "description": t('hook'),
     "knowsAbout": ["IELTS Preparation", "English Teaching", "C1/C2 Proficiency"],
@@ -38,7 +38,7 @@ export default function About() {
               <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-transparent to-transparent z-10" />
               <Image 
                 src="/amine.jpg" 
-                alt="Amine - IELTS Instructor" 
+                alt="Mr.Senouci - IELTS Instructor" 
                 fill 
                 className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -48,7 +48,7 @@ export default function About() {
                 <div className="inline-block bg-crimson text-white px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase mb-2 shadow-glow">
                   {t('subtitle')}
                 </div>
-                <h3 className="text-3xl font-bold text-white">Amine</h3>
+                <h3 className="text-3xl font-bold text-white">Mr.Senouci</h3>
               </div>
             </div>
           </div>

@@ -58,7 +58,7 @@ export default function TallyForm({ formId, hideTitle = true, alignLeft = false 
           // Ignore localStorage errors
         }
 
-        const message = "Hi Amine, I just submitted my application for the IELTS Lab Oran and I would like to confirm my seat.";
+        const message = "Hi Mr.Senouci, I just submitted my application for the IELTS Lab Oran and I would like to confirm my seat.";
         const encodedMessage = encodeURIComponent(message);
         const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '213780343103';
         const waUrl = `https://wa.me/${waNumber}?text=${encodedMessage}`;

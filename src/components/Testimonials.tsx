@@ -9,7 +9,7 @@ export default function Testimonials() {
 
   const testimonials = [
     {
-      quote: "I was terrified of taking the computer IELTS because reading on a screen felt impossible. Amine sat me down at a PC and showed me exactly how the software works. His tricks for highlighting and saving time are the real reason I got my 7.5.",
+      quote: "I was terrified of taking the computer IELTS because reading on a screen felt impossible. Mr.Senouci sat me down at a PC and showed me exactly how the software works. His tricks for highlighting and saving time are the real reason I got my 7.5.",
       initials: "RM",
       name: "Rania M.",
       profile: "Study Abroad Candidate • Band 7.5"

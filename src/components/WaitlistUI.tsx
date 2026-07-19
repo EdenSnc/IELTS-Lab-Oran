@@ -13,7 +13,7 @@ const copy = {
     disclaimer: 'No spam. No cold calls. Just a single message when the next cohort opens.',
     whatsapp_label: 'Prefer to reach out directly?',
     whatsapp_cta: 'Message on WhatsApp',
-    whatsapp_msg: 'Hi Amine, I want to join the waitlist for the next IELTS Lab Oran cohort. Please notify me when seats open.',
+    whatsapp_msg: 'Hi Mr.Senouci, I want to join the waitlist for the next IELTS Lab Oran cohort. Please notify me when seats open.',
     proof: [
       { n: '8', label: 'seats per cohort' },
       { n: '100%', label: 'computer-delivered' },
@@ -31,7 +31,7 @@ const copy = {
     disclaimer: 'Pas de spam. Pas d\'appels. Un seul message quand la prochaine cohorte ouvre.',
     whatsapp_label: 'Vous préférez contacter directement ?',
     whatsapp_cta: 'Message sur WhatsApp',
-    whatsapp_msg: 'Bonjour Amine, je souhaite rejoindre la liste d\'attente pour la prochaine cohorte d\'IELTS Lab Oran. Merci de me prévenir quand les places sont disponibles.',
+    whatsapp_msg: 'Bonjour Mr.Senouci, je souhaite rejoindre la liste d\'attente pour la prochaine cohorte d\'IELTS Lab Oran. Merci de me prévenir quand les places sont disponibles.',
     proof: [
       { n: '8', label: 'places par cohorte' },
       { n: '100%', label: 'sur ordinateur' },
@@ -49,7 +49,7 @@ const copy = {
     disclaimer: 'لا رسائل مزعجة. لا اتصالات. فقط رسالة واحدة عند فتح الدفعة التالية.',
     whatsapp_label: 'تفضّل التواصل المباشر؟',
     whatsapp_cta: 'راسل على واتساب',
-    whatsapp_msg: 'السلام عليكم أمين، أريد الانضمام إلى قائمة الانتظار للدفعة القادمة من IELTS Lab Oran. أرجو إخباري عند فتح المقاعد.',
+    whatsapp_msg: 'السلام عليكم سنوسي، أريد الانضمام إلى قائمة الانتظار للدفعة القادمة من IELTS Lab Oran. أرجو إخباري عند فتح المقاعد.',
     proof: [
       { n: '8', label: 'مقاعد لكل دفعة' },
       { n: '100%', label: 'اختبار رقمي' },

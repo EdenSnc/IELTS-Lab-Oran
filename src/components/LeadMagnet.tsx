@@ -74,7 +74,7 @@ export default function LeadMagnet() {
 
       // WhatsApp redirect
       const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '213780343103';
-      const message = 'Hi Amine, I just downloaded the IELTS Academic vs. General guide and I would like more information...';
+      const message = 'Hi Mr.Senouci, I just downloaded the IELTS Academic vs. General guide and I would like more information...';
       const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
       setTimeout(() => { window.location.href = waUrl; }, 1000);
 
