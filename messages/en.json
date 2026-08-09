@@ -1,0 +1,142 @@
+{
+  "Navbar": {
+    "title": "IELTS Lab Oran",
+    "methodology": "Methodology",
+    "articles": "Articles",
+    "faq": "FAQ",
+    "applyNow": "APPLY NOW"
+  },
+  "Cohort": {
+    "remaining": "{remaining} of {total} founding seats available",
+    "claimedText": "{claimed} of {total} founding seats reserved",
+    "full": "Founding Cohort - Full",
+    "discountNote": "Founding members get priority scheduling & the best rate.",
+    "fullCta": "Join the General Waitlist"
+  },
+  "Hero": {
+    "badge": "Oran • 8-Seat Physical Lab",
+    "title": "We diagnose your English.",
+    "subtitle": "Then we engineer <red>your score.</red>",
+    "description": "A rigorous <highlight>IELTS course is launching in Oran</highlight>, built for the computer-delivered test, not outdated paper practice.",
+    "reserve": "RESERVE YOUR SEAT",
+    "details": "PROGRAM DETAILS",
+    "noPayment": "No upfront payment required to apply.",
+    "programBadge": "The «IELTS SUCCESS» System"
+  },
+  "Methodology": {
+    "title": "The IELTS Success System",
+    "subtitle": "Most IELTS prep fails to reflect the digital reality of the test. We do things differently:",
+    "bullet1Title": "Digital-First Training:",
+    "bullet1Desc": "Train exactly how you will test on exam day.",
+    "bullet2Title": "Diagnostic Targeting:",
+    "bullet2Desc": "We pinpoint specific language gaps instead of generic tutoring.",
+    "bullet3Title": "Criteria Mastery:",
+    "bullet3Desc": "Your study plan is engineered exclusively around the official rubrics.",
+    "notForBeginners": "Strictly for non-beginners"
+  },
+  "StopTraining": {
+    "title": "STOP <mark>TRAINING ON PAPER.</mark>",
+    "subtitle": "The official British Council test is digital. <mark>If you are practicing with paper handouts, you are putting yourself at a disadvantage.</mark> This lab is designed exclusively for:",
+    "bullet1": "<strong>University Applicants</strong> aiming for foreign admissions",
+    "bullet2": "<strong>Study Abroad Candidates</strong> facing tight deadlines",
+    "bullet3": "<strong>Express Entry Candidates</strong> requiring strict band scores",
+    "proofBadge": "Proven Results",
+    "proofTitle": "The Exact Framework Used To Secure Band 8.0"
+  },
+  "Compare": {
+    "title": "Why We Are Different",
+    "traditionalTitle": "Traditional Centers",
+    "traditionalSubtitle": "Standard language schools.",
+    "traditional1": "Paper practice that ignores the computer exam.",
+    "traditional2": "Crowded classrooms of 20+ students.",
+    "traditional3": "Generic English lessons over exam strategy.",
+    "labTitle": "The Physical Lab",
+    "labSubtitle": "Focused, modern preparation.",
+    "lab1": "100% PC training built around the computer-delivered format.",
+    "lab2": "8-person groups that keep feedback personal.",
+    "lab3": "Actionable writing and speaking feedback."
+  },
+  "Testimonials": {
+    "title": "Student Results",
+    "subtitle": "Results and feedback from Mr.Senouci's past private students. The physical 8-seat cohort is launching soon."
+  },
+  "Facility": {
+    "title": "The Facility",
+    "subtitle": "Located in Bir El Djir. A quiet, secure environment engineered for deep focus and diagnostic training.",
+    "location": "Bir El Djir, Oran",
+    "mapBtn": "Load Interactive Map",
+    "contact": "Contact Us",
+    "social": "Follow Us",
+    "copyright": "© {year} IELTS Lab Oran. All rights reserved."
+  },
+  "FAQ": {
+    "title": "Frequently Asked Questions",
+    "q1": "What is the difference between Paper-Based and Computer-Based IELTS?",
+    "a1": "The test content and scoring do not change, but delivery affects navigation and writing. Our PC practice is designed around the computer-delivered format so you can build useful screen habits.",
+    "q2": "How can I pay my official test registration fee in Algeria?",
+    "a2": "The standard Academic or General Training fee is currently 40,000 DZD. The British Council Algeria page lists online bank-card payment, digital banking, bank transfer, and cash. Complete payment within 72 hours and follow your confirmation instructions.",
+    "q3": "Is this course suitable for complete beginners in English?",
+    "a3": "No. This intensive sprint is strictly for candidates with intermediate English. We focus purely on exam strategy, not basic grammar.",
+    "q4": "How do your class groups protect individual learning progress?",
+    "a4": "Strictly 8 seats per cohort. The small group allows line-by-line essay correction and personalized speaking feedback from a certified instructor.",
+    "q5": "Can I join if I am facing an imminent Capago or TLScontact deadline?",
+    "a5": "Yes, if the schedule fits, but no course can guarantee a score by a visa deadline. We first compare your current level, target score, test type, and available preparation time.",
+    "q6": "What resources are included in the 29,500 DA tuition fee?",
+    "a6": "Covers 32 hours of dedicated PC time, diagnostic simulations, writing templates, and line-by-line feedback.",
+    "q7": "When does the Lab open, and how do I know if I got a seat?",
+    "a7": "We launch soon. If a seat opens, you'll receive a WhatsApp message with dates and payment details. We process applications in order of receipt."
+  },
+  "LeadMagnet": {
+    "title": "Not Ready to Enroll?",
+    "subtitle": "Get our free guide: IELTS on Computer vs. Paper (PDF).",
+    "description": "Discover the exact differences, which format is easier, and how to choose the right test.",
+    "phoneLabel": "Your WhatsApp number",
+    "placeholder": "WhatsApp No. (e.g. +213 555 555 555)",
+    "submit": "SEND MY CHEAT SHEET",
+    "submitting": "Sending...",
+    "successTitle": "Request Received!",
+    "successDesc": "You will be redirected to WhatsApp to claim it.",
+    "invalidPhone": "Please enter a valid Algerian WhatsApp number (e.g. 0555123456)",
+    "errorRequired": "Please enter your WhatsApp number to continue."
+  },
+  "TrustBadges": {
+    "cash": "Cash",
+    "baridimob": "Baridimob",
+    "certified": "Certified Instructor"
+  },
+  "Intake": {
+    "title": "Reserve Your Seat",
+    "badge": "Groups of 8 | Limited Seats",
+    "feeTitle": "Fees & Seats",
+    "fee": "29,500 DA",
+    "feeDesc": "Invest once. Protect your 40K DA test fee.",
+    "feature1": "32 hours intensive PC training",
+    "feature2": "Personalized writing & speaking feedback",
+    "feature3": "Your own dedicated PC",
+    "footerText": "Fill out the application. If a seat is available, we will contact you via WhatsApp."
+  },
+  "Bypass": {
+    "label": "Can't wait for the cohort?",
+    "text": "If your exam is soon, message directly for a private 1-on-1 session.",
+    "cta": "Message on WhatsApp",
+    "waMessage": "Hi Mr.Senouci, I found IELTS Lab Oran online. My exam date is approaching and I can't wait for the founding cohort. I'm interested in a private 1-on-1 preparation session. Can we discuss this?"
+  },
+  "About": {
+    "title": "About Mr.Senouci",
+    "subtitle": "Founder & Lead Instructor",
+    "hook": "Certified English instructor with an official Band 8.0 and a perfect 9.0 in Listening.",
+    "pedigree": "Leveraged an Applied AI and Software Engineering background to build Oran's first computer-delivered IELTS simulation platform.",
+    "experience": "Years of practical English teaching experience, employing a comprehensive suite of advanced pedagogical frameworks to drive rapid language acquisition.",
+    "edge": "Strictly realistic. We set honest expectations based on your diagnostic - no false promises.",
+    "method": "Built on rigorous diagnostics and reverse-engineered official IELTS band criteria."
+  },
+  "Articles": {
+    "title": "Articles & News",
+    "article1Title": "The Official Switch to IELTS on Computer",
+    "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
+  },
+  "EventWidget": {
+    "badge": "Status Update",
+    "title": "Platform in Development"
+  }
+}

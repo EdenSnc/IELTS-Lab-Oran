@@ -1,0 +1,1338 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-crimson: #D91E36;
+  --color-charcoal: #0a0a0a;
+  --color-surface: #F3F4F6;
+  
+  --font-sans: 'Inter', sans-serif;
+  --font-cairo: 'Cairo', sans-serif;
+  
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2.5rem;
+  --radius-5xl: 3.5rem;
+  
+  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 20px rgba(192, 16, 32, 0.4);
+  --shadow-up: 0 -10px 30px rgba(0,0,0,0.1);
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  background-color: #ffffff;
+  color: var(--color-charcoal);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-charcoal);
+    border-radius: 2rem;
+}
+
+.highlight {
+    background: linear-gradient(104deg, rgba(255, 238, 100, 1) 0%, rgba(255, 226, 60, 1) 100%);
+    color: #0a0a0a;
+    padding: 0 0.25rem;
+    border-radius: 0.125rem;
+    font-weight: 600;
+}
+
+/* Testimonial Hover Animations */
+.testimonial-card {
+    transition: background-color 0.5s ease, border-color 0.5s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s ease;
+    will-change: transform, background-color;
+}
+.testimonial-card .glow-bg {
+    opacity: 0; transition: opacity 0.5s ease;
+}
+.testimonial-card .quote-mark {
+    opacity: 0.2; transition: opacity 0.5s ease;
+}
+.testimonial-card .body-text {
+    color: #4b5563; transition: color 0.5s ease;
+}
+.testimonial-card .bottom-border {
+    border-color: #e5e7eb; transition: border-color 0.5s ease;
+}
+.testimonial-card .avatar {
+    background-color: #0a0a0a; color: #ffffff; box-shadow: none; transition: all 0.5s ease;
+}
+.testimonial-card .name-text {
+    color: #0a0a0a; transition: color 0.5s ease;
+}
+.testimonial-card .title-text {
+    color: #6b7280; transition: color 0.5s ease;
+}
+/* Active/Hovered State */
+.testimonial-card.active-testimonial {
+    background-color: #0a0a0a;
+    border-color: transparent;
+    transform: translateY(-1rem);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+}
+.testimonial-card.active-testimonial .glow-bg {
+    opacity: 1;
+}
+.testimonial-card.active-testimonial .quote-mark {
+    opacity: 0.4;
+}
+.testimonial-card.active-testimonial .body-text {
+    color: #d1d5db;
+}
+.testimonial-card.active-testimonial .bottom-border {
+    border-color: #374151;
+}
+.testimonial-card.active-testimonial .avatar {
+    background-color: #c01020;
+    color: #ffffff;
+    box-shadow: 0 0 20px rgba(192, 16, 32, 0.5);
+}
+.testimonial-card.active-testimonial .name-text {
+    color: #ffffff;
+}
+.testimonial-card.active-testimonial .title-text {
+    color: #9ca3af;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Force CSS recompilation */
+.user-select-none {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.user-select-text, input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.mock-question-html,
+.mock-split-primary,
+.mock-split-secondary,
+.mock-split-primary *,
+.mock-question-html * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Imported rich text can contain many inline spans. They must never create
+   arbitrary break opportunities inside IELTS passage words. */
+.mock-reading-text,
+.mock-reading-text * {
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none !important;
+}
+
+.mock-reading-text mark[data-ielts-highlight] {
+  display: inline;
+}
+
+/* Passage names are prominent in the computer-test layout, regardless of
+   whether the imported source used h1 or h2 (and with or without a wrapper). */
+.mock-reading-text > h1:first-child,
+.mock-reading-text > h2:first-child,
+.mock-reading-text > div:first-child > h1:first-child,
+.mock-reading-text > div:first-child > h2:first-child {
+  margin: 0 0 1.25rem;
+  color: #111827;
+  font-size: 1.25em;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+
+/* The test itself remains non-printable. Results are intentionally printable through its own button. */
+.results-print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    display: block !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  [data-printable-results],
+  [data-printable-results] * {
+    visibility: visible !important;
+  }
+
+  [data-printable-results] {
+    position: static;
+    width: 100%;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .results-print-only {
+    display: block !important;
+    margin-bottom: 8mm;
+    border-bottom: 1px solid #777;
+    padding-bottom: 4mm;
+  }
+
+  .results-print-only p,
+  .results-print-only h1 {
+    margin: 0;
+  }
+
+  .diagnostic-summary-card,
+  .diagnostic-skill-row {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+}
+/* Test panes use a resizable desktop split and a usable stacked mobile layout. */
+.mock-split-primary {
+  width: var(--split-ratio);
+}
+
+.mock-split-secondary {
+  width: calc(100% - var(--split-ratio));
+}
+
+.mock-question-html [data-answer-position] {
+  display: inline-block;
+}
+
+.mock-question-html .mock-inline-answer {
+  display: inline-flex;
+  align-items: center;
+  margin: 0.2rem 0.2rem;
+  vertical-align: middle;
+}
+
+.mock-question-html .mock-inline-answer input {
+  width: 7.5rem;
+  min-width: 7rem;
+  max-width: 15rem;
+  border: 1px solid #6b7280;
+  border-radius: 0.125rem;
+  background: #fff;
+  padding: 0.25rem 0.5rem;
+  color: #111827;
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+}
+
+.matching-heading-targets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.matching-heading-targets .mock-ielts-gap {
+  width: 100%;
+  min-height: 34px;
+  height: auto;
+  margin: 0;
+  padding: 0.25rem;
+}
+
+.mock-question-html .mock-inline-answer input::placeholder {
+  color: #111827;
+  opacity: 1;
+}
+
+.mock-question-html .mock-inline-answer input:focus::placeholder {
+  color: transparent;
+}
+
+/* Database imports use plain HTML tables with inconsistent source classes.
+   Normalize them once so every table-completion item gets the same renderer. */
+.mock-question-html table {
+  width: 100%;
+  border: 1px solid #202020;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background: #ffffff;
+  color: #111111;
+}
+
+.mock-question-html th,
+.mock-question-html td {
+  border: 1px solid #202020;
+  padding: 0.5rem 0.65rem;
+  vertical-align: middle;
+}
+
+.mock-question-html th,
+.mock-question-html tr:first-child td {
+  font-weight: 700;
+  text-align: center;
+}
+
+.mock-question-html td .mock-inline-answer {
+  margin-block: 0;
+}
+
+.mock-question-html td .mock-inline-answer input {
+  width: 9rem;
+}
+
+.mock-choice-prompt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.mock-choice-prompt.is-range {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mock-choice-prompt.is-range .mock-choice-number {
+  width: max-content;
+}
+
+.mock-choice-prompt .mock-question-html {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mock-choice-number {
+  display: inline-flex;
+  min-width: 1.4rem;
+  min-height: 1.4rem;
+  align-items: center;
+  justify-content: center;
+  color: #111827;
+  font-weight: 700;
+  line-height: 1.4rem;
+  white-space: nowrap;
+}
+
+.mock-choice-number.is-current {
+  border: 2px solid #007fa3;
+  border-radius: 3px;
+}
+
+.mock-choice-option-label {
+  min-width: 1rem;
+  font-weight: 700;
+}
+
+.mock-ielts-dnd,
+.mock-ielts-dnd-help {
+  width: 100%;
+}
+
+.mock-ielts-dnd-help-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 3px auto;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  padding: 3px 12px;
+  color: #1b4d6b;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mock-ielts-dnd-help-button:hover,
+.mock-ielts-dnd-help-button:focus-visible,
+.mock-ielts-dnd-help-button[aria-expanded='true'] {
+  background: #1b4d6b;
+  color: #fff;
+  outline: 0;
+}
+
+.mock-ielts-dnd-help-panel {
+  padding: 10px 0;
+  color: #111827;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.mock-ielts-dnd-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.mock-ielts-dnd-layout.tokens-right {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.tokens-right .mock-ielts-dnd-content {
+  flex: 1 1 var(--ielts-content-basis);
+  min-width: 0;
+}
+
+.tokens-right .mock-ielts-token-bank {
+  flex: 1 1 var(--ielts-bank-basis);
+  min-width: 0;
+}
+
+.mock-ielts-token-bank {
+  display: flex;
+  min-height: 37px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  border: 0;
+  background: transparent;
+  margin-bottom: 1rem;
+  padding: 0;
+}
+
+.tokens-right .mock-ielts-token-bank {
+  flex-direction: column;
+}
+
+.mock-ielts-token {
+  display: inline-flex;
+  min-height: 27px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 5px;
+  border: 1px solid #c5c5c5;
+  border-radius: 4px;
+  background: #fff;
+  padding: 0.5em 1em;
+  color: #111;
+  font-size: 0.875em;
+  line-height: 1;
+  max-width: 100%;
+  white-space: normal;
+  cursor: move;
+  user-select: none;
+}
+
+.mock-ielts-token:hover,
+.mock-ielts-token:focus-visible,
+.mock-ielts-token.is-selected,
+.mock-ielts-token.is-dragging,
+.mock-ielts-token:active {
+  border-color: #0e98f0;
+  outline: 0;
+  box-shadow:
+    0 3px 6px rgb(0 0 0 / 10%),
+    0 3px 6px rgb(0 0 0 / 15%);
+}
+
+.mock-ielts-token.opacity {
+  opacity: 0.3;
+}
+
+.mock-touch-drag-ghost {
+  position: fixed;
+  z-index: 1000;
+  max-width: min(78vw, 320px);
+  transform: translate(-50%, -125%);
+  border: 1px solid #0e98f0;
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 0.5rem 0.75rem;
+  color: #111111;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+  font-size: 0.875rem;
+  line-height: 1.25;
+  pointer-events: none;
+}
+
+.mock-ielts-gap {
+  display: inline-flex;
+  width: 94px;
+  max-width: 100%;
+  height: 27px;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 1px 10px;
+  border: 1px dashed #c5c5c5;
+  border-radius: 5px;
+  background: #fff;
+  padding: 0;
+  color: #111;
+  font: inherit;
+  line-height: 1;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.mock-ielts-gap:hover,
+.mock-ielts-gap:focus-visible,
+.mock-ielts-gap.drag-over,
+.mock-ielts-gap.is-selected {
+  border-color: #0e98f0;
+  outline: 0;
+  box-shadow: 0 0 0 2px rgb(14 152 240 / 14%);
+}
+
+.mock-ielts-gap.dragging {
+  border-color: #0e98f0;
+}
+
+.mock-ielts-gap.populated {
+  border-style: solid;
+  border-color: #0e98f0;
+  border-radius: 4px;
+}
+
+.mock-ielts-gap-number {
+  font-weight: 700;
+}
+
+.mock-ielts-gap-token {
+  overflow: hidden;
+  padding-inline: 0.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mock-ielts-gap-remove {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  margin-right: 2px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mock-ielts-gap-remove:hover {
+  background: #e8e8e8;
+}
+
+.mock-question-html [data-ielts-canvas='true'] {
+  position: relative;
+  overflow: visible;
+}
+
+.mock-ielts-dnd[data-question-type='PLAN_MAP_DIAGRAM_LABELING'] [data-ielts-canvas='true'] {
+  left: 50%;
+  width: min(100%, 800px) !important;
+  max-width: 800px !important;
+  transform: translateX(-50%);
+}
+
+.mock-ielts-dnd[data-question-type='PLAN_MAP_DIAGRAM_LABELING'] [data-ielts-overlay='true'].answer-overlay-only .mock-ielts-gap {
+  transform: scale(0.82);
+}
+
+.mock-question-html [data-ielts-canvas='true'] > span:first-child {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mock-question-html [data-ielts-canvas='true'] img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.mock-question-html [data-ielts-overlay='true'] {
+  display: block;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+.mock-question-html [data-ielts-overlay='true'].answer-overlay-only .mock-ielts-gap {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.mock-question-html gapmatchinteraction,
+.mock-question-html choiceinteraction,
+.mock-question-html textentryinteraction {
+  display: block;
+}
+
+.mock-question-html img,
+.mock-split-primary img {
+  max-width: 100%;
+  height: auto;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+@media (max-width: 767px) {
+  .test-instructions-card-header,
+  .test-information-panel {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .test-information-panel video {
+    max-height: min(52vh, 360px);
+  }
+  .mock-split-root {
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .mock-split-primary,
+  .mock-split-secondary {
+    width: 100%;
+    height: 50%;
+    min-height: 0;
+    flex: 1 1 50%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mock-split-primary {
+    border-bottom: 2px solid #707070;
+  }
+
+  .mock-split-resizer {
+    display: none;
+  }
+
+  .mock-ielts-dnd-layout.tokens-right {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tokens-right .mock-ielts-dnd-content,
+  .tokens-right .mock-ielts-token-bank {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .tokens-right .mock-ielts-dnd-content {
+    overflow-x: auto;
+  }
+
+  .mock-ielts-dnd[data-question-type='PLAN_MAP_DIAGRAM_LABELING'] .mock-ielts-dnd-content {
+    overflow-x: hidden;
+  }
+
+  .mock-ielts-dnd[data-question-type='PLAN_MAP_DIAGRAM_LABELING'] [data-ielts-canvas='true'] {
+    left: 50%;
+    width: min(125%, 800px) !important;
+    max-width: 800px !important;
+  }
+
+  .mock-ielts-dnd-help {
+    display: none;
+  }
+
+  .mock-ielts-token,
+  .mock-ielts-gap[data-answer-label] {
+    touch-action: none;
+  }
+
+  .mock-question-html:has(table) {
+    overflow-x: auto;
+  }
+
+  .mock-question-html table {
+    width: max-content;
+    min-width: 680px;
+    font-size: 0.8125rem;
+  }
+
+  .mock-question-html .mock-inline-answer input {
+    width: 92px;
+    min-width: 92px;
+    max-width: 92px;
+  }
+
+  .mock-question-html [data-ielts-canvas='true'] {
+    min-width: 0;
+    touch-action: pan-x pan-y;
+  }
+
+  .tokens-right .mock-ielts-token-bank {
+    flex-direction: row;
+  }
+}
+
+/* Computer test player */
+.ielts-test-shell {
+  font-family: "Helvetica Neue Regular", "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #212529;
+  overflow-x: hidden;
+}
+
+.ielts-test-shell main,
+.ielts-test-area,
+.mock-split-root,
+.mock-split-primary,
+.mock-split-secondary {
+  max-width: 100%;
+}
+
+.ielts-test-shell ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ielts-test-shell ::-webkit-scrollbar-track {
+  background: #eeeeee;
+}
+
+.ielts-test-shell ::-webkit-scrollbar-thumb {
+  border-radius: 0;
+  background: #707070;
+}
+
+.ielts-test-topbar {
+  z-index: 40;
+  display: flex;
+  min-height: 63px;
+  width: 100%;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #e9bec2;
+  padding: 10px 24px 10px 16px;
+  color: #000000;
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.ielts-candidate-clock {
+  display: flex;
+  min-width: 144px;
+  height: 42px;
+  flex-direction: column;
+  justify-content: center;
+  margin-left: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ielts-candidate-clock strong {
+  font-size: 15px;
+  line-height: 19px;
+}
+
+.ielts-candidate-clock span {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ielts-timer {
+  display: block;
+}
+
+.ielts-timer-precise {
+  display: none;
+}
+
+.ielts-timer:hover .ielts-timer-rounded,
+.ielts-timer:focus-within .ielts-timer-rounded {
+  display: none;
+}
+
+.ielts-timer:hover .ielts-timer-precise,
+.ielts-timer:focus-within .ielts-timer-precise {
+  display: inline;
+}
+
+.diagnostic-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border: 1px solid #e5e5e2;
+  border-radius: 28px;
+  background: #ffffff;
+  padding: 2rem;
+  box-shadow: 0 20px 45px -35px rgb(0 0 0 / 35%);
+}
+
+.diagnostic-score-ring {
+  display: block;
+  width: 160px;
+  height: 160px;
+  margin-inline: auto;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+}
+
+.diagnostic-score-track,
+.diagnostic-score-progress {
+  fill: none;
+  stroke-width: 18;
+}
+
+.diagnostic-score-track {
+  stroke: #dedede;
+}
+
+.diagnostic-score-progress {
+  stroke: #c10037;
+  transform: rotate(-90deg);
+  transform-origin: 80px 80px;
+}
+
+.diagnostic-score-value,
+.diagnostic-score-total {
+  text-anchor: middle;
+}
+
+.diagnostic-score-value {
+  dominant-baseline: middle;
+  fill: #212529;
+  font-family: inherit;
+  font-size: 40px;
+  font-weight: 800;
+}
+
+.diagnostic-score-total {
+  fill: #54585a;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.diagnostic-skill-row {
+  display: flex;
+  min-height: 68px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid #e5e5e2;
+  border-radius: 18px;
+  background: #ffffff;
+  padding: 0.8rem 1.25rem;
+  box-shadow: 0 10px 24px -24px rgb(0 0 0 / 35%);
+  font-size: 1.25rem;
+}
+
+.diagnostic-skill-row > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.diagnostic-skill-row span {
+  color: #54585a;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+@media (max-width: 639px) {
+  .diagnostic-summary-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .diagnostic-summary-card > div:last-child {
+    align-self: center;
+  }
+
+  .diagnostic-skill-row {
+    align-items: flex-start;
+    font-size: 1rem;
+  }
+}
+
+.ielts-audio-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ielts-finish-button {
+  min-width: 99px;
+  height: 30px;
+  border: 1px solid #000000;
+  border-radius: 3px;
+  background: #ffffff;
+  padding: 0 14px;
+  color: #000000;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ielts-finish-button:hover,
+.ielts-finish-button:focus-visible {
+  background: #f3f3f3;
+}
+
+.ielts-header-icon-button {
+  display: inline-flex;
+  height: 32px;
+  width: 32px;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+}
+
+.ielts-header-icon-button:hover,
+.ielts-header-icon-button:focus-visible {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.ielts-test-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 60;
+  width: 170px;
+  border: 1px solid #707070;
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+  color: #000000;
+}
+
+.ielts-test-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.ielts-test-menu button:hover,
+.ielts-test-menu button:focus-visible {
+  background: #eeeeee;
+}
+
+.ielts-test-area {
+  padding: 16px 48px;
+}
+
+.ielts-part-header {
+  min-height: 94px;
+  flex-shrink: 0;
+  border: 1px solid #707070;
+  border-radius: 5px;
+  background: #f7f7f7;
+  padding: 10px 15px;
+  color: #212529;
+}
+
+.ielts-part-header h1 {
+  margin: 0 0 5px;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 33.6px;
+}
+
+.ielts-part-instructions,
+.ielts-part-instructions p {
+  margin: 0;
+}
+
+.ielts-question-scroll {
+  padding-top: 8px;
+}
+
+.ielts-test-shell .mock-question-html p {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+}
+
+.mock-split-resizer::after {
+  position: absolute;
+  inset: 0 -6px;
+  z-index: 2;
+  content: "";
+}
+
+.ielts-question-navigation {
+  z-index: 40;
+  height: 54px;
+  width: 100%;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 1px solid #d0d0d0;
+  background: #ffffff;
+  color: #212529;
+  scrollbar-width: none;
+}
+
+.ielts-mobile-question-navigation {
+  display: none;
+}
+
+.ielts-question-navigation::-webkit-scrollbar {
+  display: none;
+}
+
+.ielts-question-navigation nav {
+  width: 100%;
+}
+
+.ielts-footer-part {
+  position: relative;
+  display: flex;
+  min-width: 220px;
+  flex: 1 1 240px;
+  align-items: center;
+  gap: 14px;
+  border-top: 3px solid #e2dfdf;
+  padding: 0 18px;
+}
+
+.ielts-footer-part::before {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: var(--part-progress, 0%);
+  height: 3px;
+  background: #aebe36;
+  content: "";
+  transition: width 180ms ease-out;
+}
+
+.ielts-footer-part.is-active {
+  min-width: 440px;
+  flex: 2 1 440px;
+}
+
+.ielts-footer-part.has-answers {
+  border-top-color: #e2dfdf;
+}
+
+.ielts-footer-part-title {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.ielts-footer-part.is-active .ielts-footer-part-title {
+  font-weight: 700;
+}
+
+.ielts-footer-progress {
+  color: #54585a;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.ielts-footer-questions {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  padding: 5px 0;
+}
+
+.ielts-footer-question {
+  display: inline-flex;
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: #ffffff;
+  color: #212529;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.ielts-footer-question.is-current {
+  border: 2px solid #007fa3;
+  border-radius: 4px;
+}
+
+.ielts-footer-question.is-answered {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.ielts-footer-question.is-marked {
+  border-color: #212529;
+  border-radius: 50%;
+}
+
+.ielts-footer-question.is-marked.is-current {
+  border-color: #007fa3;
+}
+
+.ielts-test-arrows {
+  position: absolute;
+  right: 48px;
+  bottom: 70px;
+  z-index: 45;
+  display: flex;
+  gap: 8px;
+}
+
+.ielts-test-arrows button {
+  display: flex;
+  width: 60px;
+  height: 60px;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+  color: #ffffff;
+}
+
+.ielts-test-arrows button:disabled {
+  cursor: not-allowed;
+  background: #54585a;
+}
+
+.ielts-review-control {
+  position: absolute;
+  bottom: 80px;
+  left: 48px;
+  z-index: 45;
+}
+
+.ielts-review-control button {
+  min-width: 86px;
+  height: 40px;
+  border: 1px solid #707070;
+  background: #ffffff;
+  padding: 0 12px;
+  color: #212529;
+  font-weight: 700;
+}
+
+.ielts-review-control button[aria-pressed="true"] {
+  border-radius: 20px;
+}
+
+.ielts-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1rem;
+}
+
+.ielts-modal-card {
+  width: 100%;
+  border: 1px solid #707070;
+  background: #ffffff;
+  padding: 24px;
+  color: #212529;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+}
+
+.ielts-primary-button,
+.ielts-secondary-button {
+  min-height: 40px;
+  border: 1px solid #000000;
+  padding: 8px 18px;
+  font-weight: 700;
+}
+
+.ielts-primary-button {
+  background: #000000;
+  color: #ffffff;
+}
+
+.ielts-secondary-button {
+  background: #ffffff;
+  color: #000000;
+}
+
+.ielts-test-shell[data-color-scheme="yellow-black"] main,
+.ielts-test-shell[data-color-scheme="yellow-black"] .ielts-test-area,
+.ielts-test-shell[data-color-scheme="yellow-black"] .mock-split-primary,
+.ielts-test-shell[data-color-scheme="yellow-black"] .mock-split-secondary,
+.ielts-test-shell[data-color-scheme="yellow-black"] section {
+  background: #000000;
+  color: #ffeb3b;
+}
+
+.ielts-test-shell[data-color-scheme="yellow-black"] .ielts-part-header {
+  border-color: #ffeb3b;
+  background: #000000;
+  color: #ffeb3b;
+}
+
+.ielts-test-shell[data-color-scheme="white-blue"] main,
+.ielts-test-shell[data-color-scheme="white-blue"] .ielts-test-area,
+.ielts-test-shell[data-color-scheme="white-blue"] .mock-split-primary,
+.ielts-test-shell[data-color-scheme="white-blue"] .mock-split-secondary,
+.ielts-test-shell[data-color-scheme="white-blue"] section {
+  background: #002f6c;
+  color: #ffffff;
+}
+
+.ielts-test-shell[data-color-scheme="white-blue"] .ielts-part-header {
+  border-color: #ffffff;
+  background: #002f6c;
+  color: #ffffff;
+}
+
+@media (max-width: 767px) {
+  .ielts-test-topbar {
+    min-height: 70px;
+    padding: 8px 10px;
+  }
+
+  .ielts-candidate-clock {
+    min-width: 105px;
+    margin-left: 0;
+  }
+
+  .ielts-candidate-clock strong {
+    font-size: 13px;
+  }
+
+  .ielts-candidate-clock span {
+    font-size: 12px;
+  }
+
+  .ielts-audio-status span {
+    display: none;
+  }
+
+  .ielts-finish-button {
+    min-width: 66px;
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .ielts-test-area {
+    padding: 10px 12px;
+  }
+
+  .ielts-part-header {
+    min-height: 82px;
+    box-sizing: border-box;
+    border-width: 2px;
+  }
+
+  .ielts-part-header h1 {
+    font-size: 23px;
+    line-height: 29px;
+  }
+
+  .ielts-test-arrows {
+    right: 8px;
+    bottom: 58px;
+  }
+
+  .ielts-test-arrows button {
+    width: 48px;
+    height: 48px;
+  }
+
+  .ielts-review-control {
+    left: 8px;
+    bottom: 62px;
+  }
+
+  .ielts-review-control button {
+    height: 36px;
+    min-width: 72px;
+    font-size: 13px;
+  }
+
+  .ielts-question-navigation {
+    display: none;
+  }
+
+  .ielts-mobile-question-navigation {
+    z-index: 40;
+    display: flex;
+    height: 54px;
+    width: 100%;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid #b8b8b8;
+    background: #ffffff;
+    padding: 5px 8px;
+    color: #212529;
+  }
+
+  .ielts-mobile-part-select {
+    width: 76px;
+    height: 34px;
+    flex: 0 0 76px;
+    border: 1px solid #707070;
+    border-radius: 3px;
+    background: #ffffff;
+    padding: 0 4px;
+    color: #111111;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .ielts-mobile-footer-questions {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    gap: 3px;
+    overflow-x: auto;
+    padding: 2px 0;
+    scrollbar-width: thin;
+  }
+
+  .ielts-mobile-footer-questions .ielts-footer-question {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+  }
+
+  .ielts-notes-sidebar {
+    top: 70px;
+  }
+
+  .mock-split-root {
+    min-height: 0;
+  }
+
+  [data-question-scroll-pane='true'] > .space-y-4,
+  .ielts-question-scroll > .space-y-4 {
+    padding-bottom: 6rem;
+  }
+}

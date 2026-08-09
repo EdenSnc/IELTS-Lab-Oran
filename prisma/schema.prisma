@@ -1,0 +1,1232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["app_private"]
+}
+
+// All application tables live in app_private. The browser must not query them
+// through the Supabase Data API; Next.js/Prisma is the authorization boundary.
+
+// -----------------------------------------------------------------------------
+// CRM
+// -----------------------------------------------------------------------------
+
+enum LeadStatus {
+  NEW
+  CONTACTED_VIA_WA
+  IN_CONVERSATION
+  CONVERTED
+  DEAD_LEAD
+
+  @@schema("app_private")
+}
+
+enum LeadSource {
+  cohort_waitlist
+  workshop
+  diagnostic_qualified
+  diagnostic_below_threshold
+  lead_magnet_pdf
+  tally_intake
+  referral
+  partner
+  unknown
+
+  @@schema("app_private")
+}
+
+model Prospect {
+  id        String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  phone     String     @unique
+  name      String?
+  email     String?
+  status    LeadStatus @default(NEW)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  downloads LeadMagnetDownload[]
+  inquiries Inquiry[]
+  notes     SalesNote[]
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@schema("app_private")
+}
+
+model LeadMagnetDownload {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prospectId      String     @db.Uuid
+  magnetName      String
+  source          LeadSource @default(unknown)
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  externalEventId String?    @unique
+  ipAddress       String?
+  createdAt       DateTime   @default(now())
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId, createdAt])
+  @@index([source, createdAt])
+  @@schema("app_private")
+}
+
+model Inquiry {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prospectId String   @db.Uuid
+  message    String   @db.Text
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId, createdAt])
+  @@index([isRead, createdAt])
+  @@schema("app_private")
+}
+
+model SalesNote {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  prospectId String   @db.Uuid
+  authorId   String   @db.Uuid
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([prospectId, createdAt])
+  @@index([authorId, createdAt])
+  @@schema("app_private")
+}
+
+// -----------------------------------------------------------------------------
+// USERS, CONSENT, AND PLATFORM ACCESS
+// -----------------------------------------------------------------------------
+
+enum Role {
+  STUDENT
+  TEACHER
+  CONTENT_REVIEWER
+  ADMIN
+
+  @@schema("app_private")
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  ANONYMIZED
+
+  @@schema("app_private")
+}
+
+enum AccessSessionState {
+  ACTIVE
+  REVOKED
+  EXPIRED
+
+  @@schema("app_private")
+}
+
+enum ConsentType {
+  TERMS
+  PRIVACY
+  RECORDING
+  AI_ASSISTED_GRADING
+  MARKETING
+
+  @@schema("app_private")
+}
+
+enum ConsentAction {
+  ACCEPTED
+  WITHDRAWN
+
+  @@schema("app_private")
+}
+
+model User {
+  id           String        @id @db.Uuid // Matches Supabase auth.users.id.
+  email        String?       @unique
+  name         String?
+  whatsapp     String?       @unique
+  role         Role          @default(STUDENT)
+  status       AccountStatus @default(ACTIVE)
+  anonymizedAt DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  accessSessions     AccessSession[]
+  consents           ConsentRecord[]
+  attempts           AssessmentAttempt[]
+  orders             Order[]
+  entitlements       Entitlement[]
+  salesNotes         SalesNote[]
+  verifiedAnswerKeys AnswerKey[]         @relation("AnswerKeyVerifier")
+  resolvedIssues     ExtractionIssue[]
+
+  @@index([status, role])
+  @@schema("app_private")
+}
+
+model AccessSession {
+  id                    String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String             @db.Uuid
+  authSessionId         String             @unique @db.Uuid
+  deviceFingerprintHash String
+  ipHash                String?
+  countryCode           String             @db.Char(2)
+  state                 AccessSessionState @default(ACTIVE)
+  startedAt             DateTime           @default(now())
+  lastSeenAt            DateTime           @default(now())
+  revokedAt             DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, state, lastSeenAt])
+  @@index([lastSeenAt])
+  @@schema("app_private")
+}
+
+model ConsentRecord {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String        @db.Uuid
+  type          ConsentType
+  action        ConsentAction
+  policyVersion String
+  acceptedFrom  String?
+  createdAt     DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+  @@schema("app_private")
+}
+
+// -----------------------------------------------------------------------------
+// CONTENT IMPORT AUDIT
+// -----------------------------------------------------------------------------
+
+enum SourceProvider {
+  OTHER
+
+  @@schema("app_private")
+}
+
+enum ArtifactKind {
+  HTML
+  CSS
+  JAVASCRIPT
+  JSON
+  PDF
+  AUDIO
+  IMAGE
+  VIDEO
+  OTHER
+
+  @@schema("app_private")
+}
+
+enum ImportStatus {
+  RUNNING
+  COMPLETED
+  COMPLETED_WITH_WARNINGS
+  FAILED
+
+  @@schema("app_private")
+}
+
+enum IssueSeverity {
+  INFO
+  WARNING
+  ERROR
+  BLOCKING
+
+  @@schema("app_private")
+}
+
+model ContentSource {
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider        SourceProvider
+  externalId      String?
+  name            String
+  sourceUrl       String?
+  sourceYear      Int?
+  rightsReference String?
+  notes           String?        @db.Text
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  artifacts SourceArtifact[]
+  tests     Test[]
+
+  @@unique([provider, externalId])
+  @@index([provider, sourceYear])
+  @@schema("app_private")
+}
+
+model SourceArtifact {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId     String       @db.Uuid
+  kind         ArtifactKind
+  filename     String
+  originalPath String?
+  storageKey   String?
+  mimeType     String?
+  byteSize     BigInt?
+  checksum     String
+  metadata     Json?
+  capturedAt   DateTime?
+  createdAt    DateTime     @default(now())
+
+  source           ContentSource     @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  assets           ContentAsset[]
+  answerKeys       AnswerKey[]
+  importBatches    ImportBatch[]
+  extractionIssues ExtractionIssue[]
+
+  @@unique([sourceId, checksum])
+  @@index([sourceId, kind])
+  @@schema("app_private")
+}
+
+model ImportBatch {
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceArtifactId String       @db.Uuid
+  extractorName    String
+  extractorVersion String
+  inputChecksum    String
+  status           ImportStatus @default(RUNNING)
+  statistics       Json?
+  errorSummary     String?      @db.Text
+  startedAt        DateTime     @default(now())
+  completedAt      DateTime?
+
+  sourceArtifact SourceArtifact @relation(fields: [sourceArtifactId], references: [id], onDelete: Restrict)
+
+  @@unique([sourceArtifactId, extractorName, extractorVersion, inputChecksum])
+  @@index([status, startedAt])
+  @@schema("app_private")
+}
+
+model ExtractionIssue {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceArtifactId String        @db.Uuid
+  entityKey        String?
+  code             String
+  severity         IssueSeverity
+  details          Json?
+  resolvedAt       DateTime?
+  resolvedById     String?       @db.Uuid
+  createdAt        DateTime      @default(now())
+
+  sourceArtifact SourceArtifact @relation(fields: [sourceArtifactId], references: [id], onDelete: Cascade)
+  resolvedBy     User?          @relation(fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([sourceArtifactId, severity, resolvedAt])
+  @@index([resolvedById])
+  @@index([code])
+  @@schema("app_private")
+}
+
+// -----------------------------------------------------------------------------
+// VERSIONED IELTS CONTENT
+// -----------------------------------------------------------------------------
+
+enum TestVariant {
+  ACADEMIC
+  GENERAL_TRAINING
+  UNIVERSAL
+
+  @@schema("app_private")
+}
+
+enum Skill {
+  LISTENING
+  READING
+  WRITING
+  SPEAKING
+
+  @@schema("app_private")
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  RETIRED
+
+  @@schema("app_private")
+}
+
+enum ReviewStatus {
+  AUTO_EXTRACTED
+  PENDING_REVIEW
+  VERIFIED
+
+  @@schema("app_private")
+}
+
+enum PartSlot {
+  LISTENING_PART_1
+  LISTENING_PART_2
+  LISTENING_PART_3
+  LISTENING_PART_4
+  READING_SECTION_1
+  READING_SECTION_2
+  READING_SECTION_3
+  WRITING_TASK_1
+  WRITING_TASK_2
+  SPEAKING_PART_1
+  SPEAKING_PART_2
+  SPEAKING_PART_3
+
+  @@schema("app_private")
+}
+
+enum StimulusType {
+  READING_PASSAGE
+  AUDIO_TRACK
+  WRITING_PROMPT
+  SPEAKING_PROMPT
+  SHARED_CONTEXT
+  INSTRUCTION
+
+  @@schema("app_private")
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  MATCHING
+  MATCHING_INFORMATION
+  MATCHING_HEADINGS
+  MATCHING_FEATURES
+  MATCHING_SENTENCE_ENDINGS
+  IDENTIFYING_INFORMATION
+  IDENTIFYING_WRITER_VIEWS
+  SENTENCE_COMPLETION
+  SUMMARY_COMPLETION
+  NOTE_COMPLETION
+  TABLE_COMPLETION
+  FLOWCHART_COMPLETION
+  DIAGRAM_LABEL_COMPLETION
+  PLAN_MAP_DIAGRAM_LABELING
+  FORM_COMPLETION
+  SHORT_ANSWER
+  UNCLASSIFIED_GAP_FILL
+  WRITING_TASK_1_ACADEMIC
+  WRITING_TASK_1_GENERAL
+  WRITING_TASK_2_ESSAY
+  SPEAKING_PART_1_INTERVIEW
+  SPEAKING_PART_2_LONG_TURN
+  SPEAKING_PART_3_DISCUSSION
+
+  @@schema("app_private")
+}
+
+enum ResponseKind {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  SHORT_TEXT
+  LONG_TEXT
+  DRAG_DROP
+  AUDIO_RECORDING
+  NONE
+
+  @@schema("app_private")
+}
+
+enum ScoringStrategy {
+  PER_ITEM_EXACT
+  UNORDERED_EXACT_SET
+  RUBRIC
+  NOT_SCORED
+
+  @@schema("app_private")
+}
+
+enum AnswerKeySource {
+  OFFICIAL_KEY
+  SOURCE_RESPONSE_DECLARATION
+  HUMAN_VERIFIED
+  INFERRED
+
+  @@schema("app_private")
+}
+
+enum ContentAssetType {
+  BAR_CHART
+  LINE_GRAPH
+  PIE_CHART
+  TABLE
+  FLOWCHART
+  PROCESS_DIAGRAM
+  MAP
+  PLAN
+  DIAGRAM
+  PHOTO
+  AUDIO
+  OTHER
+
+  @@schema("app_private")
+}
+
+enum QuestionAssetRole {
+  PROMPT
+  INLINE
+  OPTION_BANK
+  DROP_TARGET
+  SUPPORTING
+
+  @@schema("app_private")
+}
+
+model Test {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId   String      @db.Uuid
+  externalId String?
+  title      String
+  variant    TestVariant
+  sourceYear Int?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  source   ContentSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  versions TestVersion[]
+
+  @@unique([sourceId, externalId])
+  @@index([variant, sourceYear])
+  @@schema("app_private")
+}
+
+model TestVersion {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  testId      String            @db.Uuid
+  version     Int
+  status      PublicationStatus @default(DRAFT)
+  contentHash String?
+  notes       String?           @db.Text
+  publishedAt DateTime?
+  retiredAt   DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  test     Test          @relation(fields: [testId], references: [id], onDelete: Restrict)
+  sections TestSection[]
+
+  @@unique([testId, version])
+  @@unique([testId, contentHash])
+  @@index([status, publishedAt])
+  @@schema("app_private")
+}
+
+model TestSection {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  testVersionId    String   @db.Uuid
+  skill            Skill
+  displayOrder     Int
+  timeLimitSeconds Int?
+  createdAt        DateTime @default(now())
+
+  testVersion TestVersion @relation(fields: [testVersionId], references: [id], onDelete: Cascade)
+  parts       TestPart[]
+
+  @@unique([testVersionId, skill])
+  @@unique([testVersionId, displayOrder])
+  @@index([skill])
+  @@schema("app_private")
+}
+
+model TestPart {
+  id                     String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  testSectionId          String       @db.Uuid
+  sourceKey              String
+  slot                   PartSlot
+  selectionGroupKey      String?
+  title                  String?
+  instructionsHtml       String?      @db.Text
+  recommendedTimeSeconds Int?
+  preparationTimeSeconds Int?
+  responseTimeSeconds    Int?
+  difficultyBand         Decimal?     @db.Decimal(2, 1)
+  sourceLocator          String?
+  extractionMetadata     Json?
+  reviewStatus           ReviewStatus @default(AUTO_EXTRACTED)
+  shuffleQuestionGroups  Boolean      @default(false)
+  createdAt              DateTime     @default(now())
+
+  testSection    TestSection     @relation(fields: [testSectionId], references: [id], onDelete: Cascade)
+  stimuli        Stimulus[]
+  questionGroups QuestionGroup[]
+
+  @@unique([testSectionId, sourceKey])
+  @@unique([testSectionId, slot])
+  @@index([slot, reviewStatus])
+  @@index([testSectionId, selectionGroupKey])
+  @@schema("app_private")
+}
+
+model Stimulus {
+  id                 String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  testPartId         String       @db.Uuid
+  assetId            String?      @db.Uuid
+  sourceKey          String
+  type               StimulusType
+  displayOrder       Int
+  title              String?
+  bodyHtml           String?      @db.Text
+  plainText          String?      @db.Text
+  transcript         String?      @db.Text
+  audioStartMs       Int?
+  audioEndMs         Int?
+  isVisibleToLearner Boolean      @default(true)
+  reviewStatus       ReviewStatus @default(AUTO_EXTRACTED)
+  createdAt          DateTime     @default(now())
+
+  testPart TestPart      @relation(fields: [testPartId], references: [id], onDelete: Cascade)
+  asset    ContentAsset? @relation(fields: [assetId], references: [id], onDelete: Restrict)
+
+  @@unique([testPartId, sourceKey])
+  @@unique([testPartId, displayOrder])
+  @@index([assetId])
+  @@index([reviewStatus])
+  @@schema("app_private")
+}
+
+model ContentAsset {
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceArtifactId String?          @db.Uuid
+  type             ContentAssetType
+  storageKey       String           @unique
+  checksum         String
+  mimeType         String
+  byteSize         BigInt?
+  width            Int?
+  height           Int?
+  durationMs       Int?
+  altText          String?
+  metadata         Json?
+  reviewStatus     ReviewStatus     @default(AUTO_EXTRACTED)
+  createdAt        DateTime         @default(now())
+
+  sourceArtifact SourceArtifact? @relation(fields: [sourceArtifactId], references: [id], onDelete: Restrict)
+  stimuli        Stimulus[]
+  questionLinks  QuestionAsset[]
+
+  @@index([sourceArtifactId])
+  @@index([type, reviewStatus])
+  @@schema("app_private")
+}
+
+model QuestionGroup {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  testPartId           String          @db.Uuid
+  sourceKey            String
+  displayOrder         Int
+  questionType         QuestionType
+  responseKind         ResponseKind
+  scoringStrategy      ScoringStrategy
+  sourceNumberStart    Int?
+  sourceNumberEnd      Int?
+  instructionsHtml     String?         @db.Text
+  promptHtml           String?         @db.Text
+  options              Json?
+  maxMarks             Int
+  minWordCount         Int?
+  maxWords             Int?
+  allowNumbers         Boolean?
+  rawAnswerInstruction String?
+  independent          Boolean         @default(false)
+  shuffleQuestions     Boolean         @default(false)
+  shuffleOptions       Boolean         @default(false)
+  dependencyKey        String?
+  reviewStatus         ReviewStatus    @default(AUTO_EXTRACTED)
+  createdAt            DateTime        @default(now())
+
+  testPart   TestPart        @relation(fields: [testPartId], references: [id], onDelete: Cascade)
+  questions  Question[]
+  answerKey  AnswerKey?
+  assetLinks QuestionAsset[]
+
+  @@unique([testPartId, sourceKey])
+  @@unique([testPartId, displayOrder])
+  @@index([questionType, reviewStatus])
+  @@index([dependencyKey])
+  @@schema("app_private")
+}
+
+model Question {
+  id                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionGroupId      String        @db.Uuid
+  stableKey            String
+  sourceNumber         Int?
+  displayOrder         Int
+  promptHtml           String?       @db.Text
+  responseKindOverride ResponseKind?
+  maxMarks             Int           @default(1)
+  metadata             Json?
+  createdAt            DateTime      @default(now())
+
+  questionGroup    QuestionGroup     @relation(fields: [questionGroupId], references: [id], onDelete: Cascade)
+  attemptQuestions AttemptQuestion[]
+
+  @@unique([questionGroupId, stableKey])
+  @@unique([questionGroupId, displayOrder])
+  @@schema("app_private")
+}
+
+model AnswerKey {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionGroupId  String          @unique @db.Uuid
+  sourceArtifactId String?         @db.Uuid
+  encryptedPayload String          @db.Text
+  formatVersion    Int             @default(1)
+  sourceType       AnswerKeySource
+  normalization    Json?
+  reviewStatus     ReviewStatus    @default(PENDING_REVIEW)
+  verifiedById     String?         @db.Uuid
+  verifiedAt       DateTime?
+  sourceLocator    String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  questionGroup  QuestionGroup   @relation(fields: [questionGroupId], references: [id], onDelete: Cascade)
+  sourceArtifact SourceArtifact? @relation(fields: [sourceArtifactId], references: [id], onDelete: Restrict)
+  verifiedBy     User?           @relation("AnswerKeyVerifier", fields: [verifiedById], references: [id], onDelete: Restrict)
+
+  @@index([reviewStatus])
+  @@index([sourceArtifactId])
+  @@index([verifiedById])
+  @@schema("app_private")
+}
+
+model QuestionAsset {
+  questionGroupId String            @db.Uuid
+  assetId         String            @db.Uuid
+  role            QuestionAssetRole
+  displayOrder    Int               @default(0)
+  structuredData  Json?
+
+  questionGroup QuestionGroup @relation(fields: [questionGroupId], references: [id], onDelete: Cascade)
+  asset         ContentAsset  @relation(fields: [assetId], references: [id], onDelete: Restrict)
+
+  @@id([questionGroupId, assetId, role])
+  @@index([assetId])
+  @@schema("app_private")
+}
+
+// -----------------------------------------------------------------------------
+// RANDOMISED TEST BLUEPRINTS AND IMMUTABLE ATTEMPT MANIFESTS
+// -----------------------------------------------------------------------------
+
+enum BlueprintSelectionMode {
+  WHOLE_PART
+  INDEPENDENT_QUESTION_GROUPS
+
+  @@schema("app_private")
+}
+
+enum AttemptState {
+  DRAFT
+  ACTIVE
+  SUBMITTED
+  GRADING
+  COMPLETED
+  ABANDONED
+  EXPIRED
+
+  @@schema("app_private")
+}
+
+model TestBlueprint {
+  id                       String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code                     String
+  version                  Int
+  name                     String
+  variant                  TestVariant
+  status                   PublicationStatus @default(DRAFT)
+  defaultMinimumSourceYear Int?
+  allowArchiveByDefault    Boolean           @default(false)
+  createdAt                DateTime          @default(now())
+  publishedAt              DateTime?
+
+  slots    BlueprintSlot[]
+  attempts AssessmentAttempt[]
+  products ProductBlueprint[]
+
+  @@unique([code, version])
+  @@index([status, variant])
+  @@schema("app_private")
+}
+
+model BlueprintSlot {
+  id            String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  blueprintId   String                 @db.Uuid
+  partSlot      PartSlot
+  displayOrder  Int
+  requiredCount Int                    @default(1)
+  selectionMode BlueprintSelectionMode @default(WHOLE_PART)
+  scoreWeight   Decimal                @default(1.0) @db.Decimal(5, 2)
+  targetMarks   Int?
+  minimumBand   Decimal?               @db.Decimal(2, 1)
+  maximumBand   Decimal?               @db.Decimal(2, 1)
+
+  blueprint TestBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Cascade)
+
+  @@unique([blueprintId, partSlot])
+  @@unique([blueprintId, displayOrder])
+  @@schema("app_private")
+}
+
+model AssessmentAttempt {
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String       @db.Uuid
+  blueprintId       String       @db.Uuid
+  entitlementId     String?      @db.Uuid
+  state             AttemptState @default(DRAFT)
+  randomSeed        String
+  minimumSourceYear Int?
+  archiveIncluded   Boolean      @default(false)
+  startedAt         DateTime?
+  submittedAt       DateTime?
+  expiresAt         DateTime?
+  completedAt       DateTime?
+  overallBand       Decimal?     @db.Decimal(2, 1)
+  version           Int          @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  blueprint   TestBlueprint       @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
+  entitlement Entitlement?        @relation(fields: [entitlementId], references: [id], onDelete: Restrict)
+  questions   AttemptQuestion[]
+  gradingRuns GradingRun[]
+  skillScores AttemptSkillScore[]
+  manifest    AttemptManifest?
+  report      LearnerReport?
+
+  @@index([userId, state, createdAt])
+  @@index([blueprintId])
+  @@index([expiresAt])
+  @@index([entitlementId])
+  @@schema("app_private")
+}
+
+model AttemptManifest {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId     String   @unique @db.Uuid
+  schemaVersion Int
+  contentHash   String
+  payload       Json
+  compiledAt    DateTime @default(now())
+
+  attempt AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([contentHash])
+  @@schema("app_private")
+}
+
+model AttemptQuestion {
+  id               String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId        String @db.Uuid
+  questionId       String @db.Uuid
+  skill            Skill
+  partOrder        Int
+  groupOrder       Int
+  questionOrder    Int
+  questionNumber   Int?
+  maxMarksSnapshot Int
+  presentedOptions Json?
+
+  attempt         AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question        Question          @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  response        Response?
+  criterionScores CriterionScore[]
+
+  @@unique([attemptId, questionId])
+  @@unique([attemptId, skill, questionNumber])
+  @@unique([attemptId, partOrder, groupOrder, questionOrder])
+  @@index([questionId])
+  @@schema("app_private")
+}
+
+model Response {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptQuestionId   String    @unique @db.Uuid
+  answer              Json
+  markedForReview     Boolean   @default(false)
+  isCorrect           Boolean?
+  marksAwarded        Decimal?  @db.Decimal(5, 2)
+  recordingStorageKey String?
+  recordingExpiresAt  DateTime?
+  recordingDeletedAt  DateTime?
+  savedAt             DateTime  @default(now())
+  finalizedAt         DateTime?
+  gradedAt            DateTime?
+  version             Int       @default(0)
+  updatedAt           DateTime  @updatedAt
+
+  attemptQuestion AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+
+  @@schema("app_private")
+}
+
+// -----------------------------------------------------------------------------
+// VERSIONED SCORING, WRITING/SPEAKING GRADING, AND REPORTS
+// -----------------------------------------------------------------------------
+
+enum GraderKind {
+  OBJECTIVE_ENGINE
+  AI
+  HUMAN
+
+  @@schema("app_private")
+}
+
+enum GradingRunStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SUPERSEDED
+
+  @@schema("app_private")
+}
+
+enum ReportStatus {
+  QUEUED
+  GENERATING
+  READY
+  FAILED
+
+  @@schema("app_private")
+}
+
+model RubricVersion {
+  id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code        String
+  version     Int
+  skill       Skill
+  variant     TestVariant?
+  status      PublicationStatus @default(DRAFT)
+  sourceUrl   String?
+  publishedAt DateTime?
+  createdAt   DateTime          @default(now())
+
+  criteria    RubricCriterion[]
+  gradingRuns GradingRun[]
+
+  @@unique([code, version])
+  @@index([skill, status])
+  @@schema("app_private")
+}
+
+model RubricCriterion {
+  id              String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rubricVersionId String  @db.Uuid
+  code            String
+  name            String
+  weight          Decimal @db.Decimal(5, 4)
+  displayOrder    Int
+  description     String? @db.Text
+
+  rubricVersion   RubricVersion    @relation(fields: [rubricVersionId], references: [id], onDelete: Cascade)
+  criterionScores CriterionScore[]
+
+  @@unique([rubricVersionId, code])
+  @@unique([rubricVersionId, displayOrder])
+  @@schema("app_private")
+}
+
+model BandScale {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          String
+  version       Int
+  skill         Skill
+  variant       TestVariant
+  status        PublicationStatus @default(DRAFT)
+  thresholds    Json
+  sourceUrl     String?
+  effectiveFrom DateTime?
+  createdAt     DateTime          @default(now())
+
+  skillScores AttemptSkillScore[]
+
+  @@unique([code, version])
+  @@index([skill, variant, status])
+  @@schema("app_private")
+}
+
+model GradingRun {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId       String           @db.Uuid
+  rubricVersionId String?          @db.Uuid
+  skill           Skill
+  graderKind      GraderKind
+  status          GradingRunStatus @default(QUEUED)
+  provider        String?
+  model           String?
+  promptVersion   String?
+  idempotencyKey  String           @unique
+  inputHash       String
+  output          Json?
+  errorCode       String?
+  errorMessage    String?          @db.Text
+  isFinal         Boolean          @default(false)
+  leaseOwner      String?
+  leaseExpiresAt  DateTime?
+  runAttempt      Int              @default(0)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  finalizedAt     DateTime?
+  createdAt       DateTime         @default(now())
+
+  attempt         AssessmentAttempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  rubricVersion   RubricVersion?      @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict)
+  criterionScores CriterionScore[]
+  skillScores     AttemptSkillScore[]
+
+  @@index([attemptId, skill, status])
+  @@index([rubricVersionId])
+  @@index([status, leaseExpiresAt])
+  @@index([provider, model])
+  @@schema("app_private")
+}
+
+model CriterionScore {
+  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  gradingRunId      String  @db.Uuid
+  rubricCriterionId String  @db.Uuid
+  attemptQuestionId String  @db.Uuid
+  band              Decimal @db.Decimal(2, 1)
+  feedback          String? @db.Text
+  evidence          Json?
+
+  gradingRun      GradingRun      @relation(fields: [gradingRunId], references: [id], onDelete: Cascade)
+  rubricCriterion RubricCriterion @relation(fields: [rubricCriterionId], references: [id], onDelete: Restrict)
+  attemptQuestion AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+
+  @@unique([gradingRunId, rubricCriterionId, attemptQuestionId])
+  @@index([rubricCriterionId])
+  @@index([attemptQuestionId])
+  @@schema("app_private")
+}
+
+model AttemptSkillScore {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId       String   @db.Uuid
+  gradingRunId    String?  @db.Uuid
+  bandScaleId     String?  @db.Uuid
+  skill           Skill
+  rawScore        Int?
+  maximumRawScore Int?
+  band            Decimal  @db.Decimal(2, 1)
+  finalizedAt     DateTime @default(now())
+
+  attempt    AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  gradingRun GradingRun?       @relation(fields: [gradingRunId], references: [id], onDelete: Restrict)
+  bandScale  BandScale?        @relation(fields: [bandScaleId], references: [id], onDelete: Restrict)
+
+  @@unique([attemptId, skill])
+  @@index([gradingRunId])
+  @@index([bandScaleId])
+  @@schema("app_private")
+}
+
+model LearnerReport {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId       String       @unique @db.Uuid
+  status          ReportStatus @default(QUEUED)
+  templateVersion String
+  summary         Json?
+  storageKey      String?
+  errorMessage    String?      @db.Text
+  generatedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  attempt AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@schema("app_private")
+}
+
+// -----------------------------------------------------------------------------
+// PRODUCTS, CHARGILY/CASH PAYMENTS, AND ACCESS ENTITLEMENTS
+// -----------------------------------------------------------------------------
+
+enum ProductTier {
+  TIER_1_BASE
+  TIER_2_DIAGNOSTIC
+  TIER_3_COHORT
+  TIER_4
+
+  @@schema("app_private")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+
+  @@schema("app_private")
+}
+
+enum PaymentProvider {
+  CHARGILY
+  CASH
+  MANUAL
+
+  @@schema("app_private")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+
+  @@schema("app_private")
+}
+
+enum EntitlementStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  REVOKED
+
+  @@schema("app_private")
+}
+
+model Product {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code            String      @unique
+  tier            ProductTier
+  name            String
+  priceMinor      Int
+  currency        String      @default("DZD") @db.Char(3)
+  accessDays      Int?
+  maximumAttempts Int?
+  active          Boolean     @default(true)
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  orders       Order[]
+  entitlements Entitlement[]
+  blueprints   ProductBlueprint[]
+
+  @@index([tier, active])
+  @@schema("app_private")
+}
+
+model ProductBlueprint {
+  productId   String @db.Uuid
+  blueprintId String @db.Uuid
+
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  blueprint TestBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
+
+  @@id([productId, blueprintId])
+  @@index([blueprintId])
+  @@schema("app_private")
+}
+
+model Order {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String      @db.Uuid
+  productId      String      @db.Uuid
+  idempotencyKey String      @unique
+  status         OrderStatus @default(PENDING)
+  amountMinor    Int
+  currency       String      @default("DZD") @db.Char(3)
+  paidAt         DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product         Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
+  paymentAttempts PaymentAttempt[]
+  entitlements    Entitlement[]
+
+  @@index([userId, status, createdAt])
+  @@index([productId])
+  @@schema("app_private")
+}
+
+model PaymentAttempt {
+  id                    String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId               String          @db.Uuid
+  provider              PaymentProvider
+  providerCheckoutId    String?
+  providerTransactionId String?
+  status                PaymentStatus   @default(PENDING)
+  amountMinor           Int
+  currency              String          @default("DZD") @db.Char(3)
+  checkoutUrl           String?
+  failureCode           String?
+  failureMessage        String?         @db.Text
+  expiresAt             DateTime?
+  completedAt           DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  order  Order          @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  events PaymentEvent[]
+
+  @@unique([provider, providerCheckoutId])
+  @@unique([provider, providerTransactionId])
+  @@index([orderId, status])
+  @@index([provider, status, createdAt])
+  @@schema("app_private")
+}
+
+model PaymentEvent {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  paymentAttemptId String    @db.Uuid
+  providerEventId  String    @unique
+  eventType        String
+  payloadHash      String
+  processedAt      DateTime?
+  errorMessage     String?   @db.Text
+  receivedAt       DateTime  @default(now())
+
+  paymentAttempt PaymentAttempt @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
+
+  @@index([paymentAttemptId, receivedAt])
+  @@schema("app_private")
+}
+
+model Entitlement {
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String            @db.Uuid
+  productId       String            @db.Uuid
+  orderId         String?           @db.Uuid
+  status          EntitlementStatus @default(PENDING)
+  startsAt        DateTime?
+  endsAt          DateTime?
+  maximumAttempts Int?
+  attemptsUsed    Int               @default(0)
+  version         Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  user     User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product  Product             @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order    Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  attempts AssessmentAttempt[]
+
+  @@index([userId, status, endsAt])
+  @@index([productId])
+  @@index([orderId])
+  @@schema("app_private")
+}
