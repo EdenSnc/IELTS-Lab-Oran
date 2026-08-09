@@ -48,12 +48,6 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
           // Fullscreen is optional and may be denied by browser or device policy.
         });
       }
-      window.setTimeout(() => {
-        document.getElementById(`test-information-${sectionId}`)?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-        });
-      }, 50);
     }
   };
 

@@ -773,6 +773,7 @@ body {
 }
 
 .ielts-test-topbar {
+  position: relative;
   z-index: 40;
   display: flex;
   min-height: 63px;
@@ -788,19 +789,28 @@ body {
   line-height: 21px;
 }
 
-.ielts-candidate-clock {
+.ielts-header-left {
   display: flex;
-  min-width: 144px;
-  height: 42px;
-  flex-direction: column;
-  justify-content: center;
-  margin-left: 24px;
-  font-variant-numeric: tabular-nums;
+  min-width: 0;
+  align-items: center;
+  gap: 1.25rem;
 }
 
-.ielts-candidate-clock strong {
+.ielts-header-brand {
   font-size: 15px;
-  line-height: 19px;
+  white-space: nowrap;
+}
+
+.ielts-candidate-clock {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  min-width: max-content;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-50%);
+  font-variant-numeric: tabular-nums;
 }
 
 .ielts-candidate-clock span {
@@ -1266,12 +1276,7 @@ body {
   }
 
   .ielts-candidate-clock {
-    min-width: 105px;
-    margin-left: 0;
-  }
-
-  .ielts-candidate-clock strong {
-    font-size: 13px;
+    min-width: max-content;
   }
 
   .ielts-candidate-clock span {
@@ -1280,6 +1285,14 @@ body {
 
   .ielts-audio-status span {
     display: none;
+  }
+
+  .ielts-header-left {
+    gap: 0.4rem;
+  }
+
+  .ielts-header-brand {
+    font-size: 12px;
   }
 
   .ielts-finish-button {

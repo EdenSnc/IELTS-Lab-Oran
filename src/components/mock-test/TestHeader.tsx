@@ -120,24 +120,25 @@ export default function TestHeader() {
       )}
 
       <header className="ielts-test-topbar">
-        <div className="flex min-w-0 items-center gap-5">
-          <div className={`ielts-candidate-clock ${warningClass}`}>
-            <strong>IELTS Lab</strong>
-            <span
-              className="ielts-timer"
-              aria-label={`Time remaining: ${preciseMinutes} minutes and ${preciseSeconds} seconds`}
-              title={preciseLabel}
-            >
-              <span className="ielts-timer-rounded">{remainingLabel}</span>
-              <span className="ielts-timer-precise" aria-hidden="true">{preciseLabel}</span>
-            </span>
-          </div>
+        <div className="ielts-header-left">
+          <strong className="ielts-header-brand">IELTS Lab</strong>
           {activeSection === 'listening' && (
             <div className="ielts-audio-status" aria-live="polite">
               <SpeakerIcon />
               <span>Audio is playing</span>
             </div>
           )}
+        </div>
+
+        <div className={`ielts-candidate-clock ${warningClass}`}>
+          <span
+            className="ielts-timer"
+            aria-label={`Time remaining: ${preciseMinutes} minutes and ${preciseSeconds} seconds`}
+            title={preciseLabel}
+          >
+            <span className="ielts-timer-rounded">{remainingLabel}</span>
+            <span className="ielts-timer-precise" aria-hidden="true">{preciseLabel}</span>
+          </span>
         </div>
 
         <div className="flex shrink-0 items-center gap-3 sm:gap-5">
