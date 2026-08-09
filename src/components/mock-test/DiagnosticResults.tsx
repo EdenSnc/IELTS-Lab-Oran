@@ -77,8 +77,10 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
   const answers = useTestStore((state) => state.answers);
   const resetTest = useTestStore((state) => state.resetTest);
   const setTestPhase = useTestStore((state) => state.setTestPhase);
-  const [result, setResult] = useState<ObjectiveGradeResult | null>(null);
-  const [writingResult, setWritingResult] = useState<WritingGradeResult | null>(null);
+  const result = useTestStore((state) => state.objectiveGradeResult);
+  const writingResult = useTestStore((state) => state.writingGradeResult);
+  const setResult = useTestStore((state) => state.setObjectiveGradeResult);
+  const setWritingResult = useTestStore((state) => state.setWritingGradeResult);
   const [writingError, setWritingError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reportedAverage = result && writingResult
@@ -94,6 +96,7 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
   };
 
   useEffect(() => {
+    if (result?.testVersionId === test.id) return;
     let cancelled = false;
     const payload = {
       testVersionId: test.id,
@@ -122,9 +125,10 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
         );
       });
     return () => { cancelled = true; };
-  }, [answers.listening, answers.reading, test.id]);
+  }, [answers.listening, answers.reading, result?.testVersionId, setResult, test.id]);
 
   useEffect(() => {
+    if (writingResult?.testVersionId === test.id) return;
     let cancelled = false;
     const payload = {
       testVersionId: test.id,
@@ -151,7 +155,7 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
         if (!cancelled) setWritingError('Writing estimate unavailable');
       });
     return () => { cancelled = true; };
-  }, [answers.writing, test.id]);
+  }, [answers.writing, setWritingResult, test.id, writingResult?.testVersionId]);
 
   return (
     <main className="min-h-screen bg-white px-4 py-6 font-sans text-[#111111] sm:px-6 sm:py-10">

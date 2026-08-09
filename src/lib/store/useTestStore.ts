@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { ObjectiveGradeResult } from '@/lib/grading/objective-grading';
+import type { WritingGradeResult } from '@/lib/grading/writing-grading';
 
 export type IELTSSection = 'listening' | 'reading' | 'writing';
 export type TestAnswerMap = Record<IELTSSection, Record<number, string>>;
@@ -43,6 +45,8 @@ interface TestState {
   testPhase: 'instructions' | 'exam' | 'results';
   activeSection: IELTSSection | null;
   completedSections: Record<IELTSSection, boolean>;
+  objectiveGradeResult: ObjectiveGradeResult | null;
+  writingGradeResult: WritingGradeResult | null;
 
   setCurrentQuestion: (id: number) => void;
   setAnswer: (section: IELTSSection, id: number, answer: string) => void;
@@ -59,6 +63,8 @@ interface TestState {
   startSection: (section: IELTSSection, durationSeconds: number) => void;
   completeSection: (section: IELTSSection) => void;
   decrementTime: () => void;
+  setObjectiveGradeResult: (result: ObjectiveGradeResult | null) => void;
+  setWritingGradeResult: (result: WritingGradeResult | null) => void;
   resetTest: () => void;
 }
 
@@ -78,6 +84,8 @@ export const useTestStore = create<TestState>()(
       testPhase: 'instructions',
       activeSection: null,
       completedSections: { listening: false, reading: false, writing: false },
+      objectiveGradeResult: null,
+      writingGradeResult: null,
 
       setCurrentQuestion: (id) => set({ currentQuestionId: id }),
       setAnswer: (section, id, answer) => set((state) => ({
@@ -142,6 +150,8 @@ export const useTestStore = create<TestState>()(
       decrementTime: () => set((state) => ({ 
         timeLeft: Math.max(0, state.timeLeft - 1) 
       })),
+      setObjectiveGradeResult: (objectiveGradeResult) => set({ objectiveGradeResult }),
+      setWritingGradeResult: (writingGradeResult) => set({ writingGradeResult }),
       resetTest: () => set({
         currentQuestionId: 1,
         timeLeft: 3600,
@@ -152,6 +162,8 @@ export const useTestStore = create<TestState>()(
         testPhase: 'instructions',
         activeSection: null,
         completedSections: { listening: false, reading: false, writing: false },
+        objectiveGradeResult: null,
+        writingGradeResult: null,
         isHidden: false,
       }),
     }),
@@ -182,6 +194,8 @@ export const useTestStore = create<TestState>()(
         testPhase: state.testPhase,
         activeSection: state.activeSection,
         completedSections: state.completedSections,
+        objectiveGradeResult: state.objectiveGradeResult,
+        writingGradeResult: state.writingGradeResult,
       }),
     }
   )
