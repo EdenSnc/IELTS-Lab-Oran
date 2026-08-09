@@ -26,7 +26,10 @@ type HighlightRegistry = { set: (name: string, value: unknown) => void; delete: 
 type HighlightConstructor = new (...ranges: Range[]) => unknown;
 
 const HIGHLIGHT_NAME = 'ielts-user-highlight';
+const FALLBACK_LAYER_ID = 'ielts-highlight-fallback';
 const highlightRanges = new Map<string, Range[]>();
+let fallbackListenersReady = false;
+let fallbackFrame = 0;
 
 function ensureHighlightStyle() {
   if (document.getElementById('ielts-highlight-style')) return;
@@ -36,15 +39,66 @@ function ensureHighlightStyle() {
   document.head.appendChild(style);
 }
 
+function paintFallbackHighlights(ranges: Range[]) {
+  let layer = document.getElementById(FALLBACK_LAYER_ID);
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = FALLBACK_LAYER_ID;
+    layer.setAttribute('aria-hidden', 'true');
+    layer.style.cssText = 'position:fixed;inset:0;z-index:34;pointer-events:none;overflow:hidden';
+    document.body.appendChild(layer);
+  }
+  layer.replaceChildren();
+
+  for (const range of ranges) {
+    const ancestor = range.commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+      ? range.commonAncestorContainer as Element
+      : range.commonAncestorContainer.parentElement;
+    const clipElement = ancestor?.closest<HTMLElement>(
+      '[data-question-scroll-pane="true"],.mock-split-primary,.mock-split-secondary',
+    );
+    const clip = clipElement?.getBoundingClientRect();
+    for (const rect of Array.from(range.getClientRects())) {
+      const left = Math.max(0, clip?.left ?? 0, rect.left);
+      const top = Math.max(0, clip?.top ?? 0, rect.top);
+      const right = Math.min(window.innerWidth, clip?.right ?? window.innerWidth, rect.right);
+      const bottom = Math.min(window.innerHeight, clip?.bottom ?? window.innerHeight, rect.bottom);
+      if (right <= left || bottom <= top) continue;
+      const highlight = document.createElement('span');
+      highlight.style.cssText = `position:absolute;left:${left}px;top:${top}px;width:${right - left}px;height:${bottom - top}px;background:rgba(253,224,71,.82);mix-blend-mode:multiply`;
+      layer.appendChild(highlight);
+    }
+  }
+}
+
+function scheduleFallbackRepaint() {
+  if (fallbackFrame) return;
+  fallbackFrame = window.requestAnimationFrame(() => {
+    fallbackFrame = 0;
+    repaintHighlights();
+  });
+}
+
+function ensureFallbackListeners() {
+  if (fallbackListenersReady) return;
+  fallbackListenersReady = true;
+  window.addEventListener('scroll', scheduleFallbackRepaint, true);
+  window.addEventListener('resize', scheduleFallbackRepaint, { passive: true });
+}
+
 function repaintHighlights() {
   const registry = (CSS as unknown as { highlights?: HighlightRegistry }).highlights;
   const Highlight = (window as unknown as { Highlight?: HighlightConstructor }).Highlight;
-  if (!registry || !Highlight) return false;
-  ensureHighlightStyle();
   const ranges = Array.from(highlightRanges.values()).flat();
-  if (ranges.length) registry.set(HIGHLIGHT_NAME, new Highlight(...ranges));
-  else registry.delete(HIGHLIGHT_NAME);
-  return true;
+  if (registry && Highlight) {
+    document.getElementById(FALLBACK_LAYER_ID)?.remove();
+    ensureHighlightStyle();
+    if (ranges.length) registry.set(HIGHLIGHT_NAME, new Highlight(...ranges));
+    else registry.delete(HIGHLIGHT_NAME);
+    return;
+  }
+  ensureFallbackListeners();
+  paintFallbackHighlights(ranges);
 }
 
 function textOffset(container: Node, node: Node, offset: number) {
@@ -208,12 +262,15 @@ export function TextAnnotationMenu({ menu, onHighlight, onNote, onClear }: {
     event.preventDefault();
     callback();
   };
+  const keyboardAction = (callback: () => void) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (event.detail === 0) callback();
+  };
 
   return (
     <div className="text-annotation-menu fixed z-[65] min-w-40 rounded-sm border border-gray-300 bg-white py-1 text-sm shadow-lg" style={{ top: menu.y, left: menu.x }} role="menu" aria-label="Selected text actions">
-      <button type="button" onPointerDown={action(onHighlight)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">{menu.highlighted ? 'Remove highlight' : 'Highlight'}</button>
-      <button type="button" onPointerDown={action(onNote)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Add note</button>
-      <button type="button" onPointerDown={action(onClear)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Clear all</button>
+      <button type="button" onPointerDown={action(onHighlight)} onClick={keyboardAction(onHighlight)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">{menu.highlighted ? 'Remove highlight' : 'Highlight'}</button>
+      <button type="button" onPointerDown={action(onNote)} onClick={keyboardAction(onNote)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Add note</button>
+      <button type="button" onPointerDown={action(onClear)} onClick={keyboardAction(onClear)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Clear all</button>
     </div>
   );
 }

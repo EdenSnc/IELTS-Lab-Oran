@@ -19,6 +19,8 @@ export function getListeningAudio(source: string) {
     listeningPlayer?.pause();
     listeningPlayer = new Audio(absolute);
     listeningPlayer.preload = 'auto';
+    listeningPlayer.disableRemotePlayback = true;
+    listeningPlayer.setAttribute('controlsList', 'noremoteplayback nodownload');
     listeningSource = absolute;
   }
   return listeningPlayer;
