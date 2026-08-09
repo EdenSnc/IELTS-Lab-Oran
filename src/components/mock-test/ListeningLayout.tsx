@@ -5,7 +5,7 @@ import type { DeliverySection } from '@/lib/content/delivery-types';
 import { useTestStore } from '@/lib/store/useTestStore';
 import QuestionGroupRenderer from './QuestionGroupRenderer';
 import TestPartHeader from './TestPartHeader';
-import { getListeningAudio } from '@/lib/audio/listening-audio';
+import { getListeningAudio, stopListeningAudio } from '@/lib/audio/listening-audio';
 
 function partRange(part: DeliverySection['parts'][number]) {
   const numbers = part.questionGroups.flatMap((group) => (
@@ -111,6 +111,7 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
         }
         navigator.mediaSession.playbackState = 'none';
       }
+      stopListeningAudio();
     };
   }, [audio?.assetUrl]);
 

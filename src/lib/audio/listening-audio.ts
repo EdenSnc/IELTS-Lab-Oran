@@ -23,3 +23,10 @@ export function startListeningAudio(source: string) {
   player.load();
   return player.play();
 }
+
+export function stopListeningAudio() {
+  if (!listeningPlayer) return;
+  listeningPlayer.pause();
+  listeningPlayer.currentTime = 0;
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'none';
+}

@@ -8,6 +8,7 @@ type TouchDragDropOptions = {
   containerRef: RefObject<HTMLElement | null>;
   draggedLabelRef: RefObject<string | null>;
   onAssign: (number: number, label: string) => void;
+  onReturn: (number: number) => void;
 };
 
 /** Adds consistent mouse, touch and pen dragging without the browser's no-drop cursor. */
@@ -15,12 +16,15 @@ export function useTouchDragDrop({
   containerRef,
   draggedLabelRef,
   onAssign,
+  onReturn,
 }: TouchDragDropOptions) {
   const onAssignRef = useRef(onAssign);
+  const onReturnRef = useRef(onReturn);
 
   useEffect(() => {
     onAssignRef.current = onAssign;
-  }, [onAssign]);
+    onReturnRef.current = onReturn;
+  }, [onAssign, onReturn]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -29,6 +33,7 @@ export function useTouchDragDrop({
     let point: { x: number; y: number } | null = null;
     let source: HTMLElement | null = null;
     let label: string | null = null;
+    let sourceNumber: number | null = null;
     let active = false;
     let ghost: HTMLElement | null = null;
     let frame = 0;
@@ -68,6 +73,7 @@ export function useTouchDragDrop({
       point = null;
       source = null;
       label = null;
+      sourceNumber = null;
       active = false;
     };
 
@@ -80,6 +86,9 @@ export function useTouchDragDrop({
       event.preventDefault();
       source = candidate;
       label = candidate.dataset.answerLabel ?? null;
+      const sourceGap = candidate.closest<HTMLElement>('[data-answer-number]');
+      const parsedSourceNumber = Number(sourceGap?.dataset.answerNumber);
+      sourceNumber = Number.isInteger(parsedSourceNumber) ? parsedSourceNumber : null;
       start = { x: event.clientX, y: event.clientY };
       point = start;
     };
@@ -116,6 +125,7 @@ export function useTouchDragDrop({
         const target = targetAt(event.clientX, event.clientY);
         const number = Number(target?.dataset.answerNumber);
         if (target && Number.isInteger(number)) onAssignRef.current(number, label);
+        else if (sourceNumber !== null) onReturnRef.current(sourceNumber);
         suppressClickUntil = performance.now() + 500;
       }
       cleanup();

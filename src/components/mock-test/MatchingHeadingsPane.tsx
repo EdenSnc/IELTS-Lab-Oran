@@ -42,6 +42,7 @@ export default function MatchingHeadingsPane({
   const [showHelp, setShowHelp] = useState(false);
   const interactionRef = useRef<HTMLDivElement>(null);
   const draggedLabel = useRef<string | null>(null);
+  const draggedFromNumber = useRef<number | null>(null);
   useDragAutoScroll(draggedLabel);
   const answers = useTestStore((state) => state.answers.reading);
   const setAnswer = useTestStore((state) => state.setAnswer);
@@ -67,9 +68,9 @@ export default function MatchingHeadingsPane({
       (_match, rawNumber: string) => {
         const number = Number(rawNumber);
         const option = optionByLabel.get(answers[number] ?? '');
-        return `<button type="button" class="mock-ielts-gap ${option ? 'populated' : ''}" data-answer-number="${number}" ${option ? `data-answer-label="${escapeHtml(option.label)}"` : ''} aria-label="Question ${number}: ${escapeHtml(option?.text ?? 'Not answered')}">`
+        return `<button type="button" class="mock-ielts-gap ${option ? 'populated' : ''}" data-answer-number="${number}" ${option ? `data-answer-label="${escapeHtml(option.label)}" draggable="true"` : ''} aria-label="Question ${number}: ${escapeHtml(option?.text ?? 'Not answered')}">`
           + (option
-            ? `<span class="mock-ielts-gap-token">${escapeHtml(option.text)}</span><span class="mock-ielts-gap-remove" data-remove-answer="${number}" aria-hidden="true">&times;</span>`
+            ? `<span class="mock-ielts-gap-token">${escapeHtml(option.text)}</span>`
             : `<span class="mock-ielts-gap-number">${number}</span>`)
           + '</button>';
       },
@@ -105,6 +106,7 @@ export default function MatchingHeadingsPane({
     containerRef: interactionRef,
     draggedLabelRef: draggedLabel,
     onAssign: assign,
+    onReturn: (number) => setAnswer('reading', number, ''),
   });
 
   const targetFromEvent = (event: { target: EventTarget | null }) => (
@@ -118,11 +120,6 @@ export default function MatchingHeadingsPane({
     if (!target) return;
     const number = Number(target.dataset.answerNumber);
     setCurrentQuestion(number);
-    if (event.target instanceof Element && event.target.closest('[data-remove-answer]')) {
-      setAnswer('reading', number, '');
-      setSelectedLabel(null);
-      return;
-    }
     if (selectedLabel) {
       if (answers[number] === selectedLabel) {
         setAnswer('reading', number, '');
@@ -170,6 +167,7 @@ export default function MatchingHeadingsPane({
     event.dataTransfer.setData('text/plain', label);
     event.dataTransfer.effectAllowed = 'move';
     draggedLabel.current = label;
+    draggedFromNumber.current = Number(target?.dataset.answerNumber);
   };
 
   const first = numbers.at(0);
@@ -182,6 +180,13 @@ export default function MatchingHeadingsPane({
       onClick={handleTargetClick}
       onKeyDown={handleTargetKeyDown}
       onDragStart={handleTargetDragStart}
+      onDragEnd={() => {
+        if (draggedFromNumber.current !== null) {
+          setAnswer('reading', draggedFromNumber.current, '');
+        }
+        draggedFromNumber.current = null;
+        draggedLabel.current = null;
+      }}
       onDragOver={(event) => {
         if (!draggedLabel.current) return;
         event.preventDefault();
@@ -193,6 +198,7 @@ export default function MatchingHeadingsPane({
         if (!target || !label) return;
         event.preventDefault();
         assign(Number(target.dataset.answerNumber), label);
+        draggedFromNumber.current = null;
         draggedLabel.current = null;
       }}
     >
@@ -267,6 +273,7 @@ export default function MatchingHeadingsPane({
             if (!label || number === undefined) return;
             event.preventDefault();
             setAnswer('reading', number, '');
+            draggedFromNumber.current = null;
             draggedLabel.current = null;
           }}
         >

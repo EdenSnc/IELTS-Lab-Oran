@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTestStore } from '@/lib/store/useTestStore';
+import { stopListeningAudio } from '@/lib/audio/listening-audio';
 import HelpModal from './HelpModal';
 
 function SpeakerIcon() {
@@ -211,6 +212,7 @@ export default function TestHeader() {
                 type="button"
                 onClick={() => {
                   setShowFinishModal(false);
+                  if (activeSection === 'listening') stopListeningAudio();
                   if (activeSection) useTestStore.getState().completeSection(activeSection);
                   useTestStore.getState().setTestPhase('instructions');
                 }}

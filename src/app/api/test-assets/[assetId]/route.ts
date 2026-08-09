@@ -40,7 +40,7 @@ export async function GET(
     const upstream = await fetchPrivateAsset(asset.storageKey, request.headers.get('range'));
     const commonHeaders = {
       'Accept-Ranges': upstream.headers.get('accept-ranges') ?? 'bytes',
-      'Cache-Control': 'private, no-store, max-age=0',
+      'Cache-Control': 'private, max-age=86400, immutable',
       'Content-Type': inferMimeType(asset.storageKey, asset.mimeType),
       'Content-Disposition': 'inline',
       'X-Content-Type-Options': 'nosniff',

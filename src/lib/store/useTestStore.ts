@@ -157,7 +157,7 @@ export const useTestStore = create<TestState>()(
     }),
     {
       name: 'test-storage',
-      version: 2,
+      version: 3,
       migrate: (persistedState) => {
         const persisted = persistedState as Partial<TestState> | undefined;
         return {
@@ -166,12 +166,22 @@ export const useTestStore = create<TestState>()(
           splitRatio: persisted?.splitRatio ?? 50,
         };
       },
-      // A new visit always opens the familiarisation dashboard. Only harmless
-      // display preferences persist; attempts and answers belong server-side.
+      // Keep an in-progress attempt recoverable after an accidental refresh or
+      // mobile browser eviction. resetTest remains the explicit fresh-start path.
       partialize: (state) => ({
+        currentQuestionId: state.currentQuestionId,
+        timeLeft: state.timeLeft,
+        answers: state.answers,
+        markedForReview: state.markedForReview,
+        notes: state.notes,
+        isNotesOpen: state.isNotesOpen,
         textSize: state.textSize,
         colorScheme: state.colorScheme,
+        isHidden: state.isHidden,
         splitRatio: state.splitRatio,
+        testPhase: state.testPhase,
+        activeSection: state.activeSection,
+        completedSections: state.completedSections,
       }),
     }
   )

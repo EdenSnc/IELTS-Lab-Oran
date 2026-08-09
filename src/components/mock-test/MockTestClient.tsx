@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { DeliveryTest } from '@/lib/content/delivery-types';
 import { useTestStore } from '@/lib/store/useTestStore';
 import TestHeader from '@/components/mock-test/TestHeader';
@@ -21,6 +22,25 @@ export default function MockTestClient({ test }: { test: DeliveryTest }) {
   const listening = test.sections.find((section) => section.skill === 'LISTENING');
   const reading = test.sections.find((section) => section.skill === 'READING');
   const writing = test.sections.find((section) => section.skill === 'WRITING');
+
+  useEffect(() => {
+    if (!activeSection || testPhase !== 'exam') return;
+    const section = test.sections.find(
+      (candidate) => candidate.skill.toLowerCase() === activeSection,
+    );
+    const images = (section?.parts ?? [])
+      .flatMap((part) => part.stimuli)
+      .filter((stimulus) => stimulus.assetUrl && stimulus.type !== 'AUDIO_TRACK')
+      .map((stimulus) => {
+        const image = new window.Image();
+        image.decoding = 'async';
+        image.src = stimulus.assetUrl!;
+        return image;
+      });
+    return () => {
+      images.forEach((image) => { image.onload = null; image.onerror = null; });
+    };
+  }, [activeSection, test.sections, testPhase]);
 
   // StrictDRM is always mounted, including on the instructions screen.
   if (testPhase === 'instructions') {

@@ -216,6 +216,7 @@ function DragDropInteraction({
     containerRef: interactionRef,
     draggedLabelRef,
     onAssign: (number, label) => assign(number, label, true),
+    onReturn: (number) => clear(number),
   });
 
   const html = useMemo(() => (
@@ -233,11 +234,11 @@ function DragDropInteraction({
         const ariaValue = option ? option.text : 'Not answered';
         return `<button type="button" class="mock-ielts-gap ${stateClasses}" `
           + `data-answer-number="${number}" `
-          + `${option ? `data-answer-label="${escapeHtml(option.label)}" ` : ''}`
+          + `${option ? `data-answer-label="${escapeHtml(option.label)}" draggable="true" ` : ''}`
           + `aria-label="Question ${number}: ${escapeHtml(ariaValue)}">`
           + (
             option
-              ? `<span class="mock-ielts-gap-token">${escapeHtml(option.text)}</span><span class="mock-ielts-gap-remove" data-remove-answer="${number}" aria-hidden="true">&times;</span>`
+              ? `<span class="mock-ielts-gap-token">${escapeHtml(option.text)}</span>`
               : `<span class="mock-ielts-gap-number">${number}</span>`
           )
           + '</button>';
@@ -278,6 +279,7 @@ function DragDropInteraction({
         element.classList.remove('dragging', 'drag-over', 'is-dragging');
       });
     };
+    let draggedFromNumber: number | null = null;
     const beginDrag = (label: string, source: HTMLElement | null) => {
       draggedLabelRef.current = label;
       source?.classList.add('is-dragging');
@@ -288,6 +290,8 @@ function DragDropInteraction({
     const onDragStart = (event: DragEvent) => {
       const label = readLabel(event);
       if (!label) return;
+      const sourceTarget = readTarget(event);
+      draggedFromNumber = sourceTarget ? Number(sourceTarget.dataset.answerNumber) : null;
       event.dataTransfer?.setData('text/plain', label);
       if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
       beginDrag(
@@ -318,10 +322,13 @@ function DragDropInteraction({
       if (!target || !label) return;
       event.preventDefault();
       assign(Number(target.dataset.answerNumber), label, true);
+      draggedFromNumber = null;
       draggedLabelRef.current = null;
       clearDragDecorations();
     };
     const onDragEnd = () => {
+      if (draggedFromNumber !== null) clear(draggedFromNumber);
+      draggedFromNumber = null;
       draggedLabelRef.current = null;
       clearDragDecorations();
       setSelectedLabel(null);
@@ -331,10 +338,6 @@ function DragDropInteraction({
       if (!target) return;
       const number = Number(target.dataset.answerNumber);
       setCurrentQuestion(number);
-      if (event.target instanceof Element && event.target.closest('[data-remove-answer]')) {
-        clear(number, true);
-        return;
-      }
       if (selectedLabel) {
         if (answers[number] === selectedLabel) clear(number, true);
         else assign(number, selectedLabel, true);

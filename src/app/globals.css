@@ -523,24 +523,6 @@ body {
   white-space: nowrap;
 }
 
-.mock-ielts-gap-remove {
-  display: inline-flex;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  align-items: center;
-  justify-content: center;
-  margin-right: 2px;
-  border-radius: 50%;
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.mock-ielts-gap-remove:hover {
-  background: #e8e8e8;
-}
-
 .mock-question-html [data-ielts-canvas='true'] {
   position: relative;
   overflow: visible;
@@ -594,6 +576,56 @@ body {
   height: auto;
   -webkit-user-drag: none;
   user-select: none;
+}
+
+.mock-note-completion {
+  max-width: 720px;
+  line-height: 1.45;
+}
+
+.mock-note-completion h2,
+.mock-note-completion h3 {
+  margin: 0 0 0.85rem;
+  font-size: 1em;
+  font-weight: 700;
+}
+
+.mock-note-completion h3:not(:first-child) {
+  margin-top: 1.5rem;
+}
+
+.mock-note-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 145px) minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.15rem;
+}
+
+.mock-note-row > strong {
+  padding-top: 0.18rem;
+}
+
+.mock-note-row ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mock-note-row li {
+  position: relative;
+  margin: 0 0 0.65rem;
+  padding-left: 1rem;
+}
+
+.mock-note-row li::before {
+  position: absolute;
+  left: 0;
+  content: '-';
+}
+
+.mock-note-indent {
+  margin: 0;
+  padding-left: min(8vw, 5rem);
 }
 
 @media (max-width: 767px) {
@@ -668,6 +700,23 @@ body {
 
   .mock-question-html:has(table) {
     overflow-x: auto;
+  }
+
+  .mock-note-completion {
+    min-width: 0;
+  }
+
+  .mock-note-row {
+    grid-template-columns: minmax(82px, 31%) minmax(0, 1fr);
+    gap: 0.45rem;
+  }
+
+  .mock-note-row li {
+    padding-left: 0.75rem;
+  }
+
+  .mock-note-indent {
+    padding-left: 1rem;
   }
 
   .mock-question-html table {
