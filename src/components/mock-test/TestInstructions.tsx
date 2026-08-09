@@ -55,6 +55,14 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
     setConfirmedSections((prev) => ({ ...prev, [sectionId]: true }));
   };
 
+  const confirmReset = () => {
+    if (window.confirm('Reset this test? All saved answers, progress and scores on this device will be deleted.')) {
+      resetTest();
+      setExpandedSection(null);
+      setConfirmedSections({});
+    }
+  };
+
   const handleStart = (section: IELTSSection, durationSeconds: number) => {
     if (section === 'listening') {
       const audioUrl = test.sections
@@ -199,15 +207,13 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
         </div>
 
         <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-[#707070] pt-5">
-          {process.env.NODE_ENV !== 'production' ? (
-            <button
-              type="button"
-              onClick={resetTest}
-              className="border border-black bg-white px-4 py-2 font-bold text-black hover:bg-[#eeeeee]"
-            >
-              Reset familiarisation test
-            </button>
-          ) : <span />}
+          <button
+            type="button"
+            onClick={confirmReset}
+            className="border border-black bg-white px-4 py-2 font-bold text-black hover:bg-[#eeeeee]"
+          >
+            Reset familiarisation test
+          </button>
           {allCompleted && (
             <button
               type="button"

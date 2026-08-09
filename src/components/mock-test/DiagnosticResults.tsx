@@ -94,6 +94,11 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
     window.print();
     window.setTimeout(restoreTitle, 1000);
   };
+  const confirmReset = () => {
+    if (window.confirm('Reset this test? All saved answers, progress and scores on this device will be deleted.')) {
+      resetTest();
+    }
+  };
 
   useEffect(() => {
     if (result?.testVersionId === test.id) return;
@@ -282,15 +287,13 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
               </div>
             </section>
 
-            {process.env.NODE_ENV !== 'production' && (
-              <button
-                type="button"
-                onClick={resetTest}
-                className="no-print mt-6 rounded-full border border-black bg-white px-4 py-2 font-bold hover:bg-[#eeeeee]"
-              >
-                Reset test data
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={confirmReset}
+              className="no-print mt-6 rounded-full border border-black bg-white px-4 py-2 font-bold hover:bg-[#eeeeee]"
+            >
+              Reset test
+            </button>
           </>
         )}
       </div>
