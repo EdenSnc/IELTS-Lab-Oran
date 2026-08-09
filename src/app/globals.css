@@ -141,6 +141,11 @@ body {
   -webkit-user-select: text;
 }
 
+[data-text-annotations='true'] {
+  touch-action: pan-y;
+  -webkit-touch-callout: default;
+}
+
 /* Imported rich text can contain many inline spans. They must never create
    arbitrary break opportunities inside IELTS passage words. */
 .mock-reading-text,
@@ -635,6 +640,22 @@ body {
 }
 
 @media (max-width: 767px) {
+  .text-annotation-menu {
+    top: auto !important;
+    right: 8px;
+    bottom: 62px;
+    left: 8px !important;
+    display: flex;
+    min-width: 0;
+    padding: 4px;
+  }
+
+  .text-annotation-menu button {
+    flex: 1;
+    padding: 10px 6px;
+    text-align: center;
+  }
+
   .test-instructions-card-header,
   .test-information-panel {
     padding-right: 1rem;
@@ -826,20 +847,6 @@ body {
 
 .ielts-timer {
   display: block;
-}
-
-.ielts-timer-precise {
-  display: none;
-}
-
-.ielts-timer:hover .ielts-timer-rounded,
-.ielts-timer:focus-within .ielts-timer-rounded {
-  display: none;
-}
-
-.ielts-timer:hover .ielts-timer-precise,
-.ielts-timer:focus-within .ielts-timer-precise {
-  display: inline;
 }
 
 .diagnostic-summary-card {
@@ -1326,7 +1333,7 @@ body {
   .mock-split-root {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, var(--split-ratio)) 12px minmax(0, 1fr);
+    grid-template-rows: minmax(0, var(--split-ratio)) 8px minmax(0, 1fr);
   }
 
   .mock-split-primary,
@@ -1343,15 +1350,26 @@ body {
   .mock-split-resizer {
     display: block;
     width: 100%;
-    height: 12px;
+    height: 8px;
     cursor: row-resize;
-    border-block: 1px solid #707070;
-    background: #eeeeee;
+    border: 0;
+    background: transparent;
     touch-action: none;
   }
 
+  .mock-split-resizer::before {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: #707070;
+    content: "";
+    transform: translateY(-50%);
+  }
+
   .mock-split-resizer::after {
-    inset: -5px 0;
+    inset: -7px 0;
   }
 
   .ielts-test-area {

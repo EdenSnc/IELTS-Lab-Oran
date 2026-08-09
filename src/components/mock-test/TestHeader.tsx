@@ -49,7 +49,7 @@ function NotesIcon() {
 
 export default function TestHeader() {
   const timeLeft = useTestStore((state) => state.timeLeft);
-  const decrementTime = useTestStore((state) => state.decrementTime);
+  const setTimeLeft = useTestStore((state) => state.setTimeLeft);
   const isHidden = useTestStore((state) => state.isHidden);
   const setHidden = useTestStore((state) => state.setHidden);
   const activeSection = useTestStore((state) => state.activeSection);
@@ -66,11 +66,38 @@ export default function TestHeader() {
   const [showMenu, setShowMenu] = useState(false);
   const [dismissedWarning, setDismissedWarning] = useState<5 | 10 | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const initialTimeLeftRef = useRef(timeLeft);
+  const deadlineRef = useRef(0);
 
   useEffect(() => {
-    const timer = window.setInterval(() => decrementTime(), 1000);
-    return () => window.clearInterval(timer);
-  }, [decrementTime]);
+    deadlineRef.current = Date.now() + (initialTimeLeftRef.current * 1000);
+    let finished = false;
+    const finishAtDeadline = () => {
+      if (finished) return;
+      finished = true;
+      const state = useTestStore.getState();
+      state.setTimeLeft(0);
+      if (state.activeSection === 'listening') stopListeningAudio();
+      if (state.activeSection) state.completeSection(state.activeSection);
+      state.setTestPhase('instructions');
+    };
+    const updateClock = () => {
+      const millisecondsLeft = deadlineRef.current - Date.now();
+      if (millisecondsLeft <= 0) finishAtDeadline();
+      else useTestStore.getState().setTimeLeft(millisecondsLeft / 1000);
+    };
+    const timer = window.setInterval(updateClock, 1000);
+    const cutoff = window.setTimeout(
+      finishAtDeadline,
+      Math.max(0, deadlineRef.current - Date.now()),
+    );
+    document.addEventListener('visibilitychange', updateClock);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(cutoff);
+      document.removeEventListener('visibilitychange', updateClock);
+    };
+  }, [setTimeLeft]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -88,10 +115,9 @@ export default function TestHeader() {
         ? dismissedWarning === 10 ? null : 10
         : null;
   const minutes = Math.max(0, Math.ceil(timeLeft / 60));
-  const remainingLabel = `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} remaining`;
-  const preciseMinutes = Math.floor(Math.max(0, timeLeft) / 60);
-  const preciseSeconds = Math.max(0, timeLeft) % 60;
-  const preciseLabel = `${String(preciseMinutes).padStart(2, '0')} : ${String(preciseSeconds).padStart(2, '0')} remaining`;
+  const remainingLabel = timeLeft > 0 && timeLeft <= 60
+    ? '1 min left'
+    : `${minutes} min left`;
   const warningClass = timeLeft <= 300
     ? 'text-[#c10037] animate-pulse'
     : timeLeft <= 600
@@ -133,11 +159,9 @@ export default function TestHeader() {
         <div className={`ielts-candidate-clock ${warningClass}`}>
           <span
             className="ielts-timer"
-            aria-label={`Time remaining: ${preciseMinutes} minutes and ${preciseSeconds} seconds`}
-            title={preciseLabel}
+            aria-label={`Time remaining: ${remainingLabel}`}
           >
-            <span className="ielts-timer-rounded">{remainingLabel}</span>
-            <span className="ielts-timer-precise" aria-hidden="true">{preciseLabel}</span>
+            {remainingLabel}
           </span>
         </div>
 

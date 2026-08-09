@@ -63,6 +63,7 @@ interface TestState {
   startSection: (section: IELTSSection, durationSeconds: number) => void;
   completeSection: (section: IELTSSection) => void;
   decrementTime: () => void;
+  setTimeLeft: (seconds: number) => void;
   setObjectiveGradeResult: (result: ObjectiveGradeResult | null) => void;
   setWritingGradeResult: (result: WritingGradeResult | null) => void;
   resetTest: () => void;
@@ -150,6 +151,7 @@ export const useTestStore = create<TestState>()(
       decrementTime: () => set((state) => ({ 
         timeLeft: Math.max(0, state.timeLeft - 1) 
       })),
+      setTimeLeft: (seconds) => set({ timeLeft: Math.max(0, Math.ceil(seconds)) }),
       setObjectiveGradeResult: (objectiveGradeResult) => set({ objectiveGradeResult }),
       setWritingGradeResult: (writingGradeResult) => set({ writingGradeResult }),
       resetTest: () => set({

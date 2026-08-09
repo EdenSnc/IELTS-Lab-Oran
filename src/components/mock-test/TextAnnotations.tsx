@@ -3,6 +3,7 @@
 import {
   type MouseEvent as ReactMouseEvent,
   useCallback,
+  useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -17,6 +18,7 @@ type MenuState = {
   quote: string;
   startOffset: number;
   endOffset: number;
+  highlighted: boolean;
 };
 
 type StoredRange = Pick<MenuState, 'startOffset' | 'endOffset'>;
@@ -127,6 +129,10 @@ export function useTextAnnotations(section: IELTSSection, contentKey: string = s
       quote,
       startOffset: textOffset(container, selectedRange.startContainer, selectedRange.startOffset),
       endOffset: textOffset(container, selectedRange.endContainer, selectedRange.endOffset),
+      highlighted: storedRangesRef.current.some((stored) => (
+        stored.startOffset < textOffset(container, selectedRange.endContainer, selectedRange.endOffset)
+        && stored.endOffset > textOffset(container, selectedRange.startContainer, selectedRange.startOffset)
+      )),
     });
     return true;
   }, [contentKey]);
@@ -142,6 +148,12 @@ export function useTextAnnotations(section: IELTSSection, contentKey: string = s
     window.setTimeout(() => showMenuFromSelection(), 0);
   };
 
+  useEffect(() => {
+    const updateSelection = () => window.setTimeout(() => showMenuFromSelection(), 0);
+    document.addEventListener('selectionchange', updateSelection);
+    return () => document.removeEventListener('selectionchange', updateSelection);
+  }, [showMenuFromSelection]);
+
   const clearSelection = () => {
     window.getSelection()?.removeAllRanges();
     setMenu(null);
@@ -149,7 +161,13 @@ export function useTextAnnotations(section: IELTSSection, contentKey: string = s
 
   const highlight = () => {
     if (!menu || menu.contentKey !== contentKey) return;
-    storedRangesRef.current.push({ startOffset: menu.startOffset, endOffset: menu.endOffset });
+    if (menu.highlighted) {
+      storedRangesRef.current = storedRangesRef.current.filter((stored) => (
+        stored.endOffset <= menu.startOffset || stored.startOffset >= menu.endOffset
+      ));
+    } else {
+      storedRangesRef.current.push({ startOffset: menu.startOffset, endOffset: menu.endOffset });
+    }
     rebuildRanges();
     clearSelection();
   };
@@ -179,7 +197,7 @@ export function useTextAnnotations(section: IELTSSection, contentKey: string = s
 }
 
 export function TextAnnotationMenu({ menu, onHighlight, onNote, onClear }: {
-  menu: { x: number; y: number } | null;
+  menu: { x: number; y: number; highlighted: boolean } | null;
   onHighlight: () => void;
   onNote: () => void;
   onClear: () => void;
@@ -192,10 +210,10 @@ export function TextAnnotationMenu({ menu, onHighlight, onNote, onClear }: {
   };
 
   return (
-    <div className="fixed z-[65] min-w-40 rounded-sm border border-gray-300 bg-white py-1 text-sm shadow-lg" style={{ top: menu.y, left: menu.x }} role="menu" aria-label="Selected text actions">
-      <button type="button" onPointerDown={action(onHighlight)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Highlight</button>
+    <div className="text-annotation-menu fixed z-[65] min-w-40 rounded-sm border border-gray-300 bg-white py-1 text-sm shadow-lg" style={{ top: menu.y, left: menu.x }} role="menu" aria-label="Selected text actions">
+      <button type="button" onPointerDown={action(onHighlight)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">{menu.highlighted ? 'Remove highlight' : 'Highlight'}</button>
       <button type="button" onPointerDown={action(onNote)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Add note</button>
-      <button type="button" onPointerDown={action(onClear)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Clear highlights</button>
+      <button type="button" onPointerDown={action(onClear)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Clear all</button>
     </div>
   );
 }

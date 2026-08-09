@@ -5,7 +5,7 @@ import type { DeliverySection } from '@/lib/content/delivery-types';
 import { useTestStore } from '@/lib/store/useTestStore';
 import QuestionGroupRenderer from './QuestionGroupRenderer';
 import TestPartHeader from './TestPartHeader';
-import { getListeningAudio, stopListeningAudio } from '@/lib/audio/listening-audio';
+import { getListeningAudio, isListeningAudioActive, stopListeningAudio } from '@/lib/audio/listening-audio';
 
 function partRange(part: DeliverySection['parts'][number]) {
   const numbers = part.questionGroups.flatMap((group) => (
@@ -36,7 +36,7 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
     let resumePending = false;
 
     const resume = () => {
-      if (!playbackStarted || player.ended || resumePending) return;
+      if (!playbackStarted || !isListeningAudioActive() || player.ended || resumePending) return;
       resumePending = true;
       void player.play().catch(() => {
         // Some operating systems temporarily retain the audio focus. The
@@ -50,7 +50,7 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     };
     const handlePause = () => {
-      if (playbackStarted && !player.ended) queueMicrotask(resume);
+      if (playbackStarted && isListeningAudioActive() && !player.ended) queueMicrotask(resume);
     };
     const handleRateChange = () => {
       if (player.playbackRate !== 1) player.playbackRate = 1;
@@ -60,7 +60,7 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
     player.addEventListener('pause', handlePause);
     player.addEventListener('ratechange', handleRateChange);
     const playbackGuard = window.setInterval(() => {
-      if (playbackStarted && player.paused && !player.ended) resume();
+      if (playbackStarted && isListeningAudioActive() && player.paused && !player.ended) resume();
     }, 250);
 
     const blockedMediaActions: MediaSessionAction[] = [
