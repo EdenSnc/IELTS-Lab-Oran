@@ -25,6 +25,7 @@ export default function WritingLayout({ section }: { section: DeliverySection })
     containerRef: annotationRef,
     menu: annotationMenu,
     openMenu,
+    openMenuFromSelection,
     highlight,
     createNote,
     clearHighlights,
@@ -43,7 +44,10 @@ export default function WritingLayout({ section }: { section: DeliverySection })
     const handlePointerMove = (e: PointerEvent) => {
       if (!isDragging || !containerRef.current) return;
       const containerRect = containerRef.current.getBoundingClientRect();
-      let newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
+      let newRatio = isMobile
+        ? ((e.clientY - containerRect.top) / containerRect.height) * 100
+        : ((e.clientX - containerRect.left) / containerRect.width) * 100;
       if (newRatio < 25) newRatio = 25;
       if (newRatio > 75) newRatio = 75;
       setSplitRatio(newRatio);
@@ -64,6 +68,14 @@ export default function WritingLayout({ section }: { section: DeliverySection })
       document.body.style.removeProperty('user-select');
     };
   }, [isDragging, setSplitRatio]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      containerRef.current?.querySelectorAll<HTMLElement>('[data-question-scroll-pane="true"]')
+        .forEach((pane) => pane.scrollTo({ top: 0, left: 0 }));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [taskIndex]);
 
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
 
@@ -110,6 +122,7 @@ export default function WritingLayout({ section }: { section: DeliverySection })
             ref={annotationRef}
             data-text-annotations="true"
             onContextMenu={openMenu}
+            onPointerUp={openMenuFromSelection}
             className="prose max-w-none leading-relaxed text-[#1a1a1a]"
             dangerouslySetInnerHTML={{ __html: prompt?.bodyHtml ?? responseGroup?.promptHtml ?? '' }}
           />

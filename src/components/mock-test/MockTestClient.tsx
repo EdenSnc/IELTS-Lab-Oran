@@ -71,7 +71,7 @@ export default function MockTestClient({ test }: { test: DeliveryTest }) {
     <>
       <StrictDRM />
       <div
-        className="ielts-test-shell relative flex h-screen w-screen flex-col overflow-hidden bg-white text-black"
+        className="ielts-test-shell relative flex h-[100dvh] w-screen flex-col overflow-hidden bg-white text-black"
         data-color-scheme={colorScheme}
       >
       <TestHeader />

@@ -83,7 +83,6 @@ export function useTouchDragDrop({
         ? event.target.closest<HTMLElement>('[data-answer-label]')
         : null;
       if (!candidate || !container.contains(candidate) || candidate.classList.contains('opacity')) return;
-      event.preventDefault();
       source = candidate;
       label = candidate.dataset.answerLabel ?? null;
       const sourceGap = candidate.closest<HTMLElement>('[data-answer-number]');

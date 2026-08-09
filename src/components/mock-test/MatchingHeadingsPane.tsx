@@ -57,6 +57,7 @@ export default function MatchingHeadingsPane({
     containerRef: annotationRef,
     menu,
     openMenu,
+    openMenuFromSelection,
     highlight,
     createNote,
     clearHighlights,
@@ -218,6 +219,7 @@ export default function MatchingHeadingsPane({
             data-text-annotations="true"
             data-answer-ids={numbers.join(' ')}
             onContextMenu={openMenu}
+            onPointerUp={openMenuFromSelection}
             className="mock-question-html mock-reading-text prose max-w-none cursor-text leading-relaxed text-charcoal"
             dangerouslySetInnerHTML={{ __html: passageHtml }}
           />

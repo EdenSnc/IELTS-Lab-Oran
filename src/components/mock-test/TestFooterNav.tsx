@@ -111,7 +111,13 @@ export default function TestFooterNav({ test }: { test: DeliveryTest }) {
       );
       const target = directControl ?? group;
       const scrollPane = target?.closest<HTMLElement>('[data-question-scroll-pane="true"]');
-      if (target && scrollPane) {
+      const partChanged = previousPartId !== nextPartId;
+      if (partChanged) {
+        document
+          .querySelectorAll<HTMLElement>('[data-question-scroll-pane="true"], .mock-split-primary')
+          .forEach((pane) => pane.scrollTo({ top: 0, left: 0 }));
+        window.scrollTo({ top: 0, left: 0 });
+      } else if (target && scrollPane) {
         const targetBounds = target.getBoundingClientRect();
         const paneBounds = scrollPane.getBoundingClientRect();
         scrollPane.scrollTo({
@@ -121,12 +127,8 @@ export default function TestFooterNav({ test }: { test: DeliveryTest }) {
           ),
           behavior: 'smooth',
         });
-      } else if (previousPartId !== nextPartId) {
-        document
-          .querySelectorAll<HTMLElement>('[data-question-scroll-pane="true"]')
-          .forEach((pane) => pane.scrollTo({ top: 0 }));
       }
-      directControl?.focus({ preventScroll: true });
+      if (!partChanged) directControl?.focus({ preventScroll: true });
     }));
   };
 

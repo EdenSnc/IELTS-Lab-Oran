@@ -15,6 +15,7 @@ function ReadingPassage({ contentKey, html, title, showTitle }: ReadingPassagePr
     containerRef,
     menu,
     openMenu,
+    openMenuFromSelection,
     highlight,
     createNote,
     clearHighlights,
@@ -33,6 +34,7 @@ function ReadingPassage({ contentKey, html, title, showTitle }: ReadingPassagePr
         ref={containerRef}
         data-text-annotations="true"
         onContextMenu={openMenu}
+        onPointerUp={openMenuFromSelection}
         className="mock-reading-text prose max-w-none cursor-text leading-relaxed text-charcoal"
         dangerouslySetInnerHTML={{ __html: html }}
       />

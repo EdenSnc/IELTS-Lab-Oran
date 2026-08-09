@@ -44,7 +44,10 @@ export default function SplitPane({ section }: { section: DeliverySection }) {
     const handlePointerMove = (event: PointerEvent) => {
       if (!isDragging || !containerRef.current) return;
       const bounds = containerRef.current.getBoundingClientRect();
-      setSplitRatio(((event.clientX - bounds.left) / bounds.width) * 100);
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
+      setSplitRatio(isMobile
+        ? ((event.clientY - bounds.top) / bounds.height) * 100
+        : ((event.clientX - bounds.left) / bounds.width) * 100);
     };
     const handlePointerUp = () => setIsDragging(false);
     if (isDragging) {
@@ -58,6 +61,14 @@ export default function SplitPane({ section }: { section: DeliverySection }) {
       document.body.style.removeProperty('user-select');
     };
   }, [isDragging, setSplitRatio]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      containerRef.current?.querySelectorAll<HTMLElement>('[data-question-scroll-pane="true"], .mock-split-primary')
+        .forEach((pane) => pane.scrollTo({ top: 0, left: 0 }));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activePart?.id]);
 
   if (!activePart) {
     return <p className="p-8">This Reading test has no sections.</p>;

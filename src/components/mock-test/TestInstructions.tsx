@@ -39,16 +39,18 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
   const allCompleted = sections.length > 0
     && sections.every((section) => completedSections[section.id]);
 
+  const ensureFullscreen = () => {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      void document.documentElement.requestFullscreen().catch(() => {
+        // Fullscreen can be denied by mobile browser policy.
+      });
+    }
+  };
+
   const toggleAccordion = (sectionId: string) => {
     const willOpen = expandedSection !== sectionId;
     setExpandedSection(willOpen ? sectionId : null);
-    if (willOpen) {
-      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-        void document.documentElement.requestFullscreen().catch(() => {
-          // Fullscreen is optional and may be denied by browser or device policy.
-        });
-      }
-    }
+    if (willOpen) ensureFullscreen();
   };
 
   const handleConfirm = (sectionId: string) => {
@@ -64,6 +66,7 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
   };
 
   const handleStart = (section: IELTSSection, durationSeconds: number) => {
+    ensureFullscreen();
     if (section === 'listening') {
       const audioUrl = test.sections
         .find((candidate) => candidate.skill === 'LISTENING')
@@ -73,6 +76,7 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
       if (audioUrl) void startListeningAudio(audioUrl).catch(() => {});
     }
     startSection(section, durationSeconds);
+    window.scrollTo({ top: 0, left: 0 });
   };
 
   return (

@@ -567,6 +567,7 @@ function QuestionGroupRenderer({
     containerRef: annotationRef,
     menu: annotationMenu,
     openMenu,
+    openMenuFromSelection,
     highlight,
     createNote,
     clearHighlights,
@@ -590,6 +591,7 @@ function QuestionGroupRenderer({
       data-answer-ids={numbers.join(' ')}
       data-text-annotations="true"
       onContextMenu={openMenu}
+      onPointerUp={openMenuFromSelection}
       className="bg-white py-2"
     >
       <TextAnnotationMenu

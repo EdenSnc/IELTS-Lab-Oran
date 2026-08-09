@@ -141,7 +141,7 @@ export default function TestHeader() {
           </span>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3 sm:gap-5">
+        <div className="ielts-header-actions flex shrink-0 items-center gap-3 sm:gap-5">
           <button
             type="button"
             onClick={() => setShowFinishModal(true)}

@@ -135,6 +135,12 @@ body {
   -webkit-user-select: text;
 }
 
+[data-text-annotations='true'],
+[data-text-annotations='true'] * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* Imported rich text can contain many inline spans. They must never create
    arbitrary break opportunities inside IELTS passage words. */
 .mock-reading-text,
@@ -695,7 +701,7 @@ body {
 
   .mock-ielts-token,
   .mock-ielts-gap[data-answer-label] {
-    touch-action: none;
+    touch-action: pan-y;
   }
 
   .mock-question-html:has(table) {
@@ -1271,12 +1277,21 @@ body {
 
 @media (max-width: 767px) {
   .ielts-test-topbar {
-    min-height: 70px;
+    display: grid;
+    min-height: 76px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 40px 20px;
+    gap: 0 8px;
     padding: 8px 10px;
   }
 
   .ielts-candidate-clock {
+    position: static;
+    grid-column: 1 / -1;
+    grid-row: 2;
     min-width: max-content;
+    height: 20px;
+    transform: none;
   }
 
   .ielts-candidate-clock span {
@@ -1288,7 +1303,14 @@ body {
   }
 
   .ielts-header-left {
+    grid-column: 1;
+    grid-row: 1;
     gap: 0.4rem;
+  }
+
+  .ielts-header-actions {
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .ielts-header-brand {
@@ -1299,6 +1321,37 @@ body {
     min-width: 66px;
     padding: 0 8px;
     font-size: 12px;
+  }
+
+  .mock-split-root {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, var(--split-ratio)) 12px minmax(0, 1fr);
+  }
+
+  .mock-split-primary,
+  .mock-split-secondary {
+    height: 100%;
+    min-height: 0;
+    flex: none;
+  }
+
+  .mock-split-primary {
+    border-bottom: 0;
+  }
+
+  .mock-split-resizer {
+    display: block;
+    width: 100%;
+    height: 12px;
+    cursor: row-resize;
+    border-block: 1px solid #707070;
+    background: #eeeeee;
+    touch-action: none;
+  }
+
+  .mock-split-resizer::after {
+    inset: -5px 0;
   }
 
   .ielts-test-area {
@@ -1386,7 +1439,7 @@ body {
   }
 
   .ielts-notes-sidebar {
-    top: 70px;
+    top: 76px;
   }
 
   .mock-split-root {
