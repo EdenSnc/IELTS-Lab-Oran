@@ -5,10 +5,10 @@ import path from 'node:path';
 
 const DEFAULT_BUCKET = 'protected-test-assets';
 
-function configuration() {
+function configuration(bucketOverride?: string) {
   const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const bucket = process.env.PRIVATE_TEST_ASSET_BUCKET ?? DEFAULT_BUCKET;
+  const bucket = bucketOverride ?? process.env.PRIVATE_TEST_ASSET_BUCKET ?? DEFAULT_BUCKET;
   if (!projectUrl || !serviceKey || serviceKey.length < 20) return null;
   return { projectUrl, serviceKey, bucket };
 }
@@ -22,8 +22,8 @@ function safeStorageKey(storageKey: string) {
   return normalized.split('/').map(encodeURIComponent).join('/');
 }
 
-export async function fetchPrivateAsset(storageKey: string, range?: string | null) {
-  const remote = configuration();
+export async function fetchPrivateAsset(storageKey: string, range?: string | null, bucketOverride?: string) {
+  const remote = configuration(bucketOverride);
   if (remote) {
     const { projectUrl, serviceKey, bucket } = remote;
     const url = `${projectUrl.replace(/\/$/, '')}/storage/v1/object/authenticated/${encodeURIComponent(bucket)}/${safeStorageKey(storageKey)}`;
@@ -61,6 +61,6 @@ export async function fetchPrivateAsset(storageKey: string, range?: string | nul
   return new Response(new Uint8Array(partial), { status: 206, headers });
 }
 
-export async function downloadPrivateAsset(storageKey: string) {
-  return Buffer.from(await (await fetchPrivateAsset(storageKey)).arrayBuffer());
+export async function downloadPrivateAsset(storageKey: string, bucketOverride?: string) {
+  return Buffer.from(await (await fetchPrivateAsset(storageKey, null, bucketOverride)).arrayBuffer());
 }

@@ -1469,3 +1469,275 @@ body {
     padding-bottom: 6rem;
   }
 }
+/* A restrained, reusable exam-shell signature. The mark stays visible without
+   competing with test content or controls. */
+.ielts-test-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  min-width: 0;
+  font-family: Inter, "Helvetica Neue", Arial, sans-serif !important;
+  text-decoration: none;
+}
+
+.ielts-test-brand__logo {
+  width: 2.625rem;
+  height: 2.625rem;
+  flex: none;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.ielts-test-brand span {
+  display: grid;
+  line-height: 1.02;
+}
+
+.ielts-test-brand strong {
+  font-size: 1rem;
+  font-weight: 780;
+  letter-spacing: -.035em;
+}
+.ielts-test-brand small {
+  margin-top: .2rem;
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #c8102e;
+}
+
+.ielts-test-brand--compact { gap: .42rem; }
+.ielts-test-brand--compact .ielts-test-brand__logo { width: 1.75rem; height: 1.75rem; }
+.ielts-test-brand--compact strong { font-size: .9rem; white-space: nowrap; }
+.ielts-test-brand--linked {
+  border-radius: .6rem;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.ielts-test-brand--linked:hover { opacity: .8; }
+.ielts-test-brand--linked:active { transform: translateY(1px); }
+.ielts-test-brand--linked:focus-visible { outline: 2px solid #0085a3; outline-offset: 4px; }
+
+/* Premium speaking surfaces: quiet, spacious and intentionally restrained. */
+.speaking-premium-shell {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 85% -10%, rgb(193 18 33 / 7%), transparent 28rem),
+    linear-gradient(180deg, #fbfbfa 0%, #f5f4f1 100%);
+  color: #171717;
+  font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+}
+
+.speaking-premium-header {
+  position: sticky;
+  z-index: 30;
+  top: 0;
+  border-bottom: 1px solid rgb(23 23 23 / 8%);
+  background: rgb(255 255 255 / 88%);
+  backdrop-filter: saturate(150%) blur(18px);
+}
+
+.speaking-premium-container {
+  width: min(100%, 80rem);
+  margin-inline: auto;
+  padding: clamp(1.25rem, 3vw, 3rem);
+}
+
+.speaking-premium-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(23 23 23 / 8%);
+  border-radius: clamp(1.5rem, 3vw, 2.5rem);
+  padding: clamp(1.75rem, 5vw, 4.5rem);
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 24px 70px rgb(24 23 21 / 7%);
+}
+
+.speaking-premium-hero::after {
+  position: absolute;
+  top: 0;
+  right: clamp(1.75rem, 5vw, 4.5rem);
+  width: 3.75rem;
+  height: .22rem;
+  border-radius: 0 0 999px 999px;
+  background: #c11221;
+  content: "";
+}
+
+.speaking-premium-hero h1 {
+  max-width: 15ch;
+  font-size: clamp(2.25rem, 6vw, 4.6rem);
+  font-weight: 720;
+  letter-spacing: -.055em;
+  line-height: .98;
+}
+
+.speaking-premium-hero--dashboard h1 { max-width: none; }
+
+.speaking-premium-card {
+  border: 1px solid rgb(23 23 23 / 8%);
+  border-radius: clamp(1.35rem, 2.5vw, 2rem);
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 16px 46px rgb(24 23 21 / 5%);
+}
+
+.speaking-premium-list-row {
+  border-color: rgb(23 23 23 / 9%);
+  background: #fff;
+  box-shadow: 0 8px 24px rgb(24 23 21 / 4%);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.speaking-premium-list-row:hover {
+  border-color: rgb(23 23 23 / 18%);
+  box-shadow: 0 12px 30px rgb(24 23 21 / 7%);
+  transform: translateY(-1px);
+}
+
+.speaking-premium-walkthrough {
+  border: 0;
+  color: #fff;
+  background: #171717;
+  box-shadow: 0 22px 55px rgb(0 0 0 / 12%);
+}
+
+.speaking-premium-walkthrough li {
+  border: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(255 255 255 / 6%);
+}
+
+.speaking-premium-walkthrough li strong { color: #fff; }
+
+.speaking-premium-metric {
+  min-height: 7.25rem;
+  border-color: rgb(23 23 23 / 9%);
+  border-radius: 1.35rem;
+  box-shadow: 0 10px 30px rgb(24 23 21 / 4%);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.speaking-premium-metric:hover {
+  box-shadow: 0 15px 34px rgb(24 23 21 / 8%);
+  transform: translateY(-2px);
+}
+
+.speaking-premium-shell :is(input:not([type="checkbox"]), select) {
+  min-height: 2.85rem;
+  border-color: rgb(23 23 23 / 15%);
+  border-radius: .8rem;
+  background: #fff;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.speaking-premium-shell :is(input:not([type="checkbox"]), select):focus {
+  border-color: #c11221;
+  box-shadow: 0 0 0 3px rgb(193 18 33 / 10%);
+}
+
+.speaking-premium-shell button { transition: transform 150ms ease, opacity 150ms ease, background 150ms ease, border-color 150ms ease; }
+.speaking-premium-shell button:active:not(:disabled) { transform: scale(.985); }
+
+@media (max-width: 640px) {
+  .speaking-premium-header { padding-inline: .9rem; }
+  .speaking-premium-container { padding: 1rem; padding-bottom: 3rem; }
+  .speaking-premium-hero { padding: 1.6rem; }
+  .speaking-premium-hero h1 { font-size: 2.45rem; }
+  .speaking-premium-card { border-radius: 1.25rem; }
+  .speaking-premium-list-row:hover,
+  .speaking-premium-metric:hover { transform: none; }
+}
+
+@media (max-width: 520px) {
+  .ielts-test-brand--responsive:not(.ielts-test-brand--compact) { gap: .45rem; }
+  .ielts-test-brand--responsive:not(.ielts-test-brand--compact) .ielts-test-brand__logo { width: 2rem; height: 2rem; }
+  .ielts-test-brand--responsive:not(.ielts-test-brand--compact) strong { font-size: .82rem; }
+  .ielts-test-brand--responsive:not(.ielts-test-brand--compact) small { margin-top: .12rem; font-size: .5rem; }
+  .ielts-test-brand--compact { gap: .3rem; }
+  .ielts-test-brand--compact .ielts-test-brand__logo { width: 1.45rem; height: 1.45rem; }
+  .ielts-test-brand--compact strong { font-size: .72rem; }
+}
+
+.speaking-status-dot {
+  display: inline-block;
+  width: .65rem;
+  height: .65rem;
+  flex: none;
+  border-radius: 999px;
+  background: #8a8a86;
+}
+
+.speaking-status-dot.is-live {
+  background: #c8102e;
+  box-shadow: 0 0 0 .22rem rgb(200 16 46 / 14%);
+}
+
+.speaking-call-card {
+  overflow: hidden;
+  border: 1px solid #d4d3ce;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.speaking-call-status {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 2.75rem;
+  padding: .65rem .85rem;
+  border-bottom: 1px solid #deddd8;
+  font-size: .85rem;
+  font-weight: 700;
+}
+
+.speaking-remote-video {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  max-height: 50vh;
+  background: #202020;
+}
+
+.speaking-remote-video video {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.speaking-remote-video p {
+  position: absolute;
+  inset: 50% 1rem auto;
+  transform: translateY(-50%);
+  text-align: center;
+  color: #d8d8d5;
+  font-size: .85rem;
+}
+
+.speaking-call-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  padding: .75rem;
+}
+
+.speaking-call-controls button {
+  flex: 1 1 auto;
+  border: 1px solid #555;
+  border-radius: .55rem;
+  padding: .6rem .7rem;
+  background: #fff;
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.speaking-call-controls button.is-danger {
+  border-color: #8b0028;
+  color: #8b0028;
+}
+
+@media (max-width: 600px) {
+  .speaking-remote-video { max-height: 38vh; }
+}

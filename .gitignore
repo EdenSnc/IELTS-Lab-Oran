@@ -51,6 +51,7 @@ next-env.d.ts
 test-db.ts
 
 *.md
+!docs/SPEAKING_SETUP.md
 
 # Private/generated content and local transfer files
 /content-packages/

@@ -246,3 +246,74 @@ ALTER TABLE app_private."Order"
 ALTER TABLE app_private."PaymentAttempt"
   ADD CONSTRAINT "PaymentAttempt_amount_valid"
   CHECK ("amountMinor" >= 0 AND currency ~ '^[A-Z]{3}$');
+
+-- Speaking appointment integrity. The GiST exclusion is the database-side
+-- concurrency backstop: even differently aligned slots cannot overlap.
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE app_private."SpeakingAppointment"
+  ADD CONSTRAINT "SpeakingAppointment_time_valid"
+  CHECK ("scheduledEndAt" > "scheduledStartAt");
+
+ALTER TABLE app_private."SpeakingAppointment"
+  ADD CONSTRAINT "SpeakingAppointment_no_examiner_overlap"
+  EXCLUDE USING gist (
+    "examinerId" WITH =,
+    tsrange("scheduledStartAt", "scheduledEndAt", '[)') WITH &&
+  ) WHERE (status = 'BOOKED');
+
+ALTER TABLE app_private."SpeakingAvailabilityRule"
+  ADD CONSTRAINT "SpeakingAvailabilityRule_values_valid"
+  CHECK (
+    weekday BETWEEN 0 AND 6
+    AND "startMinute" >= 600
+    AND "endMinute" <= 1200
+    AND "endMinute" > "startMinute"
+    AND MOD("startMinute", 20) = 0
+    AND MOD("endMinute", 20) = 0
+    AND "appointmentDurationMinutes" = 20
+    AND ("validUntil" IS NULL OR "validFrom" IS NULL OR "validUntil" >= "validFrom")
+  );
+
+ALTER TABLE app_private."SpeakingAvailabilityOverride"
+  ADD CONSTRAINT "SpeakingAvailabilityOverride_values_valid"
+  CHECK (
+    (kind = 'BLACKOUT' AND "startMinute" IS NULL AND "endMinute" IS NULL)
+    OR (
+      kind = 'AVAILABLE'
+      AND "deliveryMode" IS NOT NULL
+      AND "startMinute" >= 600
+      AND "endMinute" <= 1200
+      AND "endMinute" > "startMinute"
+      AND MOD("startMinute", 20) = 0
+      AND MOD("endMinute", 20) = 0
+      AND "appointmentDurationMinutes" = 20
+    )
+  );
+
+ALTER TABLE app_private."SpeakingEvidenceMarker"
+  ADD CONSTRAINT "SpeakingEvidenceMarker_offset_valid"
+  CHECK ("offsetMs" >= 0);
+
+ALTER TABLE app_private."SpeakingRecording"
+  ADD CONSTRAINT "SpeakingRecording_metadata_valid"
+  CHECK (
+    ("durationMs" IS NULL OR "durationMs" >= 0)
+    AND (status <> 'READY' OR "storageKey" IS NOT NULL)
+  );
+
+ALTER TABLE app_private."SpeakingHumanAssessment"
+  ADD CONSTRAINT "SpeakingHumanAssessment_bands_valid"
+  CHECK (
+    "fluencyCoherence" BETWEEN 0 AND 9
+    AND "lexicalResource" BETWEEN 0 AND 9
+    AND "grammaticalRange" BETWEEN 0 AND 9
+    AND pronunciation BETWEEN 0 AND 9
+    AND "overallBand" BETWEEN 0 AND 9
+    AND mod("fluencyCoherence" * 2, 1) = 0
+    AND mod("lexicalResource" * 2, 1) = 0
+    AND mod("grammaticalRange" * 2, 1) = 0
+    AND mod(pronunciation * 2, 1) = 0
+    AND mod("overallBand" * 2, 1) = 0
+    AND (priorities IS NULL OR jsonb_array_length(priorities) <= 3)
+  );

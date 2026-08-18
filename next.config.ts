@@ -4,6 +4,20 @@ import { withBotId } from 'botid/next/config';
 
 const withNextIntl = createNextIntlPlugin();
 
+function rtcConnectSources() {
+  const value = process.env.LIVEKIT_URL;
+  if (!value) return [];
+  try {
+    const { hostname, port } = new URL(value);
+    const host = port ? `${hostname}:${port}` : hostname;
+    return [`https://${host}`, `wss://${host}`];
+  } catch {
+    return [];
+  }
+}
+
+const speakingRtcSources = rtcConnectSources();
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -16,7 +30,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data: https://fonts.gstatic.com",
   "media-src 'self' blob:",
   "frame-src https://tally.so https://www.tally.so",
-  "connect-src 'self' https://*.tally.so https://vitals.vercel-insights.com https://*.vercel-insights.com",
+  `connect-src 'self' https://*.tally.so https://vitals.vercel-insights.com https://*.vercel-insights.com ${speakingRtcSources.join(' ')}`.trim(),
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   'upgrade-insecure-requests',
@@ -36,7 +50,7 @@ const nextConfig: NextConfig = {
       { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
       {
         key: 'Permissions-Policy',
-        value: 'camera=(), geolocation=(), microphone=(self), payment=(self)',
+        value: 'camera=(self), geolocation=(), microphone=(self), payment=(self)',
       },
       { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
       { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },

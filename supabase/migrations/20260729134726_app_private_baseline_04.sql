@@ -1,0 +1,2 @@
+-- Historical migration already applied to the configured database.
+-- Its private legacy source metadata is intentionally excluded from this repository.

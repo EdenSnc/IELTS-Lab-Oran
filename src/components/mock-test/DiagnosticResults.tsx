@@ -170,13 +170,13 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
           <h1>Mock-test result</h1>
         </div>
         <header className="no-print mb-8 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
-          <div className="flex min-w-0 items-center gap-3">
-            <Image className="h-11 w-11 shrink-0 sm:h-[52px] sm:w-[52px]" src="/logo_rounded.png" alt="IELTS Lab Oran" width={52} height={52} />
+          <Link href="/en" aria-label="IELTS Lab Oran home" className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0085a3]">
+            <Image className="h-11 w-11 shrink-0 sm:h-[52px] sm:w-[52px]" src="/ielts-lab-mark.svg" alt="IELTS Lab Oran" width={52} height={52} />
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-crimson">IELTS Lab Oran</p>
               <h1 className="text-xl font-bold sm:text-3xl">Mock-test result</h1>
             </div>
-          </div>
+          </Link>
           <div className="flex items-center justify-end gap-2">
             <button
               type="button"

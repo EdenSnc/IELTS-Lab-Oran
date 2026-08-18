@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTestStore } from '@/lib/store/useTestStore';
 import { stopListeningAudio } from '@/lib/audio/listening-audio';
 import HelpModal from './HelpModal';
+import TestBrand from '@/components/brand/TestBrand';
 
 function SpeakerIcon() {
   return (
@@ -147,7 +148,7 @@ export default function TestHeader() {
 
       <header className="ielts-test-topbar">
         <div className="ielts-header-left">
-          <strong className="ielts-header-brand">IELTS Lab</strong>
+          <TestBrand compact className="ielts-header-brand" />
           {activeSection === 'listening' && (
             <div className="ielts-audio-status" aria-live="polite">
               <SpeakerIcon />

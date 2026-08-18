@@ -150,6 +150,90 @@ enum ConsentAction {
   @@schema("app_private")
 }
 
+enum SpeakingAvailabilityOverrideKind {
+  AVAILABLE
+  BLACKOUT
+
+  @@schema("app_private")
+}
+
+enum SpeakingAppointmentMode {
+  ONLINE
+  IN_PERSON
+
+  @@schema("app_private")
+}
+
+enum SpeakingAppointmentStatus {
+  BOOKED
+  CANCELLED_BY_LEARNER
+  CANCELLED_BY_EXAMINER
+  COMPLETED
+  NO_SHOW
+
+  @@schema("app_private")
+}
+
+enum SpeakingSessionState {
+  READY
+  LIVE_PART_1
+  LIVE_PART_2
+  LIVE_PART_3
+  ENDED
+  RECORDING_PROCESSING
+  AWAITING_HUMAN_SCORE
+  AI_PROCESSING
+  READY_FOR_REVIEW
+  FINALIZED
+  FAILED
+
+  @@schema("app_private")
+}
+
+enum SpeakingPart {
+  PART_1
+  PART_2
+  PART_3
+
+  @@schema("app_private")
+}
+
+enum SpeakingRecordingTrackKind {
+  CANDIDATE_AUDIO
+  EXAMINER_AUDIO
+  MIXED_AUDIO
+  OPTIONAL_VIDEO
+
+  @@schema("app_private")
+}
+
+enum SpeakingRecordingStatus {
+  REQUESTED
+  RECORDING
+  PROCESSING
+  READY
+  FAILED
+  DELETED
+
+  @@schema("app_private")
+}
+
+enum SpeakingAssessmentStage {
+  PROVISIONAL
+  FINAL
+
+  @@schema("app_private")
+}
+
+enum SpeakingAiAnalysisStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+
+  @@schema("app_private")
+}
+
 model User {
   id           String        @id @db.Uuid // Matches Supabase auth.users.id.
   email        String?       @unique
@@ -167,8 +251,14 @@ model User {
   orders             Order[]
   entitlements       Entitlement[]
   salesNotes         SalesNote[]
-  verifiedAnswerKeys AnswerKey[]         @relation("AnswerKeyVerifier")
+  verifiedAnswerKeys AnswerKey[]                    @relation("AnswerKeyVerifier")
   resolvedIssues     ExtractionIssue[]
+  speakingBookings   SpeakingAppointment[]          @relation("SpeakingLearner")
+  speakingExamining  SpeakingAppointment[]          @relation("SpeakingExaminer")
+  speakingRules      SpeakingAvailabilityRule[]
+  speakingOverrides  SpeakingAvailabilityOverride[]
+  speakingMarkers    SpeakingEvidenceMarker[]
+  speakingScores     SpeakingHumanAssessment[]
 
   @@index([status, role])
   @@schema("app_private")
@@ -202,7 +292,8 @@ model ConsentRecord {
   acceptedFrom  String?
   createdAt     DateTime      @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  speakingSession SpeakingSession?
 
   @@index([userId, type, createdAt])
   @@schema("app_private")
@@ -800,14 +891,15 @@ model AssessmentAttempt {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  user        User                @relation(fields: [userId], references: [id], onDelete: Restrict)
-  blueprint   TestBlueprint       @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
-  entitlement Entitlement?        @relation(fields: [entitlementId], references: [id], onDelete: Restrict)
-  questions   AttemptQuestion[]
-  gradingRuns GradingRun[]
-  skillScores AttemptSkillScore[]
-  manifest    AttemptManifest?
-  report      LearnerReport?
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  blueprint           TestBlueprint        @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
+  entitlement         Entitlement?         @relation(fields: [entitlementId], references: [id], onDelete: Restrict)
+  questions           AttemptQuestion[]
+  gradingRuns         GradingRun[]
+  skillScores         AttemptSkillScore[]
+  manifest            AttemptManifest?
+  report              LearnerReport?
+  speakingAppointment SpeakingAppointment?
 
   @@index([userId, state, createdAt])
   @@index([blueprintId])
@@ -872,6 +964,196 @@ model Response {
 
   attemptQuestion AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
 
+  @@schema("app_private")
+}
+
+// -----------------------------------------------------------------------------
+// LIVE SPEAKING APPOINTMENTS, SESSION EVIDENCE, AND HUMAN-FIRST ASSESSMENT
+// -----------------------------------------------------------------------------
+
+model SpeakingAvailabilityRule {
+  id                         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  examinerId                 String                  @db.Uuid
+  weekday                    Int
+  startMinute                Int
+  endMinute                  Int
+  timezone                   String                  @default("Africa/Algiers")
+  appointmentDurationMinutes Int                     @default(20)
+  deliveryMode               SpeakingAppointmentMode @default(ONLINE)
+  validFrom                  DateTime?               @db.Date
+  validUntil                 DateTime?               @db.Date
+  active                     Boolean                 @default(true)
+  createdAt                  DateTime                @default(now())
+  updatedAt                  DateTime                @updatedAt
+
+  examiner User @relation(fields: [examinerId], references: [id], onDelete: Cascade)
+
+  @@index([examinerId, weekday, active])
+  @@schema("app_private")
+}
+
+model SpeakingAvailabilityOverride {
+  id                         String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  examinerId                 String                           @db.Uuid
+  date                       DateTime                         @db.Date
+  kind                       SpeakingAvailabilityOverrideKind
+  startMinute                Int?
+  endMinute                  Int?
+  appointmentDurationMinutes Int?
+  deliveryMode               SpeakingAppointmentMode?
+  timezone                   String                           @default("Africa/Algiers")
+  reason                     String?
+  createdAt                  DateTime                         @default(now())
+
+  examiner User @relation(fields: [examinerId], references: [id], onDelete: Cascade)
+
+  @@index([examinerId, date, kind])
+  @@schema("app_private")
+}
+
+model SpeakingAppointment {
+  id               String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId        String                    @unique @db.Uuid
+  learnerId        String                    @db.Uuid
+  examinerId       String                    @db.Uuid
+  scheduledStartAt DateTime
+  scheduledEndAt   DateTime
+  learnerTimezone  String
+  deliveryMode     SpeakingAppointmentMode   @default(ONLINE)
+  status           SpeakingAppointmentStatus @default(BOOKED)
+  cancelledAt      DateTime?
+  cancellationNote String?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  attempt  AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  learner  User              @relation("SpeakingLearner", fields: [learnerId], references: [id], onDelete: Restrict)
+  examiner User              @relation("SpeakingExaminer", fields: [examinerId], references: [id], onDelete: Restrict)
+  session  SpeakingSession?
+
+  @@unique([examinerId, scheduledStartAt])
+  @@index([learnerId, scheduledStartAt])
+  @@index([examinerId, status, scheduledStartAt])
+  @@schema("app_private")
+}
+
+model SpeakingSession {
+  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  appointmentId          String               @unique @db.Uuid
+  consentRecordId        String?              @unique @db.Uuid
+  state                  SpeakingSessionState @default(READY)
+  currentPart            SpeakingPart?
+  rtcProvider            String
+  rtcRoomName            String               @unique
+  contentSnapshot        Json?
+  examinerNotes          String?              @db.Text
+  recordingConsentAt     DateTime?
+  recordingPolicyVersion String?
+  recordingStartedAt     DateTime?
+  startedAt              DateTime?
+  endedAt                DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+
+  appointment   SpeakingAppointment       @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  consentRecord ConsentRecord?            @relation(fields: [consentRecordId], references: [id], onDelete: Restrict)
+  markers       SpeakingEvidenceMarker[]
+  recordings    SpeakingRecording[]
+  assessments   SpeakingHumanAssessment[]
+  aiAnalyses    SpeakingAiAnalysis[]
+
+  @@index([state, updatedAt])
+  @@schema("app_private")
+}
+
+model SpeakingEvidenceMarker {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId   String        @db.Uuid
+  createdById String        @db.Uuid
+  offsetMs    Int
+  part        SpeakingPart?
+  criterion   String?
+  note        String?
+  createdAt   DateTime      @default(now())
+
+  session   SpeakingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdBy User            @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([sessionId, offsetMs])
+  @@schema("app_private")
+}
+
+model SpeakingRecording {
+  id                 String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId          String                     @db.Uuid
+  kind               SpeakingRecordingTrackKind
+  status             SpeakingRecordingStatus    @default(REQUESTED)
+  providerArtifactId String?                    @unique
+  providerCallbackId String?                    @unique
+  storageKey         String?                    @unique
+  contentType        String?
+  durationMs         Int?
+  checksum           String?
+  errorCode          String?
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+
+  session SpeakingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, status])
+  @@schema("app_private")
+}
+
+model SpeakingHumanAssessment {
+  id                   String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId            String                  @db.Uuid
+  assessorId           String                  @db.Uuid
+  gradingRunId         String?                 @db.Uuid
+  stage                SpeakingAssessmentStage
+  fluencyCoherence     Decimal                 @db.Decimal(2, 1)
+  lexicalResource      Decimal                 @db.Decimal(2, 1)
+  grammaticalRange     Decimal                 @db.Decimal(2, 1)
+  pronunciation        Decimal                 @db.Decimal(2, 1)
+  overallBand          Decimal                 @db.Decimal(2, 1)
+  notes                String?                 @db.Text
+  priorities           Json?
+  aiAnalysisRevealedAt DateTime?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+
+  session    SpeakingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  assessor   User            @relation(fields: [assessorId], references: [id], onDelete: Restrict)
+  gradingRun GradingRun?     @relation(fields: [gradingRunId], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, stage])
+  @@index([assessorId, createdAt])
+  @@schema("app_private")
+}
+
+model SpeakingAiAnalysis {
+  id            String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId     String                   @db.Uuid
+  gradingRunId  String?                  @db.Uuid
+  status        SpeakingAiAnalysisStatus @default(QUEUED)
+  provider      String
+  model         String
+  promptVersion String
+  schemaVersion String
+  inputHash     String
+  output        Json?
+  errorCode     String?
+  errorMessage  String?                  @db.Text
+  runAttempt    Int                      @default(0)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+
+  session    SpeakingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  gradingRun GradingRun?     @relation(fields: [gradingRunId], references: [id], onDelete: Restrict)
+
+  @@unique([sessionId, inputHash, promptVersion])
+  @@index([status, createdAt])
   @@schema("app_private")
 }
 
@@ -985,10 +1267,12 @@ model GradingRun {
   finalizedAt     DateTime?
   createdAt       DateTime         @default(now())
 
-  attempt         AssessmentAttempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  rubricVersion   RubricVersion?      @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict)
-  criterionScores CriterionScore[]
-  skillScores     AttemptSkillScore[]
+  attempt             AssessmentAttempt         @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  rubricVersion       RubricVersion?            @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict)
+  criterionScores     CriterionScore[]
+  skillScores         AttemptSkillScore[]
+  speakingAssessments SpeakingHumanAssessment[]
+  speakingAnalyses    SpeakingAiAnalysis[]
 
   @@index([attemptId, skill, status])
   @@index([rubricVersionId])

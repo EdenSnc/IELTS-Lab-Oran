@@ -8,6 +8,7 @@ import LocalSchema from '@/components/LocalSchema';
 import FloatingWidgetClient from '@/components/FloatingWidgetClient';
 import { Locale, SITE_URL, buildAlternates } from '@/lib/seo';
 import '../globals.css';
+import BrowserExtensionHydrationGuard from '@/components/BrowserExtensionHydrationGuard';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -65,6 +66,7 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <head>
+        <BrowserExtensionHydrationGuard />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* App Router layouts replace pages/_document; keep the established site fonts unchanged. */}

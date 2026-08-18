@@ -1,6 +1,7 @@
 import { Metadata, Viewport } from 'next';
 import { SITE_URL } from '@/lib/seo';
 import '../globals.css';
+import BrowserExtensionHydrationGuard from '@/components/BrowserExtensionHydrationGuard';
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -25,6 +26,7 @@ export default function TestEngineLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <BrowserExtensionHydrationGuard />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* The result screen deliberately uses the public site's Inter typeface. */}

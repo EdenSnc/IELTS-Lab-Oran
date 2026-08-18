@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { SITE_URL } from '@/lib/seo';
 
 export default function Testimonials() {
   const t = useTranslations('Testimonials');
@@ -36,7 +37,7 @@ export default function Testimonials() {
         "@id": "https://www.ieltslaboran.com/#organization",
         "name": "IELTS Lab Oran",
         "url": "https://www.ieltslaboran.com/",
-        "logo": "https://www.ieltslaboran.com/logo_rounded.png",
+        "logo": `${SITE_URL}/ielts-lab-mark.svg`,
         "sameAs": [
           "https://instagram.com/ieltslab.oran",
           "https://facebook.com/IELTSLabOran"

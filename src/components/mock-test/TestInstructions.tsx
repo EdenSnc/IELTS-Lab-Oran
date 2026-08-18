@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { DeliveryTest } from '@/lib/content/delivery-types';
 import { useTestStore, IELTSSection } from '@/lib/store/useTestStore';
 import { startListeningAudio } from '@/lib/audio/listening-audio';
+import TestBrand from '@/components/brand/TestBrand';
 
 const SECTION_VIDEOS: Record<IELTSSection, string> = {
   listening: '/listening.mp4',
@@ -81,8 +83,8 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-y-auto bg-white text-black">
-      <div className="flex h-[42px] shrink-0 items-center border-b border-black px-6 text-sm font-bold">
-        IELTS Lab
+      <div className="flex h-[48px] shrink-0 items-center border-b border-black px-4 sm:px-6">
+        <TestBrand compact href="/en" />
       </div>
 
       <div className="mx-auto w-full max-w-[1040px] flex-1 px-5 py-7">
@@ -204,8 +206,11 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
           <div className="test-instructions-card overflow-hidden rounded-[5px] border border-[#707070] bg-white">
             <div className="test-instructions-card-header px-9 py-8">
               <h2 className="mb-2 text-[22px] font-bold text-[#333]">Speaking</h2>
-              <h4 className="mb-2 font-bold text-[#707070]">Coming soon</h4>
-              <p className="text-[#54585a]">The Speaking practice section is not yet available.</p>
+              <h4 className="mb-2 font-bold text-[#c10037]">Live examiner appointment required</h4>
+              <p className="mb-4 text-[#54585a]">Book your recorded Speaking interview after completing the computer-based sections.</p>
+              <Link href="/speaking" className="inline-flex border border-black bg-white px-4 py-2 font-bold text-black hover:bg-[#eeeeee]">
+                Speaking appointments
+              </Link>
             </div>
           </div>
         </div>
