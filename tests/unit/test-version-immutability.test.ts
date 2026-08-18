@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-test('TestVersion Immutability: published TestVersion cannot be mutated without version increment (Invariant 10)', () => {
+test('Algorithm Model: TestVersion immutability version increment check (Specification Invariant 10)', () => {
   // Simulating the version occupied check from importPackage
   const existingVersion = {
     testId: 'test-123',

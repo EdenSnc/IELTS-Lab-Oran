@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-test('Entitlement: concurrent reservation remains safe and bounds check enforced (Invariant 15)', () => {
+test('Algorithm Model: Entitlement reservation optimistic concurrency and bounds check (Specification Invariant 15)', () => {
   // Simulating atomic reservation logic
   type EntitlementState = {
     maximumAttempts: number | null;
@@ -56,7 +56,7 @@ test('Entitlement: concurrent reservation remains safe and bounds check enforced
   }, /ENTITLEMENT_EXHAUSTED/);
 });
 
-test('GradingRun: active lease cannot be stolen (Invariant 16)', () => {
+test('Algorithm Model: GradingRun active lease cannot be stolen (Specification Invariant 16)', () => {
   const now = new Date();
   const activeLease = {
     id: 'run-1',
@@ -87,7 +87,7 @@ test('GradingRun: active lease cannot be stolen (Invariant 16)', () => {
   }, /LEASE_ACQUISITION_DENIED/);
 });
 
-test('GradingRun: expired lease reclaim works (Invariant 17)', () => {
+test('Algorithm Model: GradingRun expired lease reclaim works (Specification Invariant 17)', () => {
   const now = new Date();
   const expiredLease = {
     id: 'run-1',

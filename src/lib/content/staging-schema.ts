@@ -261,6 +261,83 @@ const speakingTypes = new Set<z.infer<typeof QuestionTypeSchema>>([
   'SPEAKING_PART_3_DISCUSSION',
 ]);
 
+// =============================================================================
+// CONTENT-SIDE WORD/NUMBER INSTRUCTION CONTRACT VALIDATION
+// Used for import/review/publishing validation of content packages.
+// =============================================================================
+
+export type InstructionContractResult =
+  | { valid: true; maxWords: number; allowNumbers: boolean }
+  | { valid: false; reason: 'UNRECOGNIZED_INSTRUCTION_FORM' | 'INSTRUCTION_METADATA_MISMATCH' };
+
+export function parseAnswerInstructionSemantics(
+  rawInstruction: string,
+): { maxWords: number; allowNumbers: boolean } | null {
+  const norm = rawInstruction.trim().toUpperCase().replace(/\s+/g, ' ');
+  if (!norm) return null;
+
+  if (/(?:WRITE\s+)?(?:NO\s+MORE\s+THAN\s+)?ONE\s+WORD\s+ONLY/i.test(norm)) {
+    return { maxWords: 1, allowNumbers: false };
+  }
+
+  // AND/OR A NUMBER variants
+  if (/(?:WRITE\s+)?(?:NO\s+MORE\s+THAN\s+)?ONE\s+WORD\s+(?:AND\s*\/\s*OR|AND\s+OR)\s+A\s+NUMBER/i.test(norm)) {
+    return { maxWords: 1, allowNumbers: true };
+  }
+  if (/(?:WRITE\s+)?NO\s+MORE\s+THAN\s+TWO\s+WORDS\s+(?:AND\s*\/\s*OR|AND\s+OR)\s+A\s+NUMBER/i.test(norm)) {
+    return { maxWords: 2, allowNumbers: true };
+  }
+  if (/(?:WRITE\s+)?NO\s+MORE\s+THAN\s+THREE\s+WORDS\s+(?:AND\s*\/\s*OR|AND\s+OR)\s+A\s+NUMBER/i.test(norm)) {
+    return { maxWords: 3, allowNumbers: true };
+  }
+
+  // Word-only limits without numbers
+  if (/(?:WRITE\s+)?NO\s+MORE\s+THAN\s+ONE\s+WORD(?!\s+(?:AND|OR))/i.test(norm)) {
+    return { maxWords: 1, allowNumbers: false };
+  }
+  if (/(?:WRITE\s+)?NO\s+MORE\s+THAN\s+TWO\s+WORDS(?!\s+(?:AND|OR))/i.test(norm)) {
+    return { maxWords: 2, allowNumbers: false };
+  }
+  if (/(?:WRITE\s+)?NO\s+MORE\s+THAN\s+THREE\s+WORDS(?!\s+(?:AND|OR))/i.test(norm)) {
+    return { maxWords: 3, allowNumbers: false };
+  }
+
+  return null;
+}
+
+export function validateAnswerInstructionContract(input: {
+  rawInstruction?: string | null;
+  maxWords?: number | null;
+  allowNumbers?: boolean | null;
+}): InstructionContractResult {
+  if (!input.rawInstruction || !input.rawInstruction.trim()) {
+    return { valid: true, maxWords: input.maxWords ?? 0, allowNumbers: input.allowNumbers ?? false };
+  }
+
+  const parsed = parseAnswerInstructionSemantics(input.rawInstruction);
+  if (!parsed) {
+    return { valid: false, reason: 'UNRECOGNIZED_INSTRUCTION_FORM' };
+  }
+
+  if (
+    input.maxWords !== undefined
+    && input.maxWords !== null
+    && input.maxWords !== parsed.maxWords
+  ) {
+    return { valid: false, reason: 'INSTRUCTION_METADATA_MISMATCH' };
+  }
+
+  if (
+    input.allowNumbers !== undefined
+    && input.allowNumbers !== null
+    && input.allowNumbers !== parsed.allowNumbers
+  ) {
+    return { valid: false, reason: 'INSTRUCTION_METADATA_MISMATCH' };
+  }
+
+  return { valid: true, maxWords: parsed.maxWords, allowNumbers: parsed.allowNumbers };
+}
+
 export const QuestionGroupSchema = z.object({
   sourceKey: z.string().min(1),
   displayOrder: z.number().int().nonnegative(),
@@ -331,6 +408,25 @@ export const QuestionGroupSchema = z.object({
       message: 'Rubric-scored groups use bands, so raw maxMarks must be zero',
       path: ['maxMarks'],
     });
+  }
+
+  if (
+    group.reviewStatus === 'VERIFIED'
+    && completionTypes.has(group.questionType)
+    && group.rawAnswerInstruction
+  ) {
+    const contract = validateAnswerInstructionContract({
+      rawInstruction: group.rawAnswerInstruction,
+      maxWords: group.maxWords,
+      allowNumbers: group.allowNumbers,
+    });
+    if (!contract.valid) {
+      context.addIssue({
+        code: 'custom',
+        message: `Instruction contract failure (${contract.reason}): raw '${group.rawAnswerInstruction}' does not match maxWords=${group.maxWords}, allowNumbers=${group.allowNumbers}`,
+        path: ['rawAnswerInstruction'],
+      });
+    }
   }
 
   const optionLabels = group.options?.map((option) => option.label) ?? [];
@@ -761,81 +857,9 @@ export function parseStagedTestPackage(input: unknown): StagedTestPackage {
 }
 
 // =============================================================================
-// CONTENT-SIDE WORD/NUMBER INSTRUCTION CONTRACT VALIDATION
-// Used for import/review/publishing validation of content packages.
-// =============================================================================
-
-export type InstructionContractResult =
-  | { valid: true; maxWords: number; allowNumbers: boolean }
-  | { valid: false; reason: 'UNRECOGNIZED_INSTRUCTION_FORM' | 'INSTRUCTION_METADATA_MISMATCH' };
-
-export function parseAnswerInstructionSemantics(
-  rawInstruction: string,
-): { maxWords: number; allowNumbers: boolean } | null {
-  const norm = rawInstruction.trim().toUpperCase().replace(/\s+/g, ' ');
-  if (!norm) return null;
-
-  switch (norm) {
-    case 'ONE WORD ONLY':
-    case 'NO MORE THAN ONE WORD':
-      return { maxWords: 1, allowNumbers: false };
-    case 'NO MORE THAN TWO WORDS':
-      return { maxWords: 2, allowNumbers: false };
-    case 'NO MORE THAN THREE WORDS':
-      return { maxWords: 3, allowNumbers: false };
-    case 'ONE WORD AND/OR A NUMBER':
-    case 'ONE WORD AND / OR A NUMBER':
-    case 'ONE WORD AND /OR A NUMBER':
-    case 'NO MORE THAN ONE WORD AND/OR A NUMBER':
-    case 'NO MORE THAN ONE WORD AND / OR A NUMBER':
-      return { maxWords: 1, allowNumbers: true };
-    case 'NO MORE THAN TWO WORDS AND/OR A NUMBER':
-    case 'NO MORE THAN TWO WORDS AND / OR A NUMBER':
-      return { maxWords: 2, allowNumbers: true };
-    case 'NO MORE THAN THREE WORDS AND/OR A NUMBER':
-    case 'NO MORE THAN THREE WORDS AND / OR A NUMBER':
-      return { maxWords: 3, allowNumbers: true };
-    default:
-      return null;
-  }
-}
-
-export function validateAnswerInstructionContract(input: {
-  rawInstruction?: string | null;
-  maxWords?: number | null;
-  allowNumbers?: boolean | null;
-}): InstructionContractResult {
-  if (!input.rawInstruction || !input.rawInstruction.trim()) {
-    return { valid: true, maxWords: input.maxWords ?? 0, allowNumbers: input.allowNumbers ?? false };
-  }
-
-  const parsed = parseAnswerInstructionSemantics(input.rawInstruction);
-  if (!parsed) {
-    return { valid: false, reason: 'UNRECOGNIZED_INSTRUCTION_FORM' };
-  }
-
-  if (
-    input.maxWords !== undefined
-    && input.maxWords !== null
-    && input.maxWords !== parsed.maxWords
-  ) {
-    return { valid: false, reason: 'INSTRUCTION_METADATA_MISMATCH' };
-  }
-
-  if (
-    input.allowNumbers !== undefined
-    && input.allowNumbers !== null
-    && input.allowNumbers !== parsed.allowNumbers
-  ) {
-    return { valid: false, reason: 'INSTRUCTION_METADATA_MISMATCH' };
-  }
-
-  return { valid: true, maxWords: parsed.maxWords, allowNumbers: parsed.allowNumbers };
-}
-
-// =============================================================================
-// FULL IELTS MOCK PUBLICATION VALIDATOR
-// Validates that a single skill section represents a complete 40-question mock.
+// FULL IELTS MOCK CERTIFICATION VALIDATOR
+// Helper function to validate that a section represents a complete 40-question mock.
+// (To be wired into the publication workflow gate in Batch 2).
 // =============================================================================
 
 export type FullMockValidationResult = {
@@ -849,7 +873,9 @@ export function validateFullIeltsMockSection(section: {
   skill: 'LISTENING' | 'READING';
   parts: Array<{
     slot: string;
+    stimuli?: Array<{ type: string; reviewStatus?: string }>;
     questionGroups: Array<{
+      scoringStrategy?: string;
       maxMarks: number;
       reviewStatus: string;
       answerKey?: { reviewStatus: string; formatVersion: number } | null;
@@ -858,14 +884,24 @@ export function validateFullIeltsMockSection(section: {
   }>;
 }): FullMockValidationResult {
   const errors: string[] = [];
-  const expectedParts = section.skill === 'LISTENING'
+  const expectedSlots = section.skill === 'LISTENING'
     ? ['LISTENING_PART_1', 'LISTENING_PART_2', 'LISTENING_PART_3', 'LISTENING_PART_4']
     : ['READING_SECTION_1', 'READING_SECTION_2', 'READING_SECTION_3'];
 
   const slots = section.parts.map((p) => p.slot);
-  for (const expected of expectedParts) {
-    if (!slots.includes(expected)) {
+
+  // Exact slot match: no missing, no duplicate, no extra
+  for (const expected of expectedSlots) {
+    const count = slots.filter((s) => s === expected).length;
+    if (count === 0) {
       errors.push(`Missing expected part/section slot: ${expected}`);
+    } else if (count > 1) {
+      errors.push(`Duplicate part/section slot: ${expected}`);
+    }
+  }
+  for (const actual of slots) {
+    if (!expectedSlots.includes(actual)) {
+      errors.push(`Unexpected part/section slot for ${section.skill}: ${actual}`);
     }
   }
 
@@ -874,7 +910,20 @@ export function validateFullIeltsMockSection(section: {
   const sourceNumbers: number[] = [];
 
   for (const part of section.parts) {
+    // Stimulus presence verification if stimulus array provided
+    if (part.stimuli && part.stimuli.length > 0) {
+      const expectedStimulusType = section.skill === 'LISTENING' ? 'AUDIO_TRACK' : 'READING_PASSAGE';
+      const hasExpectedStimulus = part.stimuli.some((s) => s.type === expectedStimulusType);
+      if (!hasExpectedStimulus) {
+        errors.push(`Slot ${part.slot} missing required ${expectedStimulusType} stimulus`);
+      }
+    }
+
     for (const group of part.questionGroups) {
+      if (group.scoringStrategy && !['PER_ITEM_EXACT', 'UNORDERED_EXACT_SET'].includes(group.scoringStrategy)) {
+        errors.push(`QuestionGroup in slot ${part.slot} has unsupported scoring strategy: ${group.scoringStrategy}`);
+      }
+
       if (group.reviewStatus !== 'VERIFIED') {
         errors.push(`QuestionGroup in slot ${part.slot} is not VERIFIED`);
       }
@@ -883,6 +932,11 @@ export function validateFullIeltsMockSection(section: {
       }
       if (group.answerKey && group.answerKey.formatVersion !== 1) {
         errors.push(`AnswerKey in slot ${part.slot} has unsupported formatVersion: ${group.answerKey.formatVersion}`);
+      }
+
+      const groupItemSum = group.questions.reduce((sum, q) => sum + q.maxMarks, 0);
+      if (group.maxMarks !== groupItemSum) {
+        errors.push(`QuestionGroup in slot ${part.slot} maxMarks (${group.maxMarks}) does not equal question sum (${groupItemSum})`);
       }
 
       for (const q of group.questions) {

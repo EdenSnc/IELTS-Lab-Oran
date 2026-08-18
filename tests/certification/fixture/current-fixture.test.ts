@@ -4,9 +4,11 @@ import prisma from '../../../src/lib/prisma.ts';
 import { decrypt } from '../../../src/lib/crypto.ts';
 import { gradeVerifiedObjectiveAnswers } from '../../../src/lib/grading/objective-grading.ts';
 
+const GOLDEN_TEST_VERSION_ID = 'c2158775-a258-424a-8571-736fdbf5d828';
+
 test('Current Fixture Certification: 40/40 All-Correct, 0/40 All-Wrong, Single Mutations, and Variants', async () => {
-  const version = await prisma.testVersion.findFirst({
-    where: { status: 'PUBLISHED' },
+  const version = await prisma.testVersion.findUnique({
+    where: { id: GOLDEN_TEST_VERSION_ID },
     include: {
       test: true,
       sections: {
@@ -29,7 +31,7 @@ test('Current Fixture Certification: 40/40 All-Correct, 0/40 All-Wrong, Single M
     },
   });
 
-  assert.ok(version, 'A published TestVersion must exist in database');
+  assert.ok(version, `Golden TestVersion ${GOLDEN_TEST_VERSION_ID} must exist in database`);
 
   const listeningSection = version.sections.find((s) => s.skill === 'LISTENING');
   const readingSection = version.sections.find((s) => s.skill === 'READING');
@@ -189,29 +191,40 @@ test('Current Fixture Certification: 40/40 All-Correct, 0/40 All-Wrong, Single M
   }
 
   // -------------------------------------------------------------------------
-  // 5. EVERY ACCEPTED ANSWER VARIANT (Without logging plaintext in assertions)
+  // 5. EVERY ACCEPTED ANSWER VARIANT (Properly Awaited Iteration)
   // -------------------------------------------------------------------------
+  let acceptedVariantsTestedCount = 0;
+
   for (const [qNumStr, variants] of Object.entries(allVariantsByQuestion.listening)) {
     const qNum = Number(qNumStr);
-    variants.forEach((variant, vIdx) => {
+    for (let vIdx = 0; vIdx < variants.length; vIdx++) {
+      const variant = variants[vIdx];
       const sub = { listening: { [String(qNum)]: variant }, reading: {} };
-      void gradeVerifiedObjectiveAnswers({ testVersionId: version.id, answers: sub }).then((res) => {
-        const scored = res.skills.find((s) => s.skill === 'LISTENING')!;
-        assert.equal(scored.rawScore, 1, `Listening Q${qNum} variant index ${vIdx} must score 1 mark`);
-      });
-    });
+      const res = await gradeVerifiedObjectiveAnswers({ testVersionId: version.id, answers: sub });
+      const scored = res.skills.find((s) => s.skill === 'LISTENING')!;
+      assert.equal(scored.rawScore, 1, `Listening Q${qNum} variant index ${vIdx} must score 1 mark`);
+      acceptedVariantsTestedCount++;
+    }
   }
 
   for (const [qNumStr, variants] of Object.entries(allVariantsByQuestion.reading)) {
     const qNum = Number(qNumStr);
-    variants.forEach((variant, vIdx) => {
+    for (let vIdx = 0; vIdx < variants.length; vIdx++) {
+      const variant = variants[vIdx];
       const sub = { listening: {}, reading: { [String(qNum)]: variant } };
-      void gradeVerifiedObjectiveAnswers({ testVersionId: version.id, answers: sub }).then((res) => {
-        const scored = res.skills.find((s) => s.skill === 'READING')!;
-        assert.equal(scored.rawScore, 1, `Reading Q${qNum} variant index ${vIdx} must score 1 mark`);
-      });
-    });
+      const res = await gradeVerifiedObjectiveAnswers({ testVersionId: version.id, answers: sub });
+      const scored = res.skills.find((s) => s.skill === 'READING')!;
+      assert.equal(scored.rawScore, 1, `Reading Q${qNum} variant index ${vIdx} must score 1 mark`);
+      acceptedVariantsTestedCount++;
+    }
   }
+
+  const perItemQuestionCount = Object.keys(allVariantsByQuestion.listening).length + Object.keys(allVariantsByQuestion.reading).length;
+  assert.equal(perItemQuestionCount, 74, 'Must have exactly 74 PER_ITEM_EXACT questions across L (36) and R (38)');
+  assert.ok(
+    acceptedVariantsTestedCount >= 74,
+    `Must test at least 74 accepted variants, got ${acceptedVariantsTestedCount}`,
+  );
 
   // -------------------------------------------------------------------------
   // 6. OFFICIAL UNORDERED "IN EITHER ORDER" SETS & PERMUTATIONS

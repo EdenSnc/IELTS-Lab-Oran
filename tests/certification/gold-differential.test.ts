@@ -14,7 +14,7 @@ import {
 import type { HistoricalSection } from './historical-reference.ts';
 
 test('Gold Differential Certification: Oracle vs Current Production Scorer vs Historical Reference', () => {
-  // Construct a comprehensive multi-group section containing both PER_ITEM_EXACT and UNORDERED_EXACT_SET
+  // Construct a comprehensive multi-group section with explicit caseSensitive: false normalization
   const loadedSection: LoadedObjectiveSection = {
     skill: 'LISTENING',
     parts: [
@@ -29,6 +29,7 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
               { stableKey: 'q3', sourceNumber: 3, maxMarks: 1 },
             ],
             answerKey: {
+              normalization: { caseSensitive: false },
               payload: {
                 strategy: 'PER_ITEM_EXACT',
                 answersByStableKey: {
@@ -47,6 +48,7 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
               { stableKey: 'q5', sourceNumber: 5, maxMarks: 1 },
             ],
             answerKey: {
+              normalization: { caseSensitive: false },
               payload: {
                 strategy: 'UNORDERED_EXACT_SET',
                 acceptedSets: [['A', 'C']],
@@ -71,6 +73,7 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
           { stableKey: 'q2', sourceNumber: 2, maxMarks: 1 },
           { stableKey: 'q3', sourceNumber: 3, maxMarks: 1 },
         ],
+        normalization: { caseSensitive: false },
         answerKeyPayload: {
           strategy: 'PER_ITEM_EXACT',
           answersByStableKey: {
@@ -88,6 +91,7 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
           { stableKey: 'q4', sourceNumber: 4, maxMarks: 1 },
           { stableKey: 'q5', sourceNumber: 5, maxMarks: 1 },
         ],
+        normalization: { caseSensitive: false },
         answerKeyPayload: {
           strategy: 'UNORDERED_EXACT_SET',
           acceptedSets: [['A', 'C']],
@@ -107,6 +111,7 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
           { stableKey: 'q2', sourceNumber: 2, maxMarks: 1 },
           { stableKey: 'q3', sourceNumber: 3, maxMarks: 1 },
         ],
+        normalization: { caseSensitive: false },
         answerKey: {
           strategy: 'PER_ITEM_EXACT',
           answersByStableKey: {
@@ -123,6 +128,7 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
           { stableKey: 'q4', sourceNumber: 4, maxMarks: 1 },
           { stableKey: 'q5', sourceNumber: 5, maxMarks: 1 },
         ],
+        normalization: { caseSensitive: false },
         answerKey: {
           strategy: 'UNORDERED_EXACT_SET',
           acceptedSets: [['A', 'C']],
@@ -131,7 +137,7 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
     ],
   };
 
-  // Test Matrix: standard learner responses
+  // Test Matrix: standard learner responses when caseSensitive: false is explicitly configured
   const testSubmissions = [
     // 1. All correct: (5/5)
     {
@@ -157,7 +163,7 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
       answers: { '1': 'central library', '2': '12 years', '3': '50 percent', '4': 'A', '5': 'A' },
       expectedScore: 4,
     },
-    // 5. Casing and whitespace tolerance: (5/5)
+    // 5. Casing and whitespace tolerance with caseSensitive: false: (5/5)
     {
       label: 'Casing/Whitespace (HISTORICAL_BEHAVIOR_PRESERVED)',
       answers: { '1': '  CENTRAL   LIBRARY  ', '2': '12 YEARS', '3': '50 Percent', '4': 'a', '5': 'c' },
@@ -196,9 +202,64 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
   }
 
   // ---------------------------------------------------------------------------
+  // REGRESSION: OMITTED NORMALIZATION ({}) DIFFERENTIAL
+  // Demonstrating exact historical case-sensitive behavior vs current engine default
+  // (SCHEMA_DEFAULT_EVOLUTION_DOCUMENTED)
+  // ---------------------------------------------------------------------------
+  const unconfiguredLoadedSection: LoadedObjectiveSection = {
+    skill: 'LISTENING',
+    parts: [
+      {
+        questionGroups: [
+          {
+            scoringStrategy: 'PER_ITEM_EXACT',
+            maxMarks: 1,
+            questions: [{ stableKey: 'q_case', sourceNumber: 1, maxMarks: 1 }],
+            answerKey: {
+              normalization: {}, // unconfigured
+              payload: { strategy: 'PER_ITEM_EXACT', answersByStableKey: { q_case: ['central library'] } },
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const unconfiguredHistoricalSection: HistoricalSection = {
+    skill: 'LISTENING',
+    groups: [
+      {
+        scoringStrategy: 'PER_ITEM_EXACT',
+        maxMarks: 1,
+        questions: [{ stableKey: 'q_case', sourceNumber: 1, maxMarks: 1 }],
+        normalization: {}, // unconfigured
+        answerKey: { strategy: 'PER_ITEM_EXACT', answersByStableKey: { q_case: ['central library'] } },
+      },
+    ],
+  };
+
+  // Current engine defaults to case-insensitive (matches "CENTRAL LIBRARY")
+  const currentUnconfiguredRes = scoreLoadedObjectiveContent({
+    sections: [unconfiguredLoadedSection],
+    submittedAnswers: { listening: { '1': 'CENTRAL LIBRARY' } },
+  });
+  assert.equal(currentUnconfiguredRes[0].rawScore, 1, 'Current engine defaults to case-insensitive');
+
+  // Historical reference (commit 72d17015...) with unconfigured rules was strictly case-sensitive
+  const historicalUnconfiguredRes = scoreHistoricalContent(
+    unconfiguredHistoricalSection,
+    { '1': 'CENTRAL LIBRARY' },
+  );
+  assert.equal(
+    historicalUnconfiguredRes.rawScore,
+    0,
+    'Historical scorer with omitted caseSensitive remained case-sensitive (SCHEMA_DEFAULT_EVOLUTION_DOCUMENTED)',
+  );
+
+  // ---------------------------------------------------------------------------
   // INTENTIONAL CORRECTIONS & DEFENSE COMPARISON
   // ---------------------------------------------------------------------------
-  // Invariant 1 Defense: Current production scorer throws INVALID_QUESTION_SOURCE_NUMBER
+  // Runtime Defense: Current production scorer throws INVALID_QUESTION_SOURCE_NUMBER
   // when a scored question has a null sourceNumber.
   const nullSourceNumberSection: LoadedObjectiveSection = {
     skill: 'LISTENING',
@@ -218,8 +279,6 @@ test('Gold Differential Certification: Oracle vs Current Production Scorer vs Hi
     ],
   };
 
-  // INTENTIONAL_CORRECTION_WITH_REGRESSION_CASE:
-  // Current engine fails closed with runtime defense, preventing silent scoring corruption.
   assert.throws(() => {
     scoreLoadedObjectiveContent({
       sections: [nullSourceNumberSection],

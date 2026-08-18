@@ -20,7 +20,7 @@ export function historicalNormalizeAnswer(value: string, rules: HistoricalNormal
   if (rules.punctuationSensitive === false) {
     normalized = normalized.replace(/[^\p{L}\p{N}\s]/gu, '');
   }
-  if (rules.caseSensitive !== true) normalized = normalized.toLocaleLowerCase('en');
+  if (rules.caseSensitive === false) normalized = normalized.toLocaleLowerCase('en');
   return normalized;
 }
 

@@ -143,6 +143,20 @@ export function parseAnswerKeyPayload(encryptedPayload: string, formatVersion: n
   return answerKeySchema.parse(parsedJson);
 }
 
+export function validateBandScaleThresholds(thresholds: unknown): thresholds is Array<[number, number]> {
+  if (!Array.isArray(thresholds) || thresholds.length === 0) return false;
+  const seenMinScores = new Set<number>();
+  for (const item of thresholds) {
+    if (!Array.isArray(item) || item.length !== 2) return false;
+    const [minScore, band] = item;
+    if (typeof minScore !== 'number' || !Number.isInteger(minScore) || minScore < 0 || minScore > 40) return false;
+    if (typeof band !== 'number' || band < 0 || band > 9 || (band * 2) % 1 !== 0) return false;
+    if (seenMinScores.has(minScore)) return false;
+    seenMinScores.add(minScore);
+  }
+  return true;
+}
+
 export async function resolveBandScale(input: {
   skill: 'LISTENING' | 'READING';
   variant?: 'ACADEMIC' | 'GENERAL_TRAINING' | 'UNIVERSAL';
@@ -184,13 +198,19 @@ export async function resolveBandScale(input: {
     }
   }
 
-  if (bandScaleRecord && Array.isArray(bandScaleRecord.thresholds)) {
-    const thresholds = bandScaleRecord.thresholds as Array<[number, number]>;
-    const match = thresholds.find(([minScore]) => input.rawScore >= minScore);
-    return {
-      band: match ? match[1] : 0,
-      bandScaleId: bandScaleRecord.id,
-    };
+  if (bandScaleRecord) {
+    if (validateBandScaleThresholds(bandScaleRecord.thresholds)) {
+      const thresholds = bandScaleRecord.thresholds;
+      const match = thresholds.find(([minScore]) => input.rawScore >= minScore);
+      return {
+        band: match ? match[1] : 0,
+        bandScaleId: bandScaleRecord.id,
+      };
+    }
+    // Malformed thresholds in DB record
+    if (process.env.NODE_ENV === 'production' || input.isProduction) {
+      throw new Error('BAND_SCALE_UNAVAILABLE');
+    }
   }
 
   if (process.env.NODE_ENV === 'production' || input.isProduction) {
@@ -294,10 +314,18 @@ export function scoreLoadedObjectiveContent(input: {
         const key = group.answerKey.payload;
         const rules = normalizationRules(group.answerKey.normalization);
 
-        maximumRawScore += group.questions.reduce(
-          (total, question) => total + question.maxMarks,
-          0,
-        );
+        // Defense A: Strategy match check
+        if (group.scoringStrategy !== key.strategy) {
+          throw new Error('SCORING_STRATEGY_MISMATCH');
+        }
+
+        // Defense C: Group maxMarks equals question sum
+        const groupItemMarks = group.questions.reduce((sum, q) => sum + q.maxMarks, 0);
+        if (group.maxMarks !== groupItemMarks) {
+          throw new Error('GROUP_MAX_MARKS_MISMATCH');
+        }
+
+        maximumRawScore += group.maxMarks;
 
         if (key.strategy === 'PER_ITEM_EXACT') {
           for (const question of group.questions) {
@@ -317,6 +345,17 @@ export function scoreLoadedObjectiveContent(input: {
             }
           }
         } else if (key.strategy === 'UNORDERED_EXACT_SET') {
+          // Defense 6: Unordered set key integrity
+          for (const candidateSet of key.acceptedSets) {
+            if (candidateSet.length !== group.questions.length) {
+              throw new Error('INVALID_UNORDERED_SET_LENGTH');
+            }
+            const normalizedSetItems = candidateSet.map((item) => normalizeAnswer(item, rules));
+            if (new Set(normalizedSetItems).size !== normalizedSetItems.length) {
+              throw new Error('DUPLICATE_ACCEPTED_SET_ELEMENT');
+            }
+          }
+
           const responses = group.questions.flatMap((question) => {
             if (question.sourceNumber === null || question.sourceNumber === undefined) return [];
             const response = submitted[String(question.sourceNumber)] ?? '';
@@ -468,6 +507,14 @@ export async function gradeVerifiedObjectiveAnswers(input: {
     for (const part of section.parts) {
       const questionGroups: LoadedObjectiveGroup[] = [];
       for (const group of part.questionGroups) {
+        // Defense B: Explicitly reject non-objective scoring strategies
+        if (
+          group.scoringStrategy !== 'PER_ITEM_EXACT'
+          && group.scoringStrategy !== 'UNORDERED_EXACT_SET'
+        ) {
+          throw new Error('UNSUPPORTED_OBJECTIVE_SCORING_STRATEGY');
+        }
+
         const keyRecord = group.answerKey;
         if (
           group.reviewStatus !== 'VERIFIED'

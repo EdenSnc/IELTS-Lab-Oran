@@ -153,9 +153,10 @@ test('Generic Scorer Certification: Variable Lengths, Single Skills, and N-Item 
   assert.equal(resUnknown[0].answered, 0);
 
   // ---------------------------------------------------------------------------
-  // 4. Runtime Defense: Scored question with null sourceNumber fails closed
+  // 4. Runtime Defenses: Malformed Section Inputs Fail Closed
   // ---------------------------------------------------------------------------
-  const brokenSection: LoadedObjectiveSection = {
+  // 4a. Scored question with null sourceNumber fails closed
+  const brokenNullSourceSection: LoadedObjectiveSection = {
     skill: 'LISTENING',
     parts: [
       {
@@ -163,13 +164,89 @@ test('Generic Scorer Certification: Variable Lengths, Single Skills, and N-Item 
           {
             scoringStrategy: 'PER_ITEM_EXACT',
             maxMarks: 1,
+            questions: [{ stableKey: 'b1', sourceNumber: null, maxMarks: 1 }],
+            answerKey: {
+              payload: { strategy: 'PER_ITEM_EXACT', answersByStableKey: { b1: ['valid'] } },
+            },
+          },
+        ],
+      },
+    ],
+  };
+  assert.throws(() => {
+    scoreLoadedObjectiveContent({
+      sections: [brokenNullSourceSection],
+      submittedAnswers: { listening: { '1': 'valid' } },
+    });
+  }, /INVALID_QUESTION_SOURCE_NUMBER/);
+
+  // 4b. Strategy mismatch fails closed
+  const brokenStrategySection: LoadedObjectiveSection = {
+    skill: 'LISTENING',
+    parts: [
+      {
+        questionGroups: [
+          {
+            scoringStrategy: 'PER_ITEM_EXACT',
+            maxMarks: 1,
+            questions: [{ stableKey: 'b2', sourceNumber: 1, maxMarks: 1 }],
+            answerKey: {
+              payload: { strategy: 'UNORDERED_EXACT_SET', acceptedSets: [['A']] },
+            },
+          },
+        ],
+      },
+    ],
+  };
+  assert.throws(() => {
+    scoreLoadedObjectiveContent({
+      sections: [brokenStrategySection],
+      submittedAnswers: { listening: { '1': 'A' } },
+    });
+  }, /SCORING_STRATEGY_MISMATCH/);
+
+  // 4c. Group maxMarks mismatch fails closed
+  const brokenMaxMarksSection: LoadedObjectiveSection = {
+    skill: 'LISTENING',
+    parts: [
+      {
+        questionGroups: [
+          {
+            scoringStrategy: 'PER_ITEM_EXACT',
+            maxMarks: 5, // declares 5, but only 1 mark in questions
+            questions: [{ stableKey: 'b3', sourceNumber: 1, maxMarks: 1 }],
+            answerKey: {
+              payload: { strategy: 'PER_ITEM_EXACT', answersByStableKey: { b3: ['valid'] } },
+            },
+          },
+        ],
+      },
+    ],
+  };
+  assert.throws(() => {
+    scoreLoadedObjectiveContent({
+      sections: [brokenMaxMarksSection],
+      submittedAnswers: { listening: { '1': 'valid' } },
+    });
+  }, /GROUP_MAX_MARKS_MISMATCH/);
+
+  // 4d. Unordered accepted set length mismatch fails closed
+  const brokenSetLengthSection: LoadedObjectiveSection = {
+    skill: 'LISTENING',
+    parts: [
+      {
+        questionGroups: [
+          {
+            scoringStrategy: 'UNORDERED_EXACT_SET',
+            maxMarks: 2,
             questions: [
-              { stableKey: 'b1', sourceNumber: null, maxMarks: 1 },
+              { stableKey: 'u1', sourceNumber: 1, maxMarks: 1 },
+              { stableKey: 'u2', sourceNumber: 2, maxMarks: 1 },
             ],
             answerKey: {
               payload: {
-                strategy: 'PER_ITEM_EXACT',
-                answersByStableKey: { b1: ['valid'] },
+                strategy: 'UNORDERED_EXACT_SET',
+                acceptedSets: [['A', 'B', 'C']], // 3 elements for 2 questions
               },
             },
           },
@@ -177,11 +254,42 @@ test('Generic Scorer Certification: Variable Lengths, Single Skills, and N-Item 
       },
     ],
   };
-
   assert.throws(() => {
     scoreLoadedObjectiveContent({
-      sections: [brokenSection],
-      submittedAnswers: { listening: { '1': 'valid' } },
+      sections: [brokenSetLengthSection],
+      submittedAnswers: { listening: { '1': 'A', '2': 'B' } },
     });
-  }, /INVALID_QUESTION_SOURCE_NUMBER/);
+  }, /INVALID_UNORDERED_SET_LENGTH/);
+
+  // 4e. Unordered accepted set duplicate items (exact and case-insensitive) fail closed
+  const brokenDuplicateSetSection: LoadedObjectiveSection = {
+    skill: 'LISTENING',
+    parts: [
+      {
+        questionGroups: [
+          {
+            scoringStrategy: 'UNORDERED_EXACT_SET',
+            maxMarks: 2,
+            questions: [
+              { stableKey: 'u1', sourceNumber: 1, maxMarks: 1 },
+              { stableKey: 'u2', sourceNumber: 2, maxMarks: 1 },
+            ],
+            answerKey: {
+              normalization: { caseSensitive: false },
+              payload: {
+                strategy: 'UNORDERED_EXACT_SET',
+                acceptedSets: [['A', 'a']], // duplicate after normalization
+              },
+            },
+          },
+        ],
+      },
+    ],
+  };
+  assert.throws(() => {
+    scoreLoadedObjectiveContent({
+      sections: [brokenDuplicateSetSection],
+      submittedAnswers: { listening: { '1': 'A', '2': 'a' } },
+    });
+  }, /DUPLICATE_ACCEPTED_SET_ELEMENT/);
 });
