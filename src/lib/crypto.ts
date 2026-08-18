@@ -5,17 +5,42 @@ import crypto from 'crypto';
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 16;
 
-/**
- * Encrypts a plaintext string using AES-256-GCM.
- * Output format: ivHex:authTagHex:encryptedTextHex
- */
-export function encrypt(text: string): string {
-  const KEY = process.env.ENCRYPTION_KEY;
-  if (!KEY || !/^[0-9a-f]{64}$/i.test(KEY)) {
-    throw new Error('ENCRYPTION_KEY must be a 64-character hex string (32 bytes).');
+function validateHexKey(key: string | undefined, envName: string): Buffer {
+  if (!key || !/^[0-9a-f]{64}$/i.test(key)) {
+    throw new Error(`${envName} must be a 64-character hex string (32 bytes).`);
+  }
+  return Buffer.from(key, 'hex');
+}
+
+export function resolveEncryptionKey(keyId?: string): { keyBuffer: Buffer; keyId: string } {
+  const activeKeyId = process.env.ENCRYPTION_ACTIVE_KEY_ID || 'primary';
+  const targetKeyId = keyId ?? activeKeyId;
+
+  // Check specific environment variable for this key ID: ENCRYPTION_KEY_<KEY_ID>
+  const envVarName = `ENCRYPTION_KEY_${targetKeyId.toUpperCase()}`;
+  const specificKey = process.env[envVarName];
+
+  if (specificKey) {
+    return { keyBuffer: validateHexKey(specificKey, envVarName), keyId: targetKeyId };
   }
 
-  const keyBuffer = Buffer.from(KEY, 'hex');
+  // Fallback to ENCRYPTION_KEY if targetKeyId matches default/primary or is unset
+  if (targetKeyId === 'primary' || targetKeyId === 'default' || targetKeyId === activeKeyId) {
+    const defaultKey = process.env.ENCRYPTION_KEY;
+    if (defaultKey) {
+      return { keyBuffer: validateHexKey(defaultKey, 'ENCRYPTION_KEY'), keyId: targetKeyId };
+    }
+  }
+
+  throw new Error(`UNKNOWN_ENCRYPTION_KEY_ID: ${targetKeyId}`);
+}
+
+/**
+ * Encrypts a plaintext string using AES-256-GCM.
+ * Output format: v2:keyId:ivHex:authTagHex:encryptedTextHex
+ */
+export function encrypt(text: string, options?: { keyId?: string }): string {
+  const { keyBuffer, keyId } = resolveEncryptionKey(options?.keyId);
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, keyBuffer, iv);
 
@@ -23,25 +48,42 @@ export function encrypt(text: string): string {
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag();
 
-  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+  return `v2:${keyId}:${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
 }
 
 /**
  * Decrypts an encrypted string created by encrypt().
- * Input format: ivHex:authTagHex:encryptedTextHex
+ * Supports:
+ * - v2 format: v2:keyId:ivHex:authTagHex:encryptedTextHex
+ * - Legacy format: ivHex:authTagHex:encryptedTextHex (using legacy ENCRYPTION_KEY)
  */
 export function decrypt(encryptedData: string): string {
-  const KEY = process.env.ENCRYPTION_KEY;
-  if (!KEY || !/^[0-9a-f]{64}$/i.test(KEY)) {
-    throw new Error('ENCRYPTION_KEY must be a 64-character hex string (32 bytes).');
-  }
-
   const parts = encryptedData.split(':');
-  if (parts.length !== 3) {
-    throw new Error('Invalid encrypted text format. Expected iv:authTag:ciphertext');
+
+  let keyBuffer: Buffer;
+  let ivHex: string;
+  let authTagHex: string;
+  let encryptedTextHex: string;
+
+  if (parts.length === 5 && parts[0] === 'v2') {
+    // v2 envelope: v2:keyId:iv:authTag:ciphertext
+    const [, keyId, iv, authTag, ciphertext] = parts;
+    const resolved = resolveEncryptionKey(keyId);
+    keyBuffer = resolved.keyBuffer;
+    ivHex = iv;
+    authTagHex = authTag;
+    encryptedTextHex = ciphertext;
+  } else if (parts.length === 3) {
+    // Legacy format: iv:authTag:ciphertext using ENCRYPTION_KEY
+    const [iv, authTag, ciphertext] = parts;
+    keyBuffer = validateHexKey(process.env.ENCRYPTION_KEY, 'ENCRYPTION_KEY');
+    ivHex = iv;
+    authTagHex = authTag;
+    encryptedTextHex = ciphertext;
+  } else {
+    throw new Error('Invalid encrypted text format.');
   }
 
-  const [ivHex, authTagHex, encryptedTextHex] = parts;
   if (
     !/^[0-9a-f]{32}$/i.test(ivHex)
     || !/^[0-9a-f]{32}$/i.test(authTagHex)
@@ -49,7 +91,7 @@ export function decrypt(encryptedData: string): string {
   ) {
     throw new Error('Invalid encrypted text format.');
   }
-  const keyBuffer = Buffer.from(KEY, 'hex');
+
   const iv = Buffer.from(ivHex, 'hex');
   const authTag = Buffer.from(authTagHex, 'hex');
 

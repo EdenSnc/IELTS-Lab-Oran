@@ -6,6 +6,9 @@ const prismaClientSingleton = () => {
   const dbUrl = process.env.DATABASE_URL?.replace(/^["']|["']$/g, '');
   
   if (!dbUrl) {
+    if (process.env.NODE_ENV === 'test') {
+      return new PrismaClient();
+    }
     throw new Error('DATABASE_URL is not defined in environment variables');
   }
 
@@ -13,7 +16,7 @@ const prismaClientSingleton = () => {
     connectionString: dbUrl,
     max: 5,
     connectionTimeoutMillis: 10_000,
-    idleTimeoutMillis: 30_000,
+    idleTimeoutMillis: process.env.NODE_ENV === 'test' ? 500 : 30_000,
   });
   return new PrismaClient({ adapter: new PrismaPg(pool) });
 };

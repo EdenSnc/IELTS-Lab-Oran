@@ -1,17 +1,8 @@
--- PostgreSQL constraints that Prisma schema syntax cannot currently express.
--- Apply these statements in the first database migration after Prisma creates
--- the app_private tables. They are intentionally kept outside schema.prisma so
--- the missing invariants remain visible during schema review.
-
--- One paid-platform device/session per account at a time.
-CREATE UNIQUE INDEX "AccessSession_one_active_per_user"
-  ON app_private."AccessSession" ("userId")
-  WHERE state = 'ACTIVE';
-
--- Algeria-only access for the current paid-platform launch.
-ALTER TABLE app_private."AccessSession"
-  ADD CONSTRAINT "AccessSession_country_is_Algeria"
-  CHECK ("countryCode" = 'DZ');
+-- PostgreSQL constraints reference documentation.
+-- Authority: Supabase CLI SQL migrations under supabase/migrations/ are the
+-- single executable migration authority. This file documents custom PostgreSQL
+-- constraints for visibility during Prisma schema review and must not be run
+-- as an independent migration runner.
 
 -- Account deletion is anonymisation, not an ambiguous soft delete. The
 -- application must revoke auth/access sessions and clear these fields in the

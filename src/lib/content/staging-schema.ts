@@ -310,6 +310,19 @@ export const QuestionGroupSchema = z.object({
     });
   }
 
+  if (group.scoringStrategy !== 'RUBRIC' && group.scoringStrategy !== 'NOT_SCORED' && group.maxMarks > 0) {
+    for (let i = 0; i < group.questions.length; i++) {
+      const q = group.questions[i];
+      if (q.maxMarks > 0 && (q.sourceNumber === undefined || q.sourceNumber === null)) {
+        context.addIssue({
+          code: 'custom',
+          message: `Objective question '${q.stableKey}' participating in scoring must have a valid sourceNumber`,
+          path: ['questions', i, 'sourceNumber'],
+        });
+      }
+    }
+  }
+
   if (group.scoringStrategy === 'RUBRIC' && (group.maxMarks !== 0 || itemMarks !== 0)) {
     context.addIssue({
       code: 'custom',

@@ -68,7 +68,7 @@ function SkillRow({ result }: { result: ObjectiveSkillResult }) {
         <strong>{label}</strong>
         <span>{result.rawScore} correct out of {result.maximumRawScore}</span>
       </div>
-      <strong>{result.band.toFixed(1)}</strong>
+      <strong>{result.band !== null ? result.band.toFixed(1) : '—'}</strong>
     </div>
   );
 }
@@ -84,7 +84,7 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
   const [writingError, setWritingError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reportedAverage = result && writingResult
-    ? roundToHalf((result.skills.reduce((sum, skill) => sum + skill.band, 0) + writingResult.writingBand) / 3)
+    ? roundToHalf((result.skills.reduce((sum, skill) => sum + (skill.band ?? 0), 0) + writingResult.writingBand) / 3)
     : result?.objectiveAverageBand ?? 0;
   const printResult = () => {
     const originalTitle = document.title;

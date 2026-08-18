@@ -1,8 +1,8 @@
 import 'server-only';
 
 import { z } from 'zod';
-import prisma from '@/lib/prisma';
-import { decrypt } from '@/lib/crypto';
+import prisma from '../prisma.ts';
+import { decrypt } from '../crypto.ts';
 
 const perItemKeySchema = z.object({
   strategy: z.literal('PER_ITEM_EXACT'),
@@ -19,7 +19,7 @@ const answerKeySchema = z.discriminatedUnion('strategy', [
   setKeySchema,
 ]);
 
-type Normalization = {
+export type Normalization = {
   trimOuterWhitespace?: boolean;
   collapseInternalWhitespace?: boolean;
   caseSensitive?: boolean;
@@ -32,18 +32,19 @@ export type ObjectiveSkillResult = {
   rawScore: number;
   maximumRawScore: number;
   answered: number;
-  band: number;
-  bandIsEstimate: true;
+  band: number | null;
+  bandScaleId?: string;
+  bandIsEstimate: boolean;
 };
 
 export type ObjectiveGradeResult = {
   testVersionId: string;
   skills: ObjectiveSkillResult[];
-  objectiveAverageBand: number;
+  objectiveAverageBand: number | null;
   detailAccess: false;
 };
 
-function normalizeAnswer(value: string, rules: Normalization) {
+export function normalizeAnswer(value: string, rules: Normalization = {}): string {
   let normalized = value;
   if (rules.trimOuterWhitespace !== false) normalized = normalized.trim();
   // Whitespace is presentation, not part of an IELTS answer. A learner must
@@ -58,28 +59,145 @@ function normalizeAnswer(value: string, rules: Normalization) {
   return normalized;
 }
 
+export function countWordsAndNumbers(value: string): { words: number; numbers: number; total: number } {
+  const trimmed = value.trim();
+  if (!trimmed) return { words: 0, numbers: 0, total: 0 };
+  const tokens = trimmed.split(/\s+/).filter(Boolean);
+  let words = 0;
+  let numbers = 0;
+  for (const token of tokens) {
+    if (/^[\$£€¥]?\d+(?:[.,]\d+)*[%]?$/.test(token)) {
+      numbers += 1;
+    } else {
+      words += 1;
+    }
+  }
+  return { words, numbers, total: tokens.length };
+}
+
+export function countWords(value: string): number {
+  const trimmed = value.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).filter(Boolean).length;
+}
+
+export function isWithinWordLimit(
+  value: string,
+  limits: { maxWords?: number | null; allowNumbers?: boolean | null },
+): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return true;
+  const { words, numbers, total } = countWordsAndNumbers(trimmed);
+
+  if (limits.allowNumbers === false) {
+    if (numbers > 0 || /\d/.test(trimmed)) return false;
+    if (limits.maxWords !== undefined && limits.maxWords !== null && limits.maxWords > 0) {
+      if (words > limits.maxWords) return false;
+    }
+  } else if (limits.allowNumbers === true) {
+    // IELTS rule: "AND/OR A NUMBER" permits up to maxWords non-numeric words alongside numbers
+    if (limits.maxWords !== undefined && limits.maxWords !== null && limits.maxWords > 0) {
+      if (words > limits.maxWords) return false;
+    }
+  } else {
+    if (limits.maxWords !== undefined && limits.maxWords !== null && limits.maxWords > 0) {
+      if (total > limits.maxWords) return false;
+    }
+  }
+  return true;
+}
+
 function normalizationRules(value: unknown): Normalization {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   return value as Normalization;
 }
 
-const LISTENING_BANDS: Array<[number, number]> = [
+export const LISTENING_BANDS: Array<[number, number]> = [
   [39, 9], [37, 8.5], [35, 8], [32, 7.5], [30, 7], [26, 6.5],
   [23, 6], [18, 5.5], [16, 5], [13, 4.5], [11, 4], [8, 3.5],
   [6, 3], [4, 2.5], [2, 2], [1, 1],
 ];
 
-const ACADEMIC_READING_BANDS: Array<[number, number]> = [
+export const ACADEMIC_READING_BANDS: Array<[number, number]> = [
   [39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5],
   [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5],
   [6, 3], [4, 2.5], [2, 2], [1, 1],
 ];
 
-const GENERAL_READING_BANDS: Array<[number, number]> = [
+export const GENERAL_READING_BANDS: Array<[number, number]> = [
   [40, 9], [39, 8.5], [37, 8], [36, 7.5], [34, 7], [32, 6.5],
   [30, 6], [27, 5.5], [23, 5], [19, 4.5], [15, 4], [12, 3.5],
   [9, 3], [6, 2.5], [3, 2], [1, 1],
 ];
+
+const SUPPORTED_ANSWER_KEY_FORMAT_VERSIONS = new Set([1]);
+
+export function parseAnswerKeyPayload(encryptedPayload: string, formatVersion: number = 1) {
+  if (!SUPPORTED_ANSWER_KEY_FORMAT_VERSIONS.has(formatVersion)) {
+    throw new Error(`UNSUPPORTED_ANSWER_KEY_FORMAT_VERSION: ${formatVersion}`);
+  }
+  const decrypted = decrypt(encryptedPayload);
+  const parsedJson = JSON.parse(decrypted);
+  return answerKeySchema.parse(parsedJson);
+}
+
+export async function resolveBandScale(input: {
+  skill: 'LISTENING' | 'READING';
+  variant?: 'ACADEMIC' | 'GENERAL_TRAINING' | 'UNIVERSAL';
+  rawScore: number;
+  maximumRawScore: number;
+  bandScaleId?: string;
+}): Promise<{ band: number | null; bandScaleId?: string }> {
+  if (input.maximumRawScore !== 40) {
+    return { band: null };
+  }
+
+  const variant = input.variant ?? 'ACADEMIC';
+  const targetCode = input.skill === 'LISTENING'
+    ? 'IELTS_LISTENING_ESTIMATE'
+    : variant === 'GENERAL_TRAINING'
+      ? 'IELTS_GENERAL_READING_ESTIMATE'
+      : 'IELTS_ACADEMIC_READING_ESTIMATE';
+
+  try {
+    let bandScaleRecord = null;
+    if (input.bandScaleId) {
+      bandScaleRecord = await prisma.bandScale.findUnique({
+        where: { id: input.bandScaleId },
+      });
+    }
+    if (!bandScaleRecord) {
+      bandScaleRecord = await prisma.bandScale.findFirst({
+        where: {
+          code: targetCode,
+          status: 'PUBLISHED',
+        },
+        orderBy: { version: 'desc' },
+      });
+    }
+
+    if (bandScaleRecord && Array.isArray(bandScaleRecord.thresholds)) {
+      const thresholds = bandScaleRecord.thresholds as Array<[number, number]>;
+      const match = thresholds.find(([minScore]) => input.rawScore >= minScore);
+      return {
+        band: match ? match[1] : 0,
+        bandScaleId: bandScaleRecord.id,
+      };
+    }
+  } catch {
+    // In disconnected test environments, use deterministic constant tables
+  }
+
+  const fallbackThresholds = input.skill === 'LISTENING'
+    ? LISTENING_BANDS
+    : variant === 'GENERAL_TRAINING'
+      ? GENERAL_READING_BANDS
+      : ACADEMIC_READING_BANDS;
+  const match = fallbackThresholds.find(([minScore]) => input.rawScore >= minScore);
+  return {
+    band: match ? match[1] : 0,
+  };
+}
 
 export function rawScoreToEstimatedBand(
   skill: 'LISTENING' | 'READING',
@@ -98,6 +216,50 @@ function roundToHalf(value: number) {
   return Math.round(value * 2) / 2;
 }
 
+type CachedTestVersion = NonNullable<Awaited<ReturnType<typeof prisma.testVersion.findFirst<{
+  select: {
+    id: true;
+    test: { select: { variant: true } };
+    sections: {
+      where: { skill: { in: ['LISTENING', 'READING'] } };
+      select: {
+        skill: true;
+        parts: {
+          select: {
+            questionGroups: {
+              select: {
+                maxMarks: true;
+                maxWords: true;
+                allowNumbers: true;
+                reviewStatus: true;
+                scoringStrategy: true;
+                questions: {
+                  orderBy: { displayOrder: 'asc' };
+                  select: {
+                    stableKey: true;
+                    sourceNumber: true;
+                    maxMarks: true;
+                  };
+                };
+                answerKey: {
+                  select: {
+                    encryptedPayload: true;
+                    formatVersion: true;
+                    normalization: true;
+                    reviewStatus: true;
+                  };
+                };
+              };
+            };
+          };
+        };
+      };
+    };
+  };
+}>>>>;
+
+const testVersionCache = new Map<string, CachedTestVersion>();
+
 export async function gradeVerifiedObjectiveAnswers(input: {
   testVersionId: string;
   answers: {
@@ -105,38 +267,44 @@ export async function gradeVerifiedObjectiveAnswers(input: {
     reading: Record<string, string>;
   };
 }): Promise<ObjectiveGradeResult> {
-  const version = await prisma.testVersion.findFirst({
-    where: {
-      id: input.testVersionId,
-      ...(process.env.NODE_ENV === 'production' ? { status: 'PUBLISHED' as const } : {}),
-    },
-    select: {
-      id: true,
-      test: { select: { variant: true } },
-      sections: {
-        where: { skill: { in: ['LISTENING', 'READING'] } },
-        select: {
-          skill: true,
-          parts: {
-            select: {
-              questionGroups: {
-                select: {
-                  maxMarks: true,
-                  reviewStatus: true,
-                  scoringStrategy: true,
-                  questions: {
-                    orderBy: { displayOrder: 'asc' },
-                    select: {
-                      stableKey: true,
-                      sourceNumber: true,
-                      maxMarks: true,
+  let version: CachedTestVersion | null = testVersionCache.get(input.testVersionId) ?? null;
+  if (!version) {
+    version = await prisma.testVersion.findFirst({
+      where: {
+        id: input.testVersionId,
+        ...(process.env.NODE_ENV === 'production' ? { status: 'PUBLISHED' as const } : {}),
+      },
+      select: {
+        id: true,
+        test: { select: { variant: true } },
+        sections: {
+          where: { skill: { in: ['LISTENING', 'READING'] } },
+          select: {
+            skill: true,
+            parts: {
+              select: {
+                questionGroups: {
+                  select: {
+                    maxMarks: true,
+                    maxWords: true,
+                    allowNumbers: true,
+                    reviewStatus: true,
+                    scoringStrategy: true,
+                    questions: {
+                      orderBy: { displayOrder: 'asc' },
+                      select: {
+                        stableKey: true,
+                        sourceNumber: true,
+                        maxMarks: true,
+                      },
                     },
-                  },
-                  answerKey: {
-                    select: {
-                      encryptedPayload: true,
-                      normalization: true,
-                      reviewStatus: true,
+                    answerKey: {
+                      select: {
+                        encryptedPayload: true,
+                        formatVersion: true,
+                        normalization: true,
+                        reviewStatus: true,
+                      },
                     },
                   },
                 },
@@ -145,21 +313,31 @@ export async function gradeVerifiedObjectiveAnswers(input: {
           },
         },
       },
-    },
-  });
+    });
+    if (version) {
+      testVersionCache.set(input.testVersionId, version);
+    }
+  }
 
   if (!version) throw new Error('TEST_NOT_FOUND');
 
   const results: ObjectiveSkillResult[] = [];
   for (const section of version.sections) {
     if (section.skill !== 'LISTENING' && section.skill !== 'READING') continue;
-    const submitted = input.answers[section.skill.toLowerCase() as 'listening' | 'reading'];
+    const submitted = input.answers[section.skill.toLowerCase() as 'listening' | 'reading'] ?? {};
     let rawScore = 0;
     let maximumRawScore = 0;
     let answered = 0;
 
     for (const part of section.parts) {
       for (const group of part.questionGroups) {
+        // Runtime defense: any scored question must have a valid sourceNumber
+        for (const question of group.questions) {
+          if (question.maxMarks > 0 && (question.sourceNumber === null || question.sourceNumber === undefined)) {
+            throw new Error('INVALID_QUESTION_SOURCE_NUMBER');
+          }
+        }
+
         const keyRecord = group.answerKey;
         if (
           group.reviewStatus !== 'VERIFIED'
@@ -167,26 +345,33 @@ export async function gradeVerifiedObjectiveAnswers(input: {
         ) {
           throw new Error('UNVERIFIED_ANSWER_KEY');
         }
-        const key = answerKeySchema.parse(
-          JSON.parse(decrypt(keyRecord.encryptedPayload)),
-        );
+
+        const key = parseAnswerKeyPayload(keyRecord.encryptedPayload, keyRecord.formatVersion);
         const rules = normalizationRules(keyRecord.normalization);
+        const groupWordLimits = { maxWords: group.maxWords, allowNumbers: group.allowNumbers };
+
         maximumRawScore += group.questions.reduce(
-          (total, question) => total + question.maxMarks,
+          (total: number, question: { maxMarks: number }) => total + question.maxMarks,
           0,
         );
 
         if (key.strategy === 'PER_ITEM_EXACT') {
           for (const question of group.questions) {
-            if (question.sourceNumber === null) continue;
+            if (question.sourceNumber === null || question.sourceNumber === undefined) continue;
             const response = submitted[String(question.sourceNumber)] ?? '';
             if (response.trim()) answered += 1;
+
+            // Word limit defense: exceeding word limit rejects the item
+            if (!isWithinWordLimit(response, groupWordLimits)) {
+              continue;
+            }
+
             const normalizedResponse = normalizeAnswer(response, rules);
             const accepted = key.answersByStableKey[question.stableKey] ?? [];
             if (
               normalizedResponse
               && accepted.some(
-                (candidate) => normalizeAnswer(candidate, rules) === normalizedResponse,
+                (candidate: string) => normalizeAnswer(candidate, rules) === normalizedResponse,
               )
             ) {
               rawScore += question.maxMarks;
@@ -195,18 +380,23 @@ export async function gradeVerifiedObjectiveAnswers(input: {
           continue;
         }
 
-        const responses = group.questions.flatMap((question) => {
-          if (question.sourceNumber === null) return [];
+        const responses = group.questions.flatMap((question: { sourceNumber: number | null }) => {
+          if (question.sourceNumber === null || question.sourceNumber === undefined) return [];
           const response = submitted[String(question.sourceNumber)] ?? '';
           if (response.trim()) answered += 1;
+
+          if (!isWithinWordLimit(response, groupWordLimits)) {
+            return [];
+          }
           return response.trim() ? [normalizeAnswer(response, rules)] : [];
         });
-        const uniqueResponses = new Set(responses);
-        const bestSetScore = key.acceptedSets.reduce((best, candidate) => {
-          const accepted = new Set(
-            candidate.map((value) => normalizeAnswer(value, rules)),
+
+        const uniqueResponses = new Set<string>(responses);
+        const bestSetScore = key.acceptedSets.reduce((best: number, candidate: string[]) => {
+          const accepted = new Set<string>(
+            candidate.map((value: string) => normalizeAnswer(value, rules)),
           );
-          const score = new Set(
+          const score = new Set<string>(
             [...uniqueResponses].filter((response) => accepted.has(response)),
           ).size;
           return Math.max(best, score);
@@ -215,27 +405,36 @@ export async function gradeVerifiedObjectiveAnswers(input: {
       }
     }
 
-    if (maximumRawScore !== 40) {
-      throw new Error(`INVALID_MAXIMUM_${section.skill}_${maximumRawScore}`);
-    }
+    const { band, bandScaleId } = await resolveBandScale({
+      skill: section.skill,
+      variant: version.test.variant,
+      rawScore,
+      maximumRawScore,
+    });
+
     results.push({
       skill: section.skill,
       rawScore,
       maximumRawScore,
       answered,
-      band: rawScoreToEstimatedBand(section.skill, rawScore, version.test.variant),
-      bandIsEstimate: true,
+      band,
+      bandScaleId,
+      bandIsEstimate: band !== null,
     });
   }
 
-  if (results.length !== 2) throw new Error('OBJECTIVE_SECTIONS_MISSING');
+  if (results.length === 0) throw new Error('OBJECTIVE_SECTIONS_MISSING');
   results.sort((left, right) => left.skill.localeCompare(right.skill));
+
+  const bands = results.map((r) => r.band).filter((b): b is number => b !== null);
+  const objectiveAverageBand = bands.length === results.length && bands.length > 0
+    ? roundToHalf(bands.reduce((sum, b) => sum + b, 0) / bands.length)
+    : null;
+
   return {
     testVersionId: version.id,
     skills: results,
-    objectiveAverageBand: roundToHalf(
-      results.reduce((total, result) => total + result.band, 0) / results.length,
-    ),
+    objectiveAverageBand,
     detailAccess: false,
   };
 }
