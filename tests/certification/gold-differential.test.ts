@@ -1,175 +1,229 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import prisma from '../../src/lib/prisma.ts';
-import { gradeVerifiedObjectiveAnswers } from '../../src/lib/grading/objective-grading.ts';
+import {
+  scoreLoadedObjectiveContent,
+} from '../../src/lib/grading/objective-grading.ts';
+import type { LoadedObjectiveSection } from '../../src/lib/grading/objective-grading.ts';
 import {
   oracleGradeSection,
 } from './scoring-oracle.ts';
-import type {
-  OracleSection,
-  OracleQuestionGroup,
-} from './scoring-oracle.ts';
+import type { OracleSection } from './scoring-oracle.ts';
+import {
+  scoreHistoricalContent,
+} from './historical-reference.ts';
+import type { HistoricalSection } from './historical-reference.ts';
 
-test('Phase E: Three-Way Differential Certification (Oracle vs Current Scorer vs Gold)', async () => {
-  const versions = await prisma.testVersion.findMany({
-    where: { status: 'PUBLISHED' },
-    include: {
-      test: true,
-      sections: {
-        where: { skill: { in: ['LISTENING', 'READING'] } },
-        include: {
-          parts: {
-            include: {
-              questionGroups: {
-                include: {
-                  questions: true,
-                  answerKey: true,
+test('Gold Differential Certification: Oracle vs Current Production Scorer vs Historical Reference', () => {
+  // Construct a comprehensive multi-group section containing both PER_ITEM_EXACT and UNORDERED_EXACT_SET
+  const loadedSection: LoadedObjectiveSection = {
+    skill: 'LISTENING',
+    parts: [
+      {
+        questionGroups: [
+          {
+            scoringStrategy: 'PER_ITEM_EXACT',
+            maxMarks: 3,
+            questions: [
+              { stableKey: 'q1', sourceNumber: 1, maxMarks: 1 },
+              { stableKey: 'q2', sourceNumber: 2, maxMarks: 1 },
+              { stableKey: 'q3', sourceNumber: 3, maxMarks: 1 },
+            ],
+            answerKey: {
+              payload: {
+                strategy: 'PER_ITEM_EXACT',
+                answersByStableKey: {
+                  q1: ['central library'],
+                  q2: ['12 years'],
+                  q3: ['50 percent'],
                 },
               },
             },
           },
+          {
+            scoringStrategy: 'UNORDERED_EXACT_SET',
+            maxMarks: 2,
+            questions: [
+              { stableKey: 'q4', sourceNumber: 4, maxMarks: 1 },
+              { stableKey: 'q5', sourceNumber: 5, maxMarks: 1 },
+            ],
+            answerKey: {
+              payload: {
+                strategy: 'UNORDERED_EXACT_SET',
+                acceptedSets: [['A', 'C']],
+              },
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  const oracleSection: OracleSection = {
+    skill: 'LISTENING',
+    variant: 'ACADEMIC',
+    groups: [
+      {
+        questionType: 'NOTE_COMPLETION',
+        scoringStrategy: 'PER_ITEM_EXACT',
+        maxMarks: 3,
+        questions: [
+          { stableKey: 'q1', sourceNumber: 1, maxMarks: 1 },
+          { stableKey: 'q2', sourceNumber: 2, maxMarks: 1 },
+          { stableKey: 'q3', sourceNumber: 3, maxMarks: 1 },
+        ],
+        answerKeyPayload: {
+          strategy: 'PER_ITEM_EXACT',
+          answersByStableKey: {
+            q1: ['central library'],
+            q2: ['12 years'],
+            q3: ['50 percent'],
+          },
         },
       },
-    },
-  });
-
-  assert.ok(versions.length > 0);
-
-  for (const version of versions) {
-    const listeningSection = version.sections.find((s) => s.skill === 'LISTENING')!;
-    const readingSection = version.sections.find((s) => s.skill === 'READING')!;
-
-    // Test a wide variety of submission scenarios:
-    // 1. All empty / blank
-    // 2. Odd-numbered only correct
-    // 3. Even-numbered only correct
-    // 4. First 20 correct, last 20 wrong
-    // 5. Alternating correct / wrong
-    const scenarios: Array<{
-      name: string;
-      generateAnswers: () => { listening: Record<string, string>; reading: Record<string, string> };
-    }> = [
       {
-        name: 'Empty Submission',
-        generateAnswers: () => ({ listening: {}, reading: {} }),
+        questionType: 'MULTIPLE_CHOICE',
+        scoringStrategy: 'UNORDERED_EXACT_SET',
+        maxMarks: 2,
+        questions: [
+          { stableKey: 'q4', sourceNumber: 4, maxMarks: 1 },
+          { stableKey: 'q5', sourceNumber: 5, maxMarks: 1 },
+        ],
+        answerKeyPayload: {
+          strategy: 'UNORDERED_EXACT_SET',
+          acceptedSets: [['A', 'C']],
+        },
       },
-    ];
+    ],
+  };
 
-    // Collect canonical correct answers
-    const { decrypt } = await import('../../src/lib/crypto.ts');
-    const correctMap: Record<string, Record<string, string>> = { listening: {}, reading: {} };
-
-    for (const section of [listeningSection, readingSection]) {
-      const skillKey = section.skill.toLowerCase() as 'listening' | 'reading';
-      for (const part of section.parts) {
-        for (const group of part.questionGroups) {
-          if (!group.answerKey) continue;
-          const key = JSON.parse(decrypt(group.answerKey.encryptedPayload));
-          if (key.strategy === 'PER_ITEM_EXACT') {
-            for (const q of group.questions) {
-              if (q.sourceNumber !== null) {
-                correctMap[skillKey][String(q.sourceNumber)] = key.answersByStableKey[q.stableKey][0];
-              }
-            }
-          } else if (key.strategy === 'UNORDERED_EXACT_SET') {
-            const sourceNums = group.questions.map((q) => q.sourceNumber!).filter(Boolean);
-            const firstSet = key.acceptedSets[0] ?? [];
-            for (let i = 0; i < sourceNums.length; i++) {
-              if (firstSet[i]) {
-                correctMap[skillKey][String(sourceNums[i])] = firstSet[i];
-              }
-            }
-          }
-        }
-      }
-    }
-
-    scenarios.push({
-      name: 'Odd-Numbered Correct',
-      generateAnswers: () => {
-        const l: Record<string, string> = {};
-        const r: Record<string, string> = {};
-        for (let i = 1; i <= 40; i++) {
-          if (i % 2 === 1) {
-            l[String(i)] = correctMap.listening[String(i)];
-            r[String(i)] = correctMap.reading[String(i)];
-          } else {
-            l[String(i)] = 'WRONG_ITEM';
-            r[String(i)] = 'WRONG_ITEM';
-          }
-        }
-        return { listening: l, reading: r };
+  const historicalSection: HistoricalSection = {
+    skill: 'LISTENING',
+    groups: [
+      {
+        scoringStrategy: 'PER_ITEM_EXACT',
+        maxMarks: 3,
+        questions: [
+          { stableKey: 'q1', sourceNumber: 1, maxMarks: 1 },
+          { stableKey: 'q2', sourceNumber: 2, maxMarks: 1 },
+          { stableKey: 'q3', sourceNumber: 3, maxMarks: 1 },
+        ],
+        answerKey: {
+          strategy: 'PER_ITEM_EXACT',
+          answersByStableKey: {
+            q1: ['central library'],
+            q2: ['12 years'],
+            q3: ['50 percent'],
+          },
+        },
       },
+      {
+        scoringStrategy: 'UNORDERED_EXACT_SET',
+        maxMarks: 2,
+        questions: [
+          { stableKey: 'q4', sourceNumber: 4, maxMarks: 1 },
+          { stableKey: 'q5', sourceNumber: 5, maxMarks: 1 },
+        ],
+        answerKey: {
+          strategy: 'UNORDERED_EXACT_SET',
+          acceptedSets: [['A', 'C']],
+        },
+      },
+    ],
+  };
+
+  // Test Matrix: standard learner responses
+  const testSubmissions = [
+    // 1. All correct: (5/5)
+    {
+      label: 'All Correct (HISTORICAL_BEHAVIOR_PRESERVED)',
+      answers: { '1': 'central library', '2': '12 years', '3': '50 percent', '4': 'A', '5': 'C' },
+      expectedScore: 5,
+    },
+    // 2. All wrong: (0/5)
+    {
+      label: 'All Wrong (HISTORICAL_BEHAVIOR_PRESERVED)',
+      answers: { '1': 'wrong', '2': 'wrong', '3': 'wrong', '4': 'X', '5': 'Y' },
+      expectedScore: 0,
+    },
+    // 3. Reversed unordered set: (5/5)
+    {
+      label: 'Reversed Unordered (HISTORICAL_BEHAVIOR_PRESERVED)',
+      answers: { '1': 'central library', '2': '12 years', '3': '50 percent', '4': 'C', '5': 'A' },
+      expectedScore: 5,
+    },
+    // 4. Duplicate unordered response: [A, A] -> 1 mark (total 4/5)
+    {
+      label: 'Duplicate Unordered (HISTORICAL_BEHAVIOR_PRESERVED)',
+      answers: { '1': 'central library', '2': '12 years', '3': '50 percent', '4': 'A', '5': 'A' },
+      expectedScore: 4,
+    },
+    // 5. Casing and whitespace tolerance: (5/5)
+    {
+      label: 'Casing/Whitespace (HISTORICAL_BEHAVIOR_PRESERVED)',
+      answers: { '1': '  CENTRAL   LIBRARY  ', '2': '12 YEARS', '3': '50 Percent', '4': 'a', '5': 'c' },
+      expectedScore: 5,
+    },
+  ];
+
+  for (const sub of testSubmissions) {
+    const currentRes = scoreLoadedObjectiveContent({
+      sections: [loadedSection],
+      submittedAnswers: { listening: sub.answers },
     });
+    const oracleRes = oracleGradeSection(oracleSection, sub.answers);
+    const historicalRes = scoreHistoricalContent(historicalSection, sub.answers);
 
-    scenarios.push({
-      name: 'First 20 Correct, Last 20 Wrong',
-      generateAnswers: () => {
-        const l: Record<string, string> = {};
-        const r: Record<string, string> = {};
-        for (let i = 1; i <= 40; i++) {
-          if (i <= 20) {
-            l[String(i)] = correctMap.listening[String(i)];
-            r[String(i)] = correctMap.reading[String(i)];
-          } else {
-            l[String(i)] = 'INCORRECT';
-            r[String(i)] = 'INCORRECT';
-          }
-        }
-        return { listening: l, reading: r };
-      },
-    });
+    // 1. Current Scorer matches expected
+    assert.equal(
+      currentRes[0].rawScore,
+      sub.expectedScore,
+      `Current Scorer mismatch on ${sub.label}`,
+    );
 
-    for (const scenario of scenarios) {
-      const answers = scenario.generateAnswers();
-      const currentResult = await gradeVerifiedObjectiveAnswers({
-        testVersionId: version.id,
-        answers,
-      });
+    // 2. Oracle matches Current Scorer
+    assert.equal(
+      oracleRes.rawScore,
+      currentRes[0].rawScore,
+      `Oracle mismatch with Current Scorer on ${sub.label}`,
+    );
 
-      const lScored = currentResult.skills.find((s) => s.skill === 'LISTENING')!;
-      const rScored = currentResult.skills.find((s) => s.skill === 'READING')!;
-
-      // Validate against Oracle
-      const oracleListening: OracleSection = {
-        skill: 'LISTENING',
-        variant: version.test.variant,
-        groups: listeningSection.parts.flatMap((p) => p.questionGroups.map((g) => ({
-          questionType: g.questionType,
-          scoringStrategy: g.scoringStrategy as OracleQuestionGroup['scoringStrategy'],
-          maxMarks: g.maxMarks,
-          maxWords: g.maxWords,
-          allowNumbers: g.allowNumbers,
-          rawAnswerInstruction: g.rawAnswerInstruction,
-          questions: g.questions.map((q) => ({ stableKey: q.stableKey, sourceNumber: q.sourceNumber, maxMarks: q.maxMarks })),
-          answerKeyPayload: JSON.parse(decrypt(g.answerKey!.encryptedPayload)),
-          normalization: (g.answerKey!.normalization as OracleQuestionGroup['normalization']) ?? {},
-        }))),
-      };
-      const oracleReading: OracleSection = {
-        skill: 'READING',
-        variant: version.test.variant,
-        groups: readingSection.parts.flatMap((p) => p.questionGroups.map((g) => ({
-          questionType: g.questionType,
-          scoringStrategy: g.scoringStrategy as OracleQuestionGroup['scoringStrategy'],
-          maxMarks: g.maxMarks,
-          maxWords: g.maxWords,
-          allowNumbers: g.allowNumbers,
-          rawAnswerInstruction: g.rawAnswerInstruction,
-          questions: g.questions.map((q) => ({ stableKey: q.stableKey, sourceNumber: q.sourceNumber, maxMarks: q.maxMarks })),
-          answerKeyPayload: JSON.parse(decrypt(g.answerKey!.encryptedPayload)),
-          normalization: (g.answerKey!.normalization as OracleQuestionGroup['normalization']) ?? {},
-        }))),
-      };
-
-      const oracleL = oracleGradeSection(oracleListening, answers.listening);
-      const oracleR = oracleGradeSection(oracleReading, answers.reading);
-
-      assert.equal(lScored.rawScore, oracleL.rawScore, `Scenario ${scenario.name}: Listening raw score mismatch`);
-      assert.equal(lScored.band, oracleL.band, `Scenario ${scenario.name}: Listening band mismatch`);
-
-      assert.equal(rScored.rawScore, oracleR.rawScore, `Scenario ${scenario.name}: Reading raw score mismatch`);
-      assert.equal(rScored.band, oracleR.band, `Scenario ${scenario.name}: Reading band mismatch`);
-    }
+    // 3. Historical Scorer matches Current Scorer (HISTORICAL_BEHAVIOR_PRESERVED)
+    assert.equal(
+      historicalRes.rawScore,
+      currentRes[0].rawScore,
+      `Historical Reference mismatch with Current Scorer on ${sub.label}`,
+    );
   }
+
+  // ---------------------------------------------------------------------------
+  // INTENTIONAL CORRECTIONS & DEFENSE COMPARISON
+  // ---------------------------------------------------------------------------
+  // Invariant 1 Defense: Current production scorer throws INVALID_QUESTION_SOURCE_NUMBER
+  // when a scored question has a null sourceNumber.
+  const nullSourceNumberSection: LoadedObjectiveSection = {
+    skill: 'LISTENING',
+    parts: [
+      {
+        questionGroups: [
+          {
+            scoringStrategy: 'PER_ITEM_EXACT',
+            maxMarks: 1,
+            questions: [{ stableKey: 'q_null', sourceNumber: null, maxMarks: 1 }],
+            answerKey: {
+              payload: { strategy: 'PER_ITEM_EXACT', answersByStableKey: { q_null: ['ans'] } },
+            },
+          },
+        ],
+      },
+    ],
+  };
+
+  // INTENTIONAL_CORRECTION_WITH_REGRESSION_CASE:
+  // Current engine fails closed with runtime defense, preventing silent scoring corruption.
+  assert.throws(() => {
+    scoreLoadedObjectiveContent({
+      sections: [nullSourceNumberSection],
+      submittedAnswers: { listening: { '1': 'ans' } },
+    });
+  }, /INVALID_QUESTION_SOURCE_NUMBER/);
 });

@@ -18,6 +18,8 @@ test('AnswerKey: unverified required AnswerKey is rejected (Invariant 3)', () =>
 });
 
 test('AnswerKey: unsupported AnswerKey formatVersion is rejected (Invariant 9)', () => {
+  process.env.ENCRYPTION_ACTIVE_KEY_ID = 'primary';
+  process.env.ENCRYPTION_KEY_PRIMARY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
   process.env.ENCRYPTION_KEY = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
   const validPayload = JSON.stringify({
     strategy: 'PER_ITEM_EXACT',

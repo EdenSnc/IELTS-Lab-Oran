@@ -52,3 +52,32 @@ test('Crypto: unknown encryption key fails closed (Invariant 14)', () => {
     decrypt(unknownKeyCiphertext);
   }, /UNKNOWN_ENCRYPTION_KEY_ID: unknown_key_99/);
 });
+
+test('Crypto: v2 decryption must FAIL when specific ENCRYPTION_KEY_<KEYID> is missing even if legacy ENCRYPTION_KEY is present', () => {
+  const origKey = process.env.ENCRYPTION_KEY;
+  const origActive = process.env.ENCRYPTION_ACTIVE_KEY_ID;
+
+  try {
+    process.env.ENCRYPTION_KEY = '9999999999999999999999999999999999999999999999999999999999999999';
+    process.env.ENCRYPTION_ACTIVE_KEY_ID = 'missing_v2_key';
+    delete process.env.ENCRYPTION_KEY_MISSING_V2_KEY;
+
+    const fakeIv = '00'.repeat(16);
+    const fakeAuthTag = '00'.repeat(16);
+    const fakeCipher = '00'.repeat(8);
+    const v2Ciphertext = `v2:missing_v2_key:${fakeIv}:${fakeAuthTag}:${fakeCipher}`;
+
+    // Decryption must fail closed with UNKNOWN_ENCRYPTION_KEY_ID and not fall back to legacy key
+    assert.throws(() => {
+      decrypt(v2Ciphertext);
+    }, /UNKNOWN_ENCRYPTION_KEY_ID: missing_v2_key/);
+
+    // Encryption must also fail closed
+    assert.throws(() => {
+      encrypt('test payload', { keyId: 'missing_v2_key' });
+    }, /UNKNOWN_ENCRYPTION_KEY_ID: missing_v2_key/);
+  } finally {
+    process.env.ENCRYPTION_KEY = origKey;
+    process.env.ENCRYPTION_ACTIVE_KEY_ID = origActive;
+  }
+});

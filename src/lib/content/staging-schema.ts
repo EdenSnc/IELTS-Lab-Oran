@@ -205,7 +205,9 @@ const QuestionSchema = z.object({
 
 const NormalizationSchema = z.object({
   trimOuterWhitespace: z.boolean().default(true),
-  collapseInternalWhitespace: z.boolean().default(false),
+  // Note: For objective IELTS L/R scoring, internal whitespace collapsing is an engine invariant.
+  // This field is retained for schema compatibility with existing content JSON.
+  collapseInternalWhitespace: z.boolean().optional(),
   caseSensitive: z.boolean().default(false),
   unicodeForm: z.enum(['NFC', 'NFD', 'NFKC', 'NFKD']).default('NFC'),
   punctuationSensitive: z.boolean().default(true),
@@ -756,4 +758,169 @@ export type StagedTestPackage = z.infer<typeof StagedTestPackageSchema>;
 
 export function parseStagedTestPackage(input: unknown): StagedTestPackage {
   return StagedTestPackageSchema.parse(input);
+}
+
+// =============================================================================
+// CONTENT-SIDE WORD/NUMBER INSTRUCTION CONTRACT VALIDATION
+// Used for import/review/publishing validation of content packages.
+// =============================================================================
+
+export type InstructionContractResult =
+  | { valid: true; maxWords: number; allowNumbers: boolean }
+  | { valid: false; reason: 'UNRECOGNIZED_INSTRUCTION_FORM' | 'INSTRUCTION_METADATA_MISMATCH' };
+
+export function parseAnswerInstructionSemantics(
+  rawInstruction: string,
+): { maxWords: number; allowNumbers: boolean } | null {
+  const norm = rawInstruction.trim().toUpperCase().replace(/\s+/g, ' ');
+  if (!norm) return null;
+
+  switch (norm) {
+    case 'ONE WORD ONLY':
+    case 'NO MORE THAN ONE WORD':
+      return { maxWords: 1, allowNumbers: false };
+    case 'NO MORE THAN TWO WORDS':
+      return { maxWords: 2, allowNumbers: false };
+    case 'NO MORE THAN THREE WORDS':
+      return { maxWords: 3, allowNumbers: false };
+    case 'ONE WORD AND/OR A NUMBER':
+    case 'ONE WORD AND / OR A NUMBER':
+    case 'ONE WORD AND /OR A NUMBER':
+    case 'NO MORE THAN ONE WORD AND/OR A NUMBER':
+    case 'NO MORE THAN ONE WORD AND / OR A NUMBER':
+      return { maxWords: 1, allowNumbers: true };
+    case 'NO MORE THAN TWO WORDS AND/OR A NUMBER':
+    case 'NO MORE THAN TWO WORDS AND / OR A NUMBER':
+      return { maxWords: 2, allowNumbers: true };
+    case 'NO MORE THAN THREE WORDS AND/OR A NUMBER':
+    case 'NO MORE THAN THREE WORDS AND / OR A NUMBER':
+      return { maxWords: 3, allowNumbers: true };
+    default:
+      return null;
+  }
+}
+
+export function validateAnswerInstructionContract(input: {
+  rawInstruction?: string | null;
+  maxWords?: number | null;
+  allowNumbers?: boolean | null;
+}): InstructionContractResult {
+  if (!input.rawInstruction || !input.rawInstruction.trim()) {
+    return { valid: true, maxWords: input.maxWords ?? 0, allowNumbers: input.allowNumbers ?? false };
+  }
+
+  const parsed = parseAnswerInstructionSemantics(input.rawInstruction);
+  if (!parsed) {
+    return { valid: false, reason: 'UNRECOGNIZED_INSTRUCTION_FORM' };
+  }
+
+  if (
+    input.maxWords !== undefined
+    && input.maxWords !== null
+    && input.maxWords !== parsed.maxWords
+  ) {
+    return { valid: false, reason: 'INSTRUCTION_METADATA_MISMATCH' };
+  }
+
+  if (
+    input.allowNumbers !== undefined
+    && input.allowNumbers !== null
+    && input.allowNumbers !== parsed.allowNumbers
+  ) {
+    return { valid: false, reason: 'INSTRUCTION_METADATA_MISMATCH' };
+  }
+
+  return { valid: true, maxWords: parsed.maxWords, allowNumbers: parsed.allowNumbers };
+}
+
+// =============================================================================
+// FULL IELTS MOCK PUBLICATION VALIDATOR
+// Validates that a single skill section represents a complete 40-question mock.
+// =============================================================================
+
+export type FullMockValidationResult = {
+  valid: boolean;
+  errors: string[];
+  totalQuestions: number;
+  maxMarks: number;
+};
+
+export function validateFullIeltsMockSection(section: {
+  skill: 'LISTENING' | 'READING';
+  parts: Array<{
+    slot: string;
+    questionGroups: Array<{
+      maxMarks: number;
+      reviewStatus: string;
+      answerKey?: { reviewStatus: string; formatVersion: number } | null;
+      questions: Array<{ sourceNumber: number | null | undefined; maxMarks: number }>;
+    }>;
+  }>;
+}): FullMockValidationResult {
+  const errors: string[] = [];
+  const expectedParts = section.skill === 'LISTENING'
+    ? ['LISTENING_PART_1', 'LISTENING_PART_2', 'LISTENING_PART_3', 'LISTENING_PART_4']
+    : ['READING_SECTION_1', 'READING_SECTION_2', 'READING_SECTION_3'];
+
+  const slots = section.parts.map((p) => p.slot);
+  for (const expected of expectedParts) {
+    if (!slots.includes(expected)) {
+      errors.push(`Missing expected part/section slot: ${expected}`);
+    }
+  }
+
+  let totalQuestions = 0;
+  let totalMaxMarks = 0;
+  const sourceNumbers: number[] = [];
+
+  for (const part of section.parts) {
+    for (const group of part.questionGroups) {
+      if (group.reviewStatus !== 'VERIFIED') {
+        errors.push(`QuestionGroup in slot ${part.slot} is not VERIFIED`);
+      }
+      if (!group.answerKey || group.answerKey.reviewStatus !== 'VERIFIED') {
+        errors.push(`AnswerKey in slot ${part.slot} is missing or not VERIFIED`);
+      }
+      if (group.answerKey && group.answerKey.formatVersion !== 1) {
+        errors.push(`AnswerKey in slot ${part.slot} has unsupported formatVersion: ${group.answerKey.formatVersion}`);
+      }
+
+      for (const q of group.questions) {
+        totalQuestions += 1;
+        totalMaxMarks += q.maxMarks;
+        if (q.sourceNumber === null || q.sourceNumber === undefined) {
+          errors.push(`Question in slot ${part.slot} has null sourceNumber`);
+        } else {
+          sourceNumbers.push(q.sourceNumber);
+        }
+        if (q.maxMarks !== 1) {
+          errors.push(`Question ${q.sourceNumber ?? 'unknown'} has maxMarks ${q.maxMarks} (expected 1 for standard IELTS item)`);
+        }
+      }
+    }
+  }
+
+  if (totalQuestions !== 40) {
+    errors.push(`Expected exactly 40 questions, got ${totalQuestions}`);
+  }
+  if (totalMaxMarks !== 40) {
+    errors.push(`Expected total maximum marks 40, got ${totalMaxMarks}`);
+  }
+
+  const uniqueNumbers = new Set(sourceNumbers);
+  if (uniqueNumbers.size !== 40) {
+    errors.push(`Expected 40 unique question numbers, got ${uniqueNumbers.size}`);
+  }
+  for (let i = 1; i <= 40; i++) {
+    if (!uniqueNumbers.has(i)) {
+      errors.push(`Missing question number Q${i}`);
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+    totalQuestions,
+    maxMarks: totalMaxMarks,
+  };
 }

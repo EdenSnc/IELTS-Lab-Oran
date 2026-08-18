@@ -13,23 +13,19 @@ function validateHexKey(key: string | undefined, envName: string): Buffer {
 }
 
 export function resolveEncryptionKey(keyId?: string): { keyBuffer: Buffer; keyId: string } {
-  const activeKeyId = process.env.ENCRYPTION_ACTIVE_KEY_ID || 'primary';
+  const activeKeyId = process.env.ENCRYPTION_ACTIVE_KEY_ID;
   const targetKeyId = keyId ?? activeKeyId;
 
-  // Check specific environment variable for this key ID: ENCRYPTION_KEY_<KEY_ID>
+  if (!targetKeyId) {
+    throw new Error('UNKNOWN_ENCRYPTION_KEY_ID: active key ID is not configured');
+  }
+
+  // Exact environment variable name for this v2 key ID
   const envVarName = `ENCRYPTION_KEY_${targetKeyId.toUpperCase()}`;
   const specificKey = process.env[envVarName];
 
   if (specificKey) {
     return { keyBuffer: validateHexKey(specificKey, envVarName), keyId: targetKeyId };
-  }
-
-  // Fallback to ENCRYPTION_KEY if targetKeyId matches default/primary or is unset
-  if (targetKeyId === 'primary' || targetKeyId === 'default' || targetKeyId === activeKeyId) {
-    const defaultKey = process.env.ENCRYPTION_KEY;
-    if (defaultKey) {
-      return { keyBuffer: validateHexKey(defaultKey, 'ENCRYPTION_KEY'), keyId: targetKeyId };
-    }
   }
 
   throw new Error(`UNKNOWN_ENCRYPTION_KEY_ID: ${targetKeyId}`);

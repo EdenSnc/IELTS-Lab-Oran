@@ -19,6 +19,8 @@ const answerKeySchema = z.discriminatedUnion('strategy', [
   setKeySchema,
 ]);
 
+export type AnswerKeyPayload = z.infer<typeof answerKeySchema>;
+
 export type Normalization = {
   trimOuterWhitespace?: boolean;
   collapseInternalWhitespace?: boolean;
@@ -47,15 +49,15 @@ export type ObjectiveGradeResult = {
 export function normalizeAnswer(value: string, rules: Normalization = {}): string {
   let normalized = value;
   if (rules.trimOuterWhitespace !== false) normalized = normalized.trim();
-  // Whitespace is presentation, not part of an IELTS answer. A learner must
-  // not lose a mark for an accidental double space around an otherwise exact
-  // multi-word response.
+  // Whitespace collapsing is an engine invariant for objective scoring.
   normalized = normalized.replace(/\s+/g, ' ');
   normalized = normalized.normalize(rules.unicodeForm ?? 'NFC');
   if (rules.punctuationSensitive === false) {
     normalized = normalized.replace(/[^\p{L}\p{N}\s]/gu, '');
   }
-  if (rules.caseSensitive === false) normalized = normalized.toLocaleLowerCase('en');
+  if (rules.caseSensitive !== true) {
+    normalized = normalized.toLocaleLowerCase('en');
+  }
   return normalized;
 }
 
@@ -95,7 +97,7 @@ export function isWithinWordLimit(
       if (words > limits.maxWords) return false;
     }
   } else if (limits.allowNumbers === true) {
-    // IELTS rule: "AND/OR A NUMBER" permits up to maxWords non-numeric words alongside numbers
+    // Content-level word limit helper: "AND/OR A NUMBER" permits up to maxWords non-numeric words alongside numbers
     if (limits.maxWords !== undefined && limits.maxWords !== null && limits.maxWords > 0) {
       if (words > limits.maxWords) return false;
     }
@@ -147,6 +149,7 @@ export async function resolveBandScale(input: {
   rawScore: number;
   maximumRawScore: number;
   bandScaleId?: string;
+  isProduction?: boolean;
 }): Promise<{ band: number | null; bandScaleId?: string }> {
   if (input.maximumRawScore !== 40) {
     return { band: null };
@@ -159,8 +162,8 @@ export async function resolveBandScale(input: {
       ? 'IELTS_GENERAL_READING_ESTIMATE'
       : 'IELTS_ACADEMIC_READING_ESTIMATE';
 
+  let bandScaleRecord = null;
   try {
-    let bandScaleRecord = null;
     if (input.bandScaleId) {
       bandScaleRecord = await prisma.bandScale.findUnique({
         where: { id: input.bandScaleId },
@@ -175,17 +178,23 @@ export async function resolveBandScale(input: {
         orderBy: { version: 'desc' },
       });
     }
-
-    if (bandScaleRecord && Array.isArray(bandScaleRecord.thresholds)) {
-      const thresholds = bandScaleRecord.thresholds as Array<[number, number]>;
-      const match = thresholds.find(([minScore]) => input.rawScore >= minScore);
-      return {
-        band: match ? match[1] : 0,
-        bandScaleId: bandScaleRecord.id,
-      };
-    }
   } catch {
-    // In disconnected test environments, use deterministic constant tables
+    if (process.env.NODE_ENV === 'production' || input.isProduction) {
+      throw new Error('BAND_SCALE_UNAVAILABLE');
+    }
+  }
+
+  if (bandScaleRecord && Array.isArray(bandScaleRecord.thresholds)) {
+    const thresholds = bandScaleRecord.thresholds as Array<[number, number]>;
+    const match = thresholds.find(([minScore]) => input.rawScore >= minScore);
+    return {
+      band: match ? match[1] : 0,
+      bandScaleId: bandScaleRecord.id,
+    };
+  }
+
+  if (process.env.NODE_ENV === 'production' || input.isProduction) {
+    throw new Error('BAND_SCALE_UNAVAILABLE');
   }
 
   const fallbackThresholds = input.skill === 'LISTENING'
@@ -215,6 +224,135 @@ export function rawScoreToEstimatedBand(
 function roundToHalf(value: number) {
   return Math.round(value * 2) / 2;
 }
+
+// =============================================================================
+// PURE DETERMINISTIC LOADED-CONTENT SCORING BOUNDARY
+// =============================================================================
+
+export type LoadedObjectiveQuestion = {
+  stableKey: string;
+  sourceNumber: number | null;
+  maxMarks: number;
+};
+
+export type LoadedObjectiveGroup = {
+  id?: string;
+  questionType?: string;
+  scoringStrategy: 'PER_ITEM_EXACT' | 'UNORDERED_EXACT_SET';
+  maxMarks: number;
+  maxWords?: number | null;
+  allowNumbers?: boolean | null;
+  rawAnswerInstruction?: string | null;
+  questions: LoadedObjectiveQuestion[];
+  answerKey: {
+    payload: AnswerKeyPayload;
+    normalization?: Normalization;
+  };
+};
+
+export type LoadedObjectivePart = {
+  questionGroups: LoadedObjectiveGroup[];
+};
+
+export type LoadedObjectiveSection = {
+  skill: 'LISTENING' | 'READING';
+  parts: LoadedObjectivePart[];
+};
+
+export type ScoredSectionResult = {
+  skill: 'LISTENING' | 'READING';
+  rawScore: number;
+  maximumRawScore: number;
+  answered: number;
+};
+
+export function scoreLoadedObjectiveContent(input: {
+  sections: LoadedObjectiveSection[];
+  submittedAnswers: {
+    listening?: Record<string, string>;
+    reading?: Record<string, string>;
+  };
+}): ScoredSectionResult[] {
+  const results: ScoredSectionResult[] = [];
+
+  for (const section of input.sections) {
+    const skillKey = section.skill.toLowerCase() as 'listening' | 'reading';
+    const submitted = input.submittedAnswers[skillKey] ?? {};
+    let rawScore = 0;
+    let maximumRawScore = 0;
+    let answered = 0;
+
+    for (const part of section.parts) {
+      for (const group of part.questionGroups) {
+        // Runtime defense: any scored question must have a valid sourceNumber
+        for (const question of group.questions) {
+          if (question.maxMarks > 0 && (question.sourceNumber === null || question.sourceNumber === undefined)) {
+            throw new Error('INVALID_QUESTION_SOURCE_NUMBER');
+          }
+        }
+
+        const key = group.answerKey.payload;
+        const rules = normalizationRules(group.answerKey.normalization);
+
+        maximumRawScore += group.questions.reduce(
+          (total, question) => total + question.maxMarks,
+          0,
+        );
+
+        if (key.strategy === 'PER_ITEM_EXACT') {
+          for (const question of group.questions) {
+            if (question.sourceNumber === null || question.sourceNumber === undefined) continue;
+            const response = submitted[String(question.sourceNumber)] ?? '';
+            if (response.trim()) answered += 1;
+
+            const normalizedResponse = normalizeAnswer(response, rules);
+            const accepted = key.answersByStableKey[question.stableKey] ?? [];
+            if (
+              normalizedResponse
+              && accepted.some(
+                (candidate) => normalizeAnswer(candidate, rules) === normalizedResponse,
+              )
+            ) {
+              rawScore += question.maxMarks;
+            }
+          }
+        } else if (key.strategy === 'UNORDERED_EXACT_SET') {
+          const responses = group.questions.flatMap((question) => {
+            if (question.sourceNumber === null || question.sourceNumber === undefined) return [];
+            const response = submitted[String(question.sourceNumber)] ?? '';
+            if (response.trim()) answered += 1;
+            return response.trim() ? [normalizeAnswer(response, rules)] : [];
+          });
+
+          const uniqueResponses = new Set<string>(responses);
+          const bestSetScore = key.acceptedSets.reduce((best, candidate) => {
+            const accepted = new Set<string>(
+              candidate.map((value) => normalizeAnswer(value, rules)),
+            );
+            const score = new Set<string>(
+              [...uniqueResponses].filter((response) => accepted.has(response)),
+            ).size;
+            return Math.max(best, score);
+          }, 0);
+          rawScore += Math.min(group.maxMarks, bestSetScore);
+        }
+      }
+    }
+
+    results.push({
+      skill: section.skill,
+      rawScore,
+      maximumRawScore,
+      answered,
+    });
+  }
+
+  return results;
+}
+
+// =============================================================================
+// DATABASE-BACKED VERIFIED OBJECTIVE TEST GRADER
+// =============================================================================
 
 type CachedTestVersion = NonNullable<Awaited<ReturnType<typeof prisma.testVersion.findFirst<{
   select: {
@@ -321,23 +459,15 @@ export async function gradeVerifiedObjectiveAnswers(input: {
 
   if (!version) throw new Error('TEST_NOT_FOUND');
 
-  const results: ObjectiveSkillResult[] = [];
+  // Verify and load content structure
+  const loadedSections: LoadedObjectiveSection[] = [];
   for (const section of version.sections) {
     if (section.skill !== 'LISTENING' && section.skill !== 'READING') continue;
-    const submitted = input.answers[section.skill.toLowerCase() as 'listening' | 'reading'] ?? {};
-    let rawScore = 0;
-    let maximumRawScore = 0;
-    let answered = 0;
+    const parts: LoadedObjectivePart[] = [];
 
     for (const part of section.parts) {
+      const questionGroups: LoadedObjectiveGroup[] = [];
       for (const group of part.questionGroups) {
-        // Runtime defense: any scored question must have a valid sourceNumber
-        for (const question of group.questions) {
-          if (question.maxMarks > 0 && (question.sourceNumber === null || question.sourceNumber === undefined)) {
-            throw new Error('INVALID_QUESTION_SOURCE_NUMBER');
-          }
-        }
-
         const keyRecord = group.answerKey;
         if (
           group.reviewStatus !== 'VERIFIED'
@@ -346,77 +476,53 @@ export async function gradeVerifiedObjectiveAnswers(input: {
           throw new Error('UNVERIFIED_ANSWER_KEY');
         }
 
-        const key = parseAnswerKeyPayload(keyRecord.encryptedPayload, keyRecord.formatVersion);
-        const rules = normalizationRules(keyRecord.normalization);
-        const groupWordLimits = { maxWords: group.maxWords, allowNumbers: group.allowNumbers };
-
-        maximumRawScore += group.questions.reduce(
-          (total: number, question: { maxMarks: number }) => total + question.maxMarks,
-          0,
-        );
-
-        if (key.strategy === 'PER_ITEM_EXACT') {
-          for (const question of group.questions) {
-            if (question.sourceNumber === null || question.sourceNumber === undefined) continue;
-            const response = submitted[String(question.sourceNumber)] ?? '';
-            if (response.trim()) answered += 1;
-
-            // Word limit defense: exceeding word limit rejects the item
-            if (!isWithinWordLimit(response, groupWordLimits)) {
-              continue;
-            }
-
-            const normalizedResponse = normalizeAnswer(response, rules);
-            const accepted = key.answersByStableKey[question.stableKey] ?? [];
-            if (
-              normalizedResponse
-              && accepted.some(
-                (candidate: string) => normalizeAnswer(candidate, rules) === normalizedResponse,
-              )
-            ) {
-              rawScore += question.maxMarks;
-            }
-          }
-          continue;
-        }
-
-        const responses = group.questions.flatMap((question: { sourceNumber: number | null }) => {
-          if (question.sourceNumber === null || question.sourceNumber === undefined) return [];
-          const response = submitted[String(question.sourceNumber)] ?? '';
-          if (response.trim()) answered += 1;
-
-          if (!isWithinWordLimit(response, groupWordLimits)) {
-            return [];
-          }
-          return response.trim() ? [normalizeAnswer(response, rules)] : [];
+        const parsedKey = parseAnswerKeyPayload(keyRecord.encryptedPayload, keyRecord.formatVersion);
+        questionGroups.push({
+          scoringStrategy: group.scoringStrategy as 'PER_ITEM_EXACT' | 'UNORDERED_EXACT_SET',
+          maxMarks: group.maxMarks,
+          maxWords: group.maxWords,
+          allowNumbers: group.allowNumbers,
+          rawAnswerInstruction: null,
+          questions: group.questions.map((q) => ({
+            stableKey: q.stableKey,
+            sourceNumber: q.sourceNumber,
+            maxMarks: q.maxMarks,
+          })),
+          answerKey: {
+            payload: parsedKey,
+            normalization: normalizationRules(keyRecord.normalization),
+          },
         });
-
-        const uniqueResponses = new Set<string>(responses);
-        const bestSetScore = key.acceptedSets.reduce((best: number, candidate: string[]) => {
-          const accepted = new Set<string>(
-            candidate.map((value: string) => normalizeAnswer(value, rules)),
-          );
-          const score = new Set<string>(
-            [...uniqueResponses].filter((response) => accepted.has(response)),
-          ).size;
-          return Math.max(best, score);
-        }, 0);
-        rawScore += Math.min(group.maxMarks, bestSetScore);
       }
+      parts.push({ questionGroups });
     }
 
+    loadedSections.push({
+      skill: section.skill as 'LISTENING' | 'READING',
+      parts,
+    });
+  }
+
+  // Calculate deterministic raw scores via pure scoring boundary
+  const scoredSectionResults = scoreLoadedObjectiveContent({
+    sections: loadedSections,
+    submittedAnswers: input.answers,
+  });
+
+  const results: ObjectiveSkillResult[] = [];
+  for (const scored of scoredSectionResults) {
     const { band, bandScaleId } = await resolveBandScale({
-      skill: section.skill,
+      skill: scored.skill,
       variant: version.test.variant,
-      rawScore,
-      maximumRawScore,
+      rawScore: scored.rawScore,
+      maximumRawScore: scored.maximumRawScore,
     });
 
     results.push({
-      skill: section.skill,
-      rawScore,
-      maximumRawScore,
-      answered,
+      skill: scored.skill,
+      rawScore: scored.rawScore,
+      maximumRawScore: scored.maximumRawScore,
+      answered: scored.answered,
       band,
       bandScaleId,
       bandIsEstimate: band !== null,

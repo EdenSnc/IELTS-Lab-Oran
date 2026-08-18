@@ -65,7 +65,7 @@ function SkillRow({ result }: { result: ObjectiveSkillResult }) {
   return (
     <div className="diagnostic-skill-row">
       <div>
-        <strong>{label}</strong>
+        <strong>Estimated {label} band</strong>
         <span>{result.rawScore} correct out of {result.maximumRawScore}</span>
       </div>
       <strong>{result.band !== null ? result.band.toFixed(1) : '—'}</strong>
@@ -218,7 +218,7 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
               <h2 className="text-2xl font-bold sm:text-3xl">Your available score</h2>
               <div className="mt-2 text-center">
                 <p className="mb-3 text-sm font-semibold text-[#555555]">
-                  {writingResult ? 'Listening, Reading and Writing average' : 'Listening and Reading average'}
+                  {writingResult ? 'Estimated Listening, Reading and Writing average' : 'Estimated Listening and Reading average'}
                 </p>
                 <ScoreRing score={reportedAverage} />
               </div>
@@ -232,7 +232,7 @@ export default function DiagnosticResults({ test }: { test: DeliveryTest }) {
                 ))}
                 <div className={`diagnostic-skill-row ${writingResult ? '' : 'opacity-70'}`}>
                   <div>
-                    <strong>Writing</strong>
+                    <strong>Estimated Writing band</strong>
                     <span>
                       {writingResult ? 'Assessment complete' : writingError ?? 'Pending'}
                     </span>

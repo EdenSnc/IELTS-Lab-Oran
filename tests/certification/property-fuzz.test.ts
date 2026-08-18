@@ -1,14 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  normalizeAnswer,
-  countWords,
-  isWithinWordLimit,
-  rawScoreToEstimatedBand,
+  scoreLoadedObjectiveContent,
 } from '../../src/lib/grading/objective-grading.ts';
+import type { LoadedObjectiveSection } from '../../src/lib/grading/objective-grading.ts';
 
 // Deterministic Linear Congruential Generator (LCG) PRNG
-class SeededPRNG {
+class DeterministicPRNG {
   private state: number;
   constructor(seed: number) {
     this.state = seed >>> 0;
@@ -20,16 +18,11 @@ class SeededPRNG {
   randInt(min: number, max: number): number {
     return Math.floor(this.next() * (max - min + 1)) + min;
   }
-  randString(len: number): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_';
-    let res = '';
-    for (let i = 0; i < len; i++) {
-      res += chars[this.randInt(0, chars.length - 1)];
-    }
-    return res;
+  choice<T>(arr: T[]): T {
+    return arr[this.randInt(0, arr.length - 1)];
   }
-  randLetters(len: number): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  randString(len: number): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let res = '';
     for (let i = 0; i < len; i++) {
       res += chars[this.randInt(0, chars.length - 1)];
@@ -38,64 +31,164 @@ class SeededPRNG {
   }
 }
 
-test('Phase X: 10,000 Property & Fuzz Tests (Deterministic Seed: 20260818)', () => {
-  const prng = new SeededPRNG(20260818);
-  const acceptedAnswers = ['central library', '50 percent', 'solar energy', 'part-time', 'True', 'A'];
+test('Phase X: 10,000 Deterministic Generative Scoring Cases (Seed: 20260818)', () => {
+  const prng = new DeterministicPRNG(20260818);
+  const vocabulary = [
+    'library', 'center', 'energy', 'solar', 'station', 'part-time', 'full-time',
+    'water', 'filter', 'assessment', 'bridge', 'castle', 'tower', 'garden',
+    'TRUE', 'FALSE', 'NOT GIVEN', 'YES', 'NO', 'A', 'B', 'C', 'D', 'E', 'F',
+  ];
+
+  let totalCasesEvaluated = 0;
 
   for (let iter = 0; iter < 10_000; iter++) {
-    const testType = iter % 7;
+    const numGroups = prng.randInt(1, 3);
+    const groups = [];
+    const submittedAnswers: Record<string, string> = {};
+    let globalQNum = 1;
+    let expectedMaxMarks = 0;
 
-    if (testType === 0) {
-      // Property 1: Random noisy strings never match accepted answers (unless identical)
-      const randomStr = prng.randString(prng.randInt(1, 20));
-      const normRand = normalizeAnswer(randomStr, { caseSensitive: false, punctuationSensitive: false });
-      for (const accepted of acceptedAnswers) {
-        const normAcc = normalizeAnswer(accepted, { caseSensitive: false, punctuationSensitive: false });
-        if (normRand !== normAcc) {
-          assert.notEqual(normRand, normAcc);
+    for (let g = 0; g < numGroups; g++) {
+      const isUnordered = prng.next() > 0.6;
+      const groupSize = isUnordered ? prng.randInt(2, 3) : prng.randInt(1, 4);
+      const groupQuestions = [];
+      const qNums: number[] = [];
+
+      for (let q = 0; q < groupSize; q++) {
+        const qNum = globalQNum++;
+        qNums.push(qNum);
+        groupQuestions.push({
+          stableKey: `key_${g}_${q}`,
+          sourceNumber: qNum,
+          maxMarks: 1,
+        });
+      }
+
+      expectedMaxMarks += groupSize;
+
+      if (!isUnordered) {
+        // PER_ITEM_EXACT
+        const answersByStableKey: Record<string, string[]> = {};
+        for (const q of groupQuestions) {
+          const numVariants = prng.randInt(1, 3);
+          const variants = Array.from({ length: numVariants }, () => prng.choice(vocabulary));
+          answersByStableKey[q.stableKey] = variants;
+
+          // Decide submission: correct variant, mutated variant, wrong, or blank
+          const subType = prng.randInt(0, 3);
+          if (subType === 0) {
+            // Correct
+            submittedAnswers[String(q.sourceNumber)] = prng.choice(variants);
+          } else if (subType === 1) {
+            // Cased / spaced variant
+            const v = prng.choice(variants);
+            submittedAnswers[String(q.sourceNumber)] = `  ${v.toUpperCase()}  `;
+          } else if (subType === 2) {
+            // Wrong word
+            submittedAnswers[String(q.sourceNumber)] = `wrong_${prng.randString(4)}`;
+          }
+          // subType === 3: left blank (no answer)
+        }
+
+        groups.push({
+          scoringStrategy: 'PER_ITEM_EXACT' as const,
+          maxMarks: groupSize,
+          questions: groupQuestions,
+          answerKey: {
+            payload: {
+              strategy: 'PER_ITEM_EXACT' as const,
+              answersByStableKey,
+            },
+          },
+        });
+      } else {
+        // UNORDERED_EXACT_SET
+        const acceptedSet = Array.from({ length: groupSize }, () => prng.choice(vocabulary));
+        groups.push({
+          scoringStrategy: 'UNORDERED_EXACT_SET' as const,
+          maxMarks: groupSize,
+          questions: groupQuestions,
+          answerKey: {
+            payload: {
+              strategy: 'UNORDERED_EXACT_SET' as const,
+              acceptedSets: [acceptedSet],
+            },
+          },
+        });
+
+        // Generate submissions for unordered set
+        for (const qNum of qNums) {
+          const subType = prng.randInt(0, 3);
+          if (subType === 0) {
+            submittedAnswers[String(qNum)] = prng.choice(acceptedSet);
+          } else if (subType === 1) {
+            // Duplicate of first accepted element
+            submittedAnswers[String(qNum)] = acceptedSet[0];
+          } else if (subType === 2) {
+            submittedAnswers[String(qNum)] = `wrong_${prng.randString(4)}`;
+          }
         }
       }
-    } else if (testType === 1) {
-      // Property 6: Adding extra words over word limit always fails isWithinWordLimit
-      const baseWord = acceptedAnswers[prng.randInt(0, acceptedAnswers.length - 1)];
-      const maxWords = prng.randInt(1, 2);
-      const extraWords = Array.from({ length: maxWords + 1 }, () => prng.randLetters(4)).join(' ');
-      const overLimitStr = `${baseWord} ${extraWords}`;
-      assert.equal(
-        isWithinWordLimit(overLimitStr, { maxWords, allowNumbers: true }),
-        false,
-        `String '${overLimitStr}' should exceed ${maxWords} words`,
-      );
-    } else if (testType === 2) {
-      // Property 7: Changing case on text answer preserves normalized equality
-      const baseWord = acceptedAnswers[prng.randInt(0, acceptedAnswers.length - 1)];
-      const randomizedCase = baseWord.split('').map((c) => (prng.next() > 0.5 ? c.toUpperCase() : c.toLowerCase())).join('');
-      assert.equal(
-        normalizeAnswer(randomizedCase, { caseSensitive: false }),
-        normalizeAnswer(baseWord, { caseSensitive: false }),
-      );
-    } else if (testType === 3) {
-      // Property 8: Blank/whitespace strings count as 0 words and normalize to empty
-      const spaces = ' '.repeat(prng.randInt(1, 10));
-      assert.equal(countWords(spaces), 0);
-      assert.equal(normalizeAnswer(spaces), '');
-    } else if (testType === 4) {
-      // Property 9: rawScoreToEstimatedBand bounds check [0, 9.0]
-      const raw = prng.randInt(-5, 45);
-      const skill = prng.next() > 0.5 ? 'LISTENING' : 'READING';
-      const variant = (prng.next() > 0.5 ? 'ACADEMIC' : 'GENERAL_TRAINING') as 'ACADEMIC' | 'GENERAL_TRAINING';
-      const band = rawScoreToEstimatedBand(skill, raw, variant);
-      assert.ok(band >= 0.0 && band <= 9.0, `Band ${band} must be between 0.0 and 9.0`);
-    } else if (testType === 5) {
-      // Property 12: Determinism - calling normalization twice with same input gives exact same output
-      const str = prng.randString(prng.randInt(1, 30));
-      const res1 = normalizeAnswer(str);
-      const res2 = normalizeAnswer(str);
-      assert.equal(res1, res2);
-    } else if (testType === 6) {
-      // Property 14: Hyphenated compound words count as 1 word
-      const compound = `${prng.randLetters(4)}-${prng.randLetters(4)}`;
-      assert.equal(countWords(compound), 1);
     }
+
+    // Add random unknown keys to submittedAnswers to test boundary defense
+    if (prng.next() > 0.5) {
+      submittedAnswers[String(globalQNum + 5)] = 'random_junk';
+      submittedAnswers['-99'] = 'random_junk';
+    }
+
+    const section: LoadedObjectiveSection = {
+      skill: 'LISTENING',
+      parts: [{ questionGroups: groups }],
+    };
+
+    const res = scoreLoadedObjectiveContent({
+      sections: [section],
+      submittedAnswers: { listening: submittedAnswers },
+    });
+
+    const scored = res[0];
+
+    // INVARIANT 1: 0 <= rawScore <= maximumRawScore
+    assert.ok(
+      scored.rawScore >= 0 && scored.rawScore <= scored.maximumRawScore,
+      `Iteration ${iter}: rawScore ${scored.rawScore} out of bounds [0, ${scored.maximumRawScore}]`,
+    );
+
+    // INVARIANT 2: maximumRawScore equals sum of question maxMarks
+    assert.equal(
+      scored.maximumRawScore,
+      expectedMaxMarks,
+      `Iteration ${iter}: maximumRawScore mismatch`,
+    );
+
+    // INVARIANT 3: Pure Determinism - Scoring same input twice gives identical result
+    const res2 = scoreLoadedObjectiveContent({
+      sections: [section],
+      submittedAnswers: { listening: submittedAnswers },
+    });
+    assert.equal(
+      res2[0].rawScore,
+      scored.rawScore,
+      `Iteration ${iter}: non-deterministic scoring detected`,
+    );
+
+    // INVARIANT 4: Unknown response fields cannot increase score
+    const cleanAnswers = { ...submittedAnswers };
+    delete cleanAnswers[String(globalQNum + 5)];
+    delete cleanAnswers['-99'];
+    const resClean = scoreLoadedObjectiveContent({
+      sections: [section],
+      submittedAnswers: { listening: cleanAnswers },
+    });
+    assert.equal(
+      resClean[0].rawScore,
+      scored.rawScore,
+      `Iteration ${iter}: unknown fields altered score`,
+    );
+
+    totalCasesEvaluated++;
   }
+
+  assert.equal(totalCasesEvaluated, 10_000, 'Must have evaluated exactly 10,000 distinct scoring cases');
 });

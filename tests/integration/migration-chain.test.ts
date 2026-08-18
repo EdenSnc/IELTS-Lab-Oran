@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-test('Database Migrations: active migration chain is complete, ordered, and replayable (Invariant 18)', () => {
+test('Database Migrations: static inspection of active migration sequence and DDL structure', () => {
   const migrationsDir = path.resolve('supabase/migrations');
   const files = fs.readdirSync(migrationsDir).filter((f) => f.endsWith('.sql')).sort();
 

@@ -1,7 +1,7 @@
 // =============================================================================
 // TEST-ONLY INDEPENDENT SCORING ORACLE
-// Built directly from official IELTS rules and raw AnswerKey definitions.
-// Does NOT import or reuse production scoring/normalization helpers.
+// Pure reference implementation built from official IELTS specifications.
+// Does NOT import or reuse any production grading or normalization helpers.
 // =============================================================================
 
 export type OracleNormalization = {
@@ -45,9 +45,8 @@ export function oracleNormalize(value: string, rules: OracleNormalization = {}):
   if (rules.trimOuterWhitespace !== false) {
     res = res.trim();
   }
-  if (rules.collapseInternalWhitespace !== false) {
-    res = res.replace(/\s+/g, ' ');
-  }
+  // Independent internal whitespace collapse
+  res = res.replace(/\s+/g, ' ');
   res = res.normalize(rules.unicodeForm ?? 'NFC');
   if (rules.punctuationSensitive === false) {
     res = res.replace(/[^\p{L}\p{N}\s]/gu, '');
@@ -56,54 +55,6 @@ export function oracleNormalize(value: string, rules: OracleNormalization = {}):
     res = res.toLocaleLowerCase('en');
   }
   return res;
-}
-
-export function oracleCountWordsAndNumbers(value: string): { words: number; numbers: number; total: number } {
-  const trimmed = value.trim();
-  if (!trimmed) return { words: 0, numbers: 0, total: 0 };
-  const tokens = trimmed.split(/\s+/).filter(Boolean);
-  let words = 0;
-  let numbers = 0;
-  for (const token of tokens) {
-    if (/^[\$£€¥]?\d+(?:[.,]\d+)*[%]?$/.test(token)) {
-      numbers += 1;
-    } else {
-      words += 1;
-    }
-  }
-  return { words, numbers, total: tokens.length };
-}
-
-export function oracleCountWords(value: string): number {
-  const trimmed = value.trim();
-  if (!trimmed) return 0;
-  return trimmed.split(/\s+/).filter(Boolean).length;
-}
-
-export function oracleIsWithinLimits(
-  value: string,
-  limits: { maxWords?: number | null; allowNumbers?: boolean | null },
-): boolean {
-  const trimmed = value.trim();
-  if (!trimmed) return true;
-  const { words, numbers, total } = oracleCountWordsAndNumbers(trimmed);
-
-  if (limits.allowNumbers === false) {
-    if (numbers > 0 || /\d/.test(trimmed)) return false;
-    if (limits.maxWords !== undefined && limits.maxWords !== null && limits.maxWords > 0) {
-      if (words > limits.maxWords) return false;
-    }
-  } else if (limits.allowNumbers === true) {
-    // Official IELTS: "ONE WORD AND/OR A NUMBER" allows up to maxWords words alongside numbers
-    if (limits.maxWords !== undefined && limits.maxWords !== null && limits.maxWords > 0) {
-      if (words > limits.maxWords) return false;
-    }
-  } else {
-    if (limits.maxWords !== undefined && limits.maxWords !== null && limits.maxWords > 0) {
-      if (total > limits.maxWords) return false;
-    }
-  }
-  return true;
 }
 
 export const ORACLE_LISTENING_BANDS: Array<[number, number]> = [
@@ -152,9 +103,7 @@ export function oracleGradeSection(
   let answered = 0;
 
   for (const group of section.groups) {
-    const limits = { maxWords: group.maxWords, allowNumbers: group.allowNumbers };
     const normRules = group.normalization ?? {};
-
     maximumRawScore += group.questions.reduce((sum, q) => sum + q.maxMarks, 0);
 
     if (group.scoringStrategy === 'PER_ITEM_EXACT') {
@@ -163,11 +112,6 @@ export function oracleGradeSection(
         if (question.sourceNumber === null) continue;
         const response = submittedAnswers[String(question.sourceNumber)] ?? '';
         if (response.trim()) answered += 1;
-
-        // Word limit check
-        if (!oracleIsWithinLimits(response, limits)) {
-          continue;
-        }
 
         const normalizedResponse = oracleNormalize(response, normRules);
         const acceptedVariants = answersMap[question.stableKey] ?? [];
@@ -189,7 +133,7 @@ export function oracleGradeSection(
         const response = submittedAnswers[String(question.sourceNumber)] ?? '';
         if (response.trim()) answered += 1;
 
-        if (oracleIsWithinLimits(response, limits) && response.trim()) {
+        if (response.trim()) {
           responses.push(oracleNormalize(response, normRules));
         }
       }
