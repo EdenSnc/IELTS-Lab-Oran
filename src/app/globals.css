@@ -5,8 +5,9 @@
   --color-charcoal: #0a0a0a;
   --color-surface: #F3F4F6;
   
-  --font-sans: 'Inter', sans-serif;
-  --font-cairo: 'Cairo', sans-serif;
+  --font-sans: var(--font-inter-face), 'Inter', sans-serif;
+  --font-inter: var(--font-inter-face), 'Inter', sans-serif;
+  --font-cairo: var(--font-cairo-face), 'Cairo', sans-serif;
   
   --radius-3xl: 1.5rem;
   --radius-4xl: 2.5rem;

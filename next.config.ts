@@ -25,9 +25,9 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "form-action 'self' https://tally.so https://www.tally.so",
   "script-src 'self' 'unsafe-inline' https://tally.so https://*.tally.so https://va.vercel-scripts.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.tally.so https://images.unsplash.com https://img.youtube.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "font-src 'self' data:",
   "media-src 'self' blob:",
   "frame-src https://tally.so https://www.tally.so",
   `connect-src 'self' https://*.tally.so https://vitals.vercel-insights.com https://*.vercel-insights.com ${speakingRtcSources.join(' ')}`.trim(),
@@ -37,6 +37,21 @@ const contentSecurityPolicy = [
 ].join('; ');
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/photo-1497215728101-856f4ea42174',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+        pathname: '/vi/r5eiUU3EpHE/maxresdefault.jpg',
+      },
+    ],
+  },
   allowedDevOrigins: [
     'localhost',
     '127.0.0.1',

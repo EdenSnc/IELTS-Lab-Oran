@@ -1,20 +1,24 @@
 import type { Metadata } from 'next';
 
 /**
- * SEO configuration - single source of truth.
- * 
- * TODO: Once the final domain is decided, update NEXT_PUBLIC_SITE_URL in .env
- * and restart the dev server. Every hreflang tag and JSON-LD block derives from it.
+ * SEO configuration – single source of truth.
+ *
+ * Every canonical URL, hreflang alternate, sitemap entry, robots directive,
+ * JSON-LD @id, and Open Graph URL derives from CANONICAL_ORIGIN.
+ *
+ * This is intentionally a compile-time constant, NOT an environment variable,
+ * so that preview/staging deployments can never accidentally claim production
+ * canonical identity.
  */
+export const CANONICAL_ORIGIN = 'https://www.ieltslab.org' as const;
 
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.ieltslab.app';
+/** @deprecated Use CANONICAL_ORIGIN — kept as an alias for incremental migration. */
+export const SITE_URL = CANONICAL_ORIGIN;
 
 export const SITE_NAME = 'IELTS Lab Oran';
 export const COURSE_PRICE_DZD = 29_500;
 export const COURSE_PRICE_LABEL = '29,500 DA';
 export const CONTENT_REVIEW_DATE = '2026-07-29';
-
 export const LOCALES = ['en', 'fr', 'ar'] as const;
 export type Locale = (typeof LOCALES)[number];
 

@@ -4,11 +4,24 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
+import { Inter, Cairo } from 'next/font/google';
 import LocalSchema from '@/components/LocalSchema';
 import FloatingWidgetClient from '@/components/FloatingWidgetClient';
-import { Locale, SITE_URL, buildAlternates } from '@/lib/seo';
+import { Locale, CANONICAL_ORIGIN, buildAlternates } from '@/lib/seo';
 import '../globals.css';
-import BrowserExtensionHydrationGuard from '@/components/BrowserExtensionHydrationGuard';
+
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter-face',
+});
+
+const cairo = Cairo({
+  subsets: ['arabic', 'latin'],
+  display: 'swap',
+  variable: '--font-cairo-face',
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -20,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   } as const;
   const description = descriptions[locale as Locale] ?? descriptions.en;
   return {
-    metadataBase: new URL(SITE_URL),
+    metadataBase: new URL(CANONICAL_ORIGIN),
     title: `${t('title')} | IELTS Preparation Oran`,
     description,
     alternates: buildAlternates(locale as Locale),
@@ -28,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       type: 'website',
       locale,
       siteName: t('title'),
-      url: `${SITE_URL}/${locale}`,
+      url: `${CANONICAL_ORIGIN}/${locale}`,
       title: `${t('title')} | IELTS Preparation Oran`,
       description,
     },
@@ -54,27 +67,18 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
   const isRtl = locale === 'ar';
-  // Use the font class name as a plain string to avoid a next/font Turbopack bug.
-  const fontClass = isRtl ? 'font-cairo' : 'font-inter';
+  const fontClass = isRtl ? 'font-cairo' : 'font-sans';
 
   return (
     <html
       lang={locale}
       dir={isRtl ? 'rtl' : 'ltr'}
-      className={`scroll-smooth ${fontClass}`}
+      className={`scroll-smooth ${inter.variable} ${cairo.variable} ${fontClass}`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <head>
-        <BrowserExtensionHydrationGuard />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* App Router layouts replace pages/_document; keep the established site fonts unchanged. */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Cairo:wght@200..900&display=swap"
-          rel="stylesheet"
-        />
+
         <LocalSchema />
       </head>
       <body suppressHydrationWarning className="bg-surface text-charcoal selection:bg-crimson selection:text-white antialiased">

@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { SITE_URL } from '@/lib/seo';
 
 export default function Testimonials() {
   const t = useTranslations('Testimonials');
@@ -29,25 +28,6 @@ export default function Testimonials() {
     }
   ];
 
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "EducationalOrganization",
-        "@id": "https://www.ieltslaboran.com/#organization",
-        "name": "IELTS Lab Oran",
-        "url": "https://www.ieltslaboran.com/",
-        "logo": `${SITE_URL}/ielts-lab-mark.svg`,
-        "sameAs": [
-          "https://instagram.com/ieltslab.oran",
-          "https://facebook.com/IELTSLabOran"
-        ],
-        "founder": {
-          "@id": "https://www.ieltslaboran.com/#instructor"
-        }
-      }
-    ]
-  };
 
   return (
     <section 
@@ -86,10 +66,6 @@ export default function Testimonials() {
         })}
       </div>
 
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-      />
     </section>
   );
 }

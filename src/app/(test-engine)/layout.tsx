@@ -1,14 +1,27 @@
 import { Metadata, Viewport } from 'next';
-import { SITE_URL } from '@/lib/seo';
+import { Inter } from 'next/font/google';
+import { CANONICAL_ORIGIN } from '@/lib/seo';
 import '../globals.css';
-import BrowserExtensionHydrationGuard from '@/components/BrowserExtensionHydrationGuard';
+
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter-face',
+});
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL(CANONICAL_ORIGIN),
   title: 'IELTS Mock Test',
   robots: {
     index: false,
     follow: false,
+  },
+  openGraph: {
+    images: [`${CANONICAL_ORIGIN}/opengraph-image.png`],
+  },
+  twitter: {
+    images: [`${CANONICAL_ORIGIN}/twitter-image.png`],
   },
 };
 
@@ -24,17 +37,9 @@ export default function TestEngineLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
-        <BrowserExtensionHydrationGuard />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* The result screen deliberately uses the public site's Inter typeface. */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
-          rel="stylesheet"
-        />
+
       </head>
       <body 
         suppressHydrationWarning

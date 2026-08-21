@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 
 export default function Methodology() {
   const t = useTranslations('Methodology');
@@ -60,8 +61,14 @@ export default function Methodology() {
         aria-label="Watch the methodology walkthrough on YouTube"
         className="block mt-16 max-w-3xl mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl relative aspect-video bg-charcoal group cursor-pointer border-4 border-surface"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://img.youtube.com/vi/r5eiUU3EpHE/maxresdefault.jpg" alt="Methodology Walkthrough" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500" loading="lazy" />
+        <Image
+          src="https://img.youtube.com/vi/r5eiUU3EpHE/maxresdefault.jpg"
+          alt="Methodology Walkthrough"
+          fill
+          sizes="(max-width: 768px) 100vw, 768px"
+          className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+          loading="lazy"
+        />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-20 h-20 bg-crimson rounded-[1.5rem] flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform duration-300">
             <svg className="w-8 h-8 text-white ml-2" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4l12 6-12 6z"></path></svg>

@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { CONTENT_REVIEW_DATE, LOCALES, SITE_URL } from '@/lib/seo';
+import { CANONICAL_ORIGIN, CONTENT_REVIEW_DATE, LOCALES } from '@/lib/seo';
 
 const indexablePaths = [
   '',
@@ -19,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     LOCALES.map((locale) => {
       const suffix = path ? `/${path}` : '';
       return {
-        url: `${SITE_URL}/${locale}${suffix}`,
+        url: `${CANONICAL_ORIGIN}/${locale}${suffix}`,
         lastModified: new Date(CONTENT_REVIEW_DATE),
         changeFrequency: path === '' ? ('weekly' as const) : ('monthly' as const),
         priority: path === '' ? 1 : path === 'articles' ? 0.8 : 0.7,
@@ -27,9 +27,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
           languages: Object.fromEntries([
             ...LOCALES.map((language) => [
               language,
-              `${SITE_URL}/${language}${suffix}`,
+              `${CANONICAL_ORIGIN}/${language}${suffix}`,
             ]),
-            ['x-default', `${SITE_URL}/en${suffix}`],
+            ['x-default', `${CANONICAL_ORIGIN}/en${suffix}`],
           ]),
         },
       };

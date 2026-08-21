@@ -1,6 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Link } from '@/i18n/routing';
 
 export default function Facility() {
@@ -32,8 +33,14 @@ export default function Facility() {
       </p>
       <div className="rounded-[3rem] overflow-hidden shadow-2xl relative aspect-[21/9] bg-charcoal group border-8 border-surface">
         {/* Placeholder for real facility image */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2070&auto=format&fit=crop" alt="Illustration of a computer learning space" className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" />
+        <Image
+          src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2070&auto=format&fit=crop"
+          alt="Illustration of a computer learning space"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1152px"
+          className="object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
+          loading="lazy"
+        />
         
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 to-transparent flex flex-col justify-end items-center pb-10">
            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full text-white font-medium border border-white/20">
