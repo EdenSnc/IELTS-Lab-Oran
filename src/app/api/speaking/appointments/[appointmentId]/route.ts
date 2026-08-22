@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { requireRequestUser } from '@/lib/auth/request-user';
+import { isExaminer, requirePrivilegedRequestUser, requireRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { cancelSpeakingAppointment, rescheduleSpeakingAppointment } from '@/lib/speaking/booking-service';
 
@@ -22,6 +22,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ appoi
   try {
     assertSameOrigin(request);
     const user = await requireRequestUser(request);
+    if (isExaminer(user.role)) await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const { appointmentId } = await context.params;
     const input = actionSchema.parse(await request.json());
     if (input.action === 'cancel') {

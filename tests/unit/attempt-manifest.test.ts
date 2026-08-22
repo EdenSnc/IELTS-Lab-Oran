@@ -63,6 +63,7 @@ const candidates: AssemblyPart[] = slotDefinitions.flatMap(([slot, skill, marks]
       slot,
       reviewStatus: 'VERIFIED',
       stimuliReady: true,
+      assetsReady: true,
       shuffleQuestionGroups: false,
       groups: [{
         id: uuid(),
@@ -74,7 +75,7 @@ const candidates: AssemblyPart[] = slotDefinitions.flatMap(([slot, skill, marks]
         shuffleQuestions: false,
         shuffleOptions: true,
         options: [{ label: 'A', text: 'Alpha' }, { label: 'B', text: 'Beta' }],
-        answerKey: { reviewStatus: 'VERIFIED', formatVersion: 2 },
+        answerKey: { reviewStatus: 'VERIFIED', formatVersion: 1 },
         questions,
       }],
     } satisfies AssemblyPart;
@@ -92,6 +93,7 @@ function scoreSkill(manifest: ReturnType<typeof compileAttemptManifest>['payload
         && sourceGroup.questions.some((candidate) => candidate.id === question.questionId)
       ));
       groups.push({
+        scoringStrategy: 'PER_ITEM_EXACT',
         maxMarks: sourceGroup.maxMarks,
         questions: selected.map((question) => {
           const source = sourceGroup.questions.find((candidate) => candidate.id === question.questionId)!;
@@ -121,6 +123,7 @@ test('1,000 deterministic full manifests preserve atomic structure and 40-mark L
     const repeated = compileAttemptManifest({ blueprint, candidates, seed });
     assert.deepEqual(repeated, compiled);
     parseFrozenManifestPayload(JSON.parse(JSON.stringify(compiled.payload)));
+    assert.equal(compiled.payload.totalTimeLimitSeconds, 7_200, 'Listening and Reading durations count once per assembled skill');
 
     assert.equal(new Set(compiled.payload.questions.map((question) => question.questionId)).size, 80);
     assert.equal(new Set(compiled.payload.parts.map((part) => part.slot)).size, 7);
@@ -205,6 +208,7 @@ test('rubric-scored Writing tasks compile with zero raw marks', () => {
     slot: 'WRITING_TASK_1',
     reviewStatus: 'VERIFIED',
     stimuliReady: true,
+    assetsReady: true,
     shuffleQuestionGroups: false,
     groups: [{
       id: uuid(),
@@ -227,5 +231,21 @@ test('rubric-scored Writing tasks compile with zero raw marks', () => {
     seed: 'writing-rubric',
   });
   assert.equal(compiled.payload.questions[0].maxMarks, 0);
+  assert.equal(compiled.payload.totalTimeLimitSeconds, 3_600);
   parseFrozenManifestPayload(JSON.parse(JSON.stringify(compiled.payload)));
+});
+
+test('assembled skill timing rejects inconsistent source limits and excludes scheduled Speaking', () => {
+  const listening = candidates.filter((candidate) => candidate.skill === 'LISTENING' && candidate.testVersionContentHash?.endsWith('-0'));
+  const listeningBlueprint: AssemblyBlueprint = {
+    ...blueprint,
+    id: uuid(),
+    slots: blueprint.slots.filter((slot) => slot.partSlot.startsWith('LISTENING_')),
+  };
+  assert.equal(compileAttemptManifest({ blueprint: listeningBlueprint, candidates: listening, seed: 'timing' }).payload.totalTimeLimitSeconds, 3_600);
+  assert.throws(() => compileAttemptManifest({
+    blueprint: listeningBlueprint,
+    candidates: listening.map((part, index) => index === 3 ? { ...part, sectionTimeLimitSeconds: 1_800 } : part),
+    seed: 'timing-mismatch',
+  }), /INCONSISTENT_SKILL_TIME_LIMIT/u);
 });

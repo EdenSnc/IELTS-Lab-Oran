@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { decrypt } from '@/lib/crypto';
 import {
   normalizationSchema,
+  assertSupportedAnswerKeyFormatVersion,
   objectiveAnswerKeySchema,
   rawScoreToBand,
   roundToHalf,
@@ -70,6 +71,7 @@ export async function gradeVerifiedObjectiveAnswers(input: {
                   answerKey: {
                     select: {
                       encryptedPayload: true,
+                      formatVersion: true,
                       normalization: true,
                       reviewStatus: true,
                     },
@@ -100,6 +102,7 @@ export async function gradeVerifiedObjectiveAnswers(input: {
         ) {
           throw new Error('UNVERIFIED_ANSWER_KEY');
         }
+        assertSupportedAnswerKeyFormatVersion(keyRecord.formatVersion);
         const key = objectiveAnswerKeySchema.parse(
           JSON.parse(decrypt(keyRecord.encryptedPayload)),
         );
@@ -107,6 +110,7 @@ export async function gradeVerifiedObjectiveAnswers(input: {
           throw new Error('OBJECTIVE_QUESTION_NUMBER_MISSING');
         }
         groups.push({
+          scoringStrategy: group.scoringStrategy,
           maxMarks: group.maxMarks,
           normalization: normalizationRules(keyRecord.normalization),
           answerKey: key,

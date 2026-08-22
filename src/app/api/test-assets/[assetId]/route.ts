@@ -7,6 +7,7 @@ import { requireActiveAttemptDevice } from '@/lib/attempts/execution-lease';
 import { requireRequestDeviceSlot } from '@/lib/auth/device-slots';
 import { requireRequestUser } from '@/lib/auth/request-user';
 import { authorizeStrictListeningAsset } from '@/lib/audio/listening-playback';
+import { listeningAssetCacheHeaders } from '@/lib/audio/listening-cache';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -37,6 +38,7 @@ export async function GET(
   let allowedPartIds: string[] | undefined;
   let allowedGroupIds: string[] | undefined;
   let strictDeviceSlotId: string | null = null;
+  let strictAudioAuthorized = false;
   if (attemptId) {
     if (!UUID_PATTERN.test(attemptId)) {
       return NextResponse.json({ error: 'Invalid attempt identifier.' }, { status: 400 });
@@ -126,6 +128,7 @@ export async function GET(
       if (!authorized) {
         return NextResponse.json({ error: 'Asset is unavailable.' }, { status: 404 });
       }
+      strictAudioAuthorized = true;
     }
   }
 
@@ -133,7 +136,7 @@ export async function GET(
     const upstream = await fetchPrivateAsset(asset.storageKey, request.headers.get('range'));
     const commonHeaders = {
       'Accept-Ranges': upstream.headers.get('accept-ranges') ?? 'bytes',
-      'Cache-Control': 'private, max-age=86400, immutable',
+      ...listeningAssetCacheHeaders(strictAudioAuthorized),
       'Content-Type': inferMimeType(asset.storageKey, asset.mimeType),
       'Content-Disposition': 'inline',
       'X-Content-Type-Options': 'nosniff',

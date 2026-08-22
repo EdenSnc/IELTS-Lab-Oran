@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
-import { requireRequestUser } from '@/lib/auth/request-user';
+import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 
 const querySchema = z.object({ type: z.enum(['rule', 'override']) });
@@ -8,7 +8,7 @@ const querySchema = z.object({ type: z.enum(['rule', 'override']) });
 export async function DELETE(request: Request, context: { params: Promise<{ availabilityId: string }> }) {
   try {
     assertSameOrigin(request);
-    const user = await requireRequestUser(request, ['TEACHER', 'ADMIN']);
+    const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const { availabilityId } = await context.params;
     z.uuid().parse(availabilityId);
     const { type } = querySchema.parse(Object.fromEntries(new URL(request.url).searchParams));

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
-import { requireRequestUser } from '@/lib/auth/request-user';
+import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { assertSessionTransition, partForState, type SessionState } from '@/lib/speaking/lifecycle';
 
@@ -20,7 +20,7 @@ function targetState(action: 'start' | 'part2' | 'part3' | 'end') {
 export async function PATCH(request: Request, context: { params: Promise<{ sessionId: string }> }) {
   try {
     assertSameOrigin(request);
-    const user = await requireRequestUser(request, ['TEACHER', 'ADMIN']);
+    const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const { sessionId } = await context.params;
     const event = eventSchema.parse(await request.json());
     const session = await prisma.speakingSession.findUnique({ where: { id: sessionId }, include: { appointment: true } });

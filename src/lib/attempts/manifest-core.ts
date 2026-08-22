@@ -34,6 +34,7 @@ export type AssemblyPart = {
   slot: string;
   reviewStatus: string;
   stimuliReady: boolean;
+  assetsReady: boolean;
   shuffleQuestionGroups: boolean;
   groups: AssemblyQuestionGroup[];
 };
@@ -170,7 +171,7 @@ function supportedObjectiveGroup(group: AssemblyQuestionGroup) {
   if (group.reviewStatus !== 'VERIFIED') return false;
   if (objective && (
     group.answerKey?.reviewStatus !== 'VERIFIED'
-    || ![1, 2].includes(group.answerKey.formatVersion)
+    || group.answerKey.formatVersion !== 1
   )) return false;
   if (!objective && !['RUBRIC', 'NOT_SCORED'].includes(group.scoringStrategy)) return false;
   if (group.questions.length === 0) return false;
@@ -188,6 +189,7 @@ function supportedObjectiveGroup(group: AssemblyQuestionGroup) {
 function supportedPart(part: AssemblyPart) {
   return part.reviewStatus === 'VERIFIED'
     && part.stimuliReady
+    && part.assetsReady
     && part.groups.length > 0
     && part.groups.every(supportedObjectiveGroup);
 }
@@ -287,13 +289,15 @@ export function compileAttemptManifest(input: {
   const questions: FrozenManifestQuestion[] = [];
   const parts: FrozenManifestPart[] = [];
   const seenQuestions = new Set<string>();
-  const sectionDurations = new Map<string, number>();
+  const skillDurations = new Map<string, number | null>();
 
   chosenParts.sort((left, right) => left.displayOrder - right.displayOrder).forEach((selection, partIndex) => {
     const { part, groups } = selection;
-    if (part.sectionTimeLimitSeconds !== null) {
-      sectionDurations.set(part.sectionId, part.sectionTimeLimitSeconds);
+    const existingDuration = skillDurations.get(part.skill);
+    if (skillDurations.has(part.skill) && existingDuration !== part.sectionTimeLimitSeconds) {
+      throw new ManifestCompilationError('INCONSISTENT_SKILL_TIME_LIMIT');
     }
+    skillDurations.set(part.skill, part.sectionTimeLimitSeconds);
     parts.push({
       partId: part.id,
       testVersionId: part.testVersionId,
@@ -340,8 +344,10 @@ export function compileAttemptManifest(input: {
     blueprintVersion: blueprint.version,
     variant: blueprint.variant,
     seed,
-    totalTimeLimitSeconds: sectionDurations.size > 0
-      ? [...sectionDurations.values()].reduce((sum, value) => sum + value, 0)
+    totalTimeLimitSeconds: [...skillDurations.entries()].some(([skill, value]) => skill !== 'SPEAKING' && value !== null)
+      ? [...skillDurations.entries()].reduce((sum, [skill, value]) => (
+        skill === 'SPEAKING' || value === null ? sum : sum + value
+      ), 0)
       : null,
     parts,
     questions,

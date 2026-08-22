@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { requireRequestUser } from '@/lib/auth/request-user';
+import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { saveHumanSpeakingAssessment } from '@/lib/speaking/assessment-service';
 
@@ -24,7 +24,7 @@ const schema = z.object({
 export async function POST(request: Request, context: { params: Promise<{ sessionId: string }> }) {
   try {
     assertSameOrigin(request);
-    const user = await requireRequestUser(request, ['TEACHER', 'ADMIN']);
+    const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const { sessionId } = await context.params;
     const { stage, ...scores } = schema.parse(await request.json());
     return noStoreJson({ assessment: await saveHumanSpeakingAssessment({ user, sessionId, stage, scores }) }, 201);

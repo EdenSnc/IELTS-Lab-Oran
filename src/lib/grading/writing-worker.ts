@@ -8,8 +8,9 @@ import prisma from '@/lib/prisma';
 import { claimGradingRun } from '@/lib/db/concurrency';
 import { downloadPrivateAsset } from '@/lib/content/private-asset-storage';
 import { hashFrozenManifestPayload, parseFrozenManifestPayload } from '@/lib/attempts/manifest-core';
+import { finalizeAttemptIfReady } from '@/lib/attempts/finalize-attempt';
 import { gradeWritingTasks, type WritingTaskInput } from './writing-grading';
-import { roundOverallBand, writingRunInputHash, type FrozenWritingResponse } from './writing-run-core';
+import { writingRunInputHash, type FrozenWritingResponse } from './writing-run-core';
 
 export class WritingGradingTerminalError extends Error {
   constructor(message: string) {
@@ -249,26 +250,7 @@ export async function processWritingGradingRun(
         },
       });
 
-      const existingScores = input.run.attempt.skillScores
-        .filter((score) => score.skill !== 'WRITING')
-        .map((score) => ({ skill: score.skill, band: score.band?.toNumber() ?? null }));
-      const allScores = [...existingScores, { skill: 'WRITING' as const, band: graded.writingBand }];
-      const requiredSkills = new Set(input.manifest.questions.map((question) => question.skill));
-      if (input.run.attempt.speakingAppointment) requiredSkills.add('SPEAKING');
-      const finalizedSkills = new Set<string>(allScores.map((score) => score.skill));
-      const complete = [...requiredSkills].every((skill) => finalizedSkills.has(skill));
-      let overallBand: number | null = null;
-      const fourSkills = ['LISTENING', 'READING', 'WRITING', 'SPEAKING'] as const;
-      if (fourSkills.every((skill) => requiredSkills.has(skill))) {
-        const bands = fourSkills.map((skill) => allScores.find((score) => score.skill === skill)?.band ?? null);
-        if (bands.every((band): band is number => band !== null)) overallBand = roundOverallBand(bands);
-      }
-      if (complete) {
-        await transaction.assessmentAttempt.update({
-          where: { id: input.run.attemptId },
-          data: { state: 'COMPLETED', completedAt: now, overallBand, version: { increment: 1 } },
-        });
-      }
+      await finalizeAttemptIfReady(transaction, input.run.attemptId, now);
       return { status: 'succeeded' as const, writingBand: graded.writingBand };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   } catch (error) {

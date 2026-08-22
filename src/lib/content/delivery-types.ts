@@ -69,3 +69,9 @@ export type DeliveryTest = {
   sections: DeliverySection[];
 };
 
+export type ListeningAudioResolution = {
+  audioUrl: string;
+  stimulusId: string;
+  resumeAtSeconds: number;
+};
+

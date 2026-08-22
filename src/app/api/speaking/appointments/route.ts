@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
-import { isExaminer, requireRequestUser } from '@/lib/auth/request-user';
+import { isExaminer, requirePrivilegedRequestUser, requireRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { bookSpeakingAppointment } from '@/lib/speaking/booking-service';
 import { speakingConfig } from '@/lib/speaking/config';
@@ -20,6 +20,7 @@ const bookingSchema = z.object({
 export async function GET(request: Request) {
   try {
     const user = await requireRequestUser(request);
+    if (isExaminer(user.role)) await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const examiner = isExaminer(user.role);
     const url = new URL(request.url);
     const requestedExaminerId = url.searchParams.get('examinerId');

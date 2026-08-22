@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
-import { requireRequestUser } from '@/lib/auth/request-user';
+import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { speakingConfig } from '@/lib/speaking/config';
 
@@ -66,7 +66,7 @@ const bulkDeleteSchema = z.object({
   ruleIds: z.array(z.uuid()).min(1).max(100).transform((values) => [...new Set(values)]),
 });
 
-async function targetExaminerId(user: Awaited<ReturnType<typeof requireRequestUser>>, requested?: string) {
+async function targetExaminerId(user: Awaited<ReturnType<typeof requirePrivilegedRequestUser>>, requested?: string) {
   const examinerId = user.role === 'ADMIN' && requested ? requested : user.id;
   if (user.role !== 'ADMIN' && requested && requested !== user.id) throw new Error('FORBIDDEN');
   const examiner = await prisma.user.findFirst({
@@ -79,7 +79,7 @@ async function targetExaminerId(user: Awaited<ReturnType<typeof requireRequestUs
 
 export async function GET(request: Request) {
   try {
-    const user = await requireRequestUser(request, ['TEACHER', 'ADMIN']);
+    const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const examinerId = await targetExaminerId(user, new URL(request.url).searchParams.get('examinerId') ?? undefined);
     const [rules, overrides] = await Promise.all([
       prisma.speakingAvailabilityRule.findMany({ where: { examinerId }, orderBy: [{ weekday: 'asc' }, { startMinute: 'asc' }] }),
@@ -99,7 +99,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    const user = await requireRequestUser(request, ['TEACHER', 'ADMIN']);
+    const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const payload = await request.json();
     const parsedBulkRule = bulkRuleSchema.safeParse(payload);
     if (parsedBulkRule.success) {
@@ -175,7 +175,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     assertSameOrigin(request);
-    const user = await requireRequestUser(request, ['TEACHER', 'ADMIN']);
+    const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const input = bulkDeleteSchema.parse(await request.json());
     const examinerId = await targetExaminerId(user, input.examinerId);
     const ownedCount = await prisma.speakingAvailabilityRule.count({ where: { id: { in: input.ruleIds }, examinerId } });

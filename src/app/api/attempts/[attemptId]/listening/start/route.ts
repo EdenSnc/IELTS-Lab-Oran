@@ -34,11 +34,13 @@ export async function POST(
     });
     const query = new URLSearchParams({ attemptId });
     if (playback.strict) {
-      query.set('stimulusId', input.stimulusId);
+      query.set('stimulusId', playback.stimulusId);
       query.set('playbackToken', input.playbackToken);
     }
     return noStoreJson({
       audioUrl: `/api/test-assets/${playback.assetId}?${query.toString()}`,
+      stimulusId: playback.stimulusId,
+      resumeAtSeconds: playback.resumeAtSeconds,
     });
   } catch (error) {
     return apiError(error, 'LISTENING_AUDIO_START_FAILED');

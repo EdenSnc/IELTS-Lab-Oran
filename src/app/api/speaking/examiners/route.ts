@@ -1,10 +1,10 @@
 import prisma from '@/lib/prisma';
-import { requireRequestUser } from '@/lib/auth/request-user';
+import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, noStoreJson } from '@/lib/http/api';
 
 export async function GET(request: Request) {
   try {
-    const user = await requireRequestUser(request, ['TEACHER', 'ADMIN']);
+    const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const includeWithoutAvailability = user.role === 'ADMIN'
       && new URL(request.url).searchParams.get('includeWithoutAvailability') === 'true';
     const examiners = await prisma.user.findMany({

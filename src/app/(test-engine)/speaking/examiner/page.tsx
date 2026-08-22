@@ -1,2 +1,3 @@
 import ExaminerDashboard from '@/components/speaking/ExaminerDashboard';
-export default function SpeakingExaminerPage() { return <ExaminerDashboard />; }
+import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
+export default async function SpeakingExaminerPage() { await requireStaffPageAal2(); return <ExaminerDashboard />; }

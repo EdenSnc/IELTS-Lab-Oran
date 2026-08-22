@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { isExaminer, requireRequestUser } from '@/lib/auth/request-user';
+import { isExaminer, requirePrivilegedRequestUser, requireRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { speakingConfig } from '@/lib/speaking/config';
 import { assertSpeakingRecordingConfigured, createSpeakingRtcCredentials } from '@/lib/speaking/rtc-provider';
@@ -9,6 +9,7 @@ export async function POST(request: Request, context: { params: Promise<{ sessio
   try {
     assertSameOrigin(request);
     const user = await requireRequestUser(request);
+    if (isExaminer(user.role)) await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const { sessionId } = await context.params;
     const session = await prisma.speakingSession.findUnique({
       where: { id: sessionId },

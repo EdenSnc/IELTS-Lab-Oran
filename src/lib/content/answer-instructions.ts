@@ -24,7 +24,9 @@ export function parseAnswerInstruction(raw: string): ParsedAnswerInstruction {
   const maximumWords = NUMBER_WORDS[wordMatch[1]] ?? Number(wordMatch[1]);
   const allowNumber = /\b(?:A\s+)?NUMBERS?\b/u.test(text);
 
-  if (!/\b(?:ONLY|NO MORE THAN|UP TO|MAXIMUM)\b/u.test(text)) {
+  const canonicalOneWordAndNumber = maximumWords === 1
+    && /\bONE\s+WORD\s+AND\s*\/\s*OR\s+A\s+NUMBER\b/u.test(text);
+  if (!canonicalOneWordAndNumber && !/\b(?:ONLY|NO MORE THAN|UP TO|MAXIMUM)\b/u.test(text)) {
     throw new Error('AMBIGUOUS_ANSWER_INSTRUCTION');
   }
   return { maximumWords, allowNumber };

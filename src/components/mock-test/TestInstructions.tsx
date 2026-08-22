@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { DeliveryTest } from '@/lib/content/delivery-types';
+import type { ListeningAudioResolution } from '@/lib/content/delivery-types';
 import { useTestStore, IELTSSection } from '@/lib/store/useTestStore';
 import { startListeningAudio } from '@/lib/audio/listening-audio';
 import TestBrand from '@/components/brand/TestBrand';
@@ -18,7 +19,7 @@ export default function TestInstructions({
   resolveListeningAudio,
 }: {
   test: DeliveryTest;
-  resolveListeningAudio?: (stimulusId: string) => Promise<string>;
+  resolveListeningAudio?: (stimulusId: string) => Promise<ListeningAudioResolution>;
 }) {
   const startSection = useTestStore((state) => state.startSection);
   const completedSections = useTestStore((state) => state.completedSections);

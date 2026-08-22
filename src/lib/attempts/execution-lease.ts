@@ -7,6 +7,7 @@ import { AuthError } from '@/lib/auth/request-user';
 import type { FrozenManifestPayload } from './manifest-core';
 
 export const ATTEMPT_LEASE_HEADER = 'x-attempt-lease';
+export const SUBMISSION_GRACE_SECONDS = 120;
 
 function hashLeaseToken(token: string) {
   return createHash('sha256').update(token, 'utf8').digest('hex');
@@ -211,7 +212,14 @@ export async function authorizeAttemptSubmission(input: {
     include: { executionLease: true },
   });
   if (!attempt) throw new AuthError('ATTEMPT_NOT_FOUND', 404);
-  if (attempt.state !== AttemptState.ACTIVE || attempt.mode === AttemptMode.PRACTICE) return attempt;
+  if (attempt.state === AttemptState.GRADING || attempt.state === AttemptState.COMPLETED) return attempt;
+  if (attempt.state !== AttemptState.ACTIVE) throw new AuthError('ATTEMPT_NOT_ACTIVE', 409);
+  if (attempt.mode === AttemptMode.PRACTICE) return attempt;
+  const now = new Date();
+  if (
+    attempt.expiresAt
+    && now.getTime() > attempt.expiresAt.getTime() + SUBMISSION_GRACE_SECONDS * 1_000
+  ) throw new AuthError('ATTEMPT_SUBMISSION_WINDOW_EXPIRED', 409);
   const token = input.request.headers.get(ATTEMPT_LEASE_HEADER);
   if (
     !token

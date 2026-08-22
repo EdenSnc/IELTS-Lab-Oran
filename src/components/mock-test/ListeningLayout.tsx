@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import type { DeliverySection } from '@/lib/content/delivery-types';
+import { useEffect, useMemo, useState } from 'react';
+import type { DeliverySection, ListeningAudioResolution } from '@/lib/content/delivery-types';
 import { useTestStore } from '@/lib/store/useTestStore';
 import QuestionGroupRenderer from './QuestionGroupRenderer';
 import TestPartHeader from './TestPartHeader';
@@ -21,14 +21,16 @@ export default function ListeningLayout({
   resolveListeningAudio,
 }: {
   section: DeliverySection;
-  resolveListeningAudio?: (stimulusId: string) => Promise<string>;
+  resolveListeningAudio?: (stimulusId: string) => Promise<ListeningAudioResolution>;
 }) {
   const currentQuestionId = useTestStore((state) => state.currentQuestionId);
   const textSize = useTestStore((state) => state.textSize);
   const [gestureStimulusId, setGestureStimulusId] = useState<string | null>(null);
+  const [playbackIndex, setPlaybackIndex] = useState(0);
   const [resolvedAudio, setResolvedAudio] = useState<{
     stimulusId: string;
     source: string | null;
+    resumeAtSeconds: number;
     error: string | null;
   } | null>(null);
   const activePart = section.parts.find((part) => {
@@ -38,28 +40,39 @@ export default function ListeningLayout({
       && currentQuestionId >= first
       && currentQuestionId <= last;
   }) ?? section.parts.at(0);
-  const audio = activePart?.stimuli.find((stimulus) => stimulus.type === 'AUDIO_TRACK');
+  const allAudio = useMemo(() => section.parts.flatMap((part) => (
+    part.stimuli.filter((stimulus) => stimulus.type === 'AUDIO_TRACK')
+  )), [section.parts]);
+  const requestedAudio = allAudio[playbackIndex];
+  const audio = allAudio.find((candidate) => candidate.id === resolvedAudio?.stimulusId) ?? requestedAudio;
   const currentAudio = resolvedAudio?.stimulusId === audio?.id ? resolvedAudio : null;
   const audioSource = currentAudio?.source ?? null;
+  const resumeAtSeconds = currentAudio?.resumeAtSeconds ?? 0;
   const audioError = currentAudio?.error ?? null;
 
   useEffect(() => {
     let cancelled = false;
-    if (!audio?.assetUrl) return () => { cancelled = true; };
+    if (!requestedAudio?.assetUrl) return () => { cancelled = true; };
     const source = resolveListeningAudio
-      ? resolveListeningAudio(audio.id)
-      : Promise.resolve(audio.assetUrl);
-    void source.then((url) => {
-      if (!cancelled) setResolvedAudio({ stimulusId: audio.id, source: url, error: null });
+      ? resolveListeningAudio(requestedAudio.id)
+      : Promise.resolve({ audioUrl: requestedAudio.assetUrl, stimulusId: requestedAudio.id, resumeAtSeconds: 0 });
+    void source.then((resolution) => {
+      if (!cancelled) setResolvedAudio({
+        stimulusId: resolution.stimulusId,
+        source: resolution.audioUrl,
+        resumeAtSeconds: resolution.resumeAtSeconds,
+        error: null,
+      });
     }).catch((cause: unknown) => {
       if (!cancelled) setResolvedAudio({
-        stimulusId: audio.id,
+        stimulusId: requestedAudio.id,
         source: null,
+        resumeAtSeconds: 0,
         error: cause instanceof Error ? cause.message : 'Listening audio is unavailable.',
       });
     });
     return () => { cancelled = true; };
-  }, [audio?.assetUrl, audio?.id, resolveListeningAudio]);
+  }, [requestedAudio?.assetUrl, requestedAudio?.id, resolveListeningAudio]);
 
   useEffect(() => {
     if (!audioSource) return;
@@ -88,10 +101,21 @@ export default function ListeningLayout({
     const handleRateChange = () => {
       if (player.playbackRate !== 1) player.playbackRate = 1;
     };
+    const seekToTimeline = () => {
+      if (resumeAtSeconds > 0 && player.currentTime + 1 < resumeAtSeconds) {
+        player.currentTime = Math.min(resumeAtSeconds, Number.isFinite(player.duration) ? player.duration : resumeAtSeconds);
+      }
+    };
+    const handleEnded = () => {
+      const completedIndex = allAudio.findIndex((candidate) => candidate.id === audio?.id);
+      if (completedIndex >= 0 && completedIndex + 1 < allAudio.length) setPlaybackIndex(completedIndex + 1);
+    };
 
     player.addEventListener('playing', handlePlaying);
     player.addEventListener('pause', handlePause);
     player.addEventListener('ratechange', handleRateChange);
+    player.addEventListener('loadedmetadata', seekToTimeline);
+    player.addEventListener('ended', handleEnded);
     const playbackGuard = window.setInterval(() => {
       if (playbackStarted && isListeningAudioActive() && player.paused && !player.ended) resume();
     }, 250);
@@ -122,6 +146,7 @@ export default function ListeningLayout({
       }
     }
 
+    seekToTimeline();
     if (player.paused) {
       player.play().catch(() => setGestureStimulusId(audio?.id ?? null));
     } else {
@@ -133,6 +158,8 @@ export default function ListeningLayout({
       player.removeEventListener('playing', handlePlaying);
       player.removeEventListener('pause', handlePause);
       player.removeEventListener('ratechange', handleRateChange);
+      player.removeEventListener('loadedmetadata', seekToTimeline);
+      player.removeEventListener('ended', handleEnded);
       window.clearInterval(playbackGuard);
       if ('mediaSession' in navigator) {
         for (const action of [...blockedMediaActions, 'play' as const]) {
@@ -146,7 +173,7 @@ export default function ListeningLayout({
       }
       stopListeningAudio();
     };
-  }, [audio?.id, audioSource]);
+  }, [allAudio, audio?.id, audioSource, resumeAtSeconds]);
 
   if (!activePart) {
     return <p className="p-8">This Listening test has no parts.</p>;

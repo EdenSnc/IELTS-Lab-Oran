@@ -154,7 +154,7 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
           byteSize: artifact.byteSize === undefined ? undefined : BigInt(artifact.byteSize),
           durationMs,
           metadata: artifact.metadata ? json(artifact.metadata) : undefined,
-          reviewStatus: 'PENDING_REVIEW',
+          reviewStatus: artifact.reviewStatus,
         },
         update: {
           sourceArtifactId: sourceArtifact.id,
@@ -339,7 +339,7 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
                 questionGroupId: groupRecord.id,
                 sourceArtifactId,
                 encryptedPayload,
-                formatVersion: encryptedPayload.startsWith('v2:') ? 2 : 1,
+                formatVersion: group.answerKey.formatVersion,
                 sourceType: group.answerKey.sourceType,
                 normalization: json(group.answerKey.normalization),
                 reviewStatus: group.answerKey.reviewStatus,
@@ -348,6 +348,14 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
                   ? new Date()
                   : undefined,
               },
+            });
+          }
+
+          for (const link of group.assetLinks) {
+            const assetId = assetIdByChecksum.get(link.assetChecksum);
+            if (!assetId) throw new Error(`Question asset was not imported: ${link.assetChecksum}`);
+            await transaction.questionAsset.create({
+              data: { questionGroupId: groupRecord.id, assetId, role: link.role },
             });
           }
         }
@@ -372,7 +380,9 @@ async function main() {
   const staged = parseStagedTestPackage(
     JSON.parse(fs.readFileSync(filePath, 'utf8')),
   );
-  certifyCompleteMockPackage(staged);
+  if (process.argv.slice(3).includes('--certify-full-mock')) {
+    certifyCompleteMockPackage(staged);
+  }
   const result = await importPackage(staged, path.dirname(filePath), isPublicDemo);
   console.log(JSON.stringify(result, null, 2));
 }

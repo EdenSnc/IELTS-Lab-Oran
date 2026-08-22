@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { DeliveryTest } from '@/lib/content/delivery-types';
+import type { DeliveryTest, ListeningAudioResolution } from '@/lib/content/delivery-types';
 import { type IELTSSection, type ReviewMap, type TestAnswerMap, useTestStore } from '@/lib/store/useTestStore';
 import MockTestClient from './MockTestClient';
 
@@ -56,7 +56,7 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
   const timersRef = useRef(new Map<string, number>());
   const saveChainsRef = useRef(new Map<string, Promise<void>>());
   const audioTokensRef = useRef(new Map<string, string>());
-  const audioRequestsRef = useRef(new Map<string, Promise<string>>());
+  const audioRequestsRef = useRef(new Map<string, Promise<ListeningAudioResolution>>());
 
   const keyFor = (skill: IELTSSection, questionNumber: number) => `${skill}:${questionNumber}`;
   const leaseHeaders = useCallback((): Record<string, string> => (
@@ -86,7 +86,7 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
         }
         throw new Error('Listening audio could not be started.');
       }
-      return (await response.json() as { audioUrl: string }).audioUrl;
+      return await response.json() as ListeningAudioResolution;
     }).catch((cause) => {
       audioRequestsRef.current.delete(stimulusId);
       throw cause;

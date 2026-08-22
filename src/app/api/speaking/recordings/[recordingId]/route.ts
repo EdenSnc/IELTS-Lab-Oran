@@ -1,12 +1,12 @@
 import prisma from '@/lib/prisma';
-import { requireRequestUser } from '@/lib/auth/request-user';
+import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError } from '@/lib/http/api';
 import { fetchPrivateAsset } from '@/lib/content/private-asset-storage';
 import { canReadSpeakingRecording } from '@/lib/speaking/permissions';
 
 export async function GET(request: Request, context: { params: Promise<{ recordingId: string }> }) {
   try {
-    const user = await requireRequestUser(request, ['TEACHER', 'ADMIN']);
+    const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const { recordingId } = await context.params;
     const recording = await prisma.speakingRecording.findUnique({
       where: { id: recordingId },

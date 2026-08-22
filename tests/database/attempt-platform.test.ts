@@ -14,7 +14,7 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     { encrypt },
     { createAuthenticatedAttempt },
     { enrollDeviceSlot },
-    { acquireAttemptExecution },
+    { acquireAttemptExecution, authorizeAttemptSubmission, requireLiveAttemptExecution },
     { saveResponseOptimistically },
     { submitAndGradeObjectiveAttempt },
   ] = await Promise.all([
@@ -107,7 +107,7 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
         strategy: 'PER_ITEM_EXACT',
         answersByStableKey: { q1: ['correct'] },
       })),
-      formatVersion: 2,
+      formatVersion: 1,
       sourceType: 'HUMAN_VERIFIED',
       normalization: { caseSensitive: false },
       reviewStatus: 'VERIFIED',
@@ -213,6 +213,22 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
   });
   const reclaimed = await acquireAttemptExecution({ attemptId: attempt.id, userId: user.id, deviceSlot: secondDevice });
   assert.equal(reclaimed.attempt.expiresAt?.toISOString(), fixedDeadline, 'lease recovery must not extend the attempt deadline');
+
+  const submissionRequest = new Request('https://www.ieltslab.org/api/attempts/submit', {
+    headers: { 'x-attempt-lease': reclaimed.leaseToken as string },
+  });
+  await prisma.assessmentAttempt.update({ where: { id: attempt.id }, data: { expiresAt: new Date(Date.now() - 30_000) } });
+  await assert.rejects(requireLiveAttemptExecution({
+    request: submissionRequest, attemptId: attempt.id, userId: user.id, deviceSlotId: secondDevice.id,
+  }), (error: Error) => error.message === 'ATTEMPT_EXPIRED');
+  assert.equal((await authorizeAttemptSubmission({
+    request: submissionRequest, attemptId: attempt.id, userId: user.id, deviceSlotId: secondDevice.id,
+  })).id, attempt.id, 'persisted answers may be finalized inside the bounded grace window');
+  await prisma.assessmentAttempt.update({ where: { id: attempt.id }, data: { expiresAt: new Date(Date.now() - 121_000) } });
+  await assert.rejects(authorizeAttemptSubmission({
+    request: submissionRequest, attemptId: attempt.id, userId: user.id, deviceSlotId: secondDevice.id,
+  }), (error: Error) => error.message === 'ATTEMPT_SUBMISSION_WINDOW_EXPIRED');
+  await prisma.assessmentAttempt.update({ where: { id: attempt.id }, data: { expiresAt: new Date(fixedDeadline as string) } });
 
   const responseId = attempt.questions[0].response!.id;
   assert.deepEqual(await saveResponseOptimistically({

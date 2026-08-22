@@ -13,6 +13,7 @@ test('Writing worker finalizes once and releases retryable leases before retry',
     { createAuthenticatedAttempt },
     { submitAndGradeObjectiveAttempt },
     { processWritingGradingRun },
+    { saveHumanSpeakingAssessment },
     { recoverWritingGradingRuns },
     { loadStoredAttemptResult },
   ] = await Promise.all([
@@ -20,6 +21,7 @@ test('Writing worker finalizes once and releases retryable leases before retry',
     import('../../src/lib/attempts/attempt-service'),
     import('../../src/lib/attempts/objective-attempt-grading'),
     import('../../src/lib/grading/writing-worker'),
+    import('../../src/lib/speaking/assessment-service'),
     import('../../src/lib/qstash/jobs'),
     import('../../src/lib/attempts/attempt-results'),
   ]);
@@ -203,6 +205,65 @@ test('Writing worker finalizes once and releases retryable leases before retry',
   assert.equal(queued.leaseOwner, null);
   assert.equal(queued.leaseExpiresAt, null);
   assert.equal((await processWritingGradingRun(retry.gradingRunId!, deterministicGrader)).status, 'succeeded');
+
+  const raced = await createSubmittedRun();
+  await prisma.attemptSkillScore.createMany({ data: [
+    { attemptId: raced.attemptId, skill: 'LISTENING', band: 6, finalizedAt: new Date() },
+    { attemptId: raced.attemptId, skill: 'READING', band: 6.5, finalizedAt: new Date() },
+  ] });
+  const examiner = await prisma.user.create({
+    data: { id: randomUUID(), email: `writing-race-examiner-${suffix}@example.invalid`, role: 'TEACHER' },
+  });
+  const appointment = await prisma.speakingAppointment.create({
+    data: {
+      learnerId: user.id,
+      examinerId: examiner.id,
+      attemptId: raced.attemptId,
+      scheduledStartAt: new Date(Date.now() + 86_400_000),
+      scheduledEndAt: new Date(Date.now() + 86_400_000 + 1_200_000),
+      learnerTimezone: 'Africa/Algiers',
+      deliveryMode: 'ONLINE',
+      session: {
+        create: {
+          rtcProvider: 'livekit',
+          rtcRoomName: `writing-race-${suffix}`,
+          state: 'AWAITING_HUMAN_SCORE',
+          startedAt: new Date(),
+          endedAt: new Date(),
+        },
+      },
+    },
+    include: { session: true },
+  });
+  const raceSpeakingSession = await prisma.speakingSession.findUniqueOrThrow({
+    where: { appointmentId: appointment.id },
+  });
+  let releaseGrader!: () => void;
+  let markGraderStarted!: () => void;
+  const graderStarted = new Promise<void>((resolve) => { markGraderStarted = resolve; });
+  const graderRelease = new Promise<void>((resolve) => { releaseGrader = resolve; });
+  const writingInFlight = processWritingGradingRun(raced.gradingRunId!, async (tasks) => {
+    markGraderStarted();
+    await graderRelease;
+    return deterministicGrader(tasks);
+  });
+  await graderStarted;
+  const speakingScores = {
+    fluencyCoherence: 6, lexicalResource: 6.5, grammaticalRange: 6, pronunciation: 6.5,
+  };
+  await saveHumanSpeakingAssessment({
+    user: examiner, sessionId: raceSpeakingSession.id, stage: 'PROVISIONAL', scores: speakingScores,
+  });
+  await saveHumanSpeakingAssessment({
+    user: examiner, sessionId: raceSpeakingSession.id, stage: 'FINAL', scores: speakingScores,
+  });
+  assert.equal((await prisma.assessmentAttempt.findUniqueOrThrow({ where: { id: raced.attemptId } })).state, 'GRADING');
+  releaseGrader();
+  await writingInFlight;
+  const raceCompleted = await prisma.assessmentAttempt.findUniqueOrThrow({ where: { id: raced.attemptId } });
+  assert.equal(raceCompleted.state, 'COMPLETED');
+  assert.equal(raceCompleted.overallBand?.toNumber(), 6.5);
+  assert.equal(await prisma.attemptSkillScore.count({ where: { attemptId: raced.attemptId } }), 4);
 
   const expired = await createSubmittedRun();
   await prisma.gradingRun.update({

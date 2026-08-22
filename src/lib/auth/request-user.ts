@@ -54,6 +54,23 @@ async function authenticateRequest(request: Request): Promise<SupabaseUser> {
   return data.user;
 }
 
+async function authenticatePrivilegedRequest(request: Request) {
+  const config = requireSupabasePublicConfig();
+  const token = bearerToken(request);
+  const client = token
+    ? createClient(config.url, config.publishableKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    : createServerClient(config.url, config.publishableKey, {
+      cookies: { getAll: () => requestCookies(request), setAll: () => undefined },
+    });
+  const { data: userData, error: userError } = await client.auth.getUser(token ?? undefined);
+  if (userError || !userData.user) throw new AuthError('AUTH_REQUIRED', 401);
+  const { data: aal, error: aalError } = await client.auth.mfa.getAuthenticatorAssuranceLevel(token ?? undefined);
+  if (aalError) throw new AuthError('MFA_ASSURANCE_UNAVAILABLE', 503);
+  return { authUser: userData.user, currentLevel: aal.currentLevel };
+}
+
 function authDisplayName(authUser: SupabaseUser) {
   const candidate = authUser.user_metadata?.full_name ?? authUser.user_metadata?.name;
   return typeof candidate === 'string' && candidate.trim()
@@ -96,6 +113,29 @@ export async function requireRequestUser(request: Request, roles?: readonly Role
 
   if (!user || user.status !== 'ACTIVE') throw new AuthError('ACCOUNT_UNAVAILABLE', 403);
   if (roles && !roles.includes(user.role)) throw new AuthError('FORBIDDEN', 403);
+  return user;
+}
+
+export async function requirePrivilegedRequestUser(
+  request: Request,
+  roles: readonly Role[] = ['TEACHER', 'CONTENT_REVIEWER', 'ADMIN'],
+): Promise<User> {
+  let user: User | null;
+  let currentLevel: 'aal1' | 'aal2' | null = null;
+  const devUserId = process.env.SPEAKING_DEV_AUTH_USER_ID;
+  if (process.env.NODE_ENV !== 'production' && devUserId) {
+    user = await prisma.user.findUnique({ where: { id: devUserId } });
+    currentLevel = process.env.STAFF_MFA_DEV_AAL2 === 'true' ? 'aal2' : 'aal1';
+  } else {
+    const identity = await authenticatePrivilegedRequest(request);
+    user = await syncApplicationUser(identity.authUser);
+    currentLevel = identity.currentLevel === 'aal2'
+      ? 'aal2'
+      : identity.currentLevel === 'aal1' ? 'aal1' : null;
+  }
+  if (!user || user.status !== 'ACTIVE') throw new AuthError('ACCOUNT_UNAVAILABLE', 403);
+  if (!roles.includes(user.role)) throw new AuthError('FORBIDDEN', 403);
+  if (currentLevel !== 'aal2') throw new AuthError('MFA_AAL2_REQUIRED', 403);
   return user;
 }
 

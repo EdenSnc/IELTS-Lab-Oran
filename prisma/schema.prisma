@@ -331,6 +331,11 @@ model ConsentRecord {
 // -----------------------------------------------------------------------------
 
 enum SourceProvider {
+  IDP
+  BRITISH_COUNCIL
+  IELTS_ORG
+  CAMBRIDGE
+  IELTS_LAB
   OTHER
 
   @@schema("app_private")
@@ -806,7 +811,7 @@ model AnswerKey {
   questionGroupId  String          @unique @db.Uuid
   sourceArtifactId String?         @db.Uuid
   encryptedPayload String          @db.Text
-  formatVersion    Int             @default(2)
+  formatVersion    Int             @default(1)
   sourceType       AnswerKeySource
   normalization    Json?
   reviewStatus     ReviewStatus    @default(PENDING_REVIEW)

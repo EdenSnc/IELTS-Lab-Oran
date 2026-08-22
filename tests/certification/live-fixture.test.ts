@@ -9,7 +9,8 @@ import {
 const enabled = Boolean(
   process.env.RUN_CONFIGURED_FIXTURE_CERTIFICATION === '1'
   && process.env.DATABASE_URL
-  && process.env.ENCRYPTION_KEY,
+  && process.env.ENCRYPTION_KEY
+  && process.env.CERTIFIED_FIXTURE_TEST_VERSION_ID,
 );
 let disconnect: (() => Promise<void>) | undefined;
 
@@ -24,10 +25,8 @@ test('configured real fixture preserves 40/40, 0/40, and every single-item mark'
   disconnect = () => prisma.$disconnect();
   const version = await prisma.testVersion.findFirst({
     where: {
-      sections: { some: { skill: 'LISTENING' } },
-      AND: { sections: { some: { skill: 'READING' } } },
+      id: process.env.CERTIFIED_FIXTURE_TEST_VERSION_ID,
     },
-    orderBy: { createdAt: 'desc' },
     select: {
       id: true,
       sections: {
@@ -39,12 +38,13 @@ test('configured real fixture preserves 40/40, 0/40, and every single-item mark'
               questionGroups: {
                 select: {
                   maxMarks: true,
+                  scoringStrategy: true,
                   questions: {
                     orderBy: { displayOrder: 'asc' },
                     select: { stableKey: true, sourceNumber: true, maxMarks: true },
                   },
                   answerKey: {
-                    select: { encryptedPayload: true, normalization: true },
+                    select: { encryptedPayload: true, normalization: true, formatVersion: true },
                   },
                 },
               },
@@ -54,7 +54,7 @@ test('configured real fixture preserves 40/40, 0/40, and every single-item mark'
       },
     },
   });
-  assert.ok(version, 'a configured Listening/Reading fixture is required');
+  assert.ok(version, 'the explicitly configured Listening/Reading fixture is required');
 
   const allAnswers = { listening: {} as Record<string, string>, reading: {} as Record<string, string> };
   const groupsBySkill = new Map<'LISTENING' | 'READING', ObjectiveGroup[]>();
@@ -64,11 +64,13 @@ test('configured real fixture preserves 40/40, 0/40, and every single-item mark'
     for (const part of section.parts) {
       for (const group of part.questionGroups) {
         assert.ok(group.answerKey);
+        assert.equal(group.answerKey.formatVersion, 1);
         assert.ok(group.questions.every((question) => question.sourceNumber !== null));
         const answerKey = objectiveAnswerKeySchema.parse(
           JSON.parse(decrypt(group.answerKey.encryptedPayload)),
         );
         const objectiveGroup: ObjectiveGroup = {
+          scoringStrategy: group.scoringStrategy,
           maxMarks: group.maxMarks,
           questions: group.questions.map((question) => ({
             ...question,
@@ -111,6 +113,25 @@ test('configured real fixture preserves 40/40, 0/40, and every single-item mark'
     for (const number of Object.keys(answers)) {
       assert.equal(scoreObjectiveGroups({ groups, answers: { [number]: answers[number] } }).rawScore, 1);
       assert.equal(scoreObjectiveGroups({ groups, answers: { ...answers, [number]: '__wrong__' } }).rawScore, 39);
+    }
+    for (const group of groups) {
+      if (group.answerKey.strategy === 'PER_ITEM_EXACT') {
+        for (const question of group.questions) {
+          for (const accepted of group.answerKey.answersByStableKey[question.stableKey]) {
+            assert.equal(scoreObjectiveGroups({ groups, answers: { [question.sourceNumber]: accepted } }).rawScore, 1);
+          }
+        }
+      } else {
+        for (const acceptedSet of group.answerKey.acceptedSets) {
+          const permutations = [acceptedSet, [...acceptedSet].reverse()];
+          for (const permutation of permutations) {
+            const candidate = Object.fromEntries(group.questions.map((question, index) => [question.sourceNumber, permutation[index]]));
+            assert.equal(scoreObjectiveGroups({ groups: [group], answers: candidate }).rawScore, group.maxMarks);
+          }
+          const duplicate = Object.fromEntries(group.questions.map((question) => [question.sourceNumber, acceptedSet[0]]));
+          assert.ok(scoreObjectiveGroups({ groups: [group], answers: duplicate }).rawScore <= 1);
+        }
+      }
     }
   }
 });

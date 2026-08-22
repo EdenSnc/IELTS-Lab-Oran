@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import { decrypt } from '@/lib/crypto';
 import {
   normalizationSchema,
+  assertSupportedAnswerKeyFormatVersion,
   objectiveAnswerKeySchema,
   rawScoreToBand,
   scoreObjectiveGroups,
@@ -131,6 +132,7 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
         if (sourceGroup.reviewStatus !== 'VERIFIED' || keyRecord?.reviewStatus !== 'VERIFIED') {
           throw new Error('UNVERIFIED_ANSWER_KEY');
         }
+        assertSupportedAnswerKeyFormatVersion(keyRecord.formatVersion);
         const key = objectiveAnswerKeySchema.parse(JSON.parse(decrypt(keyRecord.encryptedPayload)));
         const ordered = [...groupQuestions].sort((left, right) => left.questionOrder - right.questionOrder);
         for (const question of ordered) {
@@ -141,6 +143,7 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
           answers[String(question.questionNumber)] = responseText(question.response.answer);
         }
         groups.push({
+          scoringStrategy: sourceGroup.scoringStrategy,
           maxMarks: sourceGroup.maxMarks,
           normalization: normalizationRules(keyRecord.normalization),
           answerKey: key,

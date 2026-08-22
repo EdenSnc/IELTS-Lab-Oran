@@ -1,7 +1,9 @@
 -- Answer-key payloads written after this migration use the key-identified v2
 -- envelope. Existing v1 ciphertext remains readable during key rotation.
+-- AnswerKey.formatVersion versions the decrypted JSON payload schema. It is
+-- independent from the v2 ciphertext envelope and remains version 1.
 ALTER TABLE app_private."AnswerKey"
-  ALTER COLUMN "formatVersion" SET DEFAULT 2;
+  ALTER COLUMN "formatVersion" SET DEFAULT 1;
 
 -- Published content versions are immutable provenance boundaries. A correction
 -- is a new TestVersion. Retirement is the only permitted post-publication edit.

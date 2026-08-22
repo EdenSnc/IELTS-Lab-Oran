@@ -1,10 +1,11 @@
 import prisma from '@/lib/prisma';
-import { isExaminer, requireRequestUser } from '@/lib/auth/request-user';
+import { isExaminer, requirePrivilegedRequestUser, requireRequestUser } from '@/lib/auth/request-user';
 import { apiError, noStoreJson } from '@/lib/http/api';
 
 export async function GET(request: Request, context: { params: Promise<{ sessionId: string }> }) {
   try {
     const user = await requireRequestUser(request);
+    if (isExaminer(user.role)) await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const { sessionId } = await context.params;
     const session = await prisma.speakingSession.findUnique({
       where: { id: sessionId },

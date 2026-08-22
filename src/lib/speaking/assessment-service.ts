@@ -3,7 +3,8 @@ import 'server-only';
 import { createHash } from 'node:crypto';
 import type { User } from '@prisma/client';
 import prisma from '@/lib/prisma';
-import { deriveSpeakingBand, fullMockOverall } from './lifecycle';
+import { finalizeAttemptIfReady } from '@/lib/attempts/finalize-attempt';
+import { deriveSpeakingBand } from './lifecycle';
 import { canPublishSpeakingResult } from './permissions';
 
 export type HumanSpeakingScores = {
@@ -78,14 +79,7 @@ export async function saveHumanSpeakingAssessment(input: {
       create: { attemptId: session.appointment.attemptId, gradingRunId: gradingRun.id, skill: 'SPEAKING', band: scores.overallBand },
       update: { gradingRunId: gradingRun.id, band: scores.overallBand, finalizedAt: new Date() },
     });
-    const componentScores = await tx.attemptSkillScore.findMany({ where: { attemptId: session.appointment.attemptId }, select: { skill: true, band: true } });
-    const overallBand = fullMockOverall(componentScores.map((score) => ({ skill: score.skill, band: Number(score.band) })));
-    if (overallBand != null) {
-      await tx.assessmentAttempt.update({
-        where: { id: session.appointment.attemptId },
-        data: { overallBand, state: 'COMPLETED', completedAt: new Date() },
-      });
-    }
+    await finalizeAttemptIfReady(tx, session.appointment.attemptId);
     await tx.speakingSession.update({ where: { id: input.sessionId }, data: { state: 'FINALIZED' } });
     await tx.speakingAppointment.update({ where: { id: session.appointmentId }, data: { status: 'COMPLETED' } });
     return assessment;

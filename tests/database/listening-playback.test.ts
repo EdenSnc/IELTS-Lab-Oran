@@ -60,6 +60,7 @@ test('Strict Listening grants one idempotent playback token and rejects refresh 
       storageKey: `listening/${suffix}.mp3`,
       checksum: randomBytes(32).toString('hex'),
       mimeType: 'audio/mpeg',
+      durationMs: 120_000,
       reviewStatus: 'VERIFIED',
     },
   });
@@ -92,11 +93,39 @@ test('Strict Listening grants one idempotent playback token and rejects refresh 
     data: {
       questionGroupId: group.id,
       encryptedPayload: 'fixture-not-decrypted',
-      formatVersion: 2,
+      formatVersion: 1,
       sourceType: 'HUMAN_VERIFIED',
       reviewStatus: 'VERIFIED',
       verifiedById: user.id,
       verifiedAt: new Date(),
+    },
+  });
+  const secondPart = await prisma.testPart.create({
+    data: { testSectionId: section.id, sourceKey: 'listening-2', slot: 'LISTENING_PART_2', reviewStatus: 'VERIFIED' },
+  });
+  const secondAsset = await prisma.contentAsset.create({
+    data: {
+      type: 'AUDIO', storageKey: `listening/${suffix}-2.mp3`, checksum: randomBytes(32).toString('hex'),
+      mimeType: 'audio/mpeg', durationMs: 120_000, reviewStatus: 'VERIFIED',
+    },
+  });
+  const secondStimulus = await prisma.stimulus.create({
+    data: {
+      testPartId: secondPart.id, assetId: secondAsset.id, sourceKey: 'audio-2', type: 'AUDIO_TRACK',
+      displayOrder: 1, reviewStatus: 'VERIFIED',
+    },
+  });
+  const secondGroup = await prisma.questionGroup.create({
+    data: {
+      testPartId: secondPart.id, sourceKey: 'q2', displayOrder: 1, questionType: 'SHORT_ANSWER',
+      responseKind: 'SHORT_TEXT', scoringStrategy: 'PER_ITEM_EXACT', maxMarks: 1, reviewStatus: 'VERIFIED',
+    },
+  });
+  await prisma.question.create({ data: { questionGroupId: secondGroup.id, stableKey: 'q2', displayOrder: 1, maxMarks: 1 } });
+  await prisma.answerKey.create({
+    data: {
+      questionGroupId: secondGroup.id, encryptedPayload: 'fixture-not-decrypted', formatVersion: 1,
+      sourceType: 'HUMAN_VERIFIED', reviewStatus: 'VERIFIED', verifiedById: user.id, verifiedAt: new Date(),
     },
   });
   await prisma.testVersion.update({
@@ -111,7 +140,10 @@ test('Strict Listening grants one idempotent playback token and rejects refresh 
       variant: 'ACADEMIC',
       status: 'DRAFT',
       fixedTestVersionId: version.id,
-      slots: { create: { partSlot: 'LISTENING_PART_1', displayOrder: 1, targetMarks: 1 } },
+      slots: { create: [
+        { partSlot: 'LISTENING_PART_1', displayOrder: 1, targetMarks: 1 },
+        { partSlot: 'LISTENING_PART_2', displayOrder: 2, targetMarks: 1 },
+      ] },
     },
   });
   await prisma.testBlueprint.update({
@@ -160,10 +192,10 @@ test('Strict Listening grants one idempotent playback token and rejects refresh 
     beginListeningPlayback(input),
     beginListeningPlayback(input),
   ]);
-  assert.deepEqual(duplicates, [
-    { assetId: asset.id, strict: true },
-    { assetId: asset.id, strict: true },
-  ]);
+  assert.ok(duplicates.every((playback) => (
+    playback.assetId === asset.id && playback.stimulusId === stimulus.id
+    && playback.strict && playback.resumeAtSeconds >= 0
+  )));
   assert.equal(await prisma.attemptMediaPlayback.count({
     where: { attemptId: attempt.id, stimulusId: stimulus.id },
   }), 1);
@@ -181,8 +213,33 @@ test('Strict Listening grants one idempotent playback token and rejects refresh 
     deviceSlotId: device.id,
     playbackToken: token(),
   }), false);
-  await assert.rejects(
-    beginListeningPlayback({ ...input, playbackToken: token() }),
-    (error: Error) => error.message === 'LISTENING_AUDIO_ALREADY_STARTED',
-  );
+  await prisma.attemptMediaPlayback.update({
+    where: { attemptId_stimulusId: { attemptId: attempt.id, stimulusId: stimulus.id } },
+    data: { startedAt: new Date(Date.now() - 10_000) },
+  });
+  const refreshToken = token();
+  const refreshed = await beginListeningPlayback({ ...input, playbackToken: refreshToken });
+  assert.equal(refreshed.stimulusId, stimulus.id);
+  assert.ok(refreshed.resumeAtSeconds >= 9, 'refresh/new token resumes the authoritative elapsed timeline');
+  assert.equal(await authorizeStrictListeningAsset({
+    attemptId: attempt.id, stimulusId: stimulus.id, assetId: asset.id,
+    deviceSlotId: device.id, playbackToken,
+  }), false, 'token rotation invalidates the old fetch URL');
+  const earlyNext = await beginListeningPlayback({ ...input, stimulusId: secondStimulus.id, playbackToken: token() });
+  assert.equal(earlyNext.stimulusId, stimulus.id, 'question navigation cannot start a later track early');
+
+  await prisma.attemptMediaPlayback.update({
+    where: { attemptId_stimulusId: { attemptId: attempt.id, stimulusId: stimulus.id } },
+    data: { startedAt: new Date(Date.now() - 130_000) },
+  });
+  const progressed = await beginListeningPlayback({ ...input, stimulusId: secondStimulus.id, playbackToken: token() });
+  assert.equal(progressed.stimulusId, secondStimulus.id);
+  assert.equal(progressed.assetId, secondAsset.id);
+  assert.ok(progressed.resumeAtSeconds >= 9 && progressed.resumeAtSeconds < 20);
+
+  await prisma.assessmentAttempt.update({ where: { id: attempt.id }, data: { mode: 'PRACTICE' } });
+  const practiceOne = await beginListeningPlayback({ ...input, playbackToken: token() });
+  const practiceTwo = await beginListeningPlayback({ ...input, playbackToken: token() });
+  assert.equal(practiceOne.resumeAtSeconds, 0);
+  assert.equal(practiceTwo.resumeAtSeconds, 0);
 });

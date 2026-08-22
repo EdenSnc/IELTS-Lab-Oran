@@ -34,11 +34,20 @@ export type ObjectiveQuestion = {
 };
 
 export type ObjectiveGroup = {
+  scoringStrategy: 'PER_ITEM_EXACT' | 'UNORDERED_EXACT_SET' | 'RUBRIC' | 'NOT_SCORED';
   maxMarks: number;
   questions: readonly ObjectiveQuestion[];
   answerKey: ObjectiveAnswerKey;
   normalization?: NormalizationRules;
 };
+
+export const SUPPORTED_ANSWER_KEY_FORMAT_VERSIONS = [1] as const;
+
+export function assertSupportedAnswerKeyFormatVersion(formatVersion: number) {
+  if (!(SUPPORTED_ANSWER_KEY_FORMAT_VERSIONS as readonly number[]).includes(formatVersion)) {
+    throw new Error('UNSUPPORTED_ANSWER_KEY_FORMAT_VERSION');
+  }
+}
 
 export type BandThreshold = readonly [minimumRawScore: number, band: number];
 
@@ -60,6 +69,12 @@ export function normalizeObjectiveAnswer(
 }
 
 function assertGroupIntegrity(group: ObjectiveGroup) {
+  if (group.scoringStrategy === 'RUBRIC' || group.scoringStrategy === 'NOT_SCORED') {
+    throw new Error('UNSUPPORTED_OBJECTIVE_SCORING_STRATEGY');
+  }
+  if (group.scoringStrategy !== group.answerKey.strategy) {
+    throw new Error('SCORING_STRATEGY_MISMATCH');
+  }
   const stableKeys = group.questions.map((question) => question.stableKey);
   if (new Set(stableKeys).size !== stableKeys.length) {
     throw new Error('DUPLICATE_STABLE_KEY');
@@ -96,6 +111,15 @@ export function scoreObjectiveGroups(input: {
   groups: readonly ObjectiveGroup[];
   answers: Readonly<Record<string, string>>;
 }) {
+  const questions = input.groups.flatMap((group) => [...group.questions]);
+  const numbers = questions.map((question) => question.sourceNumber);
+  if (numbers.some((number) => !Number.isInteger(number) || number <= 0)) {
+    throw new Error('INVALID_OBJECTIVE_QUESTION_NUMBER');
+  }
+  if (new Set(numbers).size !== numbers.length) throw new Error('DUPLICATE_OBJECTIVE_QUESTION_NUMBER');
+  const stableKeys = questions.map((question) => question.stableKey);
+  if (new Set(stableKeys).size !== stableKeys.length) throw new Error('DUPLICATE_STABLE_KEY');
+
   let rawScore = 0;
   let maximumRawScore = 0;
   let answered = 0;

@@ -40,6 +40,7 @@ async function loadAssemblyInput(blueprintId: string) {
       questionGroups: {
         include: {
           answerKey: { select: { reviewStatus: true, formatVersion: true } },
+          assetLinks: { select: { asset: { select: { reviewStatus: true } } } },
           questions: { orderBy: { displayOrder: 'asc' } },
         },
         orderBy: { displayOrder: 'asc' },
@@ -80,6 +81,9 @@ async function loadAssemblyInput(blueprintId: string) {
         stimulus.reviewStatus === 'VERIFIED'
         && (!stimulus.asset || stimulus.asset.reviewStatus === 'VERIFIED')
       )),
+    assetsReady: part.questionGroups.every((group) => (
+      group.assetLinks.every((link) => link.asset.reviewStatus === 'VERIFIED')
+    )),
     shuffleQuestionGroups: part.shuffleQuestionGroups,
     groups: part.questionGroups.map((group) => ({
       id: group.id,

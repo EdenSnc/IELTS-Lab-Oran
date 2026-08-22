@@ -14,6 +14,7 @@ function fortyQuestionFixture(): ObjectiveGroup[] {
       return { stableKey: `q${number}`, sourceNumber: number, maxMarks: 1 };
     });
     return {
+      scoringStrategy: 'PER_ITEM_EXACT' as const,
       maxMarks: 10,
       questions,
       normalization: { caseSensitive: false, collapseInternalWhitespace: true },
@@ -64,6 +65,7 @@ test('legacy whitespace and case normalisation remains stable', () => {
 
 test('unordered groups accept permutations without awarding duplicate answers twice', () => {
   const group: ObjectiveGroup = {
+    scoringStrategy: 'UNORDERED_EXACT_SET',
     maxMarks: 3,
     questions: [
       { stableKey: 'a', sourceNumber: 1, maxMarks: 1 },
@@ -79,6 +81,23 @@ test('unordered groups accept permutations without awarding duplicate answers tw
   assert.equal(scoreObjectiveGroups({
     groups: [group], answers: { 1: 'red', 2: 'red', 3: 'wrong' },
   }).rawScore, 1);
+});
+
+test('objective scorer rejects strategy mismatches and malformed cross-group identities', () => {
+  const base = fixture[0];
+  assert.throws(() => scoreObjectiveGroups({
+    groups: [{ ...base, scoringStrategy: 'UNORDERED_EXACT_SET' }], answers: {},
+  }), /SCORING_STRATEGY_MISMATCH/u);
+  assert.throws(() => scoreObjectiveGroups({
+    groups: [{ ...base, scoringStrategy: 'RUBRIC' }], answers: {},
+  }), /UNSUPPORTED_OBJECTIVE_SCORING_STRATEGY/u);
+  assert.throws(() => scoreObjectiveGroups({
+    groups: [base, { ...base, questions: base.questions.map((question) => ({ ...question })) }], answers: {},
+  }), /DUPLICATE_OBJECTIVE_QUESTION_NUMBER/u);
+  assert.throws(() => scoreObjectiveGroups({
+    groups: [{ ...base, questions: [{ ...base.questions[0], sourceNumber: 0 }], maxMarks: 1,
+      answerKey: { strategy: 'PER_ITEM_EXACT', answersByStableKey: { [base.questions[0].stableKey]: ['a'] } } }], answers: {},
+  }), /INVALID_OBJECTIVE_QUESTION_NUMBER/u);
 });
 
 test('band thresholds fail closed when malformed', () => {

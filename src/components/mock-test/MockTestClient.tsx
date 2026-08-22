@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import type { DeliveryTest } from '@/lib/content/delivery-types';
+import type { ListeningAudioResolution } from '@/lib/content/delivery-types';
 import { useTestStore } from '@/lib/store/useTestStore';
 import TestHeader from '@/components/mock-test/TestHeader';
 import TestFooterNav from '@/components/mock-test/TestFooterNav';
@@ -20,7 +21,7 @@ export default function MockTestClient({
 }: {
   test: DeliveryTest;
   onFinish?: () => void | Promise<void>;
-  resolveListeningAudio?: (stimulusId: string) => Promise<string>;
+  resolveListeningAudio?: (stimulusId: string) => Promise<ListeningAudioResolution>;
 }) {
   const testPhase = useTestStore((state) => state.testPhase);
   const activeSection = useTestStore((state) => state.activeSection);

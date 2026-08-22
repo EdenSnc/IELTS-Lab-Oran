@@ -2,6 +2,11 @@ import { z } from 'zod';
 import { parseAnswerInstruction } from './answer-instructions';
 
 export const SourceProviderSchema = z.enum([
+  'IDP',
+  'BRITISH_COUNCIL',
+  'IELTS_ORG',
+  'CAMBRIDGE',
+  'IELTS_LAB',
   'OTHER',
 ]);
 
@@ -120,6 +125,7 @@ const SourceArtifactSchema = z.object({
   checksum: z.string().min(16),
   capturedAt: z.iso.datetime().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  reviewStatus: ReviewStatusSchema.default('PENDING_REVIEW'),
 });
 
 const ContentSourceSchema = z.object({
@@ -226,6 +232,7 @@ const UnorderedSetKeyPayloadSchema = z.object({
 });
 
 const AnswerKeySchema = z.object({
+  formatVersion: z.literal(1).default(1),
   sourceType: AnswerKeySourceSchema,
   sourceArtifactChecksum: z.string().min(16).optional(),
   sourceLocator: z.string().optional(),
@@ -283,6 +290,10 @@ export const QuestionGroupSchema = z.object({
   reviewStatus: ReviewStatusSchema,
   questions: z.array(QuestionSchema).min(1),
   answerKey: AnswerKeySchema.optional(),
+  assetLinks: z.array(z.object({
+    assetChecksum: z.string().min(16),
+    role: z.enum(['PROMPT', 'INLINE', 'OPTION_BANK', 'DROP_TARGET', 'SUPPORTING']),
+  })).default([]),
 }).superRefine((group, context) => {
   const keys = group.questions.map((question) => question.stableKey);
   if (new Set(keys).size !== keys.length) {
@@ -718,14 +729,6 @@ export const StagedTestPackageSchema = z.object({
     sections: z.array(TestSectionSchema).min(1),
   }),
 }).superRefine((data, context) => {
-  if (data.test.variant === 'UNIVERSAL') {
-    context.addIssue({
-      code: 'custom',
-      message: 'A complete IELTS test must be Academic or General Training, not UNIVERSAL',
-      path: ['test', 'variant'],
-    });
-  }
-
   const skills = data.test.sections.map((section) => section.skill);
   if (new Set(skills).size !== skills.length) {
     context.addIssue({
@@ -743,6 +746,40 @@ export const StagedTestPackageSchema = z.object({
       path: ['test', 'sections'],
     });
   }
+
+  const artifactChecksums = new Set(data.source.artifacts.map((artifact) => artifact.checksum));
+  data.test.sections.forEach((section, sectionIndex) => {
+    section.parts.forEach((part, partIndex) => {
+      part.stimuli.forEach((stimulus, stimulusIndex) => {
+        if (stimulus.assetChecksum && !artifactChecksums.has(stimulus.assetChecksum)) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Stimulus references an artifact not present in the package',
+            path: ['test', 'sections', sectionIndex, 'parts', partIndex, 'stimuli', stimulusIndex, 'assetChecksum'],
+          });
+        }
+      });
+      part.questionGroups.forEach((group, groupIndex) => {
+        const links = group.assetLinks.map((link) => `${link.role}:${link.assetChecksum}`);
+        if (new Set(links).size !== links.length) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Question asset links must be unique by role and checksum',
+            path: ['test', 'sections', sectionIndex, 'parts', partIndex, 'questionGroups', groupIndex, 'assetLinks'],
+          });
+        }
+        group.assetLinks.forEach((link, linkIndex) => {
+          if (!artifactChecksums.has(link.assetChecksum)) {
+            context.addIssue({
+              code: 'custom',
+              message: 'Question group references an artifact not present in the package',
+              path: ['test', 'sections', sectionIndex, 'parts', partIndex, 'questionGroups', groupIndex, 'assetLinks', linkIndex],
+            });
+          }
+        });
+      });
+    });
+  });
 
   const writing = data.test.sections.find((section) => section.skill === 'WRITING');
   const task1 = writing?.parts.find((part) => part.slot === 'WRITING_TASK_1');
