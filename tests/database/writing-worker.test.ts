@@ -118,7 +118,7 @@ test('Writing worker finalizes once and releases retryable leases before retry',
       tier: 'TIER_2_DIAGNOSTIC',
       name: 'Writing worker fixture',
       priceMinor: 100,
-      maximumAttempts: 3,
+      maximumAttempts: 4,
       blueprints: { create: { blueprintId: blueprint.id } },
     },
   });
@@ -128,7 +128,7 @@ test('Writing worker finalizes once and releases retryable leases before retry',
       productId: product.id,
       status: 'ACTIVE',
       startsAt: new Date(Date.now() - 60_000),
-      maximumAttempts: 3,
+      maximumAttempts: 4,
     },
   });
 

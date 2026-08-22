@@ -3,7 +3,7 @@ import 'server-only';
 import { createHash } from 'node:crypto';
 import type { User } from '@prisma/client';
 import prisma from '@/lib/prisma';
-import { finalizeAttemptIfReady } from '@/lib/attempts/finalize-attempt';
+import { finalizeAttemptIfReady, lockAttemptForFinalization } from '@/lib/attempts/finalize-attempt';
 import { deriveSpeakingBand } from './lifecycle';
 import { canPublishSpeakingResult } from './permissions';
 
@@ -60,6 +60,7 @@ export async function saveHumanSpeakingAssessment(input: {
 
   const hash = createHash('sha256').update(JSON.stringify(scores)).digest('hex');
   return prisma.$transaction(async (tx) => {
+    await lockAttemptForFinalization(tx, session.appointment.attemptId);
     const gradingRun = await tx.gradingRun.create({
       data: {
         attemptId: session.appointment.attemptId,

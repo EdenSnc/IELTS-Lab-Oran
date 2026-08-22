@@ -2,16 +2,24 @@ import { Prisma, type Skill } from '@prisma/client';
 import { roundOverallBand } from '@/lib/grading/writing-run-core';
 import { hashFrozenManifestPayload, parseFrozenManifestPayload } from './manifest-core';
 
+export async function lockAttemptForFinalization(
+  transaction: Prisma.TransactionClient,
+  attemptId: string,
+) {
+  const rows = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+    SELECT id FROM app_private."AssessmentAttempt"
+    WHERE id = ${attemptId}::uuid
+    FOR UPDATE
+  `);
+  if (rows.length !== 1) throw new Error('ATTEMPT_NOT_FOUND');
+}
+
 export async function finalizeAttemptIfReady(
   transaction: Prisma.TransactionClient,
   attemptId: string,
   now = new Date(),
 ) {
-  await transaction.$queryRaw(Prisma.sql`
-    SELECT id FROM app_private."AssessmentAttempt"
-    WHERE id = ${attemptId}::uuid
-    FOR UPDATE
-  `);
+  await lockAttemptForFinalization(transaction, attemptId);
   const attempt = await transaction.assessmentAttempt.findUnique({
     where: { id: attemptId },
     include: { manifest: true, speakingAppointment: true, skillScores: true },

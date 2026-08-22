@@ -237,15 +237,70 @@ test('rubric-scored Writing tasks compile with zero raw marks', () => {
 
 test('assembled skill timing rejects inconsistent source limits and excludes scheduled Speaking', () => {
   const listening = candidates.filter((candidate) => candidate.skill === 'LISTENING' && candidate.testVersionContentHash?.endsWith('-0'));
+  const reading = candidates.filter((candidate) => candidate.skill === 'READING' && candidate.testVersionContentHash?.endsWith('-0'));
   const listeningBlueprint: AssemblyBlueprint = {
     ...blueprint,
     id: uuid(),
     slots: blueprint.slots.filter((slot) => slot.partSlot.startsWith('LISTENING_')),
   };
   assert.equal(compileAttemptManifest({ blueprint: listeningBlueprint, candidates: listening, seed: 'timing' }).payload.totalTimeLimitSeconds, 3_600);
+  const readingBlueprint: AssemblyBlueprint = {
+    ...blueprint,
+    id: uuid(),
+    slots: blueprint.slots.filter((slot) => slot.partSlot.startsWith('READING_')),
+  };
+  assert.equal(compileAttemptManifest({ blueprint: readingBlueprint, candidates: reading, seed: 'reading-timing' }).payload.totalTimeLimitSeconds, 3_600);
+  assert.equal(compileAttemptManifest({
+    blueprint: { ...blueprint, id: uuid() },
+    candidates: [...listening, ...reading],
+    seed: 'listening-reading-timing',
+  }).payload.totalTimeLimitSeconds, 7_200);
+  const writingCandidate: AssemblyPart = {
+    ...listening[0],
+    id: uuid(),
+    testVersionId: uuid(),
+    testVersionContentHash: 'writing-timing-version',
+    testVariant: 'ACADEMIC',
+    skill: 'WRITING',
+    sectionId: uuid(),
+    slot: 'WRITING_TASK_1',
+    groups: [{
+      id: uuid(), displayOrder: 1, reviewStatus: 'VERIFIED', scoringStrategy: 'RUBRIC',
+      maxMarks: 0, independent: false, shuffleQuestions: false, shuffleOptions: false,
+      options: null, answerKey: null,
+      questions: [{ id: uuid(), stableKey: 'writing-timing-q1', displayOrder: 1, maxMarks: 0 }],
+    }],
+  };
+  const lrwBlueprint: AssemblyBlueprint = {
+    ...blueprint,
+    id: uuid(),
+    slots: [...blueprint.slots, {
+      id: uuid(), partSlot: 'WRITING_TASK_1', displayOrder: 8,
+      requiredCount: 1, selectionMode: 'WHOLE_PART', targetMarks: 0,
+    }],
+  };
+  assert.equal(compileAttemptManifest({
+    blueprint: lrwBlueprint,
+    candidates: [...listening, ...reading, writingCandidate],
+    seed: 'lrw-timing',
+  }).payload.totalTimeLimitSeconds, 10_800);
   assert.throws(() => compileAttemptManifest({
     blueprint: listeningBlueprint,
     candidates: listening.map((part, index) => index === 3 ? { ...part, sectionTimeLimitSeconds: 1_800 } : part),
     seed: 'timing-mismatch',
   }), /INCONSISTENT_SKILL_TIME_LIMIT/u);
+});
+
+test('assembly excludes an otherwise verified part when a required asset is unverified', () => {
+  const source = candidates.find((candidate) => candidate.slot === 'READING_SECTION_1')!;
+  const singleSlotBlueprint: AssemblyBlueprint = {
+    ...blueprint,
+    id: uuid(),
+    slots: [blueprint.slots.find((slot) => slot.partSlot === 'READING_SECTION_1')!],
+  };
+  assert.throws(() => compileAttemptManifest({
+    blueprint: singleSlotBlueprint,
+    candidates: [{ ...source, assetsReady: false }],
+    seed: 'unverified-required-asset',
+  }), /INSUFFICIENT_ELIGIBLE_PARTS/u);
 });

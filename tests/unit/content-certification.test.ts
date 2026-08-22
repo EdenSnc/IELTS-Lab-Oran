@@ -127,6 +127,11 @@ test('generic validation accepts reusable and partial content without certifying
     assert.ok(partial.test.sections.length >= 1);
     assert.throws(() => certifyCompleteMockPackage(partial), /CONTENT_CERTIFICATION_FAILED/u);
   }
+  const duplicateAlternative = structuredClone(full) as StagedTestPackage;
+  const firstKey = duplicateAlternative.test.sections[0].parts[0].questionGroups[0].answerKey;
+  assert.ok(firstKey?.payload.strategy === 'PER_ITEM_EXACT');
+  firstKey.payload.answersByStableKey['LISTENING-1'] = ['Answer', 'answer'];
+  assert.throws(() => parseStagedTestPackage(duplicateAlternative));
 });
 
 test('full Academic and GT certification enforces exact Q1..Q40 and verified provenance', () => {

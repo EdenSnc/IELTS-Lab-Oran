@@ -100,6 +100,27 @@ test('objective scorer rejects strategy mismatches and malformed cross-group ide
   }), /INVALID_OBJECTIVE_QUESTION_NUMBER/u);
 });
 
+test('objective scorer rejects normalized duplicate and blank accepted alternatives', () => {
+  const group: ObjectiveGroup = {
+    scoringStrategy: 'PER_ITEM_EXACT',
+    maxMarks: 1,
+    questions: [{ stableKey: 'q1', sourceNumber: 1, maxMarks: 1 }],
+    normalization: { caseSensitive: false },
+    answerKey: { strategy: 'PER_ITEM_EXACT', answersByStableKey: { q1: ['Answer', 'answer'] } },
+  };
+  assert.throws(
+    () => scoreObjectiveGroups({ groups: [group], answers: { 1: 'answer' } }),
+    /DUPLICATE_NORMALIZED_ACCEPTED_VALUE/u,
+  );
+  assert.throws(
+    () => scoreObjectiveGroups({
+      groups: [{ ...group, answerKey: { strategy: 'PER_ITEM_EXACT', answersByStableKey: { q1: ['   '] } } }],
+      answers: {},
+    }),
+    /EMPTY_ACCEPTED_VALUE/u,
+  );
+});
+
 test('band thresholds fail closed when malformed', () => {
   const thresholds = validateBandThresholds([[39, 9], [37, 8.5], [1, 1]]);
   assert.equal(rawScoreToBand(40, thresholds), 9);

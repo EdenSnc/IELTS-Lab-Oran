@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 import { claimGradingRun } from '@/lib/db/concurrency';
 import { downloadPrivateAsset } from '@/lib/content/private-asset-storage';
 import { hashFrozenManifestPayload, parseFrozenManifestPayload } from '@/lib/attempts/manifest-core';
-import { finalizeAttemptIfReady } from '@/lib/attempts/finalize-attempt';
+import { finalizeAttemptIfReady, lockAttemptForFinalization } from '@/lib/attempts/finalize-attempt';
 import { gradeWritingTasks, type WritingTaskInput } from './writing-grading';
 import { writingRunInputHash, type FrozenWritingResponse } from './writing-run-core';
 
@@ -162,6 +162,7 @@ export async function processWritingGradingRun(
     // Gemini is deliberately called outside any PostgreSQL transaction.
     const graded = await grader(input.tasks);
     return await prisma.$transaction(async (transaction) => {
+      await lockAttemptForFinalization(transaction, input.run.attemptId);
       await transaction.$queryRaw(Prisma.sql`
         SELECT id FROM app_private."GradingRun"
         WHERE id = ${gradingRunId}::uuid
@@ -252,7 +253,7 @@ export async function processWritingGradingRun(
 
       await finalizeAttemptIfReady(transaction, input.run.attemptId, now);
       return { status: 'succeeded' as const, writingBand: graded.writingBand };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted });
   } catch (error) {
     const current = await prisma.gradingRun.findUnique({
       where: { id: gradingRunId },

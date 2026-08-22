@@ -56,7 +56,7 @@ test('published TestVersion descendants are immutable while DRAFT content remain
     `, [group.id])).rows[0];
     const answerKey = (await client.query<{ id: string }>(`
       INSERT INTO app_private."AnswerKey" ("questionGroupId", "encryptedPayload", "formatVersion", "sourceType", "reviewStatus", "createdAt", "updatedAt")
-      VALUES ($1, 'ciphertext', 1, 'HUMAN_VERIFIED', 'VERIFIED', NOW(), NOW()) RETURNING id
+      VALUES ($1, 'ciphertext', 1, 'HUMAN_VERIFIED', 'PENDING_REVIEW', NOW(), NOW()) RETURNING id
     `, [group.id])).rows[0];
     await client.query(`INSERT INTO app_private."QuestionAsset" ("questionGroupId", "assetId", role) VALUES ($1, $2, 'PROMPT')`, [group.id, asset.id]);
     await client.query(`UPDATE app_private."TestVersion" SET status='PUBLISHED', "publishedAt"=NOW(), "updatedAt"=NOW() WHERE id=$1`, [version.id]);

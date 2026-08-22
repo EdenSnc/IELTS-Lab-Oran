@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { parseAnswerInstruction } from './answer-instructions';
+import { normalizeObjectiveAnswer } from '@/lib/grading/objective-scoring-core';
 
 export const SourceProviderSchema = z.enum([
   'IDP',
@@ -510,17 +511,36 @@ export const QuestionGroupSchema = z.object({
         path: ['answerKey', 'payload', 'answersByStableKey'],
       });
     }
+    for (const [stableKey, alternatives] of Object.entries(group.answerKey.payload.answersByStableKey)) {
+      const normalized = alternatives.map((value) => normalizeObjectiveAnswer(value, group.answerKey?.normalization));
+      if (normalized.some((value) => !value) || new Set(normalized).size !== normalized.length) {
+        context.addIssue({
+          code: 'custom',
+          message: 'Accepted alternatives must be non-blank and unique after normalization',
+          path: ['answerKey', 'payload', 'answersByStableKey', stableKey],
+        });
+      }
+    }
   }
 
-  if (
-    group.answerKey?.payload.strategy === 'UNORDERED_EXACT_SET'
-    && group.answerKey.payload.acceptedSets.some((set) => set.length !== group.questions.length)
-  ) {
-    context.addIssue({
-      code: 'custom',
-      message: 'Every accepted unordered set must contain one answer per question',
-      path: ['answerKey', 'payload', 'acceptedSets'],
-    });
+  if (group.answerKey?.payload.strategy === 'UNORDERED_EXACT_SET') {
+    for (const [setIndex, acceptedSet] of group.answerKey.payload.acceptedSets.entries()) {
+      const normalized = acceptedSet.map((value) => normalizeObjectiveAnswer(value, group.answerKey?.normalization));
+      if (acceptedSet.length !== group.questions.length) {
+        context.addIssue({
+          code: 'custom',
+          message: 'Every accepted unordered set must contain one answer per question',
+          path: ['answerKey', 'payload', 'acceptedSets', setIndex],
+        });
+      }
+      if (normalized.some((value) => !value) || new Set(normalized).size !== normalized.length) {
+        context.addIssue({
+          code: 'custom',
+          message: 'Unordered accepted values must be non-blank and unique after normalization',
+          path: ['answerKey', 'payload', 'acceptedSets', setIndex],
+        });
+      }
+    }
   }
 });
 

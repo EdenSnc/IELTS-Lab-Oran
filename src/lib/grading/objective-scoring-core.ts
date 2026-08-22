@@ -79,7 +79,7 @@ function assertGroupIntegrity(group: ObjectiveGroup) {
   if (new Set(stableKeys).size !== stableKeys.length) {
     throw new Error('DUPLICATE_STABLE_KEY');
   }
-  if (group.questions.some((question) => question.maxMarks < 0)) {
+  if (group.questions.some((question) => question.maxMarks <= 0)) {
     throw new Error('INVALID_QUESTION_MARKS');
   }
   const marks = group.questions.reduce((sum, question) => sum + question.maxMarks, 0);
@@ -91,6 +91,15 @@ function assertGroupIntegrity(group: ObjectiveGroup) {
     if (JSON.stringify(keyed) !== JSON.stringify(expected)) {
       throw new Error('ANSWER_KEY_QUESTION_MISMATCH');
     }
+    for (const stableKey of stableKeys) {
+      const normalized = group.answerKey.answersByStableKey[stableKey].map((value) => (
+        normalizeObjectiveAnswer(value, group.normalization)
+      ));
+      if (normalized.some((value) => !value)) throw new Error('EMPTY_ACCEPTED_VALUE');
+      if (new Set(normalized).size !== normalized.length) {
+        throw new Error('DUPLICATE_NORMALIZED_ACCEPTED_VALUE');
+      }
+    }
     return;
   }
 
@@ -101,6 +110,7 @@ function assertGroupIntegrity(group: ObjectiveGroup) {
     if (normalized.length !== group.questions.length) {
       throw new Error('UNORDERED_SET_SIZE_MISMATCH');
     }
+    if (normalized.some((value) => !value)) throw new Error('EMPTY_ACCEPTED_VALUE');
     if (new Set(normalized).size !== normalized.length) {
       throw new Error('UNORDERED_SET_DUPLICATE_VALUE');
     }

@@ -21,7 +21,9 @@ function main() {
   const filePath = path.resolve(process.cwd(), input);
   const payload: unknown = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const staged = parseStagedTestPackage(payload);
-  certifyCompleteMockPackage(staged);
+  if (process.argv.slice(3).includes('--certify-full-mock')) {
+    certifyCompleteMockPackage(staged);
+  }
 
   const partCount = staged.test.sections.reduce(
     (total, section) => total + section.parts.length,

@@ -93,7 +93,7 @@ export async function beginListeningPlayback(input: {
         const timelineStartedAt = firstPlayback?.startedAt ?? now;
         const elapsedMs = Math.max(0, now.getTime() - timelineStartedAt.getTime());
         let offsetMs = 0;
-        let current = tracks.find((track) => {
+        const current = tracks.find((track) => {
           const end = offsetMs + Number(track.asset!.durationMs);
           if (elapsedMs < end) return true;
           offsetMs = end;
