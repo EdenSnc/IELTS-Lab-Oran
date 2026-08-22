@@ -7,7 +7,7 @@ Speaking is isolated under `/speaking`; its media SDK is not imported by Listeni
 - **RTC:** LiveKit. Server-generated room tokens are short-lived, room-scoped, participant-scoped, and limited to camera/microphone publication. Adaptive stream and dynacast lower video bandwidth; 360p/15fps is the default. Audio remains enabled when camera access fails.
 - **Recording:** LiveKit Track Egress starts when each microphone track is published. Candidate and examiner audio are written separately through an S3-compatible private bucket. Stored video remains off by default.
 - **Storage:** the existing server-only Supabase storage boundary streams private recordings with range support. No permanent public recording URL is returned.
-- **Analysis:** the existing server-side generation integration receives candidate audio or a supplied transcript only after the provisional human scores are persisted. The model input deliberately excludes human scores. Output is schema-validated, evidence is checked against candidate transcript timestamps, and failures never prevent manual final scoring.
+- **Analysis:** the existing server-side generation integration receives candidate audio or a supplied transcript only after the learner explicitly consents and provisional human scores are persisted. The model input deliberately excludes human scores. Output is schema-validated, evidence is checked against candidate transcript timestamps, and failures never prevent manual final scoring.
 - **Database:** all tables remain in `app_private`. Next.js/Prisma is the authorization boundary. A GiST exclusion constraint is the final concurrency guard against overlapping examiner appointments.
 
 ## Setup
@@ -33,7 +33,7 @@ The examiner may end early from any live part. A provisional four-criterion asse
 
 ## Operational notes
 
-- Recording consent is versioned in both `ConsentRecord` and `SpeakingSession`.
+- Recording consent is versioned in both `ConsentRecord` and `SpeakingSession`. AI-analysis and optional future training-data decisions are separate immutable `ConsentRecord` events; declining either never blocks human assessment.
 - Track webhook claiming and provider callback IDs are idempotent.
 - Delayed/failed recordings remain visible while human scoring continues.
 - Final diagnostic priorities are database- and API-limited to three and are selected by the human examiner; suggestions are never silently published.

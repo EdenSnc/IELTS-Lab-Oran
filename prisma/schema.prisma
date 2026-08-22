@@ -138,6 +138,7 @@ enum ConsentType {
   PRIVACY
   RECORDING
   AI_ASSISTED_GRADING
+  TRAINING_DATA
   MARKETING
 
   @@schema("app_private")
@@ -299,8 +300,9 @@ model DeviceSlot {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  user   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  leases AttemptExecutionLease[]
+  user           User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leases         AttemptExecutionLease[]
+  mediaPlaybacks AttemptMediaPlayback[]
 
   @@unique([userId, slotNumber])
   @@unique([userId, tokenHash])
@@ -706,8 +708,9 @@ model Stimulus {
   reviewStatus       ReviewStatus @default(AUTO_EXTRACTED)
   createdAt          DateTime     @default(now())
 
-  testPart TestPart      @relation(fields: [testPartId], references: [id], onDelete: Cascade)
-  asset    ContentAsset? @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  testPart       TestPart               @relation(fields: [testPartId], references: [id], onDelete: Cascade)
+  asset          ContentAsset?          @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  mediaPlaybacks AttemptMediaPlayback[]
 
   @@unique([testPartId, sourceKey])
   @@unique([testPartId, displayOrder])
@@ -934,6 +937,7 @@ model AssessmentAttempt {
   speakingAppointment     SpeakingAppointment?
   executionLease          AttemptExecutionLease?
   entitlementConsumptions EntitlementConsumption[]
+  mediaPlaybacks          AttemptMediaPlayback[]
 
   @@index([userId, state, createdAt])
   @@index([blueprintId])
@@ -959,6 +963,24 @@ model AttemptExecutionLease {
   deviceSlot DeviceSlot        @relation(fields: [deviceSlotId], references: [id], onDelete: Restrict)
 
   @@index([userId, expiresAt])
+  @@index([deviceSlotId, expiresAt])
+  @@schema("app_private")
+}
+
+model AttemptMediaPlayback {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId    String   @db.Uuid
+  stimulusId   String   @db.Uuid
+  deviceSlotId String   @db.Uuid
+  playbackHash String
+  startedAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  attempt    AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  stimulus   Stimulus          @relation(fields: [stimulusId], references: [id], onDelete: Restrict)
+  deviceSlot DeviceSlot        @relation(fields: [deviceSlotId], references: [id], onDelete: Restrict)
+
+  @@unique([attemptId, stimulusId])
   @@index([deviceSlotId, expiresAt])
   @@schema("app_private")
 }

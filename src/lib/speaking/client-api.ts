@@ -32,6 +32,7 @@ export async function speakingApi<T>(path: string, init?: RequestInit): Promise<
       AUTH_REQUIRED: 'Sign in to manage your Speaking appointment.',
       INVALID_SESSION: 'Your session expired. Sign in again.',
       RECORDING_CONSENT_REQUIRED: 'Recording consent is required before joining.',
+      AI_ANALYSIS_CONSENT_REQUIRED: 'The candidate has not consented to optional AI-assisted analysis.',
       JOIN_WINDOW_CLOSED: 'This interview is not open for joining yet.',
       SPEAKING_RTC_NOT_CONFIGURED: 'The live room is not configured yet.',
       SPEAKING_RECORDING_NOT_CONFIGURED: 'Private recording is not configured yet.',

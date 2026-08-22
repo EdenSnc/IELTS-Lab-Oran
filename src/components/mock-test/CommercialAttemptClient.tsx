@@ -23,6 +23,9 @@ type AttemptPayload = {
 type ScorePayload = {
   state: string;
   scores: Array<{ skill: string; rawScore: number | null; maximumRawScore: number | null; band: number | null }>;
+  overallBand?: number | null;
+  writingStatus?: 'NOT_INCLUDED' | 'PENDING' | 'FAILED' | 'COMPLETE' | null;
+  speakingStatus?: 'NOT_INCLUDED' | 'PENDING' | 'BOOKED' | 'COMPLETE' | null;
 };
 
 function emptyAnswers(): TestAnswerMap {
@@ -52,16 +55,58 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
   const savedRef = useRef(new Map<string, string>());
   const timersRef = useRef(new Map<string, number>());
   const saveChainsRef = useRef(new Map<string, Promise<void>>());
+  const audioTokensRef = useRef(new Map<string, string>());
+  const audioRequestsRef = useRef(new Map<string, Promise<string>>());
 
   const keyFor = (skill: IELTSSection, questionNumber: number) => `${skill}:${questionNumber}`;
   const leaseHeaders = useCallback((): Record<string, string> => (
     leaseTokenRef.current ? { 'x-attempt-lease': leaseTokenRef.current } : {}
   ), []);
+  const resolveListeningAudio = useCallback((stimulusId: string) => {
+    const pending = audioRequestsRef.current.get(stimulusId);
+    if (pending) return pending;
+    let token = audioTokensRef.current.get(stimulusId);
+    if (!token) {
+      const bytes = window.crypto.getRandomValues(new Uint8Array(32));
+      token = window.btoa(String.fromCharCode(...bytes))
+        .replace(/\+/gu, '-')
+        .replace(/\//gu, '_')
+        .replace(/=+$/u, '');
+      audioTokensRef.current.set(stimulusId, token);
+    }
+    const request = fetch(`/api/attempts/${attemptId}/listening/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...leaseHeaders() },
+      body: JSON.stringify({ stimulusId, playbackToken: token }),
+    }).then(async (response) => {
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: string } | null;
+        if (body?.error === 'LISTENING_AUDIO_ALREADY_STARTED') {
+          throw new Error('This Listening audio has already been started and cannot be replayed.');
+        }
+        throw new Error('Listening audio could not be started.');
+      }
+      return (await response.json() as { audioUrl: string }).audioUrl;
+    }).catch((cause) => {
+      audioRequestsRef.current.delete(stimulusId);
+      throw cause;
+    });
+    audioRequestsRef.current.set(stimulusId, request);
+    return request;
+  }, [attemptId, leaseHeaders]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
+        const storedResult = await fetch(`/api/attempts/${attemptId}/results`, { cache: 'no-store' });
+        if (storedResult.ok) {
+          if (!cancelled) setResult(await storedResult.json() as ScorePayload);
+          return;
+        }
+        if (storedResult.status !== 404 && storedResult.status !== 409) {
+          throw new Error('Unable to load this attempt.');
+        }
         const executionResponse = await fetch(`/api/attempts/${attemptId}/execution`, { method: 'POST' });
         if (!executionResponse.ok) throw new Error('Unable to start this attempt.');
         const execution = await executionResponse.json() as { leaseToken: string | null };
@@ -104,6 +149,17 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
     })();
     return () => { cancelled = true; };
   }, [attemptId, leaseHeaders]);
+
+  useEffect(() => {
+    if (result?.writingStatus !== 'PENDING') return;
+    const timer = window.setInterval(() => {
+      void fetch(`/api/attempts/${attemptId}/results`, { cache: 'no-store' })
+        .then((response) => response.ok ? response.json() as Promise<ScorePayload> : null)
+        .then((next) => { if (next) setResult(next); })
+        .catch(() => { /* A later poll can recover from a transient network failure. */ });
+    }, 5_000);
+    return () => window.clearInterval(timer);
+  }, [attemptId, result?.writingStatus]);
 
   const saveKey = useCallback(async (key: string) => {
     const metadata = responseByKeyRef.current.get(key);
@@ -189,29 +245,52 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
     }
   }, [attemptId, leaseHeaders, saveKey]);
 
-  if (error && !payload) return <main className="grid min-h-screen place-items-center p-6"><p role="alert">{error}</p></main>;
-  if (!payload) return <main className="grid min-h-screen place-items-center p-6"><p>Loading secure attempt…</p></main>;
   if (result) {
+    const pendingWriting = result.writingStatus === 'PENDING';
     return (
       <main className="mx-auto min-h-screen max-w-3xl px-6 py-16">
         <h1 className="text-3xl font-semibold">Attempt complete</h1>
         <div className="mt-8 grid gap-4">
           {result.scores.map((score) => (
             <div key={score.skill} className="rounded-2xl border border-black/10 p-5">
-              <h2 className="font-semibold">{score.skill === 'READING' ? 'Reading' : 'Listening'}</h2>
-              <p>{score.rawScore} correct out of {score.maximumRawScore}</p>
+              <h2 className="font-semibold">{score.skill[0] + score.skill.slice(1).toLowerCase()}</h2>
+              {score.rawScore !== null && <p>{score.rawScore} correct out of {score.maximumRawScore}</p>}
               {score.band !== null && <p className="mt-1">Estimated band: {score.band.toFixed(1)}</p>}
             </div>
           ))}
+          {result.writingStatus && result.writingStatus !== 'NOT_INCLUDED' && !result.scores.some((score) => score.skill === 'WRITING') && (
+            <div className="rounded-2xl border border-black/10 p-5">
+              <h2 className="font-semibold">Writing</h2>
+              <p>{pendingWriting ? 'Pending' : 'Assessment unavailable'}</p>
+            </div>
+          )}
+          {result.speakingStatus && result.speakingStatus !== 'NOT_INCLUDED' && !result.scores.some((score) => score.skill === 'SPEAKING') && (
+            <div className="rounded-2xl border border-black/10 p-5">
+              <h2 className="font-semibold">Speaking</h2>
+              <p>{result.speakingStatus === 'BOOKED' ? 'Appointment booked' : 'Pending'}</p>
+            </div>
+          )}
+          {result.overallBand !== undefined && result.overallBand !== null && (
+            <div className="rounded-2xl border border-black bg-black p-5 text-white">
+              <h2 className="font-semibold">Overall band</h2>
+              <p className="mt-1 text-2xl font-semibold">{result.overallBand.toFixed(1)}</p>
+            </div>
+          )}
         </div>
       </main>
     );
   }
+  if (error && !payload) return <main className="grid min-h-screen place-items-center p-6"><p role="alert">{error}</p></main>;
+  if (!payload) return <main className="grid min-h-screen place-items-center p-6"><p>Loading secure attempt…</p></main>;
   return (
     <>
       {error && <div role="alert" className="fixed inset-x-0 top-0 z-[120] bg-red-700 px-4 py-2 text-center text-sm text-white">{error}</div>}
       {submitting && <div className="fixed inset-0 z-[110] grid place-items-center bg-white/80"><p>Submitting securely…</p></div>}
-      <MockTestClient test={payload.test} onFinish={finish} />
+      <MockTestClient
+        test={payload.test}
+        onFinish={finish}
+        resolveListeningAudio={resolveListeningAudio}
+      />
     </>
   );
 }

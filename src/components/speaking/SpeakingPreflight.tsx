@@ -13,6 +13,8 @@ export default function SpeakingPreflight({ sessionId }: { sessionId: string }) 
   const [message, setMessage] = useState('Run the device check before joining.');
   const [cameraAvailable, setCameraAvailable] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [aiAnalysisConsent, setAiAnalysisConsent] = useState(false);
+  const [trainingDataConsent, setTrainingDataConsent] = useState(false);
   const [joined, setJoined] = useState(false);
 
   async function runCheck() {
@@ -53,7 +55,14 @@ export default function SpeakingPreflight({ sessionId }: { sessionId: string }) 
 
   async function join() {
     if (!consent || state !== 'ready') return;
-    await speakingApi(`/api/speaking/sessions/${sessionId}/consent`, { method: 'POST' });
+    await speakingApi(`/api/speaking/sessions/${sessionId}/consent`, {
+      method: 'POST',
+      body: JSON.stringify({
+        recording: true,
+        aiAnalysis: aiAnalysisConsent,
+        trainingData: trainingDataConsent,
+      }),
+    });
     setJoined(true);
   }
 
@@ -69,6 +78,8 @@ export default function SpeakingPreflight({ sessionId }: { sessionId: string }) 
           <p role="status" className="font-semibold">{message}</p>
           <div className="mt-5 flex flex-wrap gap-3"><button className="rounded-lg bg-black px-4 py-2 font-bold text-white" onClick={runCheck} disabled={state === 'checking'}>{state === 'checking' ? 'Checking…' : 'Check microphone and camera'}</button><button className="rounded-lg border border-black px-4 py-2 font-bold" onClick={testOutput}>Test speakers</button></div>
           <label className="mt-7 flex items-start gap-3 rounded-xl bg-[#f3f2ee] p-4"><input className="mt-1 size-5" type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span><strong>I consent to recording.</strong><br /><small className="text-[#555]">The interview is recorded for assessment and quality review. Recordings remain private and access-controlled.</small></span></label>
+          <label className="mt-3 flex items-start gap-3 rounded-xl border border-[#deddd8] p-4"><input className="mt-1 size-5" type="checkbox" checked={aiAnalysisConsent} onChange={(event) => setAiAnalysisConsent(event.target.checked)} /><span><strong>Allow optional AI-assisted analysis.</strong><br /><small className="text-[#555]">Your examiner remains responsible for the final Speaking result.</small></span></label>
+          <label className="mt-3 flex items-start gap-3 rounded-xl border border-[#deddd8] p-4"><input className="mt-1 size-5" type="checkbox" checked={trainingDataConsent} onChange={(event) => setTrainingDataConsent(event.target.checked)} /><span><strong>Allow future training-data use.</strong><br /><small className="text-[#555]">Optional. Declining does not affect your interview or score.</small></span></label>
           <button className="mt-5 w-full rounded-lg bg-[#c8102e] px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-40" disabled={state !== 'ready' || !consent} onClick={() => void join().catch((error) => setMessage(error.message))}>Join Speaking interview</button>
         </section>
       </div>

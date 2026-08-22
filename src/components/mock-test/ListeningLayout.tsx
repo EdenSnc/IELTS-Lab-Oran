@@ -5,7 +5,7 @@ import type { DeliverySection } from '@/lib/content/delivery-types';
 import { useTestStore } from '@/lib/store/useTestStore';
 import QuestionGroupRenderer from './QuestionGroupRenderer';
 import TestPartHeader from './TestPartHeader';
-import { getListeningAudio, isListeningAudioActive, stopListeningAudio } from '@/lib/audio/listening-audio';
+import { activateListeningAudio, getListeningAudio, isListeningAudioActive, stopListeningAudio } from '@/lib/audio/listening-audio';
 
 function partRange(part: DeliverySection['parts'][number]) {
   const numbers = part.questionGroups.flatMap((group) => (
@@ -16,10 +16,21 @@ function partRange(part: DeliverySection['parts'][number]) {
   return { first: numbers.at(0), last: numbers.at(-1) };
 }
 
-export default function ListeningLayout({ section }: { section: DeliverySection }) {
+export default function ListeningLayout({
+  section,
+  resolveListeningAudio,
+}: {
+  section: DeliverySection;
+  resolveListeningAudio?: (stimulusId: string) => Promise<string>;
+}) {
   const currentQuestionId = useTestStore((state) => state.currentQuestionId);
   const textSize = useTestStore((state) => state.textSize);
-  const [audioNeedsGesture, setAudioNeedsGesture] = useState(false);
+  const [gestureStimulusId, setGestureStimulusId] = useState<string | null>(null);
+  const [resolvedAudio, setResolvedAudio] = useState<{
+    stimulusId: string;
+    source: string | null;
+    error: string | null;
+  } | null>(null);
   const activePart = section.parts.find((part) => {
     const { first, last } = partRange(part);
     return first !== undefined
@@ -28,10 +39,31 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
       && currentQuestionId <= last;
   }) ?? section.parts.at(0);
   const audio = activePart?.stimuli.find((stimulus) => stimulus.type === 'AUDIO_TRACK');
+  const currentAudio = resolvedAudio?.stimulusId === audio?.id ? resolvedAudio : null;
+  const audioSource = currentAudio?.source ?? null;
+  const audioError = currentAudio?.error ?? null;
 
   useEffect(() => {
-    if (!audio?.assetUrl) return;
-    const player = getListeningAudio(audio.assetUrl);
+    let cancelled = false;
+    if (!audio?.assetUrl) return () => { cancelled = true; };
+    const source = resolveListeningAudio
+      ? resolveListeningAudio(audio.id)
+      : Promise.resolve(audio.assetUrl);
+    void source.then((url) => {
+      if (!cancelled) setResolvedAudio({ stimulusId: audio.id, source: url, error: null });
+    }).catch((cause: unknown) => {
+      if (!cancelled) setResolvedAudio({
+        stimulusId: audio.id,
+        source: null,
+        error: cause instanceof Error ? cause.message : 'Listening audio is unavailable.',
+      });
+    });
+    return () => { cancelled = true; };
+  }, [audio?.assetUrl, audio?.id, resolveListeningAudio]);
+
+  useEffect(() => {
+    if (!audioSource) return;
+    const player = activateListeningAudio(audioSource);
     let playbackStarted = false;
     let resumePending = false;
 
@@ -47,6 +79,7 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
     };
     const handlePlaying = () => {
       playbackStarted = true;
+      setGestureStimulusId(null);
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     };
     const handlePause = () => {
@@ -90,7 +123,7 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
     }
 
     if (player.paused) {
-      player.play().catch(() => setAudioNeedsGesture(true));
+      player.play().catch(() => setGestureStimulusId(audio?.id ?? null));
     } else {
       handlePlaying();
     }
@@ -113,7 +146,7 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
       }
       stopListeningAudio();
     };
-  }, [audio?.assetUrl]);
+  }, [audio?.id, audioSource]);
 
   if (!activePart) {
     return <p className="p-8">This Listening test has no parts.</p>;
@@ -135,12 +168,17 @@ export default function ListeningLayout({ section }: { section: DeliverySection 
 
   return (
     <div className={`ielts-test-area flex h-full w-full flex-col bg-white ${textSizeClass}`}>
-      {audioNeedsGesture && audio?.assetUrl && (
+      {audioError && (
+        <p role="alert" className="mx-4 mt-3 border border-red-700 bg-red-50 px-4 py-2 text-red-900">
+          {audioError}
+        </p>
+      )}
+      {gestureStimulusId === audio?.id && audioSource && (
         <button
           type="button"
           className="mx-4 mt-3 w-fit border border-black bg-black px-4 py-2 font-bold text-white"
           onClick={() => {
-            void getListeningAudio(audio.assetUrl!).play().then(() => setAudioNeedsGesture(false));
+            void getListeningAudio(audioSource).play().then(() => setGestureStimulusId(null));
           }}
         >
           Start audio

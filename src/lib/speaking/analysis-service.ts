@@ -13,6 +13,7 @@ import {
   validateGrounding,
 } from './analysis-schema';
 import { buildSpeakingAnalysisPayload, speakingAnalysisSystemInstruction } from './analysis-prompt';
+import { hasSpeakingAiConsent } from './consent-service';
 
 const transcriptSchema = z.array(z.object({
   speaker: z.enum(['candidate', 'examiner', 'uncertain']),
@@ -28,7 +29,7 @@ export async function runSpeakingAnalysis(sessionId: string, transcriptInput: un
   const session = await prisma.speakingSession.findUnique({
     where: { id: sessionId },
     include: {
-      appointment: { select: { attemptId: true } },
+      appointment: { select: { attemptId: true, learnerId: true } },
       markers: { orderBy: { offsetMs: 'asc' }, select: { offsetMs: true, part: true, criterion: true, note: true } },
       recordings: { where: { status: 'READY', kind: { in: ['CANDIDATE_AUDIO', 'MIXED_AUDIO'] } }, orderBy: { createdAt: 'asc' }, take: 1 },
       assessments: { where: { stage: 'PROVISIONAL' }, select: { id: true }, take: 1 },
@@ -36,6 +37,9 @@ export async function runSpeakingAnalysis(sessionId: string, transcriptInput: un
   });
   if (!session) throw new Error('SESSION_NOT_FOUND');
   if (!session.assessments.length) throw new Error('PROVISIONAL_SCORE_REQUIRED');
+  if (!await hasSpeakingAiConsent(sessionId, session.appointment.learnerId)) {
+    throw new Error('AI_ANALYSIS_CONSENT_REQUIRED');
+  }
   const recording = session.recordings[0];
   if (!transcriptSegments.length && !recording?.storageKey) throw new Error('RECORDING_NOT_READY');
   // Human scores are deliberately not selected above and therefore cannot be

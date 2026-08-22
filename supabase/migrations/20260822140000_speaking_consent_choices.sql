@@ -1,0 +1,2 @@
+ALTER TYPE app_private."ConsentType"
+  ADD VALUE IF NOT EXISTS 'TRAINING_DATA';

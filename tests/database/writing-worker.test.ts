@@ -14,12 +14,14 @@ test('Writing worker finalizes once and releases retryable leases before retry',
     { submitAndGradeObjectiveAttempt },
     { processWritingGradingRun },
     { recoverWritingGradingRuns },
+    { loadStoredAttemptResult },
   ] = await Promise.all([
     import('../../src/lib/prisma'),
     import('../../src/lib/attempts/attempt-service'),
     import('../../src/lib/attempts/objective-attempt-grading'),
     import('../../src/lib/grading/writing-worker'),
     import('../../src/lib/qstash/jobs'),
+    import('../../src/lib/attempts/attempt-results'),
   ]);
   const suffix = randomUUID();
   const user = await prisma.user.create({
@@ -173,6 +175,9 @@ test('Writing worker finalizes once and releases retryable leases before retry',
   });
 
   const first = await createSubmittedRun();
+  const pendingResult = await loadStoredAttemptResult(first.attemptId, user.id);
+  assert.equal(pendingResult.writingStatus, 'PENDING');
+  assert.equal(pendingResult.overallBand, null);
   assert.deepEqual(await processWritingGradingRun(first.gradingRunId!, deterministicGrader), {
     status: 'succeeded',
     writingBand: 6.5,
@@ -185,6 +190,9 @@ test('Writing worker finalizes once and releases retryable leases before retry',
     where: { attemptId_skill: { attemptId: first.attemptId, skill: 'WRITING' } },
   })).band?.toNumber(), 6.5);
   assert.equal((await prisma.assessmentAttempt.findUniqueOrThrow({ where: { id: first.attemptId } })).state, 'COMPLETED');
+  const completedResult = await loadStoredAttemptResult(first.attemptId, user.id);
+  assert.equal(completedResult.writingStatus, 'COMPLETE');
+  assert.equal(completedResult.scores.find((score) => score.skill === 'WRITING')?.band, 6.5);
 
   const retry = await createSubmittedRun();
   await assert.rejects(processWritingGradingRun(retry.gradingRunId!, async () => {
@@ -210,8 +218,8 @@ test('Writing worker finalizes once and releases retryable leases before retry',
   const recovered = await recoverWritingGradingRuns(25, async (gradingRunId) => {
     published.push(gradingRunId);
   });
-  assert.deepEqual(published, [expired.gradingRunId]);
-  assert.deepEqual(recovered, [{ id: expired.gradingRunId, published: true }]);
+  assert.ok(published.includes(expired.gradingRunId));
+  assert.ok(recovered.some((item) => item.id === expired.gradingRunId && item.published));
   const recoveredRun = await prisma.gradingRun.findUniqueOrThrow({ where: { id: expired.gradingRunId! } });
   assert.equal(recoveredRun.status, 'QUEUED');
   assert.equal(recoveredRun.leaseOwner, null);

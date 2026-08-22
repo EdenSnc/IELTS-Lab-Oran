@@ -26,9 +26,13 @@ export function getListeningAudio(source: string) {
   return listeningPlayer;
 }
 
-export function startListeningAudio(source: string) {
+export function activateListeningAudio(source: string) {
   listeningActive = true;
-  const player = getListeningAudio(source);
+  return getListeningAudio(source);
+}
+
+export function startListeningAudio(source: string) {
+  const player = activateListeningAudio(source);
   player.load();
   return player.play();
 }

@@ -13,7 +13,13 @@ const SECTION_VIDEOS: Record<IELTSSection, string> = {
   writing: '/writing.mp4',
 };
 
-export default function TestInstructions({ test }: { test: DeliveryTest }) {
+export default function TestInstructions({
+  test,
+  resolveListeningAudio,
+}: {
+  test: DeliveryTest;
+  resolveListeningAudio?: (stimulusId: string) => Promise<string>;
+}) {
   const startSection = useTestStore((state) => state.startSection);
   const completedSections = useTestStore((state) => state.completedSections);
   const resetTest = useTestStore((state) => state.resetTest);
@@ -70,12 +76,13 @@ export default function TestInstructions({ test }: { test: DeliveryTest }) {
   const handleStart = (section: IELTSSection, durationSeconds: number) => {
     ensureFullscreen();
     if (section === 'listening') {
-      const audioUrl = test.sections
+      const audio = test.sections
         .find((candidate) => candidate.skill === 'LISTENING')
         ?.parts.flatMap((part) => part.stimuli)
-        .find((stimulus) => stimulus.type === 'AUDIO_TRACK')
-        ?.assetUrl;
-      if (audioUrl) void startListeningAudio(audioUrl).catch(() => {});
+        .find((stimulus) => stimulus.type === 'AUDIO_TRACK');
+      if (audio?.assetUrl && !resolveListeningAudio) {
+        void startListeningAudio(audio.assetUrl).catch(() => {});
+      }
     }
     startSection(section, durationSeconds);
     window.scrollTo({ top: 0, left: 0 });

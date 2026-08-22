@@ -6,6 +6,7 @@ import { parseFrozenManifestPayload } from '@/lib/attempts/manifest-core';
 import { requireActiveAttemptDevice } from '@/lib/attempts/execution-lease';
 import { requireRequestDeviceSlot } from '@/lib/auth/device-slots';
 import { requireRequestUser } from '@/lib/auth/request-user';
+import { authorizeStrictListeningAsset } from '@/lib/audio/listening-playback';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -35,6 +36,7 @@ export async function GET(
   const attemptId = new URL(request.url).searchParams.get('attemptId');
   let allowedPartIds: string[] | undefined;
   let allowedGroupIds: string[] | undefined;
+  let strictDeviceSlotId: string | null = null;
   if (attemptId) {
     if (!UUID_PATTERN.test(attemptId)) {
       return NextResponse.json({ error: 'Invalid attempt identifier.' }, { status: 400 });
@@ -42,7 +44,8 @@ export async function GET(
     try {
       const user = await requireRequestUser(request, ['STUDENT']);
       const device = await requireRequestDeviceSlot(request, user.id);
-      await requireActiveAttemptDevice({ attemptId, userId: user.id, deviceSlotId: device.id });
+      const attempt = await requireActiveAttemptDevice({ attemptId, userId: user.id, deviceSlotId: device.id });
+      if (attempt.mode === 'STRICT') strictDeviceSlotId = device.id;
       const manifest = await prisma.attemptManifest.findFirst({
         where: { attemptId, attempt: { userId: user.id } },
         select: { payload: true },
@@ -93,10 +96,37 @@ export async function GET(
         ],
       }),
     },
-    select: { storageKey: true, mimeType: true },
+    select: {
+      id: true,
+      storageKey: true,
+      mimeType: true,
+      stimuli: { select: { id: true, type: true, testPartId: true } },
+    },
   });
   if (!asset) {
     return NextResponse.json({ error: 'Asset not found.' }, { status: 404 });
+  }
+  if (attemptId && strictDeviceSlotId) {
+    const audioStimuli = asset.stimuli.filter((stimulus) => (
+      stimulus.type === 'AUDIO_TRACK' && allowedPartIds?.includes(stimulus.testPartId)
+    ));
+    if (audioStimuli.length > 0) {
+      const url = new URL(request.url);
+      const stimulusId = url.searchParams.get('stimulusId');
+      const matched = audioStimuli.some((stimulus) => stimulus.id === stimulusId);
+      const authorized = matched && stimulusId
+        ? await authorizeStrictListeningAsset({
+          attemptId,
+          stimulusId,
+          assetId: asset.id,
+          deviceSlotId: strictDeviceSlotId,
+          playbackToken: url.searchParams.get('playbackToken'),
+        })
+        : false;
+      if (!authorized) {
+        return NextResponse.json({ error: 'Asset is unavailable.' }, { status: 404 });
+      }
+    }
   }
 
   try {

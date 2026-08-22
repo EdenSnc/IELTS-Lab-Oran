@@ -26,6 +26,8 @@ export const speakingConfig = {
   tokenTtlSeconds: boundedInteger(process.env.SPEAKING_RTC_TOKEN_TTL_SECONDS, 900, 300, 3600),
   rtcProvider: process.env.SPEAKING_RTC_PROVIDER ?? 'livekit',
   recordingPolicyVersion: process.env.SPEAKING_RECORDING_POLICY_VERSION ?? '2026-08-01',
+  aiPolicyVersion: process.env.SPEAKING_AI_POLICY_VERSION ?? '2026-08-01',
+  trainingPolicyVersion: process.env.SPEAKING_TRAINING_POLICY_VERSION ?? '2026-08-01',
   analysisModel: process.env.GEMINI_SPEAKING_MODEL ?? 'gemini-3.5-flash-lite',
   disagreementThreshold: Number(process.env.SPEAKING_AI_DISAGREEMENT_THRESHOLD ?? 1),
   recordingRetentionDays: boundedInteger(process.env.SPEAKING_RECORDING_RETENTION_DAYS, 180, 1, 3650),

@@ -16,9 +16,11 @@ import DiagnosticResults from '@/components/mock-test/DiagnosticResults';
 export default function MockTestClient({
   test,
   onFinish,
+  resolveListeningAudio,
 }: {
   test: DeliveryTest;
   onFinish?: () => void | Promise<void>;
+  resolveListeningAudio?: (stimulusId: string) => Promise<string>;
 }) {
   const testPhase = useTestStore((state) => state.testPhase);
   const activeSection = useTestStore((state) => state.activeSection);
@@ -53,7 +55,7 @@ export default function MockTestClient({
     return (
       <>
         <StrictDRM />
-        <TestInstructions test={test} />
+        <TestInstructions test={test} resolveListeningAudio={resolveListeningAudio} />
       </>
     );
   }
@@ -84,7 +86,9 @@ export default function MockTestClient({
       
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <main className={`flex min-w-0 flex-1 overflow-hidden ${textSizeClass} ${colorClass}`}>
-          {activeSection === 'listening' && listening && <ListeningLayout section={listening} />}
+          {activeSection === 'listening' && listening && (
+            <ListeningLayout section={listening} resolveListeningAudio={resolveListeningAudio} />
+          )}
           {activeSection === 'reading' && reading && <SplitPane section={reading} />}
           {activeSection === 'writing' && writing && <WritingLayout section={writing} />}
           {!activeSection && (
