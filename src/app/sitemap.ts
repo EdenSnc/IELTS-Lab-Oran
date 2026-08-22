@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { CANONICAL_ORIGIN, CONTENT_REVIEW_DATE, LOCALES } from '@/lib/seo';
+import { CANONICAL_ORIGIN, LOCALES } from '@/lib/seo';
 
 const indexablePaths = [
   '',
@@ -20,7 +20,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       const suffix = path ? `/${path}` : '';
       return {
         url: `${CANONICAL_ORIGIN}/${locale}${suffix}`,
-        lastModified: new Date(CONTENT_REVIEW_DATE),
         changeFrequency: path === '' ? ('weekly' as const) : ('monthly' as const),
         priority: path === '' ? 1 : path === 'articles' ? 0.8 : 0.7,
         alternates: {

@@ -53,6 +53,23 @@ test('HTTP Runtime: X-Powered-By header is suppressed', async () => {
   assert.equal(res.headers.get('x-powered-by'), null, 'X-Powered-By header must not be exposed');
 });
 
+test('HTTP Runtime: root permanently redirects directly to canonical English landing page', async () => {
+  const res = await fetch(`${BASE_URL}/`, {
+    redirect: 'manual',
+  });
+  assert.equal(res.status, 308);
+  assert.equal(res.headers.get('location'), '/en');
+
+  const withQuery = await fetch(`${BASE_URL}/?domainMigrationTest=1`, {
+    redirect: 'manual',
+  });
+  assert.equal(withQuery.status, 308);
+  assert.equal(
+    withQuery.headers.get('location'),
+    '/en?domainMigrationTest=1',
+  );
+});
+
 test('HTTP Runtime: /favicon.ico serves a valid, crawlable ICO', async () => {
   const res = await fetch(`${BASE_URL}/favicon.ico`);
   assert.equal(res.status, 200);
@@ -81,13 +98,19 @@ test('HTTP Runtime: /sitemap.xml serves canonical URLs', async () => {
   assert.match(text, /<loc>https:\/\/www\.ieltslab\.org\/en<\/loc>/);
   assert.match(text, /<loc>https:\/\/www\.ieltslab\.org\/fr<\/loc>/);
   assert.match(text, /<loc>https:\/\/www\.ieltslab\.org\/ar<\/loc>/);
+  assert.ok(!text.includes('<lastmod>'), 'Sitemap must omit lastmod without reliable per-URL modification dates');
   assert.ok(!text.includes('ieltslab.app'), 'sitemap.xml must not contain ieltslab.app');
   assert.ok(!text.includes('ieltslaboran.com'), 'sitemap.xml must not contain ieltslaboran.com');
   assert.ok(!text.includes('ieltslab.tech'), 'sitemap.xml must not contain ieltslab.tech');
 });
 
 test('HTTP Runtime: /en serves correct canonical, hreflang, Open Graph, and JSON-LD', async () => {
-  const res = await fetch(`${BASE_URL}/en`);
+  const res = await fetch(`${BASE_URL}/en`, {
+    headers: {
+      'x-forwarded-host': 'www.ieltslab.org',
+      'x-forwarded-proto': 'https',
+    },
+  });
   assert.equal(res.status, 200);
   const html = await res.text();
 
@@ -121,6 +144,13 @@ test('HTTP Runtime: /en serves correct canonical, hreflang, Open Graph, and JSON
   assert.ok(!html.includes('ieltslab.app'), 'Page must contain zero ieltslab.app occurrences');
   assert.ok(!html.includes('ieltslaboran.com'), 'Page must contain zero ieltslaboran.com occurrences');
   assert.ok(!html.includes('ieltslab.tech'), 'Page must contain zero ieltslab.tech occurrences');
+
+  const linkHeader = res.headers.get('link') ?? '';
+  assert.match(
+    linkHeader,
+    /<https:\/\/www\.ieltslab\.org\/en>;\s*rel="alternate";\s*hreflang="x-default"/i,
+    'HTTP Link x-default must agree with the HTML x-default',
+  );
 });
 
 test('HTTP Runtime: /fr serves correct localized canonical and hreflang', async () => {
@@ -150,6 +180,44 @@ test('HTTP Runtime: /ar serves correct localized canonical, RTL dir, and hreflan
 test('HTTP Runtime: Nonexistent route returns HTTP 404', async () => {
   const res = await fetch(`${BASE_URL}/en/nonexistent-test-page-12345`);
   assert.equal(res.status, 404, 'Nonexistent page must return 404 status code');
+});
+
+test('HTTP Runtime: global unmatched routes use the custom global 404 without page metadata', async () => {
+  for (const pathname of ['/this-does-not-exist', '/zz', '/random/unmatched/path']) {
+    const res = await fetch(`${BASE_URL}${pathname}`);
+    assert.equal(res.status, 404, `${pathname} must return 404`);
+
+    const html = await res.text();
+    assert.match(html, />Page Not Found</, `${pathname} must render the custom 404 UI`);
+    assert.equal((html.match(/<html(?:\s|>)/gi) ?? []).length, 1, `${pathname} must contain one html element`);
+    assert.equal((html.match(/<body(?:\s|>)/gi) ?? []).length, 1, `${pathname} must contain one body element`);
+    assert.ok(!html.includes('__next_error__'), `${pathname} must not use the generic Next.js error document`);
+    assert.match(html, /<meta[^>]*name="robots"[^>]*content="noindex"/i, `${pathname} must be noindex`);
+    assert.ok(!/<link[^>]*rel="canonical"/i.test(html), `${pathname} must not emit a canonical`);
+    assert.ok(!/<meta[^>]*property="og:url"/i.test(html), `${pathname} must not emit og:url`);
+    assert.ok(!/<meta[^>]*property="og:locale"/i.test(html), `${pathname} must not emit og:locale`);
+    assert.ok(!/<link[^>]*rel="alternate"[^>]*hreflang=/i.test(html), `${pathname} must not emit hreflang`);
+  }
+});
+
+test('HTTP Runtime: localized unmatched routes preserve localized 404 behavior', async () => {
+  const localizedRoutes = [
+    '/en/this-does-not-exist',
+    '/fr/this-does-not-exist',
+    '/ar/this-does-not-exist',
+    '/en/foo/bar/this-does-not-exist',
+  ];
+
+  for (const pathname of localizedRoutes) {
+    const res = await fetch(`${BASE_URL}${pathname}`);
+    assert.equal(res.status, 404, `${pathname} must return 404`);
+
+    const html = await res.text();
+    assert.ok(!html.includes('__next_error__'), `${pathname} must not use the generic Next.js error document`);
+    assert.match(html, /<meta[^>]*name="robots"[^>]*content="noindex"/i, `${pathname} must be noindex`);
+    assert.ok(!/<link[^>]*rel="canonical"/i.test(html), `${pathname} must not emit a canonical for a missing page`);
+    assert.ok(!/<meta[^>]*property="og:url"/i.test(html), `${pathname} must not emit og:url for a missing page`);
+  }
 });
 
 test('HTTP Runtime: test-engine pages stay noindex and never emit localhost social URLs', async () => {
