@@ -26,6 +26,7 @@
     "@prisma/client": "^7.9.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.110.7",
+    "@upstash/qstash": "^2.11.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "botid": "^1.5.11",

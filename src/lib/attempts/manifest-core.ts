@@ -109,7 +109,7 @@ const frozenQuestionSchema = z.object({
   groupOrder: z.number().int().positive(),
   questionOrder: z.number().int().positive(),
   questionNumber: z.number().int().positive(),
-  maxMarks: z.number().int().positive(),
+  maxMarks: z.number().int().nonnegative(),
   presentedOptions: z.array(z.unknown()).nullable(),
 }).strict();
 
@@ -176,6 +176,11 @@ function supportedObjectiveGroup(group: AssemblyQuestionGroup) {
   if (group.questions.length === 0) return false;
   const keys = new Set(group.questions.map((question) => question.stableKey));
   if (keys.size !== group.questions.length) return false;
+  const rubricScored = ['RUBRIC', 'NOT_SCORED'].includes(group.scoringStrategy);
+  if (rubricScored) {
+    return group.maxMarks === 0
+      && group.questions.every((question) => question.maxMarks === 0);
+  }
   return group.questions.every((question) => question.maxMarks > 0)
     && group.questions.reduce((sum, question) => sum + question.maxMarks, 0) === group.maxMarks;
 }

@@ -1,0 +1,219 @@
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import test from 'node:test';
+
+const databaseUrl = process.env.TEST_DATABASE_URL;
+
+test('Writing worker finalizes once and releases retryable leases before retry', {
+  skip: databaseUrl ? false : 'TEST_DATABASE_URL is required for database tests',
+}, async () => {
+  process.env.DATABASE_URL = databaseUrl;
+  const [
+    { default: prisma },
+    { createAuthenticatedAttempt },
+    { submitAndGradeObjectiveAttempt },
+    { processWritingGradingRun },
+    { recoverWritingGradingRuns },
+  ] = await Promise.all([
+    import('../../src/lib/prisma'),
+    import('../../src/lib/attempts/attempt-service'),
+    import('../../src/lib/attempts/objective-attempt-grading'),
+    import('../../src/lib/grading/writing-worker'),
+    import('../../src/lib/qstash/jobs'),
+  ]);
+  const suffix = randomUUID();
+  const user = await prisma.user.create({
+    data: { id: randomUUID(), email: `writing-${suffix}@example.invalid` },
+  });
+  const source = await prisma.contentSource.create({
+    data: { provider: 'OTHER', name: `writing source ${suffix}` },
+  });
+  const contentTest = await prisma.test.create({
+    data: {
+      sourceId: source.id,
+      externalId: `writing-${suffix}`,
+      title: 'Writing worker fixture',
+      variant: 'ACADEMIC',
+      sourceYear: 2026,
+    },
+  });
+  const version = await prisma.testVersion.create({
+    data: { testId: contentTest.id, version: 1, status: 'DRAFT', contentHash: `writing-${suffix}` },
+  });
+  const section = await prisma.testSection.create({
+    data: { testVersionId: version.id, skill: 'WRITING', displayOrder: 1, timeLimitSeconds: 3_600 },
+  });
+  for (const taskNumber of [1, 2] as const) {
+    const part = await prisma.testPart.create({
+      data: {
+        testSectionId: section.id,
+        sourceKey: `writing-task-${taskNumber}`,
+        slot: taskNumber === 1 ? 'WRITING_TASK_1' : 'WRITING_TASK_2',
+        reviewStatus: 'VERIFIED',
+      },
+    });
+    await prisma.stimulus.create({
+      data: {
+        testPartId: part.id,
+        sourceKey: `prompt-${taskNumber}`,
+        type: 'WRITING_PROMPT',
+        displayOrder: 1,
+        plainText: `Write task ${taskNumber}.`,
+        isVisibleToLearner: true,
+        reviewStatus: 'VERIFIED',
+      },
+    });
+    await prisma.questionGroup.create({
+      data: {
+        testPartId: part.id,
+        sourceKey: `group-${taskNumber}`,
+        displayOrder: 1,
+        questionType: taskNumber === 1 ? 'WRITING_TASK_1_ACADEMIC' : 'WRITING_TASK_2_ESSAY',
+        responseKind: 'LONG_TEXT',
+        scoringStrategy: 'RUBRIC',
+        maxMarks: 0,
+        minWordCount: taskNumber === 1 ? 150 : 250,
+        reviewStatus: 'VERIFIED',
+        questions: {
+          create: {
+            stableKey: `writing-${taskNumber}`,
+            displayOrder: 1,
+            maxMarks: 0,
+          },
+        },
+      },
+    });
+  }
+  await prisma.testVersion.update({
+    where: { id: version.id },
+    data: { status: 'PUBLISHED', publishedAt: new Date() },
+  });
+  const blueprint = await prisma.testBlueprint.create({
+    data: {
+      code: `writing-${suffix}`,
+      version: 1,
+      name: 'Writing worker fixture',
+      variant: 'ACADEMIC',
+      status: 'DRAFT',
+      fixedTestVersionId: version.id,
+      slots: {
+        create: [
+          { partSlot: 'WRITING_TASK_1', displayOrder: 1, targetMarks: 0 },
+          { partSlot: 'WRITING_TASK_2', displayOrder: 2, targetMarks: 0 },
+        ],
+      },
+    },
+  });
+  await prisma.testBlueprint.update({
+    where: { id: blueprint.id },
+    data: { status: 'PUBLISHED', publishedAt: new Date() },
+  });
+  const product = await prisma.product.create({
+    data: {
+      code: `writing-${suffix}`,
+      tier: 'TIER_2_DIAGNOSTIC',
+      name: 'Writing worker fixture',
+      priceMinor: 100,
+      maximumAttempts: 3,
+      blueprints: { create: { blueprintId: blueprint.id } },
+    },
+  });
+  const entitlement = await prisma.entitlement.create({
+    data: {
+      userId: user.id,
+      productId: product.id,
+      status: 'ACTIVE',
+      startsAt: new Date(Date.now() - 60_000),
+      maximumAttempts: 3,
+    },
+  });
+
+  const createSubmittedRun = async () => {
+    const attempt = await createAuthenticatedAttempt({
+      userId: user.id,
+      entitlementId: entitlement.id,
+      blueprintId: blueprint.id,
+      mode: 'PRACTICE',
+    });
+    const ordered = [...attempt.questions].sort((left, right) => left.partOrder - right.partOrder);
+    await Promise.all(ordered.map((question, index) => prisma.response.update({
+      where: { attemptQuestionId: question.id },
+      data: { answer: `candidate response for task ${index + 1}` },
+    })));
+    await prisma.assessmentAttempt.update({
+      where: { id: attempt.id },
+      data: { state: 'ACTIVE', startedAt: new Date(), expiresAt: new Date(Date.now() + 3_600_000) },
+    });
+    const submitted = await submitAndGradeObjectiveAttempt(attempt.id, user.id);
+    assert.ok(submitted.writingGradingRunId);
+    return { attemptId: attempt.id, gradingRunId: submitted.writingGradingRunId };
+  };
+
+  const deterministicGrader = async (tasks: Array<{ taskNumber: 1 | 2 }>) => ({
+    writingBand: 6.5,
+    taskResults: tasks.map((task) => ({
+      taskNumber: task.taskNumber,
+      taskAchievementOrResponse: { band: 6.5, rationale: 'Task response is sufficiently developed for this fixture.', evidence: ['candidate'] },
+      coherenceAndCohesion: { band: 6.5, rationale: 'Organisation is sufficiently clear for this fixture.', evidence: [] },
+      lexicalResource: { band: 6.5, rationale: 'Vocabulary is sufficiently controlled for this fixture.', evidence: [] },
+      grammaticalRangeAndAccuracy: { band: 6.5, rationale: 'Grammar is sufficiently controlled for this fixture.', evidence: [] },
+      strengths: ['Clear response'],
+      priorityActions: ['Develop support'],
+      confidence: 'HIGH' as const,
+      wordCount: 5,
+      minimumWordCount: task.taskNumber === 1 ? 150 : 250,
+      underLength: true,
+      taskBand: 6.5,
+    })),
+    provider: 'google' as const,
+    models: ['fixture-model'],
+    promptVersion: 'writing-practice-v1' as const,
+    rawResponses: ['{"fixture":true}'],
+    usageMetadata: [null],
+  });
+
+  const first = await createSubmittedRun();
+  assert.deepEqual(await processWritingGradingRun(first.gradingRunId!, deterministicGrader), {
+    status: 'succeeded',
+    writingBand: 6.5,
+  });
+  assert.deepEqual(await processWritingGradingRun(first.gradingRunId!, deterministicGrader), {
+    status: 'already_completed',
+  });
+  assert.equal(await prisma.criterionScore.count({ where: { gradingRunId: first.gradingRunId! } }), 8);
+  assert.equal((await prisma.attemptSkillScore.findUniqueOrThrow({
+    where: { attemptId_skill: { attemptId: first.attemptId, skill: 'WRITING' } },
+  })).band?.toNumber(), 6.5);
+  assert.equal((await prisma.assessmentAttempt.findUniqueOrThrow({ where: { id: first.attemptId } })).state, 'COMPLETED');
+
+  const retry = await createSubmittedRun();
+  await assert.rejects(processWritingGradingRun(retry.gradingRunId!, async () => {
+    throw new Error('TRANSIENT_PROVIDER_FAILURE');
+  }));
+  const queued = await prisma.gradingRun.findUniqueOrThrow({ where: { id: retry.gradingRunId! } });
+  assert.equal(queued.status, 'QUEUED');
+  assert.equal(queued.leaseOwner, null);
+  assert.equal(queued.leaseExpiresAt, null);
+  assert.equal((await processWritingGradingRun(retry.gradingRunId!, deterministicGrader)).status, 'succeeded');
+
+  const expired = await createSubmittedRun();
+  await prisma.gradingRun.update({
+    where: { id: expired.gradingRunId! },
+    data: {
+      status: 'RUNNING',
+      leaseOwner: 'crashed-worker',
+      leaseExpiresAt: new Date(Date.now() - 60_000),
+      lastEnqueuedAt: null,
+    },
+  });
+  const published: string[] = [];
+  const recovered = await recoverWritingGradingRuns(25, async (gradingRunId) => {
+    published.push(gradingRunId);
+  });
+  assert.deepEqual(published, [expired.gradingRunId]);
+  assert.deepEqual(recovered, [{ id: expired.gradingRunId, published: true }]);
+  const recoveredRun = await prisma.gradingRun.findUniqueOrThrow({ where: { id: expired.gradingRunId! } });
+  assert.equal(recoveredRun.status, 'QUEUED');
+  assert.equal(recoveredRun.leaseOwner, null);
+  assert.equal(recoveredRun.leaseExpiresAt, null);
+});

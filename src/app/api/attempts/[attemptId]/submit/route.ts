@@ -4,6 +4,7 @@ import { requireRequestDeviceSlot } from '@/lib/auth/device-slots';
 import { requireRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import prisma from '@/lib/prisma';
+import { publishWritingGradingRun } from '@/lib/qstash/jobs';
 
 export async function POST(
   request: Request,
@@ -27,7 +28,21 @@ export async function POST(
         deviceSlotId: device.id,
       });
     }
-    return noStoreJson(await submitAndGradeObjectiveAttempt(attemptId, user.id));
+    const result = await submitAndGradeObjectiveAttempt(attemptId, user.id);
+    if (result.writingGradingRunId) {
+      try {
+        await publishWritingGradingRun(result.writingGradingRunId);
+      } catch {
+        // The QUEUED GradingRun is durable. Recovery will republish it; a
+        // QStash outage must never roll back submission or objective scores.
+      }
+    }
+    return noStoreJson({
+      attemptId: result.attemptId,
+      state: result.state,
+      scores: result.scores,
+      writingStatus: result.writingGradingRunId ? 'PENDING' : null,
+    });
   } catch (error) {
     return apiError(error, 'ATTEMPT_SUBMISSION_FAILED');
   }

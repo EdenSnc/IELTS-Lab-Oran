@@ -8,6 +8,14 @@ export function noStoreJson(body: unknown, status = 200) {
 
 export function apiError(error: unknown, fallback = 'REQUEST_FAILED') {
   if (error instanceof AuthError) return noStoreJson({ error: error.code }, error.status);
+  if (
+    error instanceof Error
+    && error.name === 'PaymentServiceError'
+    && 'code' in error
+    && 'status' in error
+    && typeof error.code === 'string'
+    && typeof error.status === 'number'
+  ) return noStoreJson({ error: error.code }, error.status);
   if (error instanceof ZodError) return noStoreJson({ error: 'INVALID_REQUEST' }, 400);
   if (error instanceof Error && error.name === 'EntitlementUnavailableError') {
     return noStoreJson({ error: 'ENTITLEMENT_UNAVAILABLE' }, 409);

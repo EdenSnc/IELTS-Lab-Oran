@@ -13,6 +13,7 @@ import {
   type ObjectiveGroup,
 } from '@/lib/grading/objective-scoring-core';
 import { AuthError } from '@/lib/auth/request-user';
+import { writingRunInputHash } from '@/lib/grading/writing-run-core';
 import { hashFrozenManifestPayload, parseFrozenManifestPayload } from './manifest-core';
 
 function normalizationRules(value: unknown): NormalizationRules {
@@ -38,8 +39,12 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
         manifest: true,
         blueprint: { select: { variant: true } },
         skillScores: true,
+        gradingRuns: {
+          where: { skill: 'WRITING', graderKind: 'AI' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
         questions: {
-          where: { skill: { in: ['LISTENING', 'READING'] } },
           include: {
             response: true,
             question: {
@@ -65,6 +70,7 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
           maximumRawScore: score.maximumRawScore,
           band: score.band?.toNumber() ?? null,
         })),
+        writingGradingRunId: attempt.gradingRuns.at(0)?.id ?? null,
       };
     }
     if (attempt.state !== AttemptState.ACTIVE) throw new AuthError('ATTEMPT_NOT_ACTIVE', 409);
@@ -75,9 +81,12 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
     const frozenObjectiveIds = new Set(manifest.questions
       .filter((question) => question.skill === 'LISTENING' || question.skill === 'READING')
       .map((question) => question.questionId));
+    const objectiveQuestions = attempt.questions.filter((question) => (
+      question.skill === 'LISTENING' || question.skill === 'READING'
+    ));
     if (
-      frozenObjectiveIds.size !== attempt.questions.length
-      || attempt.questions.some((question) => !frozenObjectiveIds.has(question.questionId))
+      frozenObjectiveIds.size !== objectiveQuestions.length
+      || objectiveQuestions.some((question) => !frozenObjectiveIds.has(question.questionId))
     ) {
       throw new Error('ATTEMPT_MANIFEST_QUESTION_MISMATCH');
     }
@@ -163,7 +172,6 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
       results.push({ skill, ...scored, band, bandScaleId });
     }
 
-    if (results.length === 0) throw new Error('OBJECTIVE_ATTEMPT_CONTENT_MISSING');
     await transaction.response.updateMany({
       where: { attemptQuestion: { attemptId }, finalizedAt: null },
       data: { finalizedAt: now },
@@ -180,6 +188,45 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
           finalizedAt: now,
         },
       });
+    }
+    const writingQuestions = attempt.questions
+      .filter((question) => question.skill === 'WRITING')
+      .sort((left, right) => left.partOrder - right.partOrder || left.questionOrder - right.questionOrder);
+    if (writingQuestions.length !== 0 && writingQuestions.length !== 2) {
+      throw new Error('WRITING_ATTEMPT_CONTENT_INVALID');
+    }
+    if (results.length === 0 && writingQuestions.length === 0) {
+      throw new Error('GRADABLE_ATTEMPT_CONTENT_MISSING');
+    }
+    let writingGradingRunId: string | null = null;
+    if (writingQuestions.length === 2) {
+      const rubric = await transaction.rubricVersion.findFirst({
+        where: { code: 'IELTS_WRITING_PUBLIC_2023', skill: 'WRITING', status: 'PUBLISHED' },
+        orderBy: { version: 'desc' },
+      });
+      if (!rubric) throw new Error('WRITING_RUBRIC_NOT_CONFIGURED');
+      const inputHash = writingRunInputHash(attempt.id, writingQuestions.map((question, index) => ({
+        attemptQuestionId: question.id,
+        questionId: question.questionId,
+        taskNumber: (index + 1) as 1 | 2,
+        answer: responseText(question.response?.answer),
+      })));
+      const gradingRun = await transaction.gradingRun.upsert({
+        where: { idempotencyKey: `writing:${attempt.id}:writing-practice-v1:${inputHash}` },
+        create: {
+          attemptId: attempt.id,
+          rubricVersionId: rubric.id,
+          skill: 'WRITING',
+          graderKind: 'AI',
+          status: 'QUEUED',
+          provider: 'google',
+          promptVersion: 'writing-practice-v1',
+          idempotencyKey: `writing:${attempt.id}:writing-practice-v1:${inputHash}`,
+          inputHash,
+        },
+        update: {},
+      });
+      writingGradingRunId = gradingRun.id;
     }
     const objectiveOnly = manifest.questions.every((question) => (
       question.skill === 'LISTENING' || question.skill === 'READING'
@@ -204,6 +251,7 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
         maximumRawScore,
         band,
       })),
+      writingGradingRunId,
     };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 }

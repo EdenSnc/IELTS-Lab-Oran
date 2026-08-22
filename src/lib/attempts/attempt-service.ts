@@ -151,7 +151,7 @@ export async function createAuthenticatedAttempt(input: {
         `);
         if (reserved.length !== 1) throw new EntitlementUnavailableError();
 
-        return transaction.assessmentAttempt.create({
+        const attempt = await transaction.assessmentAttempt.create({
           data: {
             userId: input.userId,
             entitlementId: input.entitlementId,
@@ -187,6 +187,16 @@ export async function createAuthenticatedAttempt(input: {
             questions: { include: { response: true } },
           },
         });
+        await transaction.entitlementConsumption.create({
+          data: {
+            entitlementId: input.entitlementId,
+            attemptId: attempt.id,
+            kind: 'RESERVATION',
+            units: 1,
+            idempotencyKey: `attempt:${attempt.id}:reservation`,
+          },
+        });
+        return attempt;
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (error) {
       const retryable = error instanceof Prisma.PrismaClientKnownRequestError

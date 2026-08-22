@@ -178,3 +178,54 @@ test('independent-group mode stays within one source part and satisfies exact ta
   assert.equal(compiled.payload.parts[0].groupIds.length, 2);
   assert.equal(compiled.payload.questions.length, 10);
 });
+
+test('rubric-scored Writing tasks compile with zero raw marks', () => {
+  const rubricBlueprint: AssemblyBlueprint = {
+    ...blueprint,
+    id: uuid(),
+    fixedTestVersionId: null,
+    slots: [{
+      id: uuid(),
+      partSlot: 'WRITING_TASK_1',
+      displayOrder: 1,
+      requiredCount: 1,
+      selectionMode: 'WHOLE_PART',
+      targetMarks: 0,
+    }],
+  };
+  const rubricPart: AssemblyPart = {
+    id: uuid(),
+    testVersionId: uuid(),
+    testVersionContentHash: 'writing-version',
+    testVariant: 'ACADEMIC',
+    sourceYear: 2026,
+    skill: 'WRITING',
+    sectionId: uuid(),
+    sectionTimeLimitSeconds: 3_600,
+    slot: 'WRITING_TASK_1',
+    reviewStatus: 'VERIFIED',
+    stimuliReady: true,
+    shuffleQuestionGroups: false,
+    groups: [{
+      id: uuid(),
+      displayOrder: 1,
+      reviewStatus: 'VERIFIED',
+      scoringStrategy: 'RUBRIC',
+      maxMarks: 0,
+      independent: false,
+      shuffleQuestions: false,
+      shuffleOptions: false,
+      options: null,
+      answerKey: null,
+      questions: [{ id: uuid(), stableKey: 'writing-task-1', displayOrder: 1, maxMarks: 0 }],
+    }],
+  };
+
+  const compiled = compileAttemptManifest({
+    blueprint: rubricBlueprint,
+    candidates: [rubricPart],
+    seed: 'writing-rubric',
+  });
+  assert.equal(compiled.payload.questions[0].maxMarks, 0);
+  parseFrozenManifestPayload(JSON.parse(JSON.stringify(compiled.payload)));
+});

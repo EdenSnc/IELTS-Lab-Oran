@@ -923,16 +923,17 @@ model AssessmentAttempt {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  user                User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
-  blueprint           TestBlueprint          @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
-  entitlement         Entitlement?           @relation(fields: [entitlementId], references: [id], onDelete: Restrict)
-  questions           AttemptQuestion[]
-  gradingRuns         GradingRun[]
-  skillScores         AttemptSkillScore[]
-  manifest            AttemptManifest?
-  report              LearnerReport?
-  speakingAppointment SpeakingAppointment?
-  executionLease      AttemptExecutionLease?
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  blueprint               TestBlueprint            @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
+  entitlement             Entitlement?             @relation(fields: [entitlementId], references: [id], onDelete: Restrict)
+  questions               AttemptQuestion[]
+  gradingRuns             GradingRun[]
+  skillScores             AttemptSkillScore[]
+  manifest                AttemptManifest?
+  report                  LearnerReport?
+  speakingAppointment     SpeakingAppointment?
+  executionLease          AttemptExecutionLease?
+  entitlementConsumptions EntitlementConsumption[]
 
   @@index([userId, state, createdAt])
   @@index([blueprintId])
@@ -1305,28 +1306,33 @@ model BandScale {
 }
 
 model GradingRun {
-  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  attemptId       String           @db.Uuid
-  rubricVersionId String?          @db.Uuid
-  skill           Skill
-  graderKind      GraderKind
-  status          GradingRunStatus @default(QUEUED)
-  provider        String?
-  model           String?
-  promptVersion   String?
-  idempotencyKey  String           @unique
-  inputHash       String
-  output          Json?
-  errorCode       String?
-  errorMessage    String?          @db.Text
-  isFinal         Boolean          @default(false)
-  leaseOwner      String?
-  leaseExpiresAt  DateTime?
-  runAttempt      Int              @default(0)
-  startedAt       DateTime?
-  completedAt     DateTime?
-  finalizedAt     DateTime?
-  createdAt       DateTime         @default(now())
+  id               String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId        String           @db.Uuid
+  rubricVersionId  String?          @db.Uuid
+  skill            Skill
+  graderKind       GraderKind
+  status           GradingRunStatus @default(QUEUED)
+  provider         String?
+  model            String?
+  promptVersion    String?
+  idempotencyKey   String           @unique
+  inputHash        String
+  output           Json?
+  rawOutput        String?          @db.Text
+  usageMetadata    Json?
+  errorCode        String?
+  errorMessage     String?          @db.Text
+  isFinal          Boolean          @default(false)
+  leaseOwner       String?
+  leaseExpiresAt   DateTime?
+  runAttempt       Int              @default(0)
+  enqueueAttempt   Int              @default(0)
+  lastEnqueuedAt   DateTime?
+  lastEnqueueError String?          @db.Text
+  startedAt        DateTime?
+  completedAt      DateTime?
+  finalizedAt      DateTime?
+  createdAt        DateTime         @default(now())
 
   attempt             AssessmentAttempt         @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   rubricVersion       RubricVersion?            @relation(fields: [rubricVersionId], references: [id], onDelete: Restrict)
@@ -1451,6 +1457,14 @@ enum EntitlementStatus {
   @@schema("app_private")
 }
 
+enum EntitlementConsumptionKind {
+  RESERVATION
+  REVERSAL
+  ADJUSTMENT
+
+  @@schema("app_private")
+}
+
 model Product {
   id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code            String      @unique
@@ -1514,6 +1528,8 @@ model PaymentAttempt {
   provider              PaymentProvider
   providerCheckoutId    String?
   providerTransactionId String?
+  liveMode              Boolean         @default(false)
+  requestHash           String
   status                PaymentStatus   @default(PENDING)
   amountMinor           Int
   currency              String          @default("DZD") @db.Char(3)
@@ -1565,13 +1581,35 @@ model Entitlement {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
-  user     User                @relation(fields: [userId], references: [id], onDelete: Restrict)
-  product  Product             @relation(fields: [productId], references: [id], onDelete: Restrict)
-  order    Order?              @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  attempts AssessmentAttempt[]
+  user         User                     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  product      Product                  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order        Order?                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  attempts     AssessmentAttempt[]
+  consumptions EntitlementConsumption[]
 
+  @@unique([orderId])
   @@index([userId, status, endsAt])
   @@index([productId])
-  @@index([orderId])
+  @@schema("app_private")
+}
+
+model EntitlementConsumption {
+  id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entitlementId  String                     @db.Uuid
+  attemptId      String?                    @unique @db.Uuid
+  kind           EntitlementConsumptionKind
+  units          Int
+  idempotencyKey String                     @unique
+  reversalOfId   String?                    @unique @db.Uuid
+  reason         String?
+  createdAt      DateTime                   @default(now())
+
+  entitlement Entitlement             @relation(fields: [entitlementId], references: [id], onDelete: Restrict)
+  attempt     AssessmentAttempt?      @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+  reversalOf  EntitlementConsumption? @relation("EntitlementConsumptionReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy  EntitlementConsumption? @relation("EntitlementConsumptionReversal")
+
+  @@index([entitlementId, createdAt])
+  @@index([kind, createdAt])
   @@schema("app_private")
 }

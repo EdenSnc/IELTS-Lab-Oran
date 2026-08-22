@@ -181,6 +181,9 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
   assert.ok(attempt.questions[0].response);
   assert.ok(!/answerKey|acceptedSets|answersByStableKey|encryptedPayload/.test(JSON.stringify(attempt.manifest?.payload)));
   assert.equal((await prisma.entitlement.findUniqueOrThrow({ where: { id: entitlement.id } })).attemptsUsed, 1);
+  assert.equal(await prisma.entitlementConsumption.count({
+    where: { entitlementId: entitlement.id, attemptId: attempt.id, kind: 'RESERVATION' },
+  }), 1);
 
   const deviceResults = await Promise.allSettled([
     enrollDeviceSlot(user.id, 'First browser'),

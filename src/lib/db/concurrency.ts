@@ -68,7 +68,7 @@ export async function reserveEntitlementAndCreateAttempt(input: StartAttemptInpu
           throw new EntitlementUnavailableError();
         }
 
-        return transaction.assessmentAttempt.create({
+        const attempt = await transaction.assessmentAttempt.create({
           data: {
             userId: input.userId,
             entitlementId: input.entitlementId,
@@ -80,6 +80,16 @@ export async function reserveEntitlementAndCreateAttempt(input: StartAttemptInpu
             state: AttemptState.DRAFT,
           },
         });
+        await transaction.entitlementConsumption.create({
+          data: {
+            entitlementId: input.entitlementId,
+            attemptId: attempt.id,
+            kind: 'RESERVATION',
+            units: 1,
+            idempotencyKey: `attempt:${attempt.id}:reservation`,
+          },
+        });
+        return attempt;
       }, {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       });

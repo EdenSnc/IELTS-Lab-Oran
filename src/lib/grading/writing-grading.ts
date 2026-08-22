@@ -28,10 +28,10 @@ const modelAssessmentSchema = z.object({
   tasks: z.array(taskAssessmentSchema).length(2),
 });
 
-type ModelAssessment = z.infer<typeof modelAssessmentSchema>;
+export type ModelAssessment = z.infer<typeof modelAssessmentSchema>;
 type Criterion = z.infer<typeof criterionSchema>;
 
-type WritingTaskResult = z.infer<typeof taskAssessmentSchema> & {
+export type WritingTaskResult = z.infer<typeof taskAssessmentSchema> & {
   wordCount: number;
   minimumWordCount: number;
   underLength: boolean;
@@ -44,7 +44,7 @@ export type WritingGradeResult = {
   detailAccess: false;
 };
 
-type WritingTaskInput = {
+export type WritingTaskInput = {
   taskNumber: 1 | 2;
   prompt: string;
   answer: string;
@@ -221,7 +221,8 @@ async function onePass(
           responseSchema: z.toJSONSchema(modelAssessmentSchema),
         },
       });
-      const parsed = modelAssessmentSchema.parse(JSON.parse(response.text || '{}'));
+      const rawText = response.text || '';
+      const parsed = modelAssessmentSchema.parse(JSON.parse(rawText || '{}'));
       parsed.tasks.sort((left, right) => left.taskNumber - right.taskNumber);
       if (parsed.tasks[0]?.taskNumber !== 1 || parsed.tasks[1]?.taskNumber !== 2) {
         throw new Error('INVALID_WRITING_TASK_ORDER');
@@ -241,7 +242,12 @@ async function onePass(
           criterion.evidence = criterion.evidence.filter((quote) => answer.includes(quote));
         });
       });
-      return { model, assessment: parsed };
+      return {
+        model,
+        assessment: parsed,
+        rawText,
+        usageMetadata: response.usageMetadata ?? null,
+      };
     } catch (error) {
       lastError = error;
     }
@@ -278,11 +284,22 @@ export async function gradeWritingAnswers(input: {
   testVersionId: string;
   answers: { task1: string; task2: string };
 }): Promise<WritingGradeResult> {
+  const tasks = await loadWritingTasks(input.testVersionId, input.answers);
+  const detailed = await gradeWritingTasks(tasks);
+  return {
+    testVersionId: input.testVersionId,
+    writingBand: detailed.writingBand,
+    detailAccess: false,
+  };
+}
+
+export async function gradeWritingTasks(tasks: WritingTaskInput[]) {
   const apiKey = process.env.GEMINI_API_KEY;
   const models = configuredModels();
   if (!apiKey || models.length === 0) throw new Error('WRITING_GRADING_NOT_CONFIGURED');
-
-  const tasks = await loadWritingTasks(input.testVersionId, input.answers);
+  if (tasks.length !== 2 || tasks[0].taskNumber !== 1 || tasks[1].taskNumber !== 2) {
+    throw new Error('WRITING_TASKS_MISSING');
+  }
   const client = new GoogleGenAI({ apiKey });
   const completed: Array<Awaited<ReturnType<typeof onePass>>> = [];
   for (let pass = 1; pass <= configuredPasses(); pass += 1) {
@@ -306,8 +323,12 @@ export async function gradeWritingAnswers(input: {
     (taskResults[0].taskBand + (2 * taskResults[1].taskBand)) / 3,
   );
   return {
-    testVersionId: input.testVersionId,
     writingBand,
-    detailAccess: false,
+    taskResults,
+    provider: 'google' as const,
+    models: [...new Set(completed.map((result) => result.model))],
+    promptVersion: 'writing-practice-v1' as const,
+    rawResponses: completed.map((result) => result.rawText),
+    usageMetadata: completed.map((result) => result.usageMetadata),
   };
 }
