@@ -9,6 +9,7 @@ import {
   parseStagedTestPackage,
   type StagedTestPackage,
 } from '../src/lib/content/staging-schema.ts';
+import { certifyCompleteMockPackage } from '../src/lib/content/content-certification.ts';
 
 function stableStringify(value: unknown): string {
   if (Array.isArray(value)) {
@@ -330,11 +331,13 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string) {
                 `Answer-key artifact was not imported: ${group.answerKey.sourceArtifactChecksum}`,
               );
             }
+            const encryptedPayload = encrypt(JSON.stringify(group.answerKey.payload));
             await transaction.answerKey.create({
               data: {
                 questionGroupId: groupRecord.id,
                 sourceArtifactId,
-                encryptedPayload: encrypt(JSON.stringify(group.answerKey.payload)),
+                encryptedPayload,
+                formatVersion: encryptedPayload.startsWith('v2:') ? 2 : 1,
                 sourceType: group.answerKey.sourceType,
                 normalization: json(group.answerKey.normalization),
                 reviewStatus: group.answerKey.reviewStatus,
@@ -366,6 +369,7 @@ async function main() {
   const staged = parseStagedTestPackage(
     JSON.parse(fs.readFileSync(filePath, 'utf8')),
   );
+  certifyCompleteMockPackage(staged);
   const result = await importPackage(staged, path.dirname(filePath));
   console.log(JSON.stringify(result, null, 2));
 }

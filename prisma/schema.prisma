@@ -775,7 +775,7 @@ model AnswerKey {
   questionGroupId  String          @unique @db.Uuid
   sourceArtifactId String?         @db.Uuid
   encryptedPayload String          @db.Text
-  formatVersion    Int             @default(1)
+  formatVersion    Int             @default(2)
   sourceType       AnswerKeySource
   normalization    Json?
   reviewStatus     ReviewStatus    @default(PENDING_REVIEW)

@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "test": "node scripts/run-tests.mjs",
+    "test:certification": "node scripts/run-tests.mjs tests/certification",
     "db:validate": "prisma validate",
     "db:format": "prisma format",
     "test:delivery": "node scripts/run-delivery-smoke.mjs",

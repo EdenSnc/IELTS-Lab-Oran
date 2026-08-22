@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { parseStagedTestPackage } from '../src/lib/content/staging-schema.ts';
+import { certifyCompleteMockPackage } from '../src/lib/content/content-certification.ts';
 
 /**
  * The former seed script wrote obsolete Passage/Track models directly from
@@ -20,6 +21,7 @@ function main() {
   const filePath = path.resolve(process.cwd(), input);
   const payload: unknown = JSON.parse(fs.readFileSync(filePath, 'utf8'));
   const staged = parseStagedTestPackage(payload);
+  certifyCompleteMockPackage(staged);
 
   const partCount = staged.test.sections.reduce(
     (total, section) => total + section.parts.length,

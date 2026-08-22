@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { parseAnswerInstruction } from './answer-instructions';
 
 export const SourceProviderSchema = z.enum([
   'OTHER',
@@ -387,13 +388,34 @@ export const QuestionGroupSchema = z.object({
     completionTypes.has(group.questionType)
     && group.responseKind === 'SHORT_TEXT'
     && group.reviewStatus === 'VERIFIED'
-    && (group.maxWords === undefined || !group.rawAnswerInstruction)
   ) {
-    context.addIssue({
-      code: 'custom',
-      message: 'Verified completion work requires parsed and raw word-limit instructions',
-      path: ['maxWords'],
-    });
+    if (group.maxWords === undefined || !group.rawAnswerInstruction) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Verified completion work requires parsed and raw word-limit instructions',
+        path: ['maxWords'],
+      });
+    } else {
+      try {
+        const parsed = parseAnswerInstruction(group.rawAnswerInstruction);
+        if (
+          parsed.maximumWords !== group.maxWords
+          || parsed.allowNumber !== (group.allowNumbers ?? false)
+        ) {
+          context.addIssue({
+            code: 'custom',
+            message: 'Parsed answer limits do not match the raw instruction',
+            path: ['rawAnswerInstruction'],
+          });
+        }
+      } catch {
+        context.addIssue({
+          code: 'custom',
+          message: 'The raw answer instruction is ambiguous or unsupported',
+          path: ['rawAnswerInstruction'],
+        });
+      }
+    }
   }
 
   if (writingTypes.has(group.questionType) && group.minWordCount === undefined) {

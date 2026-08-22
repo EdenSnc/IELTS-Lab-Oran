@@ -1,31 +1,17 @@
 import 'server-only';
 
-import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { decrypt } from '@/lib/crypto';
-
-const perItemKeySchema = z.object({
-  strategy: z.literal('PER_ITEM_EXACT'),
-  answersByStableKey: z.record(z.string(), z.array(z.string()).min(1)),
-});
-
-const setKeySchema = z.object({
-  strategy: z.literal('UNORDERED_EXACT_SET'),
-  acceptedSets: z.array(z.array(z.string()).min(1)).min(1),
-});
-
-const answerKeySchema = z.discriminatedUnion('strategy', [
-  perItemKeySchema,
-  setKeySchema,
-]);
-
-type Normalization = {
-  trimOuterWhitespace?: boolean;
-  collapseInternalWhitespace?: boolean;
-  caseSensitive?: boolean;
-  unicodeForm?: 'NFC' | 'NFD' | 'NFKC' | 'NFKD';
-  punctuationSensitive?: boolean;
-};
+import {
+  normalizationSchema,
+  objectiveAnswerKeySchema,
+  rawScoreToBand,
+  roundToHalf,
+  scoreObjectiveGroups,
+  validateBandThresholds,
+  type NormalizationRules,
+  type ObjectiveGroup,
+} from './objective-scoring-core';
 
 export type ObjectiveSkillResult = {
   skill: 'LISTENING' | 'READING';
@@ -43,59 +29,8 @@ export type ObjectiveGradeResult = {
   detailAccess: false;
 };
 
-function normalizeAnswer(value: string, rules: Normalization) {
-  let normalized = value;
-  if (rules.trimOuterWhitespace !== false) normalized = normalized.trim();
-  // Whitespace is presentation, not part of an IELTS answer. A learner must
-  // not lose a mark for an accidental double space around an otherwise exact
-  // multi-word response.
-  normalized = normalized.replace(/\s+/g, ' ');
-  normalized = normalized.normalize(rules.unicodeForm ?? 'NFC');
-  if (rules.punctuationSensitive === false) {
-    normalized = normalized.replace(/[^\p{L}\p{N}\s]/gu, '');
-  }
-  if (rules.caseSensitive === false) normalized = normalized.toLocaleLowerCase('en');
-  return normalized;
-}
-
-function normalizationRules(value: unknown): Normalization {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
-  return value as Normalization;
-}
-
-const LISTENING_BANDS: Array<[number, number]> = [
-  [39, 9], [37, 8.5], [35, 8], [32, 7.5], [30, 7], [26, 6.5],
-  [23, 6], [18, 5.5], [16, 5], [13, 4.5], [11, 4], [8, 3.5],
-  [6, 3], [4, 2.5], [2, 2], [1, 1],
-];
-
-const ACADEMIC_READING_BANDS: Array<[number, number]> = [
-  [39, 9], [37, 8.5], [35, 8], [33, 7.5], [30, 7], [27, 6.5],
-  [23, 6], [19, 5.5], [15, 5], [13, 4.5], [10, 4], [8, 3.5],
-  [6, 3], [4, 2.5], [2, 2], [1, 1],
-];
-
-const GENERAL_READING_BANDS: Array<[number, number]> = [
-  [40, 9], [39, 8.5], [37, 8], [36, 7.5], [34, 7], [32, 6.5],
-  [30, 6], [27, 5.5], [23, 5], [19, 4.5], [15, 4], [12, 3.5],
-  [9, 3], [6, 2.5], [3, 2], [1, 1],
-];
-
-export function rawScoreToEstimatedBand(
-  skill: 'LISTENING' | 'READING',
-  rawScore: number,
-  variant: 'ACADEMIC' | 'GENERAL_TRAINING' | 'UNIVERSAL' = 'ACADEMIC',
-) {
-  const thresholds = skill === 'LISTENING'
-    ? LISTENING_BANDS
-    : variant === 'GENERAL_TRAINING'
-      ? GENERAL_READING_BANDS
-      : ACADEMIC_READING_BANDS;
-  return thresholds.find(([minimum]) => rawScore >= minimum)?.[1] ?? 0;
-}
-
-function roundToHalf(value: number) {
-  return Math.round(value * 2) / 2;
+function normalizationRules(value: unknown): NormalizationRules {
+  return normalizationSchema.parse(value ?? {});
 }
 
 export async function gradeVerifiedObjectiveAnswers(input: {
@@ -154,9 +89,7 @@ export async function gradeVerifiedObjectiveAnswers(input: {
   for (const section of version.sections) {
     if (section.skill !== 'LISTENING' && section.skill !== 'READING') continue;
     const submitted = input.answers[section.skill.toLowerCase() as 'listening' | 'reading'];
-    let rawScore = 0;
-    let maximumRawScore = 0;
-    let answered = 0;
+    const groups: ObjectiveGroup[] = [];
 
     for (const part of section.parts) {
       for (const group of part.questionGroups) {
@@ -167,63 +100,49 @@ export async function gradeVerifiedObjectiveAnswers(input: {
         ) {
           throw new Error('UNVERIFIED_ANSWER_KEY');
         }
-        const key = answerKeySchema.parse(
+        const key = objectiveAnswerKeySchema.parse(
           JSON.parse(decrypt(keyRecord.encryptedPayload)),
         );
-        const rules = normalizationRules(keyRecord.normalization);
-        maximumRawScore += group.questions.reduce(
-          (total, question) => total + question.maxMarks,
-          0,
-        );
-
-        if (key.strategy === 'PER_ITEM_EXACT') {
-          for (const question of group.questions) {
-            if (question.sourceNumber === null) continue;
-            const response = submitted[String(question.sourceNumber)] ?? '';
-            if (response.trim()) answered += 1;
-            const normalizedResponse = normalizeAnswer(response, rules);
-            const accepted = key.answersByStableKey[question.stableKey] ?? [];
-            if (
-              normalizedResponse
-              && accepted.some(
-                (candidate) => normalizeAnswer(candidate, rules) === normalizedResponse,
-              )
-            ) {
-              rawScore += question.maxMarks;
-            }
-          }
-          continue;
+        if (group.questions.some((question) => question.sourceNumber === null)) {
+          throw new Error('OBJECTIVE_QUESTION_NUMBER_MISSING');
         }
-
-        const responses = group.questions.flatMap((question) => {
-          if (question.sourceNumber === null) return [];
-          const response = submitted[String(question.sourceNumber)] ?? '';
-          if (response.trim()) answered += 1;
-          return response.trim() ? [normalizeAnswer(response, rules)] : [];
+        groups.push({
+          maxMarks: group.maxMarks,
+          normalization: normalizationRules(keyRecord.normalization),
+          answerKey: key,
+          questions: group.questions.map((question) => ({
+            stableKey: question.stableKey,
+            sourceNumber: question.sourceNumber as number,
+            maxMarks: question.maxMarks,
+          })),
         });
-        const uniqueResponses = new Set(responses);
-        const bestSetScore = key.acceptedSets.reduce((best, candidate) => {
-          const accepted = new Set(
-            candidate.map((value) => normalizeAnswer(value, rules)),
-          );
-          const score = new Set(
-            [...uniqueResponses].filter((response) => accepted.has(response)),
-          ).size;
-          return Math.max(best, score);
-        }, 0);
-        rawScore += Math.min(group.maxMarks, bestSetScore);
       }
     }
 
-    if (maximumRawScore !== 40) {
-      throw new Error(`INVALID_MAXIMUM_${section.skill}_${maximumRawScore}`);
+    const scored = scoreObjectiveGroups({ groups, answers: submitted });
+    const scaleVariant = section.skill === 'LISTENING'
+      ? 'UNIVERSAL' as const
+      : version.test.variant;
+    const scale = await prisma.bandScale.findFirst({
+      where: {
+        skill: section.skill,
+        variant: scaleVariant,
+        status: 'PUBLISHED',
+        OR: [{ effectiveFrom: null }, { effectiveFrom: { lte: new Date() } }],
+      },
+      orderBy: { version: 'desc' },
+      select: { thresholds: true },
+    });
+    if (!scale) throw new Error(`BAND_SCALE_NOT_FOUND_${section.skill}_${scaleVariant}`);
+    const thresholds = validateBandThresholds(scale.thresholds);
+
+    if (scored.maximumRawScore !== 40) {
+      throw new Error(`INVALID_MAXIMUM_${section.skill}_${scored.maximumRawScore}`);
     }
     results.push({
       skill: section.skill,
-      rawScore,
-      maximumRawScore,
-      answered,
-      band: rawScoreToEstimatedBand(section.skill, rawScore, version.test.variant),
+      ...scored,
+      band: rawScoreToBand(scored.rawScore, thresholds),
       bandIsEstimate: true,
     });
   }
