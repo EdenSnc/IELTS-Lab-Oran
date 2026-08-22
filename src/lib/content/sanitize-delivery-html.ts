@@ -2,7 +2,36 @@ import 'server-only';
 
 import { load } from 'cheerio';
 
-const BLOCKED_ELEMENTS = 'script,iframe,object,embed,link,meta,base,form,button,input,textarea,select';
+const BLOCKED_ELEMENTS = [
+  'script',
+  'style',
+  'iframe',
+  'object',
+  'embed',
+  'link',
+  'meta',
+  'base',
+  'form',
+  'button',
+  'input',
+  'textarea',
+  'select',
+  'svg',
+  'math',
+  'template',
+  'noscript',
+].join(',');
+const BLOCKED_URL_ATTRIBUTES = new Set([
+  'action',
+  'background',
+  'cite',
+  'data',
+  'formaction',
+  'ping',
+  'poster',
+  'srcdoc',
+  'srcset',
+]);
 const SAFE_STYLE_PROPERTIES = new Set([
   'position',
   'aspect-ratio',
@@ -44,7 +73,7 @@ export function sanitizeDeliveryHtml(html: string | null) {
     if (!('attribs' in element)) return;
     for (const [rawName, rawValue] of Object.entries(element.attribs)) {
       const name = rawName.toLowerCase();
-      if (name.startsWith('on') || name === 'srcdoc' || name === 'formaction') {
+      if (name.startsWith('on') || name.includes(':') || BLOCKED_URL_ATTRIBUTES.has(name)) {
         $(element).removeAttr(rawName);
         continue;
       }

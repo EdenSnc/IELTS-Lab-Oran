@@ -52,6 +52,7 @@ test-db.ts
 
 *.md
 !docs/SPEAKING_SETUP.md
+!docs/runbooks/PRODUCTION_LAUNCH.md
 
 # Private/generated content and local transfer files
 /content-packages/
