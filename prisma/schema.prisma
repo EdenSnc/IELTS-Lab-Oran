@@ -246,6 +246,8 @@ model User {
   updatedAt    DateTime      @updatedAt
 
   accessSessions     AccessSession[]
+  deviceSlots        DeviceSlot[]
+  executionLeases    AttemptExecutionLease[]
   consents           ConsentRecord[]
   attempts           AssessmentAttempt[]
   orders             Order[]
@@ -280,6 +282,29 @@ model AccessSession {
 
   @@index([userId, state, lastSeenAt])
   @@index([lastSeenAt])
+  @@schema("app_private")
+}
+
+model DeviceSlot {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String    @db.Uuid
+  slotNumber       Int
+  tokenHash        String
+  label            String?
+  enrolledAt       DateTime  @default(now())
+  lastSeenAt       DateTime  @default(now())
+  revokedAt        DateTime?
+  lastReplacedAt   DateTime?
+  replacementCount Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leases AttemptExecutionLease[]
+
+  @@unique([userId, slotNumber])
+  @@unique([userId, tokenHash])
+  @@index([userId, revokedAt, lastSeenAt])
   @@schema("app_private")
 }
 
@@ -577,20 +602,22 @@ enum QuestionAssetRole {
 }
 
 model Test {
-  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sourceId   String      @db.Uuid
-  externalId String?
-  title      String
-  variant    TestVariant
-  sourceYear Int?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sourceId     String      @db.Uuid
+  externalId   String?
+  title        String
+  variant      TestVariant
+  sourceYear   Int?
+  isPublicDemo Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   source   ContentSource @relation(fields: [sourceId], references: [id], onDelete: Restrict)
   versions TestVersion[]
 
   @@unique([sourceId, externalId])
   @@index([variant, sourceYear])
+  @@index([isPublicDemo])
   @@schema("app_private")
 }
 
@@ -606,8 +633,9 @@ model TestVersion {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  test     Test          @relation(fields: [testId], references: [id], onDelete: Restrict)
-  sections TestSection[]
+  test            Test            @relation(fields: [testId], references: [id], onDelete: Restrict)
+  sections        TestSection[]
+  fixedBlueprints TestBlueprint[]
 
   @@unique([testId, version])
   @@unique([testId, contentHash])
@@ -842,15 +870,18 @@ model TestBlueprint {
   status                   PublicationStatus @default(DRAFT)
   defaultMinimumSourceYear Int?
   allowArchiveByDefault    Boolean           @default(false)
+  fixedTestVersionId       String?           @db.Uuid
   createdAt                DateTime          @default(now())
   publishedAt              DateTime?
 
-  slots    BlueprintSlot[]
-  attempts AssessmentAttempt[]
-  products ProductBlueprint[]
+  fixedTestVersion TestVersion?        @relation(fields: [fixedTestVersionId], references: [id], onDelete: Restrict)
+  slots            BlueprintSlot[]
+  attempts         AssessmentAttempt[]
+  products         ProductBlueprint[]
 
   @@unique([code, version])
   @@index([status, variant])
+  @@index([fixedTestVersionId])
   @@schema("app_private")
 }
 
@@ -879,6 +910,7 @@ model AssessmentAttempt {
   blueprintId       String       @db.Uuid
   entitlementId     String?      @db.Uuid
   state             AttemptState @default(DRAFT)
+  mode              AttemptMode  @default(STRICT)
   randomSeed        String
   minimumSourceYear Int?
   archiveIncluded   Boolean      @default(false)
@@ -891,20 +923,49 @@ model AssessmentAttempt {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  user                User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
-  blueprint           TestBlueprint        @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
-  entitlement         Entitlement?         @relation(fields: [entitlementId], references: [id], onDelete: Restrict)
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  blueprint           TestBlueprint          @relation(fields: [blueprintId], references: [id], onDelete: Restrict)
+  entitlement         Entitlement?           @relation(fields: [entitlementId], references: [id], onDelete: Restrict)
   questions           AttemptQuestion[]
   gradingRuns         GradingRun[]
   skillScores         AttemptSkillScore[]
   manifest            AttemptManifest?
   report              LearnerReport?
   speakingAppointment SpeakingAppointment?
+  executionLease      AttemptExecutionLease?
 
   @@index([userId, state, createdAt])
   @@index([blueprintId])
   @@index([expiresAt])
   @@index([entitlementId])
+  @@schema("app_private")
+}
+
+model AttemptExecutionLease {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attemptId      String   @unique @db.Uuid
+  userId         String   @db.Uuid
+  deviceSlotId   String   @db.Uuid
+  leaseTokenHash String   @unique
+  expiresAt      DateTime
+  heartbeatAt    DateTime @default(now())
+  version        Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  attempt    AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceSlot DeviceSlot        @relation(fields: [deviceSlotId], references: [id], onDelete: Restrict)
+
+  @@index([userId, expiresAt])
+  @@index([deviceSlotId, expiresAt])
+  @@schema("app_private")
+}
+
+enum AttemptMode {
+  STRICT
+  PRACTICE
+
   @@schema("app_private")
 }
 
@@ -1308,7 +1369,7 @@ model AttemptSkillScore {
   skill           Skill
   rawScore        Int?
   maximumRawScore Int?
-  band            Decimal  @db.Decimal(2, 1)
+  band            Decimal? @db.Decimal(2, 1)
   finalizedAt     DateTime @default(now())
 
   attempt    AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)

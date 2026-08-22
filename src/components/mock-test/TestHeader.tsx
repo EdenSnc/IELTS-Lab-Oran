@@ -48,7 +48,7 @@ function NotesIcon() {
   );
 }
 
-export default function TestHeader() {
+export default function TestHeader({ onFinish }: { onFinish?: () => void | Promise<void> }) {
   const timeLeft = useTestStore((state) => state.timeLeft);
   const setTimeLeft = useTestStore((state) => state.setTimeLeft);
   const isHidden = useTestStore((state) => state.isHidden);
@@ -79,8 +79,11 @@ export default function TestHeader() {
       const state = useTestStore.getState();
       state.setTimeLeft(0);
       if (state.activeSection === 'listening') stopListeningAudio();
-      if (state.activeSection) state.completeSection(state.activeSection);
-      state.setTestPhase('instructions');
+      if (onFinish) void onFinish();
+      else {
+        if (state.activeSection) state.completeSection(state.activeSection);
+        state.setTestPhase('instructions');
+      }
     };
     const updateClock = () => {
       const millisecondsLeft = deadlineRef.current - Date.now();
@@ -98,7 +101,7 @@ export default function TestHeader() {
       window.clearTimeout(cutoff);
       document.removeEventListener('visibilitychange', updateClock);
     };
-  }, [setTimeLeft]);
+  }, [onFinish, setTimeLeft]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -239,8 +242,11 @@ export default function TestHeader() {
                 onClick={() => {
                   setShowFinishModal(false);
                   if (activeSection === 'listening') stopListeningAudio();
-                  if (activeSection) useTestStore.getState().completeSection(activeSection);
-                  useTestStore.getState().setTestPhase('instructions');
+                  if (onFinish) void onFinish();
+                  else {
+                    if (activeSection) useTestStore.getState().completeSection(activeSection);
+                    useTestStore.getState().setTestPhase('instructions');
+                  }
                 }}
                 className="ielts-primary-button flex-1"
               >

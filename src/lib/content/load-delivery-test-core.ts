@@ -21,7 +21,7 @@ const PART_ORDER: Record<string, number> = {
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function optionsFromJson(value: unknown): DeliveryOption[] {
+export function optionsFromJson(value: unknown): DeliveryOption[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((candidate) => {
     if (
@@ -36,16 +36,17 @@ function optionsFromJson(value: unknown): DeliveryOption[] {
   });
 }
 
-function rewriteContentAssetUrls(
+export function rewriteContentAssetUrls(
   html: string | null,
   assetIdByStorageKey: Map<string, string>,
+  query = '',
 ) {
   if (!html) return html;
   const rewritten = html.replace(
     /content-asset:\/\/([^"' )>]+)/g,
     (original, storageKey: string) => {
       const assetId = assetIdByStorageKey.get(storageKey);
-      return assetId ? `/api/test-assets/${assetId}` : original;
+      return assetId ? `/api/test-assets/${assetId}${query}` : original;
     },
   );
   return sanitizeDeliveryHtml(rewritten);
@@ -54,10 +55,10 @@ function rewriteContentAssetUrls(
 export async function loadDeliveryTest(testId: string): Promise<DeliveryTest | null> {
   if (testId !== 'test-1' && !UUID_PATTERN.test(testId)) return null;
   const productionStatus = process.env.NODE_ENV === 'production'
-    ? { status: 'PUBLISHED' as const }
+    ? { status: 'PUBLISHED' as const, test: { isPublicDemo: true } }
     : {};
   const where = testId === 'test-1'
-    ? productionStatus
+    ? { status: 'PUBLISHED' as const, test: { isPublicDemo: true } }
     : { id: testId, ...productionStatus };
 
   const version = await prisma.testVersion.findFirst({

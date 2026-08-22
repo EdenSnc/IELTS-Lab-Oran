@@ -48,7 +48,7 @@ function packagePath(packageRoot: string, filename: string) {
   return resolved;
 }
 
-async function importPackage(staged: StagedTestPackage, packageRoot: string) {
+async function importPackage(staged: StagedTestPackage, packageRoot: string, isPublicDemo: boolean) {
   if (!staged.source.externalId || !staged.test.externalId) {
     throw new Error('Database import requires source.externalId and test.externalId');
   }
@@ -181,11 +181,13 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string) {
         title: staged.test.title,
         variant: staged.test.variant,
         sourceYear: staged.test.sourceYear,
+        isPublicDemo,
       },
       update: {
         title: staged.test.title,
         variant: staged.test.variant,
         sourceYear: staged.test.sourceYear,
+        ...(isPublicDemo ? { isPublicDemo: true } : {}),
       },
     });
 
@@ -362,15 +364,16 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string) {
 async function main() {
   const input = process.argv[2];
   if (!input) {
-    throw new Error('Usage: npm run content:import -- <staged-test-package.json>');
+    throw new Error('Usage: npm run content:import -- <staged-test-package.json> [--public-demo]');
   }
+  const isPublicDemo = process.argv.slice(3).includes('--public-demo');
 
   const filePath = path.resolve(process.cwd(), input);
   const staged = parseStagedTestPackage(
     JSON.parse(fs.readFileSync(filePath, 'utf8')),
   );
   certifyCompleteMockPackage(staged);
-  const result = await importPackage(staged, path.dirname(filePath));
+  const result = await importPackage(staged, path.dirname(filePath), isPublicDemo);
   console.log(JSON.stringify(result, null, 2));
 }
 

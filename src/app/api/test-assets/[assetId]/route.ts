@@ -2,6 +2,10 @@ import path from 'node:path';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { fetchPrivateAsset } from '@/lib/content/private-asset-storage';
+import { parseFrozenManifestPayload } from '@/lib/attempts/manifest-core';
+import { requireActiveAttemptDevice } from '@/lib/attempts/execution-lease';
+import { requireRequestDeviceSlot } from '@/lib/auth/device-slots';
+import { requireRequestUser } from '@/lib/auth/request-user';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -28,8 +32,67 @@ export async function GET(
     return NextResponse.json({ error: 'Invalid asset identifier.' }, { status: 400 });
   }
 
-  const asset = await prisma.contentAsset.findUnique({
-    where: { id: assetId },
+  const attemptId = new URL(request.url).searchParams.get('attemptId');
+  let allowedPartIds: string[] | undefined;
+  let allowedGroupIds: string[] | undefined;
+  if (attemptId) {
+    if (!UUID_PATTERN.test(attemptId)) {
+      return NextResponse.json({ error: 'Invalid attempt identifier.' }, { status: 400 });
+    }
+    try {
+      const user = await requireRequestUser(request, ['STUDENT']);
+      const device = await requireRequestDeviceSlot(request, user.id);
+      await requireActiveAttemptDevice({ attemptId, userId: user.id, deviceSlotId: device.id });
+      const manifest = await prisma.attemptManifest.findFirst({
+        where: { attemptId, attempt: { userId: user.id } },
+        select: { payload: true },
+      });
+      if (!manifest) return NextResponse.json({ error: 'Attempt not found.' }, { status: 404 });
+      const payload = parseFrozenManifestPayload(manifest.payload);
+      allowedPartIds = payload.parts.map((part) => part.partId);
+      allowedGroupIds = payload.parts.flatMap((part) => part.groupIds);
+    } catch {
+      return NextResponse.json({ error: 'Asset is unavailable.' }, { status: 404 });
+    }
+  }
+
+  const asset = await prisma.contentAsset.findFirst({
+    where: {
+      id: assetId,
+      ...(attemptId ? {
+        OR: [
+          { stimuli: { some: { testPartId: { in: allowedPartIds } } } },
+          { questionLinks: { some: { questionGroupId: { in: allowedGroupIds } } } },
+        ],
+      } : {
+        OR: [
+          {
+            stimuli: {
+              some: {
+                testPart: {
+                  testSection: {
+                    testVersion: { status: 'PUBLISHED', test: { isPublicDemo: true } },
+                  },
+                },
+              },
+            },
+          },
+          {
+            questionLinks: {
+              some: {
+                questionGroup: {
+                  testPart: {
+                    testSection: {
+                      testVersion: { status: 'PUBLISHED', test: { isPublicDemo: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      }),
+    },
     select: { storageKey: true, mimeType: true },
   });
   if (!asset) {

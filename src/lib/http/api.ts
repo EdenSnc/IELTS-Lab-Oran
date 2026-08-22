@@ -9,6 +9,12 @@ export function noStoreJson(body: unknown, status = 200) {
 export function apiError(error: unknown, fallback = 'REQUEST_FAILED') {
   if (error instanceof AuthError) return noStoreJson({ error: error.code }, error.status);
   if (error instanceof ZodError) return noStoreJson({ error: 'INVALID_REQUEST' }, 400);
+  if (error instanceof Error && error.name === 'EntitlementUnavailableError') {
+    return noStoreJson({ error: 'ENTITLEMENT_UNAVAILABLE' }, 409);
+  }
+  if (error instanceof Error && error.name === 'OptimisticConcurrencyError') {
+    return noStoreJson({ error: 'STALE_RESPONSE_VERSION' }, 409);
+  }
   const code = error instanceof Error ? error.message : fallback;
   const status = code === 'FORBIDDEN' ? 403
     : code === 'JOIN_WINDOW_CLOSED' ? 403

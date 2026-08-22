@@ -1,6 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import {routing} from './i18n/routing';
+import { refreshSupabaseSession } from './lib/supabase/proxy-session';
 
 const handleI18nRouting = createMiddleware(routing);
 
@@ -23,27 +24,30 @@ function alignXDefaultWithEnglish(response: NextResponse) {
   return response;
 }
 
-export default function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const firstSegment = request.nextUrl.pathname.split('/')[1];
   const isLocalizedRoute = routing.locales.some(
     (locale) => locale === firstSegment,
   );
+  let response: NextResponse;
 
   if (!firstSegment) {
     const destination = request.nextUrl.clone();
     destination.pathname = '/en';
-    return NextResponse.redirect(destination, 308);
+    response = NextResponse.redirect(destination, 308);
+  } else if (isLocalizedRoute) {
+    response = alignXDefaultWithEnglish(handleI18nRouting(request));
+  } else if (['api', 'sim', 'speaking'].includes(firstSegment)) {
+    response = NextResponse.next();
+  } else {
+    response = NextResponse.rewrite(new URL('/_not-found', request.url));
   }
 
-  if (isLocalizedRoute) {
-    return alignXDefaultWithEnglish(handleI18nRouting(request));
-  }
-
-  return NextResponse.rewrite(new URL('/_not-found', request.url));
+  return refreshSupabaseSession(request, response);
 }
  
 export const config = {
   matcher: [
-    '/((?!api|sim|speaking|_next|_not-found|_vercel|.*\\..*).*)',
+    '/((?!_next|_not-found|_vercel|.*\\..*).*)',
   ],
 };

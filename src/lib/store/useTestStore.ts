@@ -32,6 +32,7 @@ const emptyNotes = (): TestNoteMap => ({
 });
 
 interface TestState {
+  activeAttemptId: string | null;
   currentQuestionId: number;
   timeLeft: number;
   answers: TestAnswerMap;
@@ -66,12 +67,20 @@ interface TestState {
   setTimeLeft: (seconds: number) => void;
   setObjectiveGradeResult: (result: ObjectiveGradeResult | null) => void;
   setWritingGradeResult: (result: WritingGradeResult | null) => void;
+  hydrateCommercialAttempt: (input: {
+    attemptId: string;
+    answers: TestAnswerMap;
+    markedForReview: ReviewMap;
+    section: IELTSSection;
+    timeLeft: number;
+  }) => void;
   resetTest: () => void;
 }
 
 export const useTestStore = create<TestState>()(
   persist(
     (set) => ({
+      activeAttemptId: null,
       currentQuestionId: 1,
       timeLeft: 3600, // 60 minutes
       answers: emptyAnswers(),
@@ -154,7 +163,20 @@ export const useTestStore = create<TestState>()(
       setTimeLeft: (seconds) => set({ timeLeft: Math.max(0, Math.ceil(seconds)) }),
       setObjectiveGradeResult: (objectiveGradeResult) => set({ objectiveGradeResult }),
       setWritingGradeResult: (writingGradeResult) => set({ writingGradeResult }),
+      hydrateCommercialAttempt: (input) => set({
+        activeAttemptId: input.attemptId,
+        answers: input.answers,
+        markedForReview: input.markedForReview,
+        activeSection: input.section,
+        currentQuestionId: 1,
+        timeLeft: Math.max(0, Math.ceil(input.timeLeft)),
+        testPhase: 'exam',
+        completedSections: { listening: false, reading: false, writing: false },
+        objectiveGradeResult: null,
+        writingGradeResult: null,
+      }),
       resetTest: () => set({
+        activeAttemptId: null,
         currentQuestionId: 1,
         timeLeft: 3600,
         answers: emptyAnswers(),
@@ -183,6 +205,7 @@ export const useTestStore = create<TestState>()(
       // Keep an in-progress attempt recoverable after an accidental refresh or
       // mobile browser eviction. resetTest remains the explicit fresh-start path.
       partialize: (state) => ({
+        activeAttemptId: state.activeAttemptId,
         currentQuestionId: state.currentQuestionId,
         timeLeft: state.timeLeft,
         answers: state.answers,

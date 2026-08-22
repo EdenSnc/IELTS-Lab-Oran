@@ -13,7 +13,13 @@ import StrictDRM from '@/components/mock-test/StrictDRM';
 import NotesSidebar from '@/components/mock-test/NotesSidebar';
 import DiagnosticResults from '@/components/mock-test/DiagnosticResults';
 
-export default function MockTestClient({ test }: { test: DeliveryTest }) {
+export default function MockTestClient({
+  test,
+  onFinish,
+}: {
+  test: DeliveryTest;
+  onFinish?: () => void | Promise<void>;
+}) {
   const testPhase = useTestStore((state) => state.testPhase);
   const activeSection = useTestStore((state) => state.activeSection);
   const textSize = useTestStore((state) => state.textSize);
@@ -74,7 +80,7 @@ export default function MockTestClient({ test }: { test: DeliveryTest }) {
         className="ielts-test-shell relative flex h-[100dvh] w-screen flex-col overflow-hidden bg-white text-black"
         data-color-scheme={colorScheme}
       >
-      <TestHeader />
+      <TestHeader onFinish={onFinish} />
       
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <main className={`flex min-w-0 flex-1 overflow-hidden ${textSizeClass} ${colorClass}`}>
