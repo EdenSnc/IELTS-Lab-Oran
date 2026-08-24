@@ -5,8 +5,8 @@ import { cookies } from 'next/headers';
 import { requireSupabasePublicConfig } from './config';
 
 export async function createSupabaseServerClient() {
-  const config = requireSupabasePublicConfig();
   const cookieStore = await cookies();
+  const config = requireSupabasePublicConfig();
 
   return createServerClient(config.url, config.publishableKey, {
     cookies: {
