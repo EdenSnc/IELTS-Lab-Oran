@@ -199,16 +199,29 @@ export async function createCheckoutForProduct(input: {
   const metadata = chargilyMetadata(checkout.metadata);
   const checkoutUrl = new URL(checkout.checkout_url);
   const providerAmount = chargilyAmountFromMinor(prepared.amountMinor, prepared.currency);
-  if (
-    checkout.livemode !== liveMode
-    || checkout.amount !== providerAmount
-    || checkout.currency.toUpperCase() !== prepared.currency
-    || !metadata
-    || metadata.orderId !== prepared.orderId
-    || metadata.paymentAttemptId !== prepared.paymentAttemptId
-    || checkoutUrl.protocol !== 'https:'
-    || checkoutUrl.hostname !== 'pay.chargily.dz'
-  ) {
+  const responseMismatch = {
+    liveMode: checkout.livemode !== liveMode,
+    amount: checkout.amount !== providerAmount,
+    currency: checkout.currency.toUpperCase() !== prepared.currency,
+    metadata: !metadata,
+    orderMetadata: metadata?.orderId !== prepared.orderId,
+    attemptMetadata: metadata?.paymentAttemptId !== prepared.paymentAttemptId,
+    protocol: checkoutUrl.protocol !== 'https:',
+    hostname: checkoutUrl.hostname !== 'pay.chargily.dz',
+  };
+  if (Object.values(responseMismatch).some(Boolean)) {
+    console.error('Chargily checkout response integrity mismatch', {
+      mismatch: responseMismatch,
+      expected: { liveMode, amount: providerAmount, currency: prepared.currency },
+      received: {
+        liveMode: checkout.livemode,
+        amount: checkout.amount,
+        currency: checkout.currency,
+        metadataShape: Array.isArray(checkout.metadata) ? 'array' : typeof checkout.metadata,
+        protocol: checkoutUrl.protocol,
+        hostname: checkoutUrl.hostname,
+      },
+    });
     await prisma.paymentAttempt.update({
       where: { id: prepared.paymentAttemptId },
       data: { status: 'FAILED', failureCode: 'CHECKOUT_RESPONSE_MISMATCH' },
