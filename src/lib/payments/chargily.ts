@@ -112,6 +112,19 @@ export function chargilyMetadata(value: unknown) {
   return { orderId, paymentAttemptId };
 }
 
+export function normalizeChargilyCheckoutUrl(value: string) {
+  const url = new URL(value);
+  if (
+    (url.protocol !== 'https:' && url.protocol !== 'http:')
+    || url.hostname !== 'pay.chargily.dz'
+    || url.port
+    || url.username
+    || url.password
+  ) return null;
+  url.protocol = 'https:';
+  return url.toString();
+}
+
 export async function createChargilyCheckout(input: {
   amountMinor: number;
   currency: string;

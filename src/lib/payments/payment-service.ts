@@ -10,6 +10,7 @@ import {
   chargilyLiveMode,
   chargilyMetadata,
   createChargilyCheckout,
+  normalizeChargilyCheckoutUrl,
   parseChargilyWebhook,
   sha256,
   verifyChargilySignature,
@@ -198,6 +199,7 @@ export async function createCheckoutForProduct(input: {
 
   const metadata = chargilyMetadata(checkout.metadata);
   const checkoutUrl = new URL(checkout.checkout_url);
+  const normalizedCheckoutUrl = normalizeChargilyCheckoutUrl(checkout.checkout_url);
   const providerAmount = chargilyAmountFromMinor(prepared.amountMinor, prepared.currency);
   const responseMismatch = {
     liveMode: checkout.livemode !== liveMode,
@@ -206,8 +208,7 @@ export async function createCheckoutForProduct(input: {
     metadata: !metadata,
     orderMetadata: metadata?.orderId !== prepared.orderId,
     attemptMetadata: metadata?.paymentAttemptId !== prepared.paymentAttemptId,
-    protocol: checkoutUrl.protocol !== 'https:',
-    hostname: checkoutUrl.hostname !== 'pay.chargily.dz',
+    checkoutUrl: !normalizedCheckoutUrl,
   };
   if (Object.values(responseMismatch).some(Boolean)) {
     console.error('Chargily checkout response integrity mismatch', {
@@ -238,14 +239,14 @@ export async function createCheckoutForProduct(input: {
     },
     data: {
       providerCheckoutId: checkout.id,
-      checkoutUrl: checkout.checkout_url,
+      checkoutUrl: normalizedCheckoutUrl!,
       status: checkout.status === 'processing' ? 'PROCESSING' : 'PENDING',
       failureCode: null,
       failureMessage: null,
     },
   });
   if (persisted.count !== 1) throw new PaymentServiceError('CHECKOUT_PERSISTENCE_CONFLICT', 409);
-  return { ...prepared, checkoutUrl: checkout.checkout_url };
+  return { ...prepared, checkoutUrl: normalizedCheckoutUrl! };
 }
 
 function expectedStatus(eventType: string) {

@@ -104,7 +104,12 @@ export default function AssessmentDashboard({
         body: JSON.stringify({ productCode, locale }),
       });
       const payload = await response.json() as { checkoutUrl?: string; error?: string };
-      if (!response.ok || !payload.checkoutUrl) throw new Error(payload.error ?? 'CHECKOUT_CREATION_FAILED');
+      if (!response.ok || !payload.checkoutUrl) {
+        if (payload.error !== 'CHECKOUT_CREATION_PENDING_RECONCILIATION') {
+          checkoutKeys.current.delete(productCode);
+        }
+        throw new Error(payload.error ?? 'CHECKOUT_CREATION_FAILED');
+      }
       window.location.assign(payload.checkoutUrl);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to open payment.');

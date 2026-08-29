@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   chargilyAmountFromMinor,
   chargilyMetadata,
+  normalizeChargilyCheckoutUrl,
   parseChargilyWebhook,
   verifyChargilySignature,
 } from '../../src/lib/payments/chargily';
@@ -59,6 +60,20 @@ test('Chargily receives whole DZD while platform accounting remains in minor uni
   assert.equal(chargilyAmountFromMinor(390_000, 'DZD'), 3_900);
   assert.throws(() => chargilyAmountFromMinor(390_001, 'DZD'), /CHARGILY_AMOUNT_NOT_WHOLE_DZD/u);
   assert.throws(() => chargilyAmountFromMinor(390_000, 'EUR'), /CHARGILY_CURRENCY_UNSUPPORTED/u);
+});
+
+test('Chargily checkout redirects remain pinned to the secure provider origin', () => {
+  assert.equal(
+    normalizeChargilyCheckoutUrl('http://pay.chargily.dz/test/checkout/example'),
+    'https://pay.chargily.dz/test/checkout/example',
+  );
+  assert.equal(
+    normalizeChargilyCheckoutUrl('https://pay.chargily.dz/test/checkout/example'),
+    'https://pay.chargily.dz/test/checkout/example',
+  );
+  assert.equal(normalizeChargilyCheckoutUrl('https://evil.example/checkout'), null);
+  assert.equal(normalizeChargilyCheckoutUrl('https://pay.chargily.dz.evil.example/checkout'), null);
+  assert.equal(normalizeChargilyCheckoutUrl('https://user@pay.chargily.dz/checkout'), null);
 });
 
 test('stored result access expires at the product entitlement boundary', () => {
