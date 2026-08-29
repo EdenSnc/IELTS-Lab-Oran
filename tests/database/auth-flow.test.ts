@@ -18,11 +18,12 @@ test('local Supabase signup/login maps idempotently to an unprivileged applicati
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const email = `auth-${randomUUID()}@example.invalid`;
+  const whatsapp = `+213${Math.floor(100000000 + Math.random() * 900000000)}`;
   const password = `Valid-${randomUUID()}-Password`;
   const signup = await client.auth.signUp({
     email,
     password,
-    options: { data: { role: 'ADMIN', full_name: 'Integration Learner' } },
+    options: { data: { role: 'ADMIN', full_name: 'Integration Learner', whatsapp } },
   });
   assert.ifError(signup.error);
   assert.ok(signup.data.session?.access_token);
@@ -34,6 +35,7 @@ test('local Supabase signup/login maps idempotently to an unprivileged applicati
   assert.equal(mapped.id, signup.data.user?.id);
   assert.equal(mapped.role, 'STUDENT', 'browser metadata must never assign a privileged role');
   assert.equal(mapped.name, 'Integration Learner');
+  assert.equal(mapped.whatsapp, whatsapp);
 
   await client.auth.signOut();
   const login = await client.auth.signInWithPassword({ email, password });

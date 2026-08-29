@@ -4,6 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient, type User as SupabaseUser } from '@supabase/supabase-js';
 import type { Role, User } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { normalizeE164Phone } from '@/lib/phone';
 import { requireSupabasePublicConfig } from '@/lib/supabase/config';
 
 export class AuthError extends Error {
@@ -78,16 +79,31 @@ function authDisplayName(authUser: SupabaseUser) {
     : undefined;
 }
 
+function authWhatsapp(authUser: SupabaseUser) {
+  const candidate = authUser.user_metadata?.whatsapp;
+  return typeof candidate === 'string' && candidate.trim()
+    ? normalizeE164Phone(candidate.slice(0, 32)) ?? undefined
+    : undefined;
+}
+
 export async function syncApplicationUser(authUser: SupabaseUser) {
   const email = authUser.email?.trim().toLowerCase();
   const name = authDisplayName(authUser);
+  const whatsapp = authWhatsapp(authUser);
+  const whatsappOwner = whatsapp
+    ? await prisma.user.findUnique({ where: { whatsapp }, select: { id: true } })
+    : null;
+  const availableWhatsapp = !whatsappOwner || whatsappOwner.id === authUser.id
+    ? whatsapp
+    : undefined;
 
   return prisma.user.upsert({
     where: { id: authUser.id },
-    create: { id: authUser.id, email, name },
+    create: { id: authUser.id, email, name, whatsapp: availableWhatsapp },
     update: {
       ...(email ? { email } : {}),
       ...(name ? { name } : {}),
+      ...(availableWhatsapp ? { whatsapp: availableWhatsapp } : {}),
     },
   });
 }

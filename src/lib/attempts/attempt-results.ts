@@ -2,6 +2,7 @@ import 'server-only';
 
 import prisma from '@/lib/prisma';
 import { AuthError } from '@/lib/auth/request-user';
+import { resultAccessActive } from './result-access';
 
 export async function loadStoredAttemptResult(attemptId: string, userId: string) {
   const attempt = await prisma.assessmentAttempt.findFirst({
@@ -16,9 +17,13 @@ export async function loadStoredAttemptResult(attemptId: string, userId: string)
         select: { status: true },
       },
       speakingAppointment: { select: { status: true } },
+      entitlement: { select: { endsAt: true } },
     },
   });
   if (!attempt) throw new AuthError('ATTEMPT_NOT_FOUND', 404);
+  if (!resultAccessActive(attempt.entitlement?.endsAt)) {
+    throw new AuthError('ATTEMPT_RESULTS_ACCESS_EXPIRED', 403);
+  }
   if (!attempt.submittedAt && !['GRADING', 'COMPLETED'].includes(attempt.state)) {
     throw new AuthError('ATTEMPT_RESULTS_NOT_AVAILABLE', 409);
   }

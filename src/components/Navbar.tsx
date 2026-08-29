@@ -43,6 +43,15 @@ export default function Navbar() {
           <Link href="/#intake" className="md:hidden text-[11px] font-bold bg-charcoal text-white px-4 py-2 rounded-full hover:bg-crimson transition-all active:scale-95 whitespace-nowrap">
             {t('applyNow')}
           </Link>
+          <Link
+            href="/account"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-gray-100 bg-gray-50 text-charcoal transition-colors hover:border-gray-200 hover:bg-white"
+            aria-label="Your account"
+          >
+            <svg aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0" />
+            </svg>
+          </Link>
           {/* Hamburger - mobile only */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}

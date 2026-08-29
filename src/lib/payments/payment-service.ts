@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma';
 import { CANONICAL_ORIGIN } from '@/lib/seo';
 import {
   ChargilyRequestError,
+  chargilyAmountFromMinor,
   chargilyLiveMode,
   chargilyMetadata,
   createChargilyCheckout,
@@ -115,6 +116,11 @@ export async function createCheckoutForProduct(input: {
           where: { code: input.productCode, active: true },
         });
         if (!product) throw new PaymentServiceError('PRODUCT_NOT_FOUND', 404);
+        try {
+          chargilyAmountFromMinor(product.priceMinor, product.currency);
+        } catch {
+          throw new PaymentServiceError('PRODUCT_PRICE_NOT_SUPPORTED', 409);
+        }
         const hash = requestHash({
           userId: input.userId,
           productId: product.id,
@@ -192,9 +198,10 @@ export async function createCheckoutForProduct(input: {
 
   const metadata = chargilyMetadata(checkout.metadata);
   const checkoutUrl = new URL(checkout.checkout_url);
+  const providerAmount = chargilyAmountFromMinor(prepared.amountMinor, prepared.currency);
   if (
     checkout.livemode !== liveMode
-    || checkout.amount !== prepared.amountMinor
+    || checkout.amount !== providerAmount
     || checkout.currency.toUpperCase() !== prepared.currency
     || !metadata
     || metadata.orderId !== prepared.orderId
@@ -285,9 +292,9 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
       payment.id !== metadata.paymentAttemptId
       || payment.orderId !== metadata.orderId
       || payment.liveMode !== event.liveMode
-      || payment.amountMinor !== event.data.amount
+      || chargilyAmountFromMinor(payment.amountMinor, payment.currency) !== event.data.amount
       || payment.currency !== event.data.currency.toUpperCase()
-      || payment.order.amountMinor !== event.data.amount
+      || chargilyAmountFromMinor(payment.order.amountMinor, payment.order.currency) !== event.data.amount
       || payment.order.currency !== event.data.currency.toUpperCase()
     ) throw new PaymentServiceError('PAYMENT_WEBHOOK_MISMATCH', 409);
 

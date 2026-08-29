@@ -69,6 +69,19 @@ export function sha256(value: string) {
   return createHash('sha256').update(value).digest('hex');
 }
 
+/**
+ * The platform stores money in minor units, while Chargily Pay V2 accepts
+ * whole DZD amounts. Keep the conversion at the provider boundary so order
+ * and entitlement accounting remains integer/minor-unit based internally.
+ */
+export function chargilyAmountFromMinor(amountMinor: number, currency: string) {
+  if (currency.toUpperCase() !== 'DZD') throw new Error('CHARGILY_CURRENCY_UNSUPPORTED');
+  if (!Number.isSafeInteger(amountMinor) || amountMinor <= 0 || amountMinor % 100 !== 0) {
+    throw new Error('CHARGILY_AMOUNT_NOT_WHOLE_DZD');
+  }
+  return amountMinor / 100;
+}
+
 export function verifyChargilySignature(rawBody: string, signature: string | null) {
   if (!signature || !/^[0-9a-f]{64}$/iu.test(signature)) return false;
   const expected = createHmac('sha256', secretKey()).update(rawBody).digest();
@@ -110,6 +123,7 @@ export async function createChargilyCheckout(input: {
   orderId: string;
   paymentAttemptId: string;
 }) {
+  const amount = chargilyAmountFromMinor(input.amountMinor, input.currency);
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl()}/checkouts`, {
@@ -119,7 +133,7 @@ export async function createChargilyCheckout(input: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: input.amountMinor,
+        amount,
         currency: input.currency.toLowerCase(),
         success_url: input.successUrl,
         failure_url: input.failureUrl,

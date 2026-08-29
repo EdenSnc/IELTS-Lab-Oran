@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import SignOutButton from '@/components/auth/SignOutButton';
 import DeviceManager from '@/components/auth/DeviceManager';
 import AssessmentDashboard from '@/components/account/AssessmentDashboard';
+import TestBrand from '@/components/brand/TestBrand';
 import { syncApplicationUser } from '@/lib/auth/request-user';
 import prisma from '@/lib/prisma';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -56,6 +57,7 @@ export default async function AccountPage({
         createdAt: true,
         submittedAt: true,
         overallBand: true,
+        entitlement: { select: { endsAt: true } },
         blueprint: { select: { name: true, variant: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -63,7 +65,7 @@ export default async function AccountPage({
     }),
     prisma.product.findMany({
       where: { active: true, blueprints: { some: { blueprint: { status: 'PUBLISHED' } } } },
-      select: { code: true, name: true, priceMinor: true, currency: true, maximumAttempts: true },
+      select: { code: true, name: true, priceMinor: true, currency: true, accessDays: true, maximumAttempts: true },
       orderBy: [{ priceMinor: 'asc' }, { name: 'asc' }],
     }),
     prisma.order.findMany({
@@ -76,37 +78,47 @@ export default async function AccountPage({
   const { payment } = await searchParams;
 
   return (
-    <main className="mx-auto min-h-[70vh] max-w-5xl px-5 py-16">
-      <div className="flex items-start justify-between gap-6 rounded-3xl border border-black/10 p-7">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#d0021b]">IELTS Lab Oran</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">Your account</h1>
-          <p className="mt-2 text-black/60">{user.email}</p>
-        </div>
-        <SignOutButton locale={locale} />
+    <main className="min-h-screen bg-[#f5f5f3] px-4 py-6 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-5xl">
+        <header className="flex items-center justify-between gap-5 px-1">
+          <TestBrand href={`/${locale}`} responsive={false} />
+          <SignOutButton locale={locale} />
+        </header>
+
+        <section className="mt-8 overflow-hidden rounded-[2rem] border border-black/[0.07] bg-white p-7 shadow-[0_20px_70px_-40px_rgba(0,0,0,0.3)] sm:p-10">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-crimson">Your IELTS Lab</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Welcome{user.name ? `, ${user.name.split(' ')[0]}` : ''}</h1>
+          <p className="mt-3 text-sm text-black/50">{user.email}</p>
+        </section>
+
+        <AssessmentDashboard
+          locale={locale}
+          paymentNotice={payment === 'success' || payment === 'failed' ? payment : undefined}
+          entitlements={entitlements.map((entitlement) => ({
+            ...entitlement,
+            startsAt: entitlement.startsAt?.toISOString() ?? null,
+            endsAt: entitlement.endsAt?.toISOString() ?? null,
+            product: {
+              name: entitlement.product.name,
+              blueprints: entitlement.product.blueprints.map(({ blueprint }) => blueprint),
+            },
+          }))}
+          attempts={attempts.map((attempt) => ({
+            ...attempt,
+            createdAt: attempt.createdAt.toISOString(),
+            submittedAt: attempt.submittedAt?.toISOString() ?? null,
+            overallBand: attempt.overallBand?.toNumber() ?? null,
+            resultsAccessExpired: Boolean(
+              attempt.submittedAt
+              && attempt.entitlement?.endsAt
+              && attempt.entitlement.endsAt <= now,
+            ),
+          }))}
+          products={products}
+          orders={orders.map((order) => ({ ...order, createdAt: order.createdAt.toISOString() }))}
+        />
+        <DeviceManager />
       </div>
-      <AssessmentDashboard
-        locale={locale}
-        paymentNotice={payment === 'success' || payment === 'failed' ? payment : undefined}
-        entitlements={entitlements.map((entitlement) => ({
-          ...entitlement,
-          startsAt: entitlement.startsAt?.toISOString() ?? null,
-          endsAt: entitlement.endsAt?.toISOString() ?? null,
-          product: {
-            name: entitlement.product.name,
-            blueprints: entitlement.product.blueprints.map(({ blueprint }) => blueprint),
-          },
-        }))}
-        attempts={attempts.map((attempt) => ({
-          ...attempt,
-          createdAt: attempt.createdAt.toISOString(),
-          submittedAt: attempt.submittedAt?.toISOString() ?? null,
-          overallBand: attempt.overallBand?.toNumber() ?? null,
-        }))}
-        products={products}
-        orders={orders.map((order) => ({ ...order, createdAt: order.createdAt.toISOString() }))}
-      />
-      <DeviceManager />
     </main>
   );
 }

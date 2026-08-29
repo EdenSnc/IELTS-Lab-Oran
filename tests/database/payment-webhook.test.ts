@@ -65,7 +65,7 @@ test('concurrent verified Chargily webhooks grant exactly one entitlement', {
       data: {
         id: providerCheckoutId,
         entity: 'checkout',
-        amount: 29_500,
+        amount: 295,
         currency: 'dzd',
         status: 'paid',
         metadata: [{ schema_version: 1, order_id: order.id, payment_attempt_id: paymentAttemptId }],
@@ -89,7 +89,7 @@ test('concurrent verified Chargily webhooks grant exactly one entitlement', {
     assert.equal(persisted?.entitlements[0].status, 'ACTIVE');
     assert.equal(persisted?.entitlements[0].maximumAttempts, 2);
 
-    const tampered = rawBody.replace('29500', '29501');
+    const tampered = rawBody.replace('"amount":295', '"amount":296');
     await assert.rejects(processChargilyWebhook(tampered, signature));
     assert.equal(await prisma.entitlement.count({ where: { orderId: order.id } }), 1);
   } finally {

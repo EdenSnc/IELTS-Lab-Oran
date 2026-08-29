@@ -169,12 +169,22 @@ export async function POST(request: Request) {
   }
 
   const tallySignature = request.headers.get('tally-signature');
-  const lead = tallySignature
-    ? hasValidTallySignature(rawBody, tallySignature) && parseTallyLead(payload)
-    : sameOrigin(request) && parseDirectLead(payload);
+  let lead: LeadInput | null = null;
+
+  if (tallySignature) {
+    if (!process.env.TALLY_WEBHOOK_SECRET) {
+      return NextResponse.json({ error: 'Tally webhook is not configured.' }, { status: 503 });
+    }
+    if (!hasValidTallySignature(rawBody, tallySignature)) {
+      return NextResponse.json({ error: 'Invalid webhook signature.' }, { status: 401 });
+    }
+    lead = parseTallyLead(payload);
+  } else if (sameOrigin(request)) {
+    lead = parseDirectLead(payload);
+  }
 
   if (!lead) {
-    return NextResponse.json({ error: 'Invalid or unauthorised lead submission.' }, { status: 422 });
+    return NextResponse.json({ error: 'Invalid lead submission.' }, { status: 422 });
   }
 
   try {

@@ -17,7 +17,8 @@
     "test:delivery": "node scripts/run-delivery-smoke.mjs",
     "test:speaking": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/speaking-domain-smoke.mts",
     "content:validate": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed.ts",
-    "content:import": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-staged-test.ts"
+    "content:import": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-staged-test.ts",
+    "commerce:provision": "node --conditions=react-server --import tsx scripts/provision-mock-product.ts"
   },
   "dependencies": {
     "@google/genai": "^2.13.0",

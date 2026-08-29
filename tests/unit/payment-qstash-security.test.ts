@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import test from 'node:test';
 import {
+  chargilyAmountFromMinor,
   chargilyMetadata,
   parseChargilyWebhook,
   verifyChargilySignature,
 } from '../../src/lib/payments/chargily';
 import { roundOverallBand } from '../../src/lib/grading/writing-run-core';
+import { resultAccessActive } from '../../src/lib/attempts/result-access';
 import { qstashEndpoint, verifyQStashRequest } from '../../src/lib/qstash/verification';
 
 function signQStash(body: string, url: string, key: string) {
@@ -51,6 +53,19 @@ test('Chargily verification uses the exact raw body and parses authoritative met
     orderId: 'order-id',
     paymentAttemptId: 'attempt-id',
   });
+});
+
+test('Chargily receives whole DZD while platform accounting remains in minor units', () => {
+  assert.equal(chargilyAmountFromMinor(390_000, 'DZD'), 3_900);
+  assert.throws(() => chargilyAmountFromMinor(390_001, 'DZD'), /CHARGILY_AMOUNT_NOT_WHOLE_DZD/u);
+  assert.throws(() => chargilyAmountFromMinor(390_000, 'EUR'), /CHARGILY_CURRENCY_UNSUPPORTED/u);
+});
+
+test('stored result access expires at the product entitlement boundary', () => {
+  const now = new Date('2026-08-29T12:00:00.000Z');
+  assert.equal(resultAccessActive(null, now), true);
+  assert.equal(resultAccessActive(new Date('2026-08-29T12:00:00.001Z'), now), true);
+  assert.equal(resultAccessActive(new Date('2026-08-29T12:00:00.000Z'), now), false);
 });
 
 test('QStash receiver binds the signature to the exact body and destination URL', async () => {
