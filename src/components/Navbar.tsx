@@ -24,6 +24,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-8 text-xs font-bold text-gray-500 tracking-wide uppercase">
           <Link href="/#methodology" className="hover:text-charcoal transition-colors">{t('methodology')}</Link>
           <Link href="/articles" className="hover:text-charcoal transition-colors">{t('articles')}</Link>
+          <Link href="/#mock-test" className="hover:text-charcoal transition-colors">{t('mockTest')}</Link>
           <Link href="/#faq" className="hover:text-charcoal transition-colors">{t('faq')}</Link>
         </div>
 
@@ -46,7 +47,7 @@ export default function Navbar() {
           <Link
             href="/account"
             className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-gray-100 bg-gray-50 text-charcoal transition-colors hover:border-gray-200 hover:bg-white"
-            aria-label="Your account"
+            aria-label={t('account')}
           >
             <svg aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0" />
@@ -85,6 +86,9 @@ export default function Navbar() {
           </Link>
           <Link href="/articles" onClick={() => setMobileOpen(false)} className="text-sm font-bold text-gray-600 uppercase tracking-wide px-4 py-3 rounded-2xl hover:bg-gray-50 hover:text-charcoal transition-colors">
             {t('articles')}
+          </Link>
+          <Link href="/#mock-test" onClick={() => setMobileOpen(false)} className="text-sm font-bold text-gray-600 uppercase tracking-wide px-4 py-3 rounded-2xl hover:bg-gray-50 hover:text-charcoal transition-colors">
+            {t('mockTest')}
           </Link>
           <Link href="/#faq" onClick={() => setMobileOpen(false)} className="text-sm font-bold text-gray-600 uppercase tracking-wide px-4 py-3 rounded-2xl hover:bg-gray-50 hover:text-charcoal transition-colors">
             {t('faq')}

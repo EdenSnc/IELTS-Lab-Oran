@@ -9,6 +9,7 @@ import About from '@/components/About';
 import FAQ from '@/components/FAQ';
 import Intake from '@/components/Intake';
 import LeadMagnet from '@/components/LeadMagnet';
+import MockTestOffer from '@/components/MockTestOffer';
 import { getFoundingCohortStatus } from '@/lib/cohort';
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
       <Navbar />
       <main className="flex flex-col">
         <Hero cohortStatus={cohortStatus} />
+        <MockTestOffer />
         <Methodology />
         <StopTraining />
         <Compare />

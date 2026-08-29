@@ -1,16 +1,7 @@
 import 'dotenv/config';
 
 import prisma from '../src/lib/prisma';
-
-const PRODUCT = {
-  code: 'academic-mock-test-1',
-  tier: 'TIER_2_DIAGNOSTIC' as const,
-  name: 'IELTS Academic Mock Test',
-  priceMinor: 390_000,
-  currency: 'DZD',
-  accessDays: 30,
-  maximumAttempts: 1,
-};
+import { ACADEMIC_MOCK_TEST_PRODUCT as PRODUCT } from '../src/lib/commerce/catalog';
 
 const BLUEPRINT = {
   code: 'academic-full-mock-1',

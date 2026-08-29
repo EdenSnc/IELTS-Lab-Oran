@@ -3,8 +3,10 @@
     "title": "IELTS Lab Oran",
     "methodology": "Methodology",
     "articles": "Articles",
+    "mockTest": "Mock test",
     "faq": "FAQ",
-    "applyNow": "APPLY NOW"
+    "applyNow": "APPLY NOW",
+    "account": "Your account"
   },
   "Cohort": {
     "remaining": "{remaining} of {total} founding seats available",
@@ -21,10 +23,10 @@
     "reserve": "RESERVE YOUR SEAT",
     "details": "PROGRAM DETAILS",
     "noPayment": "No upfront payment required to apply.",
-    "programBadge": "The «IELTS SUCCESS» System"
+    "programBadge": "Diagnostic-led IELTS preparation"
   },
   "Methodology": {
-    "title": "The IELTS Success System",
+    "title": "Training built around your score",
     "subtitle": "Most IELTS prep fails to reflect the digital reality of the test. We do things differently:",
     "bullet1Title": "Digital-First Training:",
     "bullet1Desc": "Train exactly how you will test on exam day.",
@@ -32,7 +34,17 @@
     "bullet2Desc": "We pinpoint specific language gaps instead of generic tutoring.",
     "bullet3Title": "Criteria Mastery:",
     "bullet3Desc": "Your study plan is engineered exclusively around the official rubrics.",
-    "notForBeginners": "Strictly for non-beginners"
+    "notForBeginners": "Designed for intermediate English and above"
+  },
+  "MockTest": {
+    "eyebrow": "Online mock test",
+    "title": "Practise Listening, Reading and Writing in one timed flow.",
+    "description": "An IELTS Academic mock built for computer-based practice, with secure access and stored results. Speaking appointments are managed separately.",
+    "oneAttempt": "One complete attempt",
+    "storedResults": "Results stored for {days} days",
+    "priceLabel": "Mock-test access",
+    "cta": "View test access",
+    "secureCheckout": "Secure checkout through Chargily Pay"
   },
   "StopTraining": {
     "title": "STOP <mark>TRAINING ON PAPER.</mark>",

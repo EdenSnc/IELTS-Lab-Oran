@@ -3,8 +3,10 @@
     "title": "IELTS Lab Oran",
     "methodology": "Méthodologie",
     "articles": "Articles",
+    "mockTest": "Test blanc",
     "faq": "FAQ",
-    "applyNow": "POSTULER"
+    "applyNow": "POSTULER",
+    "account": "Votre compte"
   },
   "Cohort": {
     "remaining": "{remaining} sur {total} places fondatrices disponibles",
@@ -21,10 +23,10 @@
     "reserve": "RESERVER VOTRE PLACE",
     "details": "DÉTAILS DU PROGRAMME",
     "noPayment": "Aucun paiement initial requis pour postuler.",
-    "programBadge": "Le Système «IELTS SUCCESS»"
+    "programBadge": "Préparation IELTS guidée par diagnostic"
   },
   "Methodology": {
-    "title": "Le Système IELTS Success",
+    "title": "Une formation conçue autour de votre score",
     "subtitle": "La plupart des préparations ne reflètent pas la réalité numérique du test. Nous procédons différemment :",
     "bullet1Title": "Formation 100% Numérique :",
     "bullet1Desc": "Entraînez-vous exactement comme vous serez testé le jour de l'examen.",
@@ -32,7 +34,17 @@
     "bullet2Desc": "Nous ciblons vos lacunes linguistiques au lieu de cours génériques.",
     "bullet3Title": "Maîtrise des Critères :",
     "bullet3Desc": "Votre plan d'étude est exclusivement conçu autour des grilles d'évaluation officielles.",
-    "notForBeginners": "Strictement pour les non-débutants"
+    "notForBeginners": "Conçu pour un niveau intermédiaire ou supérieur"
+  },
+  "MockTest": {
+    "eyebrow": "Test blanc en ligne",
+    "title": "Entraînez-vous au Listening, Reading et Writing dans un seul parcours chronométré.",
+    "description": "Un test blanc IELTS Academic conçu pour la pratique sur ordinateur, avec accès sécurisé et résultats conservés. Les rendez-vous Speaking sont gérés séparément.",
+    "oneAttempt": "Une tentative complète",
+    "storedResults": "Résultats conservés pendant {days} jours",
+    "priceLabel": "Accès au test blanc",
+    "cta": "Voir l'accès au test",
+    "secureCheckout": "Paiement sécurisé via Chargily Pay"
   },
   "StopTraining": {
     "title": "ARRÊTEZ DE VOUS <mark>ENTRAÎNER SUR PAPIER.</mark>",
