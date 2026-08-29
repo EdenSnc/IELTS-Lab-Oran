@@ -136,7 +136,7 @@ export default function AuthForm({ locale, mode }: { locale: string; mode: AuthM
             </label>
             <label className="grid gap-2 text-sm font-semibold text-black/75">
               WhatsApp number
-              <input name="whatsapp" type="tel" inputMode="tel" autoComplete="tel" minLength={8} maxLength={24} pattern="[+0-9() .-]{8,24}" required className={inputClassName} placeholder="+213 555 00 00 00" />
+              <input name="whatsapp" type="tel" inputMode="tel" autoComplete="tel" minLength={8} maxLength={24} required className={inputClassName} placeholder="+213 555 00 00 00" />
               <span className="text-xs font-normal leading-5 text-black/45">Used only for essential test and appointment communication.</span>
             </label>
           </>

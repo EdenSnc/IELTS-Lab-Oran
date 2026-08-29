@@ -16,7 +16,25 @@ function rtcConnectSources() {
   }
 }
 
+function supabaseConnectSource() {
+  const value = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!value) return [];
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol !== 'https:'
+      || !url.hostname.endsWith('.supabase.co')
+      || url.username
+      || url.password
+    ) return [];
+    return [url.origin];
+  } catch {
+    return [];
+  }
+}
+
 const speakingRtcSources = rtcConnectSources();
+const supabaseConnectSources = supabaseConnectSource();
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -30,7 +48,7 @@ const contentSecurityPolicy = [
   "font-src 'self' data:",
   "media-src 'self' blob:",
   "frame-src https://tally.so https://www.tally.so",
-  `connect-src 'self' https://*.tally.so https://vitals.vercel-insights.com https://*.vercel-insights.com ${speakingRtcSources.join(' ')}`.trim(),
+  `connect-src 'self' ${supabaseConnectSources.join(' ')} https://*.tally.so https://vitals.vercel-insights.com https://*.vercel-insights.com ${speakingRtcSources.join(' ')}`.trim(),
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   'upgrade-insecure-requests',
