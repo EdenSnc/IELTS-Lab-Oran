@@ -48,7 +48,8 @@ export default function Methodology() {
       </div>
 
       <div className="mt-12 flex justify-center">
-        <div className="bg-charcoal text-white text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-full shadow-lg border border-white/10">
+        <div className="inline-flex items-center gap-3 rounded-full border border-crimson/15 bg-crimson/[0.04] px-5 py-2.5 text-xs font-bold uppercase tracking-[0.16em] text-charcoal/70">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-crimson" />
           {t('notForBeginners')}
         </div>
       </div>

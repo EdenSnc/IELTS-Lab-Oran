@@ -11,6 +11,7 @@ const optionalText = z.string().trim().max(200).nullish();
 const directLeadSchema = z.object({
   phone: z.string().trim().min(1).max(32),
   email: z.email().max(320).nullish(),
+  fullName: z.string().trim().min(2).max(120).nullish(),
   utmSource: optionalText,
   utmMedium: optionalText,
   utmCampaign: optionalText,
@@ -19,9 +20,18 @@ const directLeadSchema = z.object({
     .enum([
       LeadSource.lead_magnet_pdf,
       LeadSource.workshop,
+      LeadSource.cohort_waitlist,
       LeadSource.unknown,
     ])
     .default(LeadSource.unknown),
+  application: z.object({
+    examType: z.enum(['Academic', 'General Training', 'Undecided']),
+    englishLevel: z.enum(['A2', 'B1', 'B2', 'C1+', 'Unsure']),
+    targetBand: z.enum(['6.0', '6.5', '7.0', '7.5', '8.0+', 'Unsure']),
+    timing: z.enum(['0-3 months', '3-6 months', '6+ months', 'No date']),
+    notes: z.string().trim().max(1000).nullish(),
+    locale: z.enum(['en', 'fr', 'ar']),
+  }).optional(),
 }).strict();
 
 const tallyWebhookSchema = z.object({
@@ -39,12 +49,14 @@ const tallyWebhookSchema = z.object({
 interface LeadInput {
   phone: string;
   email: string | null;
+  fullName: string | null;
   formName: string;
   source: LeadSource;
   utmSource: string | null;
   utmMedium: string | null;
   utmCampaign: string | null;
   externalEventId: string | null;
+  application: z.infer<typeof directLeadSchema>['application'] | null;
 }
 
 function normalisePhone(value: string): string | null {
@@ -118,12 +130,14 @@ function parseTallyLead(payload: unknown): LeadInput | null {
   return {
     phone,
     email,
+    fullName: null,
     formName: parsed.data.data.formName ?? 'Tally intake',
     source: LeadSource.cohort_waitlist,
     utmSource,
     utmMedium,
     utmCampaign,
     externalEventId: parsed.data.eventId,
+    application: null,
   };
 }
 
@@ -137,12 +151,14 @@ function parseDirectLead(payload: unknown): LeadInput | null {
   return {
     phone,
     email: parsed.data.email?.toLowerCase() ?? null,
+    fullName: parsed.data.fullName ?? null,
     formName: parsed.data.formName,
     source: parsed.data.source,
     utmSource: parsed.data.utmSource ?? null,
     utmMedium: parsed.data.utmMedium ?? null,
     utmCampaign: parsed.data.utmCampaign ?? null,
     externalEventId: null,
+    application: parsed.data.application ?? null,
   };
 }
 
@@ -191,8 +207,8 @@ export async function POST(request: Request) {
     await prisma.$transaction(async (tx) => {
       const prospect = await tx.prospect.upsert({
         where: { phone: lead.phone },
-        update: { email: lead.email ?? undefined },
-        create: { phone: lead.phone, email: lead.email },
+        update: { email: lead.email ?? undefined, name: lead.fullName ?? undefined },
+        create: { phone: lead.phone, email: lead.email, name: lead.fullName },
       });
 
       await tx.leadMagnetDownload.create({
@@ -206,6 +222,15 @@ export async function POST(request: Request) {
           externalEventId: lead.externalEventId,
         },
       });
+
+      if (lead.application) {
+        await tx.inquiry.create({
+          data: {
+            prospectId: prospect.id,
+            message: JSON.stringify(lead.application),
+          },
+        });
+      }
     });
 
     return NextResponse.json(

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import type { DragEvent, KeyboardEvent, MouseEvent, PointerEvent } from 'react';
+import type { KeyboardEvent, MouseEvent, PointerEvent } from 'react';
 import type {
   DeliveryQuestionGroup,
   DeliveryStimulus,
@@ -9,7 +9,6 @@ import type {
 import { useTestStore } from '@/lib/store/useTestStore';
 import QuestionGroupRenderer from './QuestionGroupRenderer';
 import { TextAnnotationMenu, useTextAnnotations } from './TextAnnotations';
-import { useDragAutoScroll } from './useDragAutoScroll';
 import { useTouchDragDrop } from './useTouchDragDrop';
 
 function questionNumbers(group: DeliveryQuestionGroup) {
@@ -42,8 +41,6 @@ export default function MatchingHeadingsPane({
   const [showHelp, setShowHelp] = useState(false);
   const interactionRef = useRef<HTMLDivElement>(null);
   const draggedLabel = useRef<string | null>(null);
-  const draggedFromNumber = useRef<number | null>(null);
-  useDragAutoScroll(draggedLabel);
   const answers = useTestStore((state) => state.answers.reading);
   const setAnswer = useTestStore((state) => state.setAnswer);
   const setCurrentQuestion = useTestStore((state) => state.setCurrentQuestion);
@@ -69,7 +66,7 @@ export default function MatchingHeadingsPane({
       (_match, rawNumber: string) => {
         const number = Number(rawNumber);
         const option = optionByLabel.get(answers[number] ?? '');
-        return `<button type="button" class="mock-ielts-gap ${option ? 'populated' : ''}" data-answer-number="${number}" ${option ? `data-answer-label="${escapeHtml(option.label)}" draggable="true"` : ''} aria-label="Question ${number}: ${escapeHtml(option?.text ?? 'Not answered')}">`
+        return `<button type="button" class="mock-ielts-gap ${option ? 'populated' : ''}" data-answer-number="${number}" ${option ? `data-answer-label="${escapeHtml(option.label)}"` : ''} aria-label="Question ${number}: ${escapeHtml(option?.text ?? 'Not answered')}">`
           + (option
             ? `<span class="mock-ielts-gap-token">${escapeHtml(option.text)}</span>`
             : `<span class="mock-ielts-gap-number">${number}</span>`)
@@ -161,16 +158,6 @@ export default function MatchingHeadingsPane({
     else if (answers[number]) setSelectedLabel(answers[number]);
   };
 
-  const handleTargetDragStart = (event: DragEvent<HTMLDivElement>) => {
-    const target = targetFromEvent(event);
-    const label = target?.dataset.answerLabel;
-    if (!label) return;
-    event.dataTransfer.setData('text/plain', label);
-    event.dataTransfer.effectAllowed = 'move';
-    draggedLabel.current = label;
-    draggedFromNumber.current = Number(target?.dataset.answerNumber);
-  };
-
   const first = numbers.at(0);
   const last = numbers.at(-1);
 
@@ -180,28 +167,6 @@ export default function MatchingHeadingsPane({
       className="matching-headings-interaction contents"
       onClick={handleTargetClick}
       onKeyDown={handleTargetKeyDown}
-      onDragStart={handleTargetDragStart}
-      onDragEnd={() => {
-        if (draggedFromNumber.current !== null) {
-          setAnswer('reading', draggedFromNumber.current, '');
-        }
-        draggedFromNumber.current = null;
-        draggedLabel.current = null;
-      }}
-      onDragOver={(event) => {
-        if (!draggedLabel.current) return;
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-      }}
-      onDrop={(event) => {
-        const target = targetFromEvent(event);
-        const label = event.dataTransfer.getData('text/plain') || draggedLabel.current;
-        if (!target || !label) return;
-        event.preventDefault();
-        assign(Number(target.dataset.answerNumber), label);
-        draggedFromNumber.current = null;
-        draggedLabel.current = null;
-      }}
     >
       <div
         data-question-scroll-pane="true"
@@ -264,20 +229,6 @@ export default function MatchingHeadingsPane({
         <div
           className="mock-ielts-token-bank flex-col"
           aria-label="List of headings"
-          onDragOver={(event) => {
-            if (!draggedLabel.current || !usedLabels.has(draggedLabel.current)) return;
-            event.preventDefault();
-            event.dataTransfer.dropEffect = 'move';
-          }}
-          onDrop={(event) => {
-            const label = event.dataTransfer.getData('text/plain') || draggedLabel.current;
-            const number = numbers.find((candidate) => answers[candidate] === label);
-            if (!label || number === undefined) return;
-            event.preventDefault();
-            setAnswer('reading', number, '');
-            draggedFromNumber.current = null;
-            draggedLabel.current = null;
-          }}
         >
           {group.options.map((option) => {
             const isUsed = usedLabels.has(option.label);
@@ -287,22 +238,8 @@ export default function MatchingHeadingsPane({
                 type="button"
                 key={option.label}
                 data-answer-label={option.label}
-                draggable={!isUsed}
                 aria-pressed={isSelected}
                 onClick={() => setSelectedLabel(isSelected ? null : option.label)}
-                onDragStart={(event) => {
-                  if (isUsed) {
-                    event.preventDefault();
-                    return;
-                  }
-                  event.dataTransfer.setData('text/plain', option.label);
-                  event.dataTransfer.effectAllowed = 'move';
-                  draggedLabel.current = option.label;
-                }}
-                onDragEnd={() => {
-                  draggedLabel.current = null;
-                  setSelectedLabel(null);
-                }}
                 onKeyDown={(event) => {
                   if (
                     event.key !== 'ArrowLeft'

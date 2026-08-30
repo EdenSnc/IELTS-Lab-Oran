@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import TallyForm from './TallyForm';
+import ApplicationForm from './ApplicationForm';
 import TrustBadges from './TrustBadges';
 import { useState, useEffect } from 'react';
 import type { CohortStatus } from '@/lib/cohort';
@@ -127,9 +127,9 @@ export default function Intake({ cohortStatus }: IntakeProps) {
             </p>
           </div>
 
-          {/* Right Column: Tally Form */}
-          <div className="md:w-1/2 bg-white rounded-3xl p-6 md:p-8 shadow-xl relative z-10 border-4 border-surface text-charcoal flex flex-col min-h-[600px]">
-            <TallyForm formId="ODrqpp" />
+          {/* Right Column: first-party application */}
+          <div className="md:w-1/2 bg-white rounded-3xl p-6 md:p-8 shadow-xl relative z-10 border-4 border-surface text-charcoal flex flex-col">
+            <ApplicationForm />
           </div>
         </div>
 

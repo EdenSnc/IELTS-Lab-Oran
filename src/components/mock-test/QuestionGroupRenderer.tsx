@@ -12,7 +12,6 @@ import type { CSSProperties } from 'react';
 import type { DeliveryQuestionGroup } from '@/lib/content/delivery-types';
 import { IELTSSection, useTestStore } from '@/lib/store/useTestStore';
 import { TextAnnotationMenu, useTextAnnotations } from './TextAnnotations';
-import { useDragAutoScroll } from './useDragAutoScroll';
 import { useTouchDragDrop } from './useTouchDragDrop';
 
 const EMPTY_ANSWERS: Record<number, string> = {};
@@ -149,7 +148,6 @@ function DragDropInteraction({
   const interactionRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const draggedLabelRef = useRef<string | null>(null);
-  useDragAutoScroll(draggedLabelRef);
   const answers = useTestStore((state) => state.answers[section]);
   const setAnswer = useTestStore((state) => state.setAnswer);
   const setCurrentQuestion = useTestStore((state) => state.setCurrentQuestion);
@@ -234,7 +232,7 @@ function DragDropInteraction({
         const ariaValue = option ? option.text : 'Not answered';
         return `<button type="button" class="mock-ielts-gap ${stateClasses}" `
           + `data-answer-number="${number}" `
-          + `${option ? `data-answer-label="${escapeHtml(option.label)}" draggable="true" ` : ''}`
+          + `${option ? `data-answer-label="${escapeHtml(option.label)}" ` : ''}`
           + `aria-label="Question ${number}: ${escapeHtml(ariaValue)}">`
           + (
             option
@@ -267,71 +265,6 @@ function DragDropInteraction({
       return target instanceof Element
         ? target.closest<HTMLElement>('[data-answer-number]')
         : null;
-    };
-    const readLabel = (event: Event) => {
-      const target = event.target;
-      return target instanceof Element
-        ? target.closest<HTMLElement>('[data-answer-label]')?.dataset.answerLabel
-        : undefined;
-    };
-    const clearDragDecorations = () => {
-      root.querySelectorAll('.dragging, .drag-over, .is-dragging').forEach((element) => {
-        element.classList.remove('dragging', 'drag-over', 'is-dragging');
-      });
-    };
-    let draggedFromNumber: number | null = null;
-    const beginDrag = (label: string, source: HTMLElement | null) => {
-      draggedLabelRef.current = label;
-      source?.classList.add('is-dragging');
-      root.querySelectorAll('.mock-ielts-gap:not(.populated)').forEach((target) => {
-        target.classList.add('dragging');
-      });
-    };
-    const onDragStart = (event: DragEvent) => {
-      const label = readLabel(event);
-      if (!label) return;
-      const sourceTarget = readTarget(event);
-      draggedFromNumber = sourceTarget ? Number(sourceTarget.dataset.answerNumber) : null;
-      event.dataTransfer?.setData('text/plain', label);
-      if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-      beginDrag(
-        label,
-        event.target instanceof Element
-          ? event.target.closest<HTMLElement>('[data-answer-label]')
-          : null,
-      );
-    };
-    const onDragOver = (event: DragEvent) => {
-      if (draggedLabelRef.current) {
-        event.preventDefault();
-        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-      }
-      const target = readTarget(event);
-      if (!target) return;
-      root.querySelector('.mock-ielts-gap.drag-over')?.classList.remove('drag-over');
-      target.classList.add('drag-over');
-    };
-    const onDragLeave = (event: DragEvent) => {
-      const target = readTarget(event);
-      if (!target || target.contains(event.relatedTarget as Node | null)) return;
-      target.classList.remove('drag-over');
-    };
-    const onDrop = (event: DragEvent) => {
-      const target = readTarget(event);
-      const label = event.dataTransfer?.getData('text/plain') || draggedLabelRef.current;
-      if (!target || !label) return;
-      event.preventDefault();
-      assign(Number(target.dataset.answerNumber), label, true);
-      draggedFromNumber = null;
-      draggedLabelRef.current = null;
-      clearDragDecorations();
-    };
-    const onDragEnd = () => {
-      if (draggedFromNumber !== null) clear(draggedFromNumber);
-      draggedFromNumber = null;
-      draggedLabelRef.current = null;
-      clearDragDecorations();
-      setSelectedLabel(null);
     };
     const onClick = (event: Event) => {
       const target = readTarget(event);
@@ -381,19 +314,9 @@ function DragDropInteraction({
       }
     };
 
-    root.addEventListener('dragstart', onDragStart);
-    root.addEventListener('dragover', onDragOver);
-    root.addEventListener('dragleave', onDragLeave);
-    root.addEventListener('drop', onDrop);
-    root.addEventListener('dragend', onDragEnd);
     root.addEventListener('click', onClick);
     root.addEventListener('keydown', onKeyDown);
     return () => {
-      root.removeEventListener('dragstart', onDragStart);
-      root.removeEventListener('dragover', onDragOver);
-      root.removeEventListener('dragleave', onDragLeave);
-      root.removeEventListener('drop', onDrop);
-      root.removeEventListener('dragend', onDragEnd);
       root.removeEventListener('click', onClick);
       root.removeEventListener('keydown', onKeyDown);
     };
@@ -418,22 +341,6 @@ function DragDropInteraction({
       className="mock-ielts-dnd"
       data-question-type={group.questionType}
       style={interactionStyle}
-      onDragOver={(event) => {
-        if (!draggedLabelRef.current) return;
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
-      }}
-      onDrop={(event) => {
-        const target = event.target instanceof Element
-          ? event.target.closest<HTMLElement>('[data-answer-number]')
-          : null;
-        const label = event.dataTransfer.getData('text/plain') || draggedLabelRef.current;
-        if (!target || !label) return;
-        event.preventDefault();
-        event.stopPropagation();
-        assign(Number(target.dataset.answerNumber), label, true);
-        draggedLabelRef.current = null;
-      }}
     >
       <div className="mock-ielts-dnd-help">
         <button
@@ -462,20 +369,6 @@ function DragDropInteraction({
         <div
           className="mock-ielts-token-bank"
           aria-label="Answer options"
-          onDragOver={(event) => {
-            const label = draggedLabelRef.current;
-            if (!label || !usedLabels.has(label)) return;
-            event.preventDefault();
-            event.dataTransfer.dropEffect = 'move';
-          }}
-          onDrop={(event) => {
-            const label = event.dataTransfer.getData('text/plain') || draggedLabelRef.current;
-            const assignedNumber = numbers.find((number) => answers[number] === label);
-            if (!label || assignedNumber === undefined) return;
-            event.preventDefault();
-            clear(assignedNumber);
-            draggedLabelRef.current = null;
-          }}
         >
           {group.options.map((option) => {
             const isSelected = selectedLabel === option.label;
@@ -486,28 +379,6 @@ function DragDropInteraction({
                 key={option.label}
                 data-ielts-token
                 data-answer-label={option.label}
-                draggable={!isUsed}
-                onDragStart={(event) => {
-                  if (isUsed) {
-                    event.preventDefault();
-                    return;
-                  }
-                  event.dataTransfer.setData('text/plain', option.label);
-                  event.dataTransfer.effectAllowed = 'move';
-                  draggedLabelRef.current = option.label;
-                  event.currentTarget.classList.add('is-dragging');
-                  rootRef.current
-                    ?.querySelectorAll('.mock-ielts-gap:not(.populated)')
-                    .forEach((target) => target.classList.add('dragging'));
-                }}
-                onDragEnd={(event) => {
-                  draggedLabelRef.current = null;
-                  event.currentTarget.classList.remove('is-dragging');
-                  rootRef.current
-                    ?.querySelectorAll('.dragging, .drag-over')
-                    .forEach((target) => target.classList.remove('dragging', 'drag-over'));
-                  setSelectedLabel(null);
-                }}
                 onClick={() => setSelectedLabel(isSelected ? null : option.label)}
                 onKeyDown={(event) => {
                   if (

@@ -25,6 +25,56 @@ function inferMimeType(storageKey: string, storedMimeType: string) {
   return mimeTypes[path.extname(storageKey).toLowerCase()] ?? storedMimeType;
 }
 
+async function isReferencedInline(
+  storageKey: string,
+  allowedPartIds?: string[],
+  allowedGroupIds?: string[],
+) {
+  const reference = `content-asset://${storageKey}`;
+  const publicVersion = {
+    testVersion: { status: 'PUBLISHED' as const, test: { isPublicDemo: true } },
+  };
+  const partWhere = allowedPartIds
+    ? { id: { in: allowedPartIds } }
+    : { testSection: publicVersion };
+  const groupWhere = allowedGroupIds
+    ? { id: { in: allowedGroupIds } }
+    : { testPart: { testSection: publicVersion } };
+
+  const [part, stimulus, group, question] = await Promise.all([
+    prisma.testPart.findFirst({
+      where: { ...partWhere, instructionsHtml: { contains: reference } },
+      select: { id: true },
+    }),
+    prisma.stimulus.findFirst({
+      where: {
+        testPart: partWhere,
+        bodyHtml: { contains: reference },
+        isVisibleToLearner: true,
+      },
+      select: { id: true },
+    }),
+    prisma.questionGroup.findFirst({
+      where: {
+        ...groupWhere,
+        OR: [
+          { instructionsHtml: { contains: reference } },
+          { promptHtml: { contains: reference } },
+        ],
+      },
+      select: { id: true },
+    }),
+    prisma.question.findFirst({
+      where: {
+        questionGroup: groupWhere,
+        promptHtml: { contains: reference },
+      },
+      select: { id: true },
+    }),
+  ]);
+  return Boolean(part || stimulus || group || question);
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ assetId: string }> },
@@ -61,43 +111,8 @@ export async function GET(
     }
   }
 
-  const asset = await prisma.contentAsset.findFirst({
-    where: {
-      id: assetId,
-      ...(attemptId ? {
-        OR: [
-          { stimuli: { some: { testPartId: { in: allowedPartIds } } } },
-          { questionLinks: { some: { questionGroupId: { in: allowedGroupIds } } } },
-        ],
-      } : {
-        OR: [
-          {
-            stimuli: {
-              some: {
-                testPart: {
-                  testSection: {
-                    testVersion: { status: 'PUBLISHED', test: { isPublicDemo: true } },
-                  },
-                },
-              },
-            },
-          },
-          {
-            questionLinks: {
-              some: {
-                questionGroup: {
-                  testPart: {
-                    testSection: {
-                      testVersion: { status: 'PUBLISHED', test: { isPublicDemo: true } },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        ],
-      }),
-    },
+  const asset = await prisma.contentAsset.findUnique({
+    where: { id: assetId },
     select: {
       id: true,
       storageKey: true,
@@ -106,6 +121,28 @@ export async function GET(
     },
   });
   if (!asset) {
+    return NextResponse.json({ error: 'Asset not found.' }, { status: 404 });
+  }
+  const linkedToAllowedContent = attemptId
+    ? asset.stimuli.some((stimulus) => allowedPartIds?.includes(stimulus.testPartId))
+      || await prisma.questionAsset.findFirst({
+        where: { assetId, questionGroupId: { in: allowedGroupIds } },
+        select: { assetId: true },
+      }) !== null
+    : await prisma.contentAsset.findFirst({
+      where: {
+        id: assetId,
+        OR: [
+          { stimuli: { some: { testPart: { testSection: { testVersion: { status: 'PUBLISHED', test: { isPublicDemo: true } } } } } } },
+          { questionLinks: { some: { questionGroup: { testPart: { testSection: { testVersion: { status: 'PUBLISHED', test: { isPublicDemo: true } } } } } } } },
+        ],
+      },
+      select: { id: true },
+    }) !== null;
+  const inlineAllowed = linkedToAllowedContent
+    ? false
+    : await isReferencedInline(asset.storageKey, allowedPartIds, allowedGroupIds);
+  if (!linkedToAllowedContent && !inlineAllowed) {
     return NextResponse.json({ error: 'Asset not found.' }, { status: 404 });
   }
   if (attemptId && strictDeviceSlotId) {

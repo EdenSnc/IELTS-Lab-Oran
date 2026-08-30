@@ -23,7 +23,7 @@
     "reserve": "RESERVER VOTRE PLACE",
     "details": "DÉTAILS DU PROGRAMME",
     "noPayment": "Aucun paiement initial requis pour postuler.",
-    "programBadge": "Préparation IELTS guidée par diagnostic"
+    "programBadge": "Le système «IELTS SUCCESS»"
   },
   "Methodology": {
     "title": "Une formation conçue autour de votre score",
@@ -34,7 +34,7 @@
     "bullet2Desc": "Nous ciblons vos lacunes linguistiques au lieu de cours génériques.",
     "bullet3Title": "Maîtrise des Critères :",
     "bullet3Desc": "Votre plan d'étude est exclusivement conçu autour des grilles d'évaluation officielles.",
-    "notForBeginners": "Conçu pour un niveau intermédiaire ou supérieur"
+    "notForBeginners": "Strictement réservé aux non-débutants"
   },
   "MockTest": {
     "eyebrow": "Test blanc en ligne",

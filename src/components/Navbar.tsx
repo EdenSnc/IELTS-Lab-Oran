@@ -1,15 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { Link, usePathname } from '@/i18n/routing';
 import Image from 'next/image';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
 
 export default function Navbar() {
   const t = useTranslations('Navbar');
   const locale = useLocale();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    const client = createSupabaseBrowserClient();
+    void client.auth.getSession().then(({ data }: { data: { session: Session | null } }) => setSignedIn(Boolean(data.session)));
+    const { data } = client.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => setSignedIn(Boolean(session)));
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   return (
     <>
@@ -46,12 +56,14 @@ export default function Navbar() {
           </Link>
           <Link
             href="/account"
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-gray-100 bg-gray-50 text-charcoal transition-colors hover:border-gray-200 hover:bg-white"
-            aria-label={t('account')}
+            className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full border border-gray-100 bg-gray-50 text-charcoal transition-colors hover:border-gray-200 hover:bg-white"
+            aria-label={`${t('account')}${signedIn ? ' · signed in' : ''}`}
+            title={signedIn ? 'Signed in' : t('account')}
           >
             <svg aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.5 20.25a7.5 7.5 0 0 1 15 0" />
             </svg>
+            {signedIn && <span aria-hidden="true" className="absolute right-0.5 top-0.5 h-2 w-2 rounded-full border-2 border-white bg-emerald-500" />}
           </Link>
           {/* Hamburger - mobile only */}
           <button
