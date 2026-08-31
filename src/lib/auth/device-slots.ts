@@ -61,7 +61,11 @@ export async function requireRequestDeviceSlot(request: Request, userId: string)
   return slot;
 }
 
-export async function enrollDeviceSlot(userId: string, label?: string) {
+async function enrollDeviceSlotInternal(
+  userId: string,
+  label: string | undefined,
+  onlyIfNone: boolean,
+) {
   for (let retry = 0; retry < 3; retry += 1) {
     const issued = issueDeviceToken();
     try {
@@ -69,10 +73,22 @@ export async function enrollDeviceSlot(userId: string, label?: string) {
         await transaction.$queryRaw(Prisma.sql`
           SELECT id FROM app_private."User" WHERE id = ${userId}::uuid FOR UPDATE
         `);
+        const now = new Date();
+        const activeEntitlement = await transaction.entitlement.findFirst({
+          where: {
+            userId,
+            status: 'ACTIVE',
+            OR: [{ startsAt: null }, { startsAt: { lte: now } }],
+            AND: [{ OR: [{ endsAt: null }, { endsAt: { gt: now } }] }],
+          },
+          select: { id: true },
+        });
+        if (!activeEntitlement) throw new AuthError('ACTIVE_TEST_ACCESS_REQUIRED', 403);
         const existing = await transaction.deviceSlot.findMany({
           where: { userId, revokedAt: null },
           orderBy: { slotNumber: 'asc' },
         });
+        if (onlyIfNone && existing.length > 0) return null;
         const slotNumber = ([1, 2] as const).find((candidate) => (
           !existing.some((slot) => slot.slotNumber === candidate)
         ));
@@ -81,7 +97,7 @@ export async function enrollDeviceSlot(userId: string, label?: string) {
           data: { userId, slotNumber, tokenHash: issued.tokenHash, label },
         });
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-      return { slot, token: issued.token };
+      return slot ? { slot, token: issued.token } : null;
     } catch (error) {
       const retryable = error instanceof Prisma.PrismaClientKnownRequestError
         && (error.code === 'P2034' || error.code === 'P2002')
@@ -90,6 +106,21 @@ export async function enrollDeviceSlot(userId: string, label?: string) {
     }
   }
   throw new Error('UNREACHABLE_DEVICE_ENROLLMENT_STATE');
+}
+
+export async function enrollDeviceSlot(userId: string, label?: string) {
+  const enrolled = await enrollDeviceSlotInternal(userId, label, false);
+  if (!enrolled) throw new Error('UNREACHABLE_DEVICE_ENROLLMENT_STATE');
+  return enrolled;
+}
+
+/**
+ * Claims the first trusted-device slot only when the account has no active
+ * slots. The user row lock makes concurrent first-login requests converge on
+ * one slot instead of silently consuming both slots.
+ */
+export function enrollInitialDeviceSlot(userId: string, label?: string) {
+  return enrollDeviceSlotInternal(userId, label, true);
 }
 
 function replacementCooldownHours() {

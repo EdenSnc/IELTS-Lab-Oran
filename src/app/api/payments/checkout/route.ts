@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { requireRequestDeviceSlot } from '@/lib/auth/device-slots';
 import { requireRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { createCheckoutForProduct } from '@/lib/payments/payment-service';
@@ -13,7 +12,6 @@ export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const user = await requireRequestUser(request, ['STUDENT']);
-    await requireRequestDeviceSlot(request, user.id);
     const idempotencyKey = request.headers.get('idempotency-key');
     if (!idempotencyKey) return noStoreJson({ error: 'IDEMPOTENCY_KEY_REQUIRED' }, 400);
     const input = checkoutRequestSchema.parse(await request.json());

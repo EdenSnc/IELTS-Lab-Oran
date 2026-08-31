@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 
-type Blueprint = { id: string; name: string; variant: string };
-type Entitlement = {
+export type Blueprint = { id: string; name: string; variant: string };
+export type Entitlement = {
   id: string;
   status: string;
   startsAt: string | null;
@@ -14,7 +14,7 @@ type Entitlement = {
   attemptsUsed: number;
   product: { name: string; blueprints: Blueprint[] };
 };
-type Attempt = {
+export type Attempt = {
   id: string;
   state: string;
   mode: string;
@@ -24,7 +24,7 @@ type Attempt = {
   overallBand: number | null;
   blueprint: { name: string; variant: string };
 };
-type Product = {
+export type Product = {
   code: string;
   name: string;
   priceMinor: number;
@@ -32,7 +32,18 @@ type Product = {
   accessDays: number | null;
   maximumAttempts: number | null;
 };
-type Order = { id: string; status: string; createdAt: string; product: { name: string } };
+export type Order = { id: string; status: string; createdAt: string; product: { name: string } };
+
+export type AssessmentDashboardProps = {
+  locale: string;
+  entitlements: Entitlement[];
+  attempts: Attempt[];
+  products: Product[];
+  orders: Order[];
+  paymentNotice?: 'success' | 'failed';
+  paymentTestMode: boolean;
+  deviceTrusted: boolean | null;
+};
 
 function statusLabel(value: string) {
   return value.toLowerCase().replaceAll('_', ' ').replace(/^./u, (first) => first.toUpperCase());
@@ -54,14 +65,9 @@ export default function AssessmentDashboard({
   products,
   orders,
   paymentNotice,
-}: {
-  locale: string;
-  entitlements: Entitlement[];
-  attempts: Attempt[];
-  products: Product[];
-  orders: Order[];
-  paymentNotice?: 'success' | 'failed';
-}) {
+  paymentTestMode,
+  deviceTrusted,
+}: AssessmentDashboardProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const checkoutKeys = useRef(new Map<string, string>());
@@ -139,6 +145,7 @@ export default function AssessmentDashboard({
               <div><p className="font-semibold">{attempt.blueprint.name}</p><p className="mt-1 text-sm text-black/50">{statusLabel(attempt.state)} · {formatDate(attempt.createdAt, locale)}{attempt.overallBand !== null ? ` · Overall ${attempt.overallBand.toFixed(1)}` : ''}</p></div>
               {(() => {
                 if (attempt.resultsAccessExpired) return <span className="rounded-full bg-black/[0.04] px-4 py-2 text-sm font-semibold text-black/40">Results access ended</span>;
+                if (deviceTrusted !== true) return <span className="rounded-full bg-black/[0.04] px-4 py-2 text-sm font-semibold text-black/45">{deviceTrusted === null ? 'Checking device…' : 'Trust a browser first'}</span>;
                 return (attempt.state === 'DRAFT' || attempt.state === 'ACTIVE' || attempt.submittedAt) && <Link className="rounded-full bg-charcoal px-4 py-2 text-sm font-semibold text-white transition hover:bg-crimson" href={`/sim/attempt/${attempt.id}`}>{attempt.submittedAt ? 'View result' : 'Continue'}</Link>;
               })()}
             </article>
@@ -156,18 +163,18 @@ export default function AssessmentDashboard({
             const remaining = entitlement.maximumAttempts === null ? 'Unlimited attempts' : `${Math.max(0, entitlement.maximumAttempts - entitlement.attemptsUsed)} attempt(s) remaining`;
             return <article key={entitlement.id} className="rounded-2xl border border-black/[0.07] p-5"><p className="font-semibold">{entitlement.product.name}</p><p className="mt-1 text-sm text-black/50">{remaining}{entitlement.endsAt ? ` · ends ${formatDate(entitlement.endsAt, locale)}` : ''}</p><div className="mt-4 flex flex-wrap gap-2">{entitlement.product.blueprints.map((blueprint) => {
               const key = `attempt:${entitlement.id}:${blueprint.id}`;
-              return <button key={blueprint.id} type="button" disabled={busy !== null || (entitlement.maximumAttempts !== null && entitlement.attemptsUsed >= entitlement.maximumAttempts)} onClick={() => void startAttempt(entitlement.id, blueprint.id)} className="rounded-full bg-charcoal px-4 py-2 text-sm font-semibold text-white transition hover:bg-crimson disabled:opacity-40">{busy === key ? 'Starting…' : `Start ${blueprint.name}`}</button>;
+              return <button key={blueprint.id} type="button" disabled={deviceTrusted !== true || busy !== null || (entitlement.maximumAttempts !== null && entitlement.attemptsUsed >= entitlement.maximumAttempts)} onClick={() => void startAttempt(entitlement.id, blueprint.id)} className="rounded-full bg-charcoal px-4 py-2 text-sm font-semibold text-white transition hover:bg-crimson disabled:opacity-40">{deviceTrusted !== true ? (deviceTrusted === null ? 'Checking device…' : 'Trust a browser first') : busy === key ? 'Starting…' : `Start ${blueprint.name}`}</button>;
             })}</div></article>;
           })}
         </div>
       </section>
 
       <section className="mt-6 rounded-[2rem] bg-charcoal p-6 text-white shadow-[0_24px_70px_-38px_rgba(0,0,0,0.7)] sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#ff6679]">Test shop</p>
-        <h2 className="mt-2 text-2xl font-semibold tracking-tight">Choose your next test</h2>
-        <p className="mt-2 text-sm text-white/55">Secure checkout. Access is added only after payment is verified.</p>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#ff6679]">{paymentTestMode ? 'Payment sandbox' : 'Test shop'}</p>
+        <h2 className="mt-2 text-2xl font-semibold tracking-tight">{paymentTestMode ? 'Test the checkout safely' : 'Choose your next test'}</h2>
+        <p className="mt-2 text-sm text-white/55">{paymentTestMode ? 'Chargily test mode is active. No real money will be charged. Access is added only after a verified test webhook.' : 'Secure checkout. Access is added only after payment is verified.'}</p>
         {!products.length && <p className="mt-5 rounded-2xl bg-white/[0.07] p-5 text-sm text-white/55">No tests are currently available for purchase.</p>}
-        {!!products.length && <div className="mt-5 grid gap-3 md:grid-cols-2">{products.map((product) => <article key={product.code} className="rounded-2xl border border-white/10 bg-white/[0.055] p-5"><p className="font-semibold">{product.name}</p><p className="mt-3 text-3xl font-semibold tracking-tight">{new Intl.NumberFormat(locale, { style: 'currency', currency: product.currency, maximumFractionDigits: 0 }).format(product.priceMinor / 100)}</p><p className="mt-1 text-sm text-white/50">{product.maximumAttempts === null ? 'Unlimited attempts' : `${product.maximumAttempts} attempt`}{product.accessDays ? ` · results available for ${product.accessDays} days` : ''}</p><button type="button" disabled={busy !== null} onClick={() => void checkout(product.code)} className="mt-5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-[#ffebee] disabled:opacity-40">{busy === `checkout:${product.code}` ? 'Opening payment…' : 'Buy securely'}</button></article>)}</div>}
+        {!!products.length && <div className="mt-5 grid gap-3 md:grid-cols-2">{products.map((product) => <article key={product.code} className="rounded-2xl border border-white/10 bg-white/[0.055] p-5"><p className="font-semibold">{product.name}</p><p className="mt-3 text-3xl font-semibold tracking-tight">{new Intl.NumberFormat(locale, { style: 'currency', currency: product.currency, maximumFractionDigits: 0 }).format(product.priceMinor / 100)}</p><p className="mt-1 text-sm text-white/50">{product.maximumAttempts === null ? 'Unlimited attempts' : `${product.maximumAttempts} attempt`}{product.accessDays ? ` · results available for ${product.accessDays} days` : ''}</p><button type="button" disabled={busy !== null} onClick={() => void checkout(product.code)} className="mt-5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-[#ffebee] disabled:opacity-40">{busy === `checkout:${product.code}` ? 'Opening payment…' : paymentTestMode ? 'Open test checkout' : 'Buy securely'}</button></article>)}</div>}
       </section>
 
       {!!orders.length && <section className="mt-6 rounded-[2rem] border border-black/[0.07] bg-white p-6 shadow-[0_18px_60px_-42px_rgba(0,0,0,0.35)] sm:p-8"><h2 className="text-2xl font-semibold tracking-tight">Recent orders</h2><div className="mt-4 grid gap-2">{orders.map((order) => <div key={order.id} className="flex items-center justify-between gap-3 rounded-2xl bg-black/[0.025] px-4 py-3 text-sm"><span>{order.product.name}</span><strong>{statusLabel(order.status)}</strong></div>)}</div></section>}

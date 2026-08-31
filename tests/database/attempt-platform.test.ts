@@ -13,7 +13,7 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     { default: prisma },
     { encrypt },
     { createAuthenticatedAttempt },
-    { enrollDeviceSlot },
+    { enrollDeviceSlot, enrollInitialDeviceSlot },
     { acquireAttemptExecution, authorizeAttemptSubmission, requireLiveAttemptExecution },
     { saveResponseOptimistically },
     { submitAndGradeObjectiveAttempt },
@@ -163,6 +163,14 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     },
   });
 
+  const freeUser = await prisma.user.create({
+    data: { id: randomUUID(), email: `free-device-${suffix}@example.invalid` },
+  });
+  await assert.rejects(
+    enrollInitialDeviceSlot(freeUser.id, 'Free browser'),
+    (error: Error) => error.message === 'ACTIVE_TEST_ACCESS_REQUIRED',
+  );
+
   const creationInput = {
     userId: user.id,
     entitlementId: entitlement.id,
@@ -185,14 +193,14 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     where: { entitlementId: entitlement.id, attemptId: attempt.id, kind: 'RESERVATION' },
   }), 1);
 
-  const deviceResults = await Promise.allSettled([
-    enrollDeviceSlot(user.id, 'First browser'),
-    enrollDeviceSlot(user.id, 'Second browser'),
+  const firstEnrollmentAttempts = await Promise.all([
+    enrollInitialDeviceSlot(user.id, 'First browser'),
+    enrollInitialDeviceSlot(user.id, 'Concurrent browser'),
   ]);
-  assert.equal(deviceResults.filter((result) => result.status === 'fulfilled').length, 2);
+  assert.equal(firstEnrollmentAttempts.filter(Boolean).length, 1, 'concurrent first-login enrollment must consume only one slot');
+  const firstDevice = firstEnrollmentAttempts.find((enrollment) => enrollment !== null)?.slot ?? null;
+  const secondDevice = (await enrollDeviceSlot(user.id, 'Second browser')).slot;
   await assert.rejects(enrollDeviceSlot(user.id, 'Third browser'), (error: Error) => error.message === 'DEVICE_LIMIT_REACHED');
-  const firstDevice = deviceResults[0].status === 'fulfilled' ? deviceResults[0].value.slot : null;
-  const secondDevice = deviceResults[1].status === 'fulfilled' ? deviceResults[1].value.slot : null;
   assert.ok(firstDevice && secondDevice);
 
   const firstExecution = await acquireAttemptExecution({ attemptId: attempt.id, userId: user.id, deviceSlot: firstDevice });

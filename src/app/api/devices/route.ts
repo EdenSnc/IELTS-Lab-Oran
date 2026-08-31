@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import {
   DEVICE_COOKIE_NAME,
   deviceCookieOptions,
+  enrollInitialDeviceSlot,
   enrollDeviceSlot,
   findRequestDeviceSlot,
   publicDeviceSlot,
@@ -14,11 +15,15 @@ import { requireRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { requireSupabasePublicConfig } from '@/lib/supabase/config';
 
-const enrollmentSchema = z.object({ label: z.string().trim().min(1).max(80).optional() });
-const replacementSchema = enrollmentSchema.extend({
+const enrollmentSchema = z.object({
+  label: z.string().trim().min(1).max(80).optional(),
+  automatic: z.boolean().optional().default(false),
+}).strict();
+const replacementSchema = z.object({
   slotNumber: z.number().int().min(1).max(2),
+  label: z.string().trim().min(1).max(80).optional(),
   password: z.string().min(8).max(256),
-});
+}).strict();
 
 export async function GET(request: Request) {
   try {
@@ -44,7 +49,10 @@ export async function POST(request: Request) {
     const existing = await findRequestDeviceSlot(request, user.id);
     if (existing) return noStoreJson({ slot: publicDeviceSlot(existing) });
     const input = enrollmentSchema.parse(await request.json());
-    const enrolled = await enrollDeviceSlot(user.id, input.label);
+    const enrolled = input.automatic
+      ? await enrollInitialDeviceSlot(user.id, input.label)
+      : await enrollDeviceSlot(user.id, input.label);
+    if (!enrolled) return noStoreJson({ error: 'INITIAL_DEVICE_ALREADY_ASSIGNED' }, 409);
     const response = NextResponse.json(
       { slot: publicDeviceSlot(enrolled.slot) },
       { status: 201, headers: { 'Cache-Control': 'private, no-store, max-age=0' } },

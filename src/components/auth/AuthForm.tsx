@@ -5,9 +5,21 @@ import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
+import type { EnabledAuthProviders } from '@/lib/supabase/auth-providers';
 import { normalizeE164Phone } from '@/lib/phone';
 
 export type AuthMode = 'sign-in' | 'sign-up' | 'forgot-password' | 'update-password';
+
+const wilayas = [
+  '01 Adrar', '02 Chlef', '03 Laghouat', '04 Oum El Bouaghi', '05 Batna', '06 Béjaïa', '07 Biskra', '08 Béchar',
+  '09 Blida', '10 Bouira', '11 Tamanrasset', '12 Tébessa', '13 Tlemcen', '14 Tiaret', '15 Tizi Ouzou', '16 Alger',
+  '17 Djelfa', '18 Jijel', '19 Sétif', '20 Saïda', '21 Skikda', '22 Sidi Bel Abbès', '23 Annaba', '24 Guelma',
+  '25 Constantine', '26 Médéa', '27 Mostaganem', '28 M’Sila', '29 Mascara', '30 Ouargla', '31 Oran', '32 El Bayadh',
+  '33 Illizi', '34 Bordj Bou Arréridj', '35 Boumerdès', '36 El Tarf', '37 Tindouf', '38 Tissemsilt', '39 El Oued',
+  '40 Khenchela', '41 Souk Ahras', '42 Tipaza', '43 Mila', '44 Aïn Defla', '45 Naâma', '46 Aïn Témouchent',
+  '47 Ghardaïa', '48 Relizane', '49 Timimoun', '50 Bordj Badji Mokhtar', '51 Ouled Djellal', '52 Béni Abbès',
+  '53 In Salah', '54 In Guezzam', '55 Touggourt', '56 Djanet', '57 El M’Ghair', '58 El Meniaa', 'Outside Algeria',
+] as const;
 
 const content = {
   'sign-in': {
@@ -36,11 +48,36 @@ const content = {
   },
 } as const;
 
-export default function AuthForm({ locale, mode }: { locale: string; mode: AuthMode }) {
+export default function AuthForm({
+  locale,
+  mode,
+  providers,
+  initialMessage,
+}: {
+  locale: string;
+  mode: AuthMode;
+  providers: EnabledAuthProviders;
+  initialMessage?: string;
+}) {
   const router = useRouter();
-  const [message, setMessage] = useState<string>();
+  const [message, setMessage] = useState<string | undefined>(initialMessage);
   const [pending, setPending] = useState(false);
   const copy = content[mode];
+
+  async function signInWithProvider(provider: 'google' | 'facebook') {
+    setPending(true);
+    setMessage(undefined);
+    const client = createSupabaseBrowserClient();
+    const redirectTo = `${window.location.origin}/api/auth/callback?next=/${locale}/account`;
+    const { error } = await client.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo },
+    });
+    if (error) {
+      setPending(false);
+      setMessage(error.message);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,6 +90,9 @@ export default function AuthForm({ locale, mode }: { locale: string; mode: AuthM
     const fullName = String(form.get('fullName') ?? '').trim();
     const rawWhatsapp = String(form.get('whatsapp') ?? '').trim();
     const whatsapp = mode === 'sign-up' ? normalizeE164Phone(rawWhatsapp) : null;
+    const birthDate = String(form.get('birthDate') ?? '').trim();
+    const wilaya = String(form.get('wilaya') ?? '').trim();
+    const preferredLocale = String(form.get('preferredLocale') ?? locale);
 
     if ((mode === 'sign-up' || mode === 'update-password') && password !== confirmPassword) {
       setPending(false);
@@ -63,6 +103,18 @@ export default function AuthForm({ locale, mode }: { locale: string; mode: AuthM
       setPending(false);
       setMessage('Enter a valid WhatsApp number with its country code.');
       return;
+    }
+    if (mode === 'sign-up' && birthDate) {
+      const parsedBirthDate = new Date(`${birthDate}T00:00:00Z`);
+      if (
+        Number.isNaN(parsedBirthDate.getTime())
+        || parsedBirthDate.getUTCFullYear() < 1900
+        || parsedBirthDate > new Date()
+      ) {
+        setPending(false);
+        setMessage('Enter a valid date of birth.');
+        return;
+      }
     }
 
     const client = createSupabaseBrowserClient();
@@ -80,7 +132,9 @@ export default function AuthForm({ locale, mode }: { locale: string; mode: AuthM
           data: {
             full_name: fullName,
             whatsapp,
-            preferred_locale: locale,
+            birth_date: birthDate || null,
+            wilaya,
+            preferred_locale: preferredLocale,
           },
         },
       }));
@@ -128,6 +182,27 @@ export default function AuthForm({ locale, mode }: { locale: string; mode: AuthM
       </div>
 
       <form onSubmit={submit} className="mt-8 grid gap-4">
+        {(mode === 'sign-in' || mode === 'sign-up') && (providers.google || providers.facebook) && (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {providers.google && (
+                <button type="button" disabled={pending} onClick={() => void signInWithProvider('google')} className="h-12 rounded-full border border-black/10 bg-white px-4 text-sm font-semibold text-charcoal transition hover:border-black/20 hover:bg-black/[0.02] disabled:opacity-50">
+                  Continue with Google
+                </button>
+              )}
+              {providers.facebook && (
+                <button type="button" disabled={pending} onClick={() => void signInWithProvider('facebook')} className="h-12 rounded-full border border-black/10 bg-white px-4 text-sm font-semibold text-charcoal transition hover:border-black/20 hover:bg-black/[0.02] disabled:opacity-50">
+                  Continue with Facebook
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-black/35">
+              <span className="h-px flex-1 bg-black/[0.08]" />
+              Or use email
+              <span className="h-px flex-1 bg-black/[0.08]" />
+            </div>
+          </>
+        )}
         {mode === 'sign-up' && (
           <>
             <label className="grid gap-2 text-sm font-semibold text-black/75">
@@ -138,6 +213,29 @@ export default function AuthForm({ locale, mode }: { locale: string; mode: AuthM
               WhatsApp number
               <input name="whatsapp" type="tel" inputMode="tel" autoComplete="tel" minLength={8} maxLength={24} required className={inputClassName} placeholder="+213 555 00 00 00" />
               <span className="text-xs font-normal leading-5 text-black/45">Used only for essential test and appointment communication.</span>
+            </label>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2 text-sm font-semibold text-black/75">
+                Wilaya
+                <select name="wilaya" defaultValue="" required className={inputClassName}>
+                  <option value="" disabled>Select</option>
+                  {wilayas.map((wilaya) => <option key={wilaya} value={wilaya}>{wilaya}</option>)}
+                </select>
+                <span className="text-xs font-normal leading-5 text-black/45">Used for local and in-centre service planning.</span>
+              </label>
+              <label className="grid gap-2 text-sm font-semibold text-black/75">
+                Date of birth <span className="font-normal text-black/40">(optional)</span>
+                <input name="birthDate" type="date" autoComplete="bday" className={inputClassName} />
+                <span className="text-xs font-normal leading-5 text-black/45">Useful for identity and age-appropriate account handling.</span>
+              </label>
+            </div>
+            <label className="grid gap-2 text-sm font-semibold text-black/75">
+              Preferred account language
+              <select name="preferredLocale" defaultValue={locale} required className={inputClassName}>
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+                <option value="ar">العربية</option>
+              </select>
             </label>
           </>
         )}

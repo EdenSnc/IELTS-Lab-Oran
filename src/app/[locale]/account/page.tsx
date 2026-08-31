@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import SignOutButton from '@/components/auth/SignOutButton';
-import DeviceManager from '@/components/auth/DeviceManager';
-import AssessmentDashboard from '@/components/account/AssessmentDashboard';
+import AccountPlatform from '@/components/account/AccountPlatform';
 import TestBrand from '@/components/brand/TestBrand';
 import { syncApplicationUser } from '@/lib/auth/request-user';
 import prisma from '@/lib/prisma';
@@ -91,7 +90,9 @@ export default async function AccountPage({
           <p className="mt-3 text-sm text-black/50">{user.email}</p>
         </section>
 
-        <AssessmentDashboard
+        <AccountPlatform
+          autoEnrollEligible={entitlements.length > 0}
+          paymentTestMode={process.env.CHARGILY_MODE === 'test'}
           locale={locale}
           paymentNotice={payment === 'success' || payment === 'failed' ? payment : undefined}
           entitlements={entitlements.map((entitlement) => ({
@@ -117,7 +118,6 @@ export default async function AccountPage({
           products={products}
           orders={orders.map((order) => ({ ...order, createdAt: order.createdAt.toISOString() }))}
         />
-        <DeviceManager />
       </div>
     </main>
   );

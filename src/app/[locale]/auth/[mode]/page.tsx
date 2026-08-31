@@ -1,11 +1,25 @@
 import { notFound } from 'next/navigation';
 import AuthForm, { type AuthMode } from '@/components/auth/AuthForm';
+import { getEnabledAuthProviders } from '@/lib/supabase/auth-providers';
 
 const MODES = new Set<AuthMode>(['sign-in', 'sign-up', 'forgot-password', 'update-password']);
 
-export default async function AuthPage({ params }: { params: Promise<{ locale: string; mode: string }> }) {
+const AUTH_ERRORS: Record<string, string> = {
+  missing_code: 'This sign-in or recovery link is incomplete. Request a new password-reset email.',
+  invalid_code: 'This sign-in or recovery link is invalid or expired. Request a new password-reset email.',
+};
+
+export default async function AuthPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string; mode: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { locale, mode } = await params;
   if (!MODES.has(mode as AuthMode)) notFound();
+  const providers = await getEnabledAuthProviders();
+  const { error } = await searchParams;
 
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f5f5f3] px-4 py-10 sm:px-6 sm:py-16">
@@ -13,7 +27,12 @@ export default async function AuthPage({ params }: { params: Promise<{ locale: s
       <div aria-hidden="true" className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-crimson/[0.055] blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -bottom-40 -right-32 h-96 w-96 rounded-full bg-black/[0.035] blur-3xl" />
       <div className="relative z-10 mx-auto w-full max-w-[31rem]">
-        <AuthForm locale={locale} mode={mode as AuthMode} />
+        <AuthForm
+          locale={locale}
+          mode={mode as AuthMode}
+          providers={providers}
+          initialMessage={error ? AUTH_ERRORS[error] : undefined}
+        />
         <p className="mx-auto mt-6 max-w-md text-center text-xs leading-5 text-black/40">
           Secure access to your IELTS Lab tests, appointments and stored results.
         </p>
