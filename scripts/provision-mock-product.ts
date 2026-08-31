@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 import prisma from '../src/lib/prisma';
 import { ACADEMIC_MOCK_TEST_PRODUCT as PRODUCT } from '../src/lib/commerce/catalog';
+import { isCommerciallyEligiblePart } from '../src/lib/content/commercial-eligibility';
 
 const BLUEPRINT = {
   code: 'academic-full-mock-1',
@@ -39,7 +40,33 @@ async function resolvePublishedTestVersion() {
       id: true,
       version: true,
       test: { select: { title: true } },
-      sections: { select: { parts: { select: { slot: true, reviewStatus: true } } } },
+      sections: {
+        select: {
+          parts: {
+            select: {
+              slot: true,
+              reviewStatus: true,
+              stimuli: {
+                select: {
+                  isVisibleToLearner: true,
+                  reviewStatus: true,
+                  asset: { select: { reviewStatus: true } },
+                },
+              },
+              questionGroups: {
+                select: {
+                  reviewStatus: true,
+                  scoringStrategy: true,
+                  maxMarks: true,
+                  answerKey: { select: { reviewStatus: true, formatVersion: true } },
+                  assetLinks: { select: { asset: { select: { reviewStatus: true } } } },
+                  questions: { select: { stableKey: true, maxMarks: true } },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     orderBy: { publishedAt: 'desc' },
   });
@@ -47,7 +74,7 @@ async function resolvePublishedTestVersion() {
   const eligible = candidates.filter((candidate) => {
     const parts = candidate.sections.flatMap((section) => section.parts);
     return parts.length === expectedSlots.size
-      && parts.every((part) => part.reviewStatus === 'VERIFIED' && expectedSlots.has(part.slot));
+      && parts.every((part) => expectedSlots.has(part.slot) && isCommerciallyEligiblePart(part));
   });
   if (eligible.length !== 1) {
     throw new Error(id ? 'COMMERCIAL_TEST_VERSION_NOT_ELIGIBLE' : 'COMMERCIAL_TEST_VERSION_AMBIGUOUS');

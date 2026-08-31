@@ -361,7 +361,7 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
           failureCode: event.type === 'checkout.failed' ? 'CHECKOUT_FAILED' : 'CHECKOUT_CANCELLED',
         },
       });
-      if (event.type === 'checkout.canceled' && payment.order.status !== 'PAID') {
+      if (payment.order.status !== 'PAID') {
         await transaction.order.update({
           where: { id: payment.orderId },
           data: { status: 'CANCELLED', cancelledAt: now },
