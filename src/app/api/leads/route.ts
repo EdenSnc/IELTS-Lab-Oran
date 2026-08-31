@@ -2,9 +2,10 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { LeadSource } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { applicationSchema, boundedTallyAnswer } from '@/lib/leads/application';
 import prisma from '@/lib/prisma';
 
-const MAX_BODY_BYTES = 16_384;
+const MAX_BODY_BYTES = 32_768;
 const phonePattern = /^(?:\+213|0)[567]\d{8}$/;
 const optionalText = z.string().trim().max(200).nullish();
 
@@ -24,14 +25,7 @@ const directLeadSchema = z.object({
       LeadSource.unknown,
     ])
     .default(LeadSource.unknown),
-  application: z.object({
-    examType: z.enum(['Academic', 'General Training', 'Undecided']),
-    englishLevel: z.enum(['A2', 'B1', 'B2', 'C1+', 'Unsure']),
-    targetBand: z.enum(['6.0', '6.5', '7.0', '7.5', '8.0+', 'Unsure']),
-    timing: z.enum(['0-3 months', '3-6 months', '6+ months', 'No date']),
-    notes: z.string().trim().max(1000).nullish(),
-    locale: z.enum(['en', 'fr', 'ar']),
-  }).optional(),
+  application: applicationSchema.optional(),
 }).strict();
 
 const tallyWebhookSchema = z.object({
@@ -56,7 +50,7 @@ interface LeadInput {
   utmMedium: string | null;
   utmCampaign: string | null;
   externalEventId: string | null;
-  application: z.infer<typeof directLeadSchema>['application'] | null;
+  application: unknown | null;
 }
 
 function normalisePhone(value: string): string | null {
@@ -107,13 +101,24 @@ function parseTallyLead(payload: unknown): LeadInput | null {
 
   let phone: string | null = null;
   let email: string | null = null;
+  let fullName: string | null = null;
   let utmSource: string | null = null;
   let utmMedium: string | null = null;
   let utmCampaign: string | null = null;
+  const answers: Array<{ key: string | null; label: string | null; value: string | string[] }> = [];
 
   for (const field of parsed.data.data.fields) {
     const value = fieldText(field.value);
     const identifier = `${field.key ?? ''} ${field.label ?? ''}`.toLowerCase();
+    const boundedValue = boundedTallyAnswer(field.value);
+
+    if (boundedValue !== null) {
+      answers.push({
+        key: field.key?.trim().slice(0, 200) || null,
+        label: field.label?.trim().slice(0, 300) || null,
+        value: boundedValue,
+      });
+    }
 
     if (identifier.includes('utm_source')) utmSource = value || null;
     if (identifier.includes('utm_medium')) utmMedium = value || null;
@@ -121,6 +126,13 @@ function parseTallyLead(payload: unknown): LeadInput | null {
     if (identifier.includes('email')) {
       const validEmail = z.email().safeParse(value);
       if (validEmail.success) email = validEmail.data.toLowerCase();
+    }
+    if (
+      !fullName
+      && (identifier.includes('full legal name') || identifier.includes('full name'))
+      && value.length >= 2
+    ) {
+      fullName = value.slice(0, 120);
     }
     phone ??= normalisePhone(value);
   }
@@ -130,14 +142,18 @@ function parseTallyLead(payload: unknown): LeadInput | null {
   return {
     phone,
     email,
-    fullName: null,
+    fullName,
     formName: parsed.data.data.formName ?? 'Tally intake',
     source: LeadSource.cohort_waitlist,
     utmSource,
     utmMedium,
     utmCampaign,
     externalEventId: parsed.data.eventId,
-    application: null,
+    application: {
+      schemaVersion: 1,
+      source: 'tally',
+      answers,
+    },
   };
 }
 
