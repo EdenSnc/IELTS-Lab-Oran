@@ -34,8 +34,16 @@ type StartAttemptInput = {
 };
 
 function retryableSerializableError(error: unknown) {
-  return error instanceof Prisma.PrismaClientKnownRequestError
-    && (error.code === 'P2034' || error.code === 'P2002');
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  if (error.code === 'P2034' || error.code === 'P2002') return true;
+
+  // PostgreSQL serialization failures raised by raw SQL are wrapped by
+  // Prisma as P2010, with the adapter retaining the native SQLSTATE.
+  const metadata = error.meta as {
+    driverAdapterError?: { cause?: { originalCode?: unknown } };
+  } | undefined;
+  return error.code === 'P2010'
+    && metadata?.driverAdapterError?.cause?.originalCode === '40001';
 }
 
 function retryDelay(retry: number) {

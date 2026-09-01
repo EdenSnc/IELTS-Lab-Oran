@@ -243,7 +243,19 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     createAuthenticatedAttempt(creationInput),
     createAuthenticatedAttempt(creationInput),
   ]);
-  assert.equal(creations.filter((result) => result.status === 'fulfilled').length, 2);
+  const creationFailures = creations
+    .filter((result) => result.status === 'rejected')
+    .map((result) => result.reason instanceof Error
+      ? `${result.reason.name}: ${result.reason.message} ${JSON.stringify({
+        code: 'code' in result.reason ? result.reason.code : undefined,
+        meta: 'meta' in result.reason ? result.reason.meta : undefined,
+      })}`
+      : String(result.reason));
+  assert.equal(
+    creations.filter((result) => result.status === 'fulfilled').length,
+    2,
+    `concurrent callers must converge on one draft; failures: ${creationFailures.join(' | ')}`,
+  );
   assert.equal(new Set(creations.filter((result) => result.status === 'fulfilled').map((result) => result.value.id)).size, 1);
   const attempt = creations.find((result) => result.status === 'fulfilled')!.value;
   assert.equal(attempt.questions.length, 1);
