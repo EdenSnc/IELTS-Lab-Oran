@@ -15,7 +15,7 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     { createAuthenticatedAttempt },
     { enrollDeviceSlot, enrollInitialDeviceSlot },
     { acquireAttemptExecution, authorizeAttemptSubmission, requireLiveAttemptExecution },
-    { saveResponseOptimistically },
+    { releaseAttempt, saveResponseOptimistically },
     { submitAndGradeObjectiveAttempt },
   ] = await Promise.all([
     import('../../src/lib/prisma'),
@@ -163,6 +163,68 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     },
   });
 
+  const resumableEntitlementEndsAt = new Date(Date.now() + 10 * 60_000);
+  const resumableEntitlement = await prisma.entitlement.create({
+    data: {
+      userId: user.id,
+      productId: product.id,
+      status: 'ACTIVE',
+      startsAt: new Date(Date.now() - 60_000),
+      endsAt: resumableEntitlementEndsAt,
+      maximumAttempts: 1,
+    },
+  });
+  let failMaterialization = true;
+  const resumableInput = {
+    userId: user.id,
+    entitlementId: resumableEntitlement.id,
+    blueprintId: blueprint.id,
+    mode: 'STRICT' as const,
+  };
+  await assert.rejects(
+    createAuthenticatedAttempt(resumableInput, {
+      beforeQuestionMaterialization: () => {
+        if (failMaterialization) {
+          failMaterialization = false;
+          throw new Error('SIMULATED_PHASE_B_FAILURE');
+        }
+      },
+    }),
+    /SIMULATED_PHASE_B_FAILURE/,
+  );
+  const stranded = await prisma.assessmentAttempt.findFirstOrThrow({
+    where: { entitlementId: resumableEntitlement.id },
+    include: { questions: true },
+  });
+  assert.equal(stranded.state, 'DRAFT');
+  assert.equal(stranded.questions.length, 0);
+  assert.equal((await prisma.entitlement.findUniqueOrThrow({ where: { id: resumableEntitlement.id } })).attemptsUsed, 1);
+  const resumed = await createAuthenticatedAttempt(resumableInput);
+  assert.equal(resumed.id, stranded.id);
+  assert.equal(resumed.questions.length, 1);
+  assert.equal(await prisma.assessmentAttempt.count({ where: { entitlementId: resumableEntitlement.id } }), 1);
+  assert.equal((await prisma.entitlement.findUniqueOrThrow({ where: { id: resumableEntitlement.id } })).attemptsUsed, 1);
+  assert.ok(resumed.expiresAt);
+  assert.ok(Math.abs(resumed.expiresAt.getTime() - resumableEntitlementEndsAt.getTime()) < 1_000);
+
+  const firstRelease = await releaseAttempt({
+    attemptId: resumed.id,
+    reason: 'Database regression test.',
+    actor: { kind: 'SYSTEM' },
+  });
+  assert.equal(firstRelease.released, true);
+  assert.equal((await prisma.entitlement.findUniqueOrThrow({ where: { id: resumableEntitlement.id } })).attemptsUsed, 0);
+  const secondRelease = await releaseAttempt({
+    attemptId: resumed.id,
+    reason: 'Database regression test replay.',
+    actor: { kind: 'SYSTEM' },
+  });
+  assert.equal(secondRelease.released, false);
+  assert.equal((await prisma.entitlement.findUniqueOrThrow({ where: { id: resumableEntitlement.id } })).attemptsUsed, 0);
+  assert.equal(await prisma.entitlementConsumption.count({
+    where: { attemptId: resumed.id, kind: 'RELEASE' },
+  }), 1);
+
   const freeUser = await prisma.user.create({
     data: { id: randomUUID(), email: `free-device-${suffix}@example.invalid` },
   });
@@ -181,8 +243,8 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     createAuthenticatedAttempt(creationInput),
     createAuthenticatedAttempt(creationInput),
   ]);
-  assert.equal(creations.filter((result) => result.status === 'fulfilled').length, 1);
-  assert.equal(creations.filter((result) => result.status === 'rejected').length, 1);
+  assert.equal(creations.filter((result) => result.status === 'fulfilled').length, 2);
+  assert.equal(new Set(creations.filter((result) => result.status === 'fulfilled').map((result) => result.value.id)).size, 1);
   const attempt = creations.find((result) => result.status === 'fulfilled')!.value;
   assert.equal(attempt.questions.length, 1);
   assert.equal(attempt.questions[0].questionId, question.id);
@@ -205,6 +267,15 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
 
   const firstExecution = await acquireAttemptExecution({ attemptId: attempt.id, userId: user.id, deviceSlot: firstDevice });
   assert.ok(firstExecution.leaseToken);
+  await assert.rejects(
+    releaseAttempt({
+      attemptId: attempt.id,
+      reason: 'Must not release an active attempt.',
+      actor: { kind: 'SYSTEM' },
+    }),
+    /ACTIVE_ATTEMPT_RELEASE_FORBIDDEN/,
+  );
+  assert.equal((await prisma.entitlement.findUniqueOrThrow({ where: { id: entitlement.id } })).attemptsUsed, 1);
   const fixedDeadline = firstExecution.attempt.expiresAt?.toISOString();
   const reconnect = await acquireAttemptExecution({ attemptId: attempt.id, userId: user.id, deviceSlot: firstDevice });
   assert.equal(reconnect.attempt.expiresAt?.toISOString(), fixedDeadline, 'reconnect must not extend the attempt deadline');

@@ -1,11 +1,12 @@
 import 'server-only';
 
 import { randomBytes } from 'node:crypto';
-import { AttemptMode, AttemptState, Prisma } from '@prisma/client';
+import { AttemptMode, Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
-import { EntitlementUnavailableError } from '@/lib/db/concurrency';
+import { reserveEntitlementAndCreateAttempt } from '@/lib/db/concurrency';
 import {
   compileAttemptManifest,
+  parseFrozenManifestPayload,
   type AssemblyBlueprint,
   type AssemblyPart,
 } from './manifest-core';
@@ -107,6 +108,53 @@ async function loadAssemblyInput(blueprintId: string) {
   return { blueprint: assemblyBlueprint, candidates };
 }
 
+async function materializeAttemptQuestions(attemptId: string, payload: ReturnType<typeof parseFrozenManifestPayload>) {
+  await prisma.$transaction(async (transaction) => {
+    await transaction.attemptQuestion.createMany({
+      data: payload.questions.map((question) => ({
+        attemptId,
+        questionId: question.questionId,
+        skill: question.skill as 'LISTENING' | 'READING' | 'WRITING' | 'SPEAKING',
+        partOrder: question.partOrder,
+        groupOrder: question.groupOrder,
+        questionOrder: question.questionOrder,
+        questionNumber: question.questionNumber,
+        maxMarksSnapshot: question.maxMarks,
+        presentedOptions: question.presentedOptions as Prisma.InputJsonValue ?? Prisma.JsonNull,
+      })),
+      skipDuplicates: true,
+    });
+    const questions = await transaction.attemptQuestion.findMany({
+      where: { attemptId },
+      select: { id: true, questionId: true },
+    });
+    if (
+      questions.length !== payload.questions.length
+      || questions.some((question) => !payload.questions.some((frozen) => frozen.questionId === question.questionId))
+    ) throw new Error('ATTEMPT_QUESTION_MATERIALIZATION_MISMATCH');
+    await transaction.response.createMany({
+      data: questions.map((question) => ({
+        attemptQuestionId: question.id,
+        answer: Prisma.JsonNull,
+      })),
+      skipDuplicates: true,
+    });
+    const responseCount = await transaction.response.count({
+      where: { attemptQuestion: { attemptId } },
+    });
+    if (responseCount !== payload.questions.length) {
+      throw new Error('ATTEMPT_RESPONSE_MATERIALIZATION_MISMATCH');
+    }
+  });
+  return prisma.assessmentAttempt.findUniqueOrThrow({
+    where: { id: attemptId },
+    include: {
+      manifest: true,
+      questions: { include: { response: true } },
+    },
+  });
+}
+
 export async function createAuthenticatedAttempt(input: {
   userId: string;
   entitlementId: string;
@@ -114,7 +162,7 @@ export async function createAuthenticatedAttempt(input: {
   mode: AttemptMode;
   minimumSourceYear?: number;
   archiveIncluded?: boolean;
-}) {
+}, hooks?: { beforeQuestionMaterialization?: (attemptId: string) => void | Promise<void> }) {
   const randomSeed = randomBytes(32).toString('base64url');
   const assembly = await loadAssemblyInput(input.blueprintId);
   const compiled = compileAttemptManifest({
@@ -124,90 +172,13 @@ export async function createAuthenticatedAttempt(input: {
     archiveIncluded: input.archiveIncluded,
   });
 
-  for (let retry = 0; retry < 3; retry += 1) {
-    try {
-      return await prisma.$transaction(async (transaction) => {
-        const reserved = await transaction.$queryRaw<Array<{ id: string }>>(Prisma.sql`
-          UPDATE app_private."Entitlement" AS entitlement
-          SET
-            "attemptsUsed" = "attemptsUsed" + 1,
-            "version" = "version" + 1,
-            "updatedAt" = NOW()
-          WHERE entitlement.id = ${input.entitlementId}::uuid
-            AND entitlement."userId" = ${input.userId}::uuid
-            AND entitlement.status = 'ACTIVE'
-            AND (entitlement."startsAt" IS NULL OR entitlement."startsAt" <= NOW())
-            AND (entitlement."endsAt" IS NULL OR entitlement."endsAt" > NOW())
-            AND (
-              entitlement."maximumAttempts" IS NULL
-              OR entitlement."attemptsUsed" < entitlement."maximumAttempts"
-            )
-            AND EXISTS (
-              SELECT 1
-              FROM app_private."ProductBlueprint" AS allowed
-              JOIN app_private."TestBlueprint" AS blueprint
-                ON blueprint.id = allowed."blueprintId"
-              WHERE allowed."productId" = entitlement."productId"
-                AND allowed."blueprintId" = ${input.blueprintId}::uuid
-                AND blueprint.status = 'PUBLISHED'
-            )
-          RETURNING id
-        `);
-        if (reserved.length !== 1) throw new EntitlementUnavailableError();
-
-        const attempt = await transaction.assessmentAttempt.create({
-          data: {
-            userId: input.userId,
-            entitlementId: input.entitlementId,
-            blueprintId: input.blueprintId,
-            state: AttemptState.DRAFT,
-            mode: input.mode,
-            randomSeed,
-            minimumSourceYear: input.minimumSourceYear,
-            archiveIncluded: input.archiveIncluded ?? false,
-            manifest: {
-              create: {
-                schemaVersion: compiled.payload.schemaVersion,
-                contentHash: compiled.contentHash,
-                payload: compiled.payload as unknown as Prisma.InputJsonValue,
-              },
-            },
-            questions: {
-              create: compiled.payload.questions.map((question) => ({
-                questionId: question.questionId,
-                skill: question.skill as 'LISTENING' | 'READING' | 'WRITING' | 'SPEAKING',
-                partOrder: question.partOrder,
-                groupOrder: question.groupOrder,
-                questionOrder: question.questionOrder,
-                questionNumber: question.questionNumber,
-                maxMarksSnapshot: question.maxMarks,
-                presentedOptions: question.presentedOptions as Prisma.InputJsonValue ?? Prisma.JsonNull,
-                response: { create: { answer: Prisma.JsonNull } },
-              })),
-            },
-          },
-          include: {
-            manifest: true,
-            questions: { include: { response: true } },
-          },
-        });
-        await transaction.entitlementConsumption.create({
-          data: {
-            entitlementId: input.entitlementId,
-            attemptId: attempt.id,
-            kind: 'RESERVATION',
-            units: 1,
-            idempotencyKey: `attempt:${attempt.id}:reservation`,
-          },
-        });
-        return attempt;
-      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-    } catch (error) {
-      const retryable = error instanceof Prisma.PrismaClientKnownRequestError
-        && error.code === 'P2034'
-        && retry < 2;
-      if (!retryable) throw error;
-    }
-  }
-  throw new Error('UNREACHABLE_ATTEMPT_CREATION_STATE');
+  const attempt = await reserveEntitlementAndCreateAttempt({
+    ...input,
+    randomSeed,
+    manifestContentHash: compiled.contentHash,
+    manifestPayload: compiled.payload,
+  });
+  if (!attempt.manifest) throw new Error('ATTEMPT_MANIFEST_MISSING');
+  await hooks?.beforeQuestionMaterialization?.(attempt.id);
+  return materializeAttemptQuestions(attempt.id, parseFrozenManifestPayload(attempt.manifest.payload));
 }

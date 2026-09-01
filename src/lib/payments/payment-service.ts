@@ -288,11 +288,54 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
         AND "providerCheckoutId" = ${event.data.id}
       FOR UPDATE
     `);
-    const payment = await transaction.paymentAttempt.findFirst({
+    let payment = await transaction.paymentAttempt.findFirst({
       where: { provider: 'CHARGILY', providerCheckoutId: event.data.id },
       include: { order: { include: { product: true, entitlements: true } } },
     });
-    if (!payment) throw new PaymentServiceError('PAYMENT_ATTEMPT_NOT_FOUND', 404);
+    if (!payment) {
+      await transaction.$queryRaw(Prisma.sql`
+        SELECT id FROM app_private."PaymentAttempt"
+        WHERE id = ${metadata.paymentAttemptId}::uuid
+          AND "orderId" = ${metadata.orderId}::uuid
+        FOR UPDATE
+      `);
+      payment = await transaction.paymentAttempt.findFirst({
+        where: { id: metadata.paymentAttemptId, orderId: metadata.orderId },
+        include: { order: { include: { product: true, entitlements: true } } },
+      });
+      if (!payment) throw new PaymentServiceError('PAYMENT_ATTEMPT_NOT_FOUND', 404);
+      if (
+        payment.provider !== 'CHARGILY'
+        || payment.liveMode !== event.liveMode
+        || !['PENDING', 'PROCESSING'].includes(payment.status)
+        || payment.order.status !== 'PENDING'
+        || payment.order.id !== metadata.orderId
+        || payment.order.product.id !== payment.order.productId
+        || chargilyAmountFromMinor(payment.amountMinor, payment.currency) !== event.data.amount
+        || payment.currency !== event.data.currency.toUpperCase()
+        || chargilyAmountFromMinor(payment.order.amountMinor, payment.order.currency) !== event.data.amount
+        || payment.order.currency !== event.data.currency.toUpperCase()
+      ) throw new PaymentServiceError('PAYMENT_WEBHOOK_MISMATCH', 409);
+      if (payment.providerCheckoutId && payment.providerCheckoutId !== event.data.id) {
+        throw new PaymentServiceError('PAYMENT_CHECKOUT_BINDING_CONFLICT', 409);
+      }
+      if (!payment.providerCheckoutId) {
+        const bound = await transaction.paymentAttempt.updateMany({
+          where: {
+            id: payment.id,
+            orderId: metadata.orderId,
+            provider: 'CHARGILY',
+            providerCheckoutId: null,
+            status: { in: ['PENDING', 'PROCESSING'] },
+          },
+          data: { providerCheckoutId: event.data.id },
+        });
+        if (bound.count !== 1) {
+          throw new PaymentServiceError('PAYMENT_CHECKOUT_BINDING_CONFLICT', 409);
+        }
+        payment = { ...payment, providerCheckoutId: event.data.id };
+      }
+    }
     const duplicateAfterLock = await transaction.paymentEvent.findUnique({
       where: { providerEventId: event.id },
     });

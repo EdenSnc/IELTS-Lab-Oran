@@ -38,6 +38,7 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
       where: { id: attemptId, userId },
       include: {
         manifest: true,
+        entitlement: true,
         blueprint: { select: { variant: true } },
         skillScores: true,
         gradingRuns: {
@@ -75,6 +76,14 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
       };
     }
     if (attempt.state !== AttemptState.ACTIVE) throw new AuthError('ATTEMPT_NOT_ACTIVE', 409);
+    const entitlement = attempt.entitlement;
+    const submissionTime = new Date();
+    if (
+      !entitlement
+      || entitlement.status !== 'ACTIVE'
+      || (entitlement.startsAt && entitlement.startsAt > submissionTime)
+      || (entitlement.endsAt && entitlement.endsAt <= submissionTime)
+    ) throw new AuthError('ENTITLEMENT_WINDOW_EXPIRED', 409);
     const manifest = parseFrozenManifestPayload(attempt.manifest.payload);
     if (hashFrozenManifestPayload(manifest) !== attempt.manifest.contentHash) {
       throw new Error('ATTEMPT_MANIFEST_HASH_MISMATCH');
@@ -203,6 +212,9 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
     }
     let writingGradingRunId: string | null = null;
     if (writingQuestions.length === 2) {
+      if (entitlement.endsAt && entitlement.endsAt <= new Date()) {
+        throw new AuthError('ENTITLEMENT_WINDOW_EXPIRED', 409);
+      }
       const rubric = await transaction.rubricVersion.findFirst({
         where: { code: 'IELTS_WRITING_PUBLIC_2023', skill: 'WRITING', status: 'PUBLISHED' },
         orderBy: { version: 'desc' },

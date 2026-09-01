@@ -1486,6 +1486,7 @@ enum EntitlementStatus {
 
 enum EntitlementConsumptionKind {
   RESERVATION
+  RELEASE
   REVERSAL
   ADJUSTMENT
 
@@ -1623,7 +1624,7 @@ model Entitlement {
 model EntitlementConsumption {
   id             String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   entitlementId  String                     @db.Uuid
-  attemptId      String?                    @unique @db.Uuid
+  attemptId      String?                    @db.Uuid
   kind           EntitlementConsumptionKind
   units          Int
   idempotencyKey String                     @unique
@@ -1638,5 +1639,6 @@ model EntitlementConsumption {
 
   @@index([entitlementId, createdAt])
   @@index([kind, createdAt])
+  @@unique([attemptId, kind])
   @@schema("app_private")
 }

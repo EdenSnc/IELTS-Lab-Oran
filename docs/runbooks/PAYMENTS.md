@@ -22,6 +22,8 @@ exists, pass `-- --test-version-id=<uuid>` rather than guessing.
 
 ## Operational invariants
 
+An attempt deadline is fixed at creation to the earlier of the manifest time limit and entitlement end. Submission and writing-grading enqueue both require an active entitlement window. An unstarted DRAFT may be released after 30 minutes with `npm run attempts:release-stale`; release is idempotent and restores its reserved attempt.
+
 Checkout creation commits the local `Order` and `PaymentAttempt` before calling Chargily. The client supplies only a product code and locale; price, currency, identity, ownership, and entitlement are server-derived. A caller-generated `Idempotency-Key` is scoped to the authenticated user.
 
 Webhook processing verifies the raw body before parsing. It validates environment, checkout identity, metadata, amount, and currency, then atomically records the unique `PaymentEvent`, marks payment/order paid, and creates at most one entitlement per order. Duplicate delivery is a successful no-op. An ambiguous checkout creation must be reconciled from the provider dashboard/webhook; do not grant an entitlement or create a second payment automatically.

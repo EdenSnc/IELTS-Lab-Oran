@@ -45,9 +45,10 @@ test('concurrent verified Chargily webhooks grant exactly one entitlement', {
         paymentAttempts: {
           create: {
             provider: 'CHARGILY',
-            providerCheckoutId,
+            providerCheckoutId: null,
             liveMode: false,
             requestHash: '11'.repeat(32),
+            status: 'PROCESSING',
             amountMinor: product.priceMinor,
             currency: product.currency,
           },
@@ -73,6 +74,19 @@ test('concurrent verified Chargily webhooks grant exactly one entitlement', {
     };
     const rawBody = JSON.stringify(event);
     const signature = createHmac('sha256', process.env.CHARGILY_SECRET_KEY).update(rawBody).digest('hex');
+
+    for (const mismatch of [
+      { ...event, id: `event-${randomUUID()}`, data: { ...event.data, amount: 296 } },
+      { ...event, id: `event-${randomUUID()}`, data: { ...event.data, currency: 'usd' } },
+      { ...event, id: `event-${randomUUID()}`, livemode: true },
+    ]) {
+      const mismatchBody = JSON.stringify(mismatch);
+      const mismatchSignature = createHmac('sha256', process.env.CHARGILY_SECRET_KEY).update(mismatchBody).digest('hex');
+      await assert.rejects(processChargilyWebhook(mismatchBody, mismatchSignature));
+    }
+    assert.equal(await prisma.paymentEvent.count({ where: { paymentAttemptId } }), 0);
+    assert.equal((await prisma.paymentAttempt.findUniqueOrThrow({ where: { id: paymentAttemptId } })).providerCheckoutId, null);
+
     const results = await Promise.all([
       processChargilyWebhook(rawBody, signature),
       processChargilyWebhook(rawBody, signature),
@@ -86,6 +100,7 @@ test('concurrent verified Chargily webhooks grant exactly one entitlement', {
     });
     assert.equal(persisted?.status, 'PAID');
     assert.equal(persisted?.paymentAttempts[0].status, 'SUCCEEDED');
+    assert.equal(persisted?.paymentAttempts[0].providerCheckoutId, providerCheckoutId);
     assert.equal(persisted?.entitlements[0].status, 'ACTIVE');
     assert.equal(persisted?.entitlements[0].maximumAttempts, 2);
 

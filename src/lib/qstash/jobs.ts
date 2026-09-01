@@ -21,10 +21,34 @@ export async function publishWritingGradingRun(gradingRunId: string) {
   const run = await prisma.$transaction(async (transaction) => {
     const existing = await transaction.gradingRun.findUnique({
       where: { id: gradingRunId },
-      select: { id: true, status: true, enqueueAttempt: true, lastEnqueuedAt: true },
+      select: {
+        id: true,
+        status: true,
+        enqueueAttempt: true,
+        lastEnqueuedAt: true,
+        attempt: { select: { entitlement: true } },
+      },
     });
     if (!existing) throw new Error('GRADING_RUN_NOT_FOUND');
     if (existing.status === 'SUCCEEDED' || existing.status === 'SUPERSEDED') return existing;
+    const now = new Date();
+    const entitlement = existing.attempt.entitlement;
+    if (
+      !entitlement
+      || entitlement.status !== 'ACTIVE'
+      || (entitlement.startsAt && entitlement.startsAt > now)
+      || (entitlement.endsAt && entitlement.endsAt <= now)
+    ) {
+      await transaction.gradingRun.update({
+        where: { id: gradingRunId },
+        data: {
+          status: 'FAILED',
+          errorCode: 'ENTITLEMENT_WINDOW_EXPIRED',
+          errorMessage: 'The paid access window was not active when grading was enqueued.',
+        },
+      });
+      return { ...existing, entitlementBlocked: true as const };
+    }
     if (existing.status === 'QUEUED' && existing.lastEnqueuedAt && existing.lastEnqueuedAt > new Date(Date.now() - 5 * 60_000)) {
       return existing;
     }
@@ -35,6 +59,7 @@ export async function publishWritingGradingRun(gradingRunId: string) {
     if (reserved.count !== 1) throw new Error('GRADING_RUN_NOT_QUEUEABLE');
     return { ...existing, enqueueAttempt: existing.enqueueAttempt + 1 };
   });
+  if ('entitlementBlocked' in run) throw new Error('ENTITLEMENT_WINDOW_EXPIRED');
   if (run.status === 'SUCCEEDED' || run.status === 'SUPERSEDED') {
     return { skipped: true, messageId: null };
   }
