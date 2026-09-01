@@ -9,6 +9,7 @@ const indexablePaths = [
   'articles/free-ielts-resources-algeria',
   'articles/how-to-register-algeria',
   'articles/ielts-vs-toefl-canada',
+  'articles/italy-student-visa-english-tests-algeria',
   'articles/overcoming-speaking-anxiety',
   'articles/tlscontact-capago',
   'articles/writing-task-2-tactics',

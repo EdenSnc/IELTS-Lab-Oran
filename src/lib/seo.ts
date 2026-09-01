@@ -53,11 +53,13 @@ export function buildArticleMetadata({
   slug,
   title,
   description,
+  modifiedTime = CONTENT_REVIEW_DATE,
 }: {
   locale: Locale;
   slug: string;
   title: string;
   description: string;
+  modifiedTime?: string;
 }): Metadata {
   const url = localizedUrl(locale, `articles/${slug}`);
   return {
@@ -72,7 +74,7 @@ export function buildArticleMetadata({
       description,
       siteName: SITE_NAME,
       locale,
-      modifiedTime: CONTENT_REVIEW_DATE,
+      modifiedTime,
     },
     twitter: {
       card: 'summary_large_image',
@@ -107,6 +109,11 @@ const ARTICLE_DESCRIPTIONS = {
     en: 'Express Entry language tests for Algerians: IELTS General Training, TCF Canada, French-English CRS points, CLB conversion, and why Academic is not accepted.',
     fr: 'Tests Entrée express pour les Algériens : IELTS General Training, TCF Canada, points français-anglais, conversion CLB et règle sur Academic.',
     ar: 'اختبارات Express Entry للجزائريين: IELTS General Training وTCF Canada ونقاط الفرنسية والإنجليزية وتحويل CLB ولماذا لا يُقبل Academic.',
+  },
+  'italy-student-visa-english-tests-algeria': {
+    en: 'Italy study visas from Algeria in 2026: what B2 means, why university acceptance differs from visa evidence, and where IELTS, Duolingo and EnglishScore stand.',
+    fr: 'Visa d’études Italie depuis l’Algérie en 2026 : niveau B2, différence admission/visa, et statut d’IELTS, Duolingo et EnglishScore.',
+    ar: 'تأشيرة الدراسة إلى إيطاليا من الجزائر في 2026: مستوى B2 والفرق بين القبول والتأشيرة ووضع IELTS وDuolingo وEnglishScore.',
   },
   'overcoming-speaking-anxiety': {
     en: 'Practical preparation and speaking techniques for managing IELTS Speaking anxiety without memorized answers.',
@@ -156,6 +163,11 @@ const ARTICLE_SEO_TITLES: Record<ArticleSlug, Record<Locale, string>> = {
     en: 'IELTS for Canada Express Entry: Tests & CLB',
     fr: 'IELTS pour Entrée express Canada : tests et CLB',
     ar: 'IELTS للهجرة إلى كندا: الاختبارات وCLB',
+  },
+  'italy-student-visa-english-tests-algeria': {
+    en: 'Italy Student Visa English Tests: Algeria 2026',
+    fr: 'Visa études Italie : tests d’anglais Algérie 2026',
+    ar: 'تأشيرة إيطاليا واختبارات الإنجليزية للجزائريين',
   },
   'overcoming-speaking-anxiety': {
     en: 'IELTS Speaking Anxiety: Practical Strategies',

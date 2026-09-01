@@ -11,6 +11,7 @@ type ArticleTrustProps = {
   title: string;
   description: string;
   sources: Source[];
+  reviewedAt?: string;
 };
 
 const copy = {
@@ -37,6 +38,7 @@ export default function ArticleTrust({
   title,
   description,
   sources,
+  reviewedAt = CONTENT_REVIEW_DATE,
 }: ArticleTrustProps) {
   const articleUrl = localizedUrl(locale, `articles/${slug}`);
   const jsonLd = {
@@ -44,7 +46,7 @@ export default function ArticleTrust({
     '@type': 'Article',
     headline: title,
     description,
-    dateModified: CONTENT_REVIEW_DATE,
+    dateModified: reviewedAt,
     inLanguage: locale,
     mainEntityOfPage: articleUrl,
     author: {
@@ -98,7 +100,15 @@ export default function ArticleTrust({
           __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, '\\u003c'),
         }}
       />
-      <p className="mt-4 mb-10 text-sm text-gray-500">{copy[locale].reviewed}</p>
+      <p className="mt-4 mb-10 text-sm text-gray-500">
+        {reviewedAt === CONTENT_REVIEW_DATE
+          ? copy[locale].reviewed
+          : locale === 'fr'
+            ? `Vérifié le ${new Intl.DateTimeFormat('fr-DZ', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${reviewedAt}T00:00:00Z`))} par IELTS Lab Oran`
+            : locale === 'ar'
+              ? `تم التحقق من المعلومات في ${new Intl.DateTimeFormat('ar-DZ', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${reviewedAt}T00:00:00Z`))} بواسطة IELTS Lab Oran`
+              : `Fact-checked ${new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${reviewedAt}T00:00:00Z`))} by IELTS Lab Oran`}
+      </p>
       <aside className="not-prose my-12 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-extrabold text-charcoal">{copy[locale].sources}</h2>
         <ul className="mt-4 grid gap-3">
