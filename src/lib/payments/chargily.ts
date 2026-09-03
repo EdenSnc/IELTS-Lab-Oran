@@ -9,7 +9,7 @@ const checkoutSchema = z.object({
   livemode: z.boolean(),
   amount: z.number().int().positive(),
   currency: z.string().length(3),
-  status: z.enum(['pending', 'processing', 'paid', 'failed', 'canceled']),
+  status: z.enum(['pending', 'processing', 'paid', 'failed', 'canceled', 'refunded']),
   metadata: z.unknown().optional().nullable(),
   checkout_url: z.url(),
 }).passthrough();
@@ -19,7 +19,7 @@ const webhookCheckoutSchema = z.object({
   entity: z.literal('checkout'),
   amount: z.number().int().positive(),
   currency: z.string().length(3),
-  status: z.enum(['pending', 'processing', 'paid', 'failed', 'canceled']),
+  status: z.enum(['pending', 'processing', 'paid', 'failed', 'canceled', 'refunded']),
   metadata: z.unknown().optional().nullable(),
 }).passthrough();
 
@@ -27,7 +27,7 @@ const chargilyWebhookSchema = z.object({
   id: z.string().min(8).max(128),
   entity: z.literal('event'),
   livemode: z.union([z.boolean(), z.enum(['true', 'false'])]),
-  type: z.enum(['checkout.paid', 'checkout.failed', 'checkout.canceled']),
+  type: z.enum(['checkout.paid', 'checkout.failed', 'checkout.canceled', 'checkout.refunded']),
   data: webhookCheckoutSchema,
 }).passthrough();
 

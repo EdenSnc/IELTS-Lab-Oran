@@ -5,6 +5,8 @@
 - `CHARGILY_MODE` must be `test` or `live` and must match incoming webhook `livemode`.
 - `CHARGILY_SECRET_KEY` is server-only and signs/verifies Chargily Pay V2 traffic.
 - `PAYMENT_CALLBACK_BASE_URL` is the public application origin. Production is `https://www.ieltslab.org`.
+- `CHECKOUT_ENABLED=false` disables new checkout creation without changing existing orders.
+- `ATTEMPTS_ENABLED=false` disables new attempt creation without changing saved work or results.
 
 Never expose these values to browser code. Configure the Chargily webhook to `POST /api/payments/webhooks/chargily` and preserve the exact request body and `signature` header.
 
@@ -36,3 +38,5 @@ Webhook processing verifies the raw body before parsing. It validates environmen
 4. A payment with an ambiguous `failureCode` remains non-entitling until authoritative provider confirmation arrives.
 
 Before enabling live mode, complete a low-value live checkout and confirm exactly one `PaymentEvent` and one `Entitlement` are created after duplicate webhook delivery.
+
+Refunds mark the order and payment `REFUNDED`. Unused access is revoked; access is retained when an attempt reached ACTIVE, while inconsistent histories receive `REFUND_REVIEW_REQUIRED` for staff review. Configure a QStash schedule every 15 minutes to POST `{"version":1,"type":"RECONCILE_PAYMENTS"}` to `/api/internal/payments/reconcile`; it expires local PENDING orders after 60 minutes and reports ambiguous PROCESSING payments without a provider checkout ID.

@@ -29,7 +29,7 @@ export function apiError(error: unknown, fallback = 'REQUEST_FAILED') {
       : code === 'RECORDING_CONSENT_REQUIRED' || code === 'IN_PERSON_APPOINTMENT' ? 409
         : code.includes('NOT_FOUND') ? 404
           : code.includes('CONFLICT') || code.includes('INVALID_SESSION_TRANSITION') || code === 'CANCELLATION_WINDOW_CLOSED' || code === 'APPOINTMENT_ALREADY_STARTED' ? 409
-            : code.includes('NOT_CONFIGURED') ? 503
+            : code.includes('NOT_CONFIGURED') || code.endsWith('_MAINTENANCE') ? 503
               : code.startsWith('INVALID_') ? 400 : 500;
   if (status >= 500) console.error(fallback, { code });
   return noStoreJson({ error: status >= 500 ? fallback : code }, status);

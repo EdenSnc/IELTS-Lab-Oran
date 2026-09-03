@@ -265,6 +265,7 @@ model User {
   speakingOverrides  SpeakingAvailabilityOverride[]
   speakingMarkers    SpeakingEvidenceMarker[]
   speakingScores     SpeakingHumanAssessment[]
+  staffActions       StaffActionAudit[]
 
   @@index([status, role])
   @@schema("app_private")
@@ -1595,6 +1596,36 @@ model PaymentEvent {
   paymentAttempt PaymentAttempt @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
 
   @@index([paymentAttemptId, receivedAt])
+  @@schema("app_private")
+}
+
+model PaymentWebhookFailure {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider        PaymentProvider @default(CHARGILY)
+  providerEventId String?
+  errorCode       String
+  payloadHash     String
+  receivedAt      DateTime        @default(now())
+
+  @@index([provider, errorCode, receivedAt])
+  @@index([providerEventId])
+  @@schema("app_private")
+}
+
+model StaffActionAudit {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorUserId String   @db.Uuid
+  action      String
+  targetType  String
+  targetId    String   @db.Uuid
+  reason      String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId, createdAt])
+  @@index([targetType, targetId, createdAt])
   @@schema("app_private")
 }
 

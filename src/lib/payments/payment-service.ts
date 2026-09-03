@@ -65,6 +65,9 @@ export async function createCheckoutForProduct(input: {
   idempotencyKey: string;
   locale: string;
 }) {
+  if (process.env.CHECKOUT_ENABLED === 'false') {
+    throw new PaymentServiceError('CHECKOUT_MAINTENANCE', 503);
+  }
   await assertAccountReady(input.userId);
   const clientKey = idempotencyKeySchema.parse(input.idempotencyKey);
   const locale = localeSchema.parse(input.locale);
@@ -118,6 +121,38 @@ export async function createCheckoutForProduct(input: {
         await transaction.$queryRaw(Prisma.sql`
           SELECT id FROM app_private."User" WHERE id = ${input.userId}::uuid FOR UPDATE
         `);
+        const product = await transaction.product.findFirst({
+          where: { code: input.productCode, active: true },
+        });
+        if (!product) throw new PaymentServiceError('PRODUCT_NOT_FOUND', 404);
+        const unresolved = await transaction.order.findFirst({
+          where: {
+            userId: input.userId,
+            productId: product.id,
+            status: 'PENDING',
+            createdAt: { gte: new Date(Date.now() - 30 * 60_000) },
+            paymentAttempts: { some: { status: { in: ['PENDING', 'PROCESSING'] } } },
+          },
+          include: {
+            paymentAttempts: { where: { provider: 'CHARGILY' }, orderBy: { createdAt: 'desc' }, take: 1 },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (unresolved) {
+          const attempt = unresolved.paymentAttempts[0];
+          if (!attempt?.checkoutUrl) {
+            throw new PaymentServiceError('CHECKOUT_CREATION_PENDING_RECONCILIATION', 409);
+          }
+          return {
+            orderId: unresolved.id,
+            paymentAttemptId: attempt.id,
+            productName: product.name,
+            amountMinor: unresolved.amountMinor,
+            currency: unresolved.currency,
+            requestHash: attempt.requestHash,
+            existingCheckoutUrl: attempt.checkoutUrl,
+          };
+        }
         const recentCheckoutCount = await transaction.order.count({
           where: {
             userId: input.userId,
@@ -127,11 +162,6 @@ export async function createCheckoutForProduct(input: {
         if (recentCheckoutCount >= 5) {
           throw new PaymentServiceError('CHECKOUT_RATE_LIMITED', 429);
         }
-
-        const product = await transaction.product.findFirst({
-          where: { code: input.productCode, active: true },
-        });
-        if (!product) throw new PaymentServiceError('PRODUCT_NOT_FOUND', 404);
         try {
           chargilyAmountFromMinor(product.priceMinor, product.currency);
         } catch {
@@ -267,6 +297,7 @@ export async function createCheckoutForProduct(input: {
 function expectedStatus(eventType: string) {
   if (eventType === 'checkout.paid') return 'paid';
   if (eventType === 'checkout.failed') return 'failed';
+  if (eventType === 'checkout.refunded') return 'refunded';
   return 'canceled';
 }
 
@@ -305,7 +336,7 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
     `);
     let payment = await transaction.paymentAttempt.findFirst({
       where: { provider: 'CHARGILY', providerCheckoutId: event.data.id },
-      include: { order: { include: { product: true, entitlements: true } } },
+      include: { order: { include: { product: true, entitlements: { include: { attempts: { select: { state: true, startedAt: true } } } } } } },
     });
     if (!payment) {
       await transaction.$queryRaw(Prisma.sql`
@@ -316,7 +347,7 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
       `);
       payment = await transaction.paymentAttempt.findFirst({
         where: { id: metadata.paymentAttemptId, orderId: metadata.orderId },
-        include: { order: { include: { product: true, entitlements: true } } },
+        include: { order: { include: { product: true, entitlements: { include: { attempts: { select: { state: true, startedAt: true } } } } } } },
       });
       if (!payment) throw new PaymentServiceError('PAYMENT_ATTEMPT_NOT_FOUND', 404);
       if (
@@ -410,6 +441,31 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
           },
         });
       }
+    } else if (event.type === 'checkout.refunded') {
+      const entitlement = payment.order.entitlements.at(0);
+      let refundFlag: string | null = null;
+      if (entitlement) {
+        const reachedActive = entitlement.attempts.some((attempt) => Boolean(attempt.startedAt));
+        const inconsistentUnstarted = entitlement.attempts.some((attempt) => (
+          !attempt.startedAt && !['DRAFT', 'ABANDONED'].includes(attempt.state)
+        ));
+        if (reachedActive) refundFlag = 'REFUND_ACCESS_RETAINED';
+        else if (inconsistentUnstarted) refundFlag = 'REFUND_REVIEW_REQUIRED';
+        else {
+          await transaction.entitlement.update({
+            where: { id: entitlement.id },
+            data: { status: 'REVOKED', version: { increment: 1 } },
+          });
+        }
+      }
+      await transaction.paymentAttempt.update({
+        where: { id: payment.id },
+        data: { status: 'REFUNDED', completedAt: now, failureCode: refundFlag, failureMessage: null },
+      });
+      await transaction.order.update({
+        where: { id: payment.orderId },
+        data: { status: 'REFUNDED', cancelledAt: now },
+      });
     } else if (payment.status !== 'SUCCEEDED') {
       await transaction.paymentAttempt.update({
         where: { id: payment.id },
@@ -439,4 +495,48 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
     }
   }
   throw new Error('UNREACHABLE_PAYMENT_WEBHOOK_STATE');
+}
+
+export async function recordPaymentWebhookFailure(rawBody: string, error: unknown) {
+  const code = error instanceof PaymentServiceError ? error.code : 'PAYMENT_WEBHOOK_FAILED';
+  if (code === 'INVALID_WEBHOOK_SIGNATURE') return;
+  let providerEventId: string | null = null;
+  try {
+    const parsed = JSON.parse(rawBody) as { id?: unknown };
+    if (typeof parsed.id === 'string') providerEventId = parsed.id.slice(0, 128);
+  } catch {
+    // Store only the payload hash and safe error code for malformed JSON.
+  }
+  await prisma.paymentWebhookFailure.create({
+    data: { provider: 'CHARGILY', providerEventId, errorCode: code, payloadHash: sha256(rawBody) },
+  });
+}
+
+export async function reconcilePaymentOperations(now = new Date()) {
+  const staleBefore = new Date(now.getTime() - 60 * 60_000);
+  return prisma.$transaction(async (transaction) => {
+    const staleOrders = await transaction.order.findMany({
+      where: { status: 'PENDING', createdAt: { lt: staleBefore } },
+      select: { id: true },
+      take: 100,
+    });
+    const orderIds = staleOrders.map(({ id }) => id);
+    if (orderIds.length) {
+      await transaction.paymentAttempt.updateMany({
+        where: { orderId: { in: orderIds }, status: { in: ['PENDING', 'PROCESSING'] } },
+        data: { status: 'EXPIRED', completedAt: now, failureCode: 'CHECKOUT_EXPIRED' },
+      });
+      await transaction.order.updateMany({
+        where: { id: { in: orderIds }, status: 'PENDING' },
+        data: { status: 'CANCELLED', cancelledAt: now },
+      });
+    }
+    const ambiguous = await transaction.paymentAttempt.findMany({
+      where: { status: 'PROCESSING', providerCheckoutId: null },
+      orderBy: { createdAt: 'asc' },
+      take: 100,
+      select: { id: true, orderId: true, createdAt: true, failureCode: true },
+    });
+    return { expiredOrders: orderIds.length, ambiguous };
+  });
 }

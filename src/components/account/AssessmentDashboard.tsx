@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export type Blueprint = { id: string; name: string; variant: string };
 export type Entitlement = {
@@ -40,7 +40,7 @@ export type AssessmentDashboardProps = {
   attempts: Attempt[];
   products: Product[];
   orders: Order[];
-  paymentNotice?: 'success' | 'failed';
+  paymentOrder?: { id: string; status: string };
   paymentTestMode: boolean;
   deviceTrusted: boolean | null;
 };
@@ -64,14 +64,71 @@ export default function AssessmentDashboard({
   attempts,
   products,
   orders,
-  paymentNotice,
+  paymentOrder: initialPaymentOrder,
   paymentTestMode,
   deviceTrusted,
 }: AssessmentDashboardProps) {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const checkoutKeys = useRef(new Map<string, string>());
+  const [paymentOrder, setPaymentOrder] = useState(initialPaymentOrder);
   const router = useRouter();
+  const paymentOrderId = paymentOrder?.id;
+  const paymentOrderStatus = paymentOrder?.status;
+
+  const clearCheckoutStorage = useCallback((orderId: string) => {
+    for (let index = sessionStorage.length - 1; index >= 0; index -= 1) {
+      const key = sessionStorage.key(index);
+      if (!key?.startsWith('ielts.checkout.')) continue;
+      try {
+        const value = JSON.parse(sessionStorage.getItem(key) ?? '{}') as { orderId?: string };
+        if (value.orderId === orderId) sessionStorage.removeItem(key);
+      } catch {
+        sessionStorage.removeItem(key);
+      }
+    }
+  }, []);
+
+  function localizedError(code: string) {
+    const messages: Record<string, Record<string, string>> = {
+      CHECKOUT_MAINTENANCE: { en: 'Checkout is temporarily unavailable.', fr: 'Le paiement est temporairement indisponible.', ar: 'الدفع غير متاح مؤقتًا.' },
+      ATTEMPTS_MAINTENANCE: { en: 'Tests are temporarily unavailable.', fr: 'Les tests sont temporairement indisponibles.', ar: 'الاختبارات غير متاحة مؤقتًا.' },
+    };
+    return messages[code]?.[locale] ?? code;
+  }
+
+  const refreshPaymentOrder = useCallback(async (orderId: string) => {
+    const response = await fetch(`/api/payments/orders/${orderId}`, { cache: 'no-store' });
+    if (!response.ok) return;
+    const payload = await response.json() as { id: string; status: string };
+    setPaymentOrder(payload);
+    if (payload.status !== 'PENDING') {
+      clearCheckoutStorage(orderId);
+      router.refresh();
+    }
+  }, [clearCheckoutStorage, router]);
+
+  useEffect(() => {
+    if (!paymentOrderId) return;
+    if (paymentOrderStatus !== 'PENDING') {
+      clearCheckoutStorage(paymentOrderId);
+      return;
+    }
+    let active = true;
+    let elapsed = 0;
+    let delay = 1_000;
+    let timeout: number | undefined;
+    const poll = async () => {
+      if (!active) return;
+      await refreshPaymentOrder(paymentOrderId);
+      elapsed += delay;
+      if (active && elapsed < 90_000) {
+        delay = Math.min(delay * 2, 10_000);
+        timeout = window.setTimeout(() => void poll(), delay);
+      }
+    };
+    timeout = window.setTimeout(() => void poll(), delay);
+    return () => { active = false; if (timeout) window.clearTimeout(timeout); };
+  }, [clearCheckoutStorage, paymentOrderId, paymentOrderStatus, refreshPaymentOrder]);
 
   async function startAttempt(entitlementId: string, blueprintId: string) {
     const key = `attempt:${entitlementId}:${blueprintId}`;
@@ -84,7 +141,7 @@ export default function AssessmentDashboard({
         body: JSON.stringify({ entitlementId, blueprintId, mode: 'STRICT' }),
       });
       const payload = await response.json() as { id?: string; error?: string };
-      if (!response.ok || !payload.id) throw new Error(payload.error ?? 'ATTEMPT_CREATION_FAILED');
+      if (!response.ok || !payload.id) throw new Error(localizedError(payload.error ?? 'ATTEMPT_CREATION_FAILED'));
       router.push(`/sim/attempt/${payload.id}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to start this test.');
@@ -96,11 +153,14 @@ export default function AssessmentDashboard({
     setBusy(`checkout:${productCode}`);
     setMessage(null);
     try {
-      let idempotencyKey = checkoutKeys.current.get(productCode);
-      if (!idempotencyKey) {
-        idempotencyKey = crypto.randomUUID();
-        checkoutKeys.current.set(productCode, idempotencyKey);
+      const storageKey = `ielts.checkout.${productCode}`;
+      const stored = sessionStorage.getItem(storageKey);
+      let idempotencyKey: string | undefined;
+      if (stored) {
+        try { idempotencyKey = (JSON.parse(stored) as { idempotencyKey?: string }).idempotencyKey; } catch { sessionStorage.removeItem(storageKey); }
       }
+      idempotencyKey ??= crypto.randomUUID();
+      sessionStorage.setItem(storageKey, JSON.stringify({ idempotencyKey }));
       const response = await fetch('/api/payments/checkout', {
         method: 'POST',
         headers: {
@@ -109,13 +169,12 @@ export default function AssessmentDashboard({
         },
         body: JSON.stringify({ productCode, locale }),
       });
-      const payload = await response.json() as { checkoutUrl?: string; error?: string };
+      const payload = await response.json() as { orderId?: string; checkoutUrl?: string; error?: string };
       if (!response.ok || !payload.checkoutUrl) {
-        if (payload.error !== 'CHECKOUT_CREATION_PENDING_RECONCILIATION') {
-          checkoutKeys.current.delete(productCode);
-        }
-        throw new Error(payload.error ?? 'CHECKOUT_CREATION_FAILED');
+        if (payload.error !== 'CHECKOUT_CREATION_PENDING_RECONCILIATION') sessionStorage.removeItem(storageKey);
+        throw new Error(localizedError(payload.error ?? 'CHECKOUT_CREATION_FAILED'));
       }
+      if (payload.orderId) sessionStorage.setItem(storageKey, JSON.stringify({ idempotencyKey, orderId: payload.orderId }));
       window.location.assign(payload.checkoutUrl);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to open payment.');
@@ -125,11 +184,11 @@ export default function AssessmentDashboard({
 
   return (
     <>
-      {(paymentNotice || message) && (
+      {(paymentOrder || message) && (
         <p role="status" className="mt-6 rounded-2xl border border-black/[0.07] bg-white px-5 py-4 text-sm leading-6 shadow-sm">
-          {message ?? (paymentNotice === 'success'
-            ? 'Payment received. Access appears after the verified payment notification is processed.'
-            : 'Payment was not completed. No access was granted.')}
+          {message ?? `Order ${paymentOrder?.status.toLowerCase()}. ${paymentOrder?.status === 'PAID' ? 'Your verified access is ready.' : paymentOrder?.status === 'PENDING' ? 'Waiting for the verified payment notification.' : 'No new access was granted.'}`}
+          {paymentOrder?.status === 'PENDING' && <button type="button" onClick={() => void refreshPaymentOrder(paymentOrder.id)} className="ml-3 font-semibold underline">Check status</button>}
+          {paymentOrder && <Link href={`/${locale}/account/orders/${paymentOrder.id}`} className="ml-3 font-semibold underline">Receipt</Link>}
         </p>
       )}
 
@@ -177,7 +236,7 @@ export default function AssessmentDashboard({
         {!!products.length && <div className="mt-5 grid gap-3 md:grid-cols-2">{products.map((product) => <article key={product.code} className="rounded-2xl border border-white/10 bg-white/[0.055] p-5"><p className="font-semibold">{product.name}</p><p className="mt-3 text-3xl font-semibold tracking-tight">{new Intl.NumberFormat(locale, { style: 'currency', currency: product.currency, maximumFractionDigits: 0 }).format(product.priceMinor / 100)}</p><p className="mt-1 text-sm text-white/50">{product.maximumAttempts === null ? 'Unlimited attempts' : `${product.maximumAttempts} attempt`}{product.accessDays ? ` · results available for ${product.accessDays} days` : ''}</p><button type="button" disabled={busy !== null} onClick={() => void checkout(product.code)} className="mt-5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-charcoal transition hover:bg-[#ffebee] disabled:opacity-40">{busy === `checkout:${product.code}` ? 'Opening payment…' : paymentTestMode ? 'Open test checkout' : 'Buy securely'}</button></article>)}</div>}
       </section>
 
-      {!!orders.length && <section className="mt-6 rounded-[2rem] border border-black/[0.07] bg-white p-6 shadow-[0_18px_60px_-42px_rgba(0,0,0,0.35)] sm:p-8"><h2 className="text-2xl font-semibold tracking-tight">Recent orders</h2><div className="mt-4 grid gap-2">{orders.map((order) => <div key={order.id} className="flex items-center justify-between gap-3 rounded-2xl bg-black/[0.025] px-4 py-3 text-sm"><span>{order.product.name}</span><strong>{statusLabel(order.status)}</strong></div>)}</div></section>}
+      {!!orders.length && <section className="mt-6 rounded-[2rem] border border-black/[0.07] bg-white p-6 shadow-[0_18px_60px_-42px_rgba(0,0,0,0.35)] sm:p-8"><h2 className="text-2xl font-semibold tracking-tight">Recent orders</h2><div className="mt-4 grid gap-2">{orders.map((order) => <Link href={`/${locale}/account/orders/${order.id}`} key={order.id} className="flex items-center justify-between gap-3 rounded-2xl bg-black/[0.025] px-4 py-3 text-sm"><span>{order.product.name}</span><strong>{statusLabel(order.status)}</strong></Link>)}</div></section>}
     </>
   );
 }

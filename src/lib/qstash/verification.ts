@@ -13,6 +13,11 @@ export const writingRecoveryJobSchema = z.object({
   type: z.literal('RECOVER_WRITING_GRADING'),
 }).strict();
 
+export const paymentReconciliationJobSchema = z.object({
+  version: z.literal(1),
+  type: z.literal('RECONCILE_PAYMENTS'),
+}).strict();
+
 function callbackBaseUrl() {
   const url = new URL(process.env.QSTASH_CALLBACK_BASE_URL ?? CANONICAL_ORIGIN);
   if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
@@ -28,7 +33,7 @@ function qstashReceiver() {
   return new Receiver({ currentSigningKey, nextSigningKey });
 }
 
-export function qstashEndpoint(path: '/api/internal/grading/writing' | '/api/internal/grading/recover') {
+export function qstashEndpoint(path: '/api/internal/grading/writing' | '/api/internal/grading/recover' | '/api/internal/payments/reconcile') {
   return `${callbackBaseUrl()}${path}` as const;
 }
 

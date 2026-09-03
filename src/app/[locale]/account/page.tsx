@@ -12,7 +12,7 @@ export default async function AccountPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ payment?: string }>;
+  searchParams: Promise<{ order?: string }>;
 }) {
   const { locale } = await params;
   const client = await createSupabaseServerClient();
@@ -25,6 +25,7 @@ export default async function AccountPage({
   } catch {
     redirect(`/${locale}/account/onboarding`);
   }
+  const { order: returnedOrderId } = await searchParams;
   const now = new Date();
   const [entitlements, attempts, products, orders] = await Promise.all([
     prisma.entitlement.findMany({
@@ -80,7 +81,12 @@ export default async function AccountPage({
       take: 10,
     }),
   ]);
-  const { payment } = await searchParams;
+  const returnedOrder = returnedOrderId && /^[0-9a-f-]{36}$/iu.test(returnedOrderId)
+    ? await prisma.order.findFirst({
+      where: { id: returnedOrderId, userId: user.id },
+      select: { id: true, status: true },
+    })
+    : null;
 
   return (
     <main className="min-h-screen bg-[#f5f5f3] px-4 py-6 sm:px-6 sm:py-10">
@@ -100,7 +106,7 @@ export default async function AccountPage({
           autoEnrollEligible={entitlements.length > 0}
           paymentTestMode={process.env.CHARGILY_MODE === 'test'}
           locale={locale}
-          paymentNotice={payment === 'success' || payment === 'failed' ? payment : undefined}
+          paymentOrder={returnedOrder ?? undefined}
           entitlements={entitlements.map((entitlement) => ({
             ...entitlement,
             startsAt: entitlement.startsAt?.toISOString() ?? null,

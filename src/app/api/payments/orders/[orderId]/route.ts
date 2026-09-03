@@ -14,6 +14,8 @@ export async function GET(
       select: {
         id: true,
         status: true,
+        amountMinor: true,
+        currency: true,
         createdAt: true,
         paidAt: true,
         product: { select: { code: true, name: true } },

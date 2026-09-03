@@ -10,7 +10,11 @@ import {
 } from '../../src/lib/payments/chargily';
 import { roundOverallBand } from '../../src/lib/grading/writing-run-core';
 import { resultAccessActive } from '../../src/lib/attempts/result-access';
-import { qstashEndpoint, verifyQStashRequest } from '../../src/lib/qstash/verification';
+import {
+  paymentReconciliationJobSchema,
+  qstashEndpoint,
+  verifyQStashRequest,
+} from '../../src/lib/qstash/verification';
 
 function signQStash(body: string, url: string, key: string) {
   const now = Math.floor(Date.now() / 1_000);
@@ -54,6 +58,20 @@ test('Chargily verification uses the exact raw body and parses authoritative met
     orderId: 'order-id',
     paymentAttemptId: 'attempt-id',
   });
+});
+
+test('Chargily refund notifications are parsed as an explicit terminal event', () => {
+  const parsed = parseChargilyWebhook(JSON.stringify({
+    id: '01refundevent000000000000000', entity: 'event', livemode: false,
+    type: 'checkout.refunded',
+    data: {
+      id: '01refundcheckout00000000000', entity: 'checkout', amount: 3900,
+      currency: 'dzd', status: 'refunded',
+      metadata: [{ schema_version: 1, order_id: 'order-id', payment_attempt_id: 'attempt-id' }],
+    },
+  }));
+  assert.equal(parsed.type, 'checkout.refunded');
+  assert.equal(parsed.data.status, 'refunded');
 });
 
 test('Chargily receives whole DZD while platform accounting remains in minor units', () => {
@@ -101,6 +119,50 @@ test('QStash receiver binds the signature to the exact body and destination URL'
     signature,
     endpoint: 'https://example.invalid/api/internal/grading/recover',
   }), false);
+});
+
+test('payment reconciliation jobs contain only the strict minimal wake-up schema', () => {
+  assert.deepEqual(paymentReconciliationJobSchema.parse({ version: 1, type: 'RECONCILE_PAYMENTS' }), {
+    version: 1,
+    type: 'RECONCILE_PAYMENTS',
+  });
+  assert.equal(paymentReconciliationJobSchema.safeParse({
+    version: 1,
+    type: 'RECONCILE_PAYMENTS',
+    orderId: 'should-not-be-in-a-sweep-message',
+  }).success, false);
+  process.env.QSTASH_CALLBACK_BASE_URL = 'https://example.invalid';
+  assert.equal(
+    qstashEndpoint('/api/internal/payments/reconcile'),
+    'https://example.invalid/api/internal/payments/reconcile',
+  );
+});
+
+test('checkout and attempt kill switches fail before account or database work', async () => {
+  process.env.DATABASE_URL ??= 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
+  const [{ createCheckoutForProduct }, { createAuthenticatedAttempt }] = await Promise.all([
+    import('../../src/lib/payments/payment-service'),
+    import('../../src/lib/attempts/attempt-service'),
+  ]);
+  process.env.CHECKOUT_ENABLED = 'false';
+  process.env.ATTEMPTS_ENABLED = 'false';
+  try {
+    await assert.rejects(createCheckoutForProduct({
+      userId: '00000000-0000-0000-0000-000000000001',
+      productCode: 'mock-test',
+      idempotencyKey: 'unit-test-maintenance-key',
+      locale: 'en',
+    }), (error: Error & { code?: string }) => error.code === 'CHECKOUT_MAINTENANCE');
+    await assert.rejects(createAuthenticatedAttempt({
+      userId: '00000000-0000-0000-0000-000000000001',
+      entitlementId: '00000000-0000-0000-0000-000000000002',
+      blueprintId: '00000000-0000-0000-0000-000000000003',
+      mode: 'STRICT',
+    }), /ATTEMPTS_MAINTENANCE/u);
+  } finally {
+    delete process.env.CHECKOUT_ENABLED;
+    delete process.env.ATTEMPTS_ENABLED;
+  }
 });
 
 test('overall IELTS rounding is correct for every realistic half-band combination', () => {

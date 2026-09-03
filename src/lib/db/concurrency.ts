@@ -230,6 +230,18 @@ export async function releaseAttempt(input: {
             reason: `${input.reason} [actor:${input.actor.kind}${input.actor.kind === 'STAFF' ? `:${input.actor.userId}` : ''}]`,
           },
         });
+        if (input.actor.kind === 'STAFF') {
+          await transaction.staffActionAudit.create({
+            data: {
+              actorUserId: input.actor.userId,
+              action: 'RELEASE_ATTEMPT',
+              targetType: 'AssessmentAttempt',
+              targetId: attempt.id,
+              reason: input.reason,
+              metadata: { forced: Boolean(input.force), restoredUnits: reservation.units },
+            },
+          });
+        }
         return { attempt: releasedAttempt, released: true as const };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (error) {

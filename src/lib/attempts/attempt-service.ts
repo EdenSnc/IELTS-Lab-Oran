@@ -164,6 +164,7 @@ export async function createAuthenticatedAttempt(input: {
   minimumSourceYear?: number;
   archiveIncluded?: boolean;
 }, hooks?: { beforeQuestionMaterialization?: (attemptId: string) => void | Promise<void> }) {
+  if (process.env.ATTEMPTS_ENABLED === 'false') throw new Error('ATTEMPTS_MAINTENANCE');
   await assertAccountReady(input.userId);
   const randomSeed = randomBytes(32).toString('base64url');
   const assembly = await loadAssemblyInput(input.blueprintId);
