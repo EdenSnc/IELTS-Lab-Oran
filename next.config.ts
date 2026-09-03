@@ -1,58 +1,23 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 import type { NextConfig } from 'next';
 import { withBotId } from 'botid/next/config';
+import { parsePublicEnvironment } from './src/lib/env';
 
 const withNextIntl = createNextIntlPlugin();
 
-function rtcConnectSources() {
+export function rtcConnectSources() {
   const value = process.env.LIVEKIT_URL;
   if (!value) return [];
-  try {
-    const { hostname, port } = new URL(value);
-    const host = port ? `${hostname}:${port}` : hostname;
-    return [`https://${host}`, `wss://${host}`];
-  } catch {
-    return [];
+  const url = new URL(value);
+  if (!['https:', 'wss:'].includes(url.protocol) || url.username || url.password) {
+    throw new Error('LIVEKIT_URL_INVALID');
   }
+  const host = url.port ? `${url.hostname}:${url.port}` : url.hostname;
+  return [`https://${host}`, `wss://${host}`];
 }
 
-function supabaseConnectSource() {
-  const value = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!value) return [];
-  try {
-    const url = new URL(value);
-    if (
-      url.protocol !== 'https:'
-      || !url.hostname.endsWith('.supabase.co')
-      || url.username
-      || url.password
-    ) return [];
-    return [url.origin];
-  } catch {
-    return [];
-  }
-}
-
-const speakingRtcSources = rtcConnectSources();
-const supabaseConnectSources = supabaseConnectSource();
-
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "form-action 'self' https://tally.so https://www.tally.so",
-  "script-src 'self' 'unsafe-inline' https://tally.so https://*.tally.so https://va.vercel-scripts.com",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.tally.so https://images.unsplash.com https://img.youtube.com",
-  "font-src 'self' data:",
-  "media-src 'self' blob:",
-  "frame-src https://tally.so https://www.tally.so",
-  `connect-src 'self' ${supabaseConnectSources.join(' ')} https://*.tally.so https://vitals.vercel-insights.com https://*.vercel-insights.com ${speakingRtcSources.join(' ')}`.trim(),
-  "worker-src 'self' blob:",
-  "manifest-src 'self'",
-  'upgrade-insecure-requests',
-].join('; ');
+parsePublicEnvironment(process.env);
+rtcConnectSources();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -95,7 +60,6 @@ const nextConfig: NextConfig = {
 
     if (process.env.NODE_ENV === 'production') {
       securityHeaders.push(
-        { key: 'Content-Security-Policy', value: contentSecurityPolicy },
         {
           key: 'Strict-Transport-Security',
           value: 'max-age=63072000; includeSubDomains; preload',

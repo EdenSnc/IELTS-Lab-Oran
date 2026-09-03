@@ -19,7 +19,9 @@
     "content:validate": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/seed.ts",
     "content:import": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/import-staged-test.ts",
     "commerce:provision": "node --conditions=react-server --import tsx scripts/provision-mock-product.ts",
-    "attempts:release-stale": "node --conditions=react-server --import tsx scripts/release-stale-draft-attempts.ts"
+    "commerce:assert-catalog": "node --conditions=react-server --import tsx scripts/assert-product-catalog.ts",
+    "attempts:release-stale": "node --conditions=react-server --import tsx scripts/release-stale-draft-attempts.ts",
+    "security:data-api-check": "node --experimental-strip-types scripts/check-data-api-exposure.mts"
   },
   "dependencies": {
     "@google/genai": "^2.13.0",

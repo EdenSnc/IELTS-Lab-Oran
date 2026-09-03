@@ -34,6 +34,7 @@ jobs:
       - run: supabase start
       - run: supabase db reset --local --no-seed
       - run: supabase db lint --local --schema app_private --level warning --fail-on error
+      - run: npm run commerce:assert-catalog
       - run: node scripts/run-tests.mjs tests/database
       - run: npm test
       - run: npm run db:validate

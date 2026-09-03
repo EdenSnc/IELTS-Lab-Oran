@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getSupabasePublicConfig } from './config';
+import { logSafeError } from '@/lib/observability/safe-log';
 
 export type EnabledAuthProviders = {
   google: boolean;
@@ -20,16 +21,19 @@ export function parseEnabledAuthProviders(payload: unknown): EnabledAuthProvider
 
 export async function getEnabledAuthProviders(): Promise<EnabledAuthProviders> {
   const config = getSupabasePublicConfig();
-  if (!config) return { google: false, facebook: false };
 
   try {
     const response = await fetch(`${config.url}/auth/v1/settings`, {
       headers: { apikey: config.publishableKey },
       next: { revalidate: 300 },
     });
-    if (!response.ok) return { google: false, facebook: false };
+    if (!response.ok) {
+      logSafeError('AUTH_PROVIDER_SETTINGS_REJECTED', new Error('UPSTREAM_REJECTED'), { status: response.status });
+      return { google: false, facebook: false };
+    }
     return parseEnabledAuthProviders(await response.json());
-  } catch {
+  } catch (error) {
+    logSafeError('AUTH_PROVIDER_SETTINGS_FETCH_FAILED', error);
     return { google: false, facebook: false };
   }
 }

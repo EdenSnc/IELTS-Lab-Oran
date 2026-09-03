@@ -132,16 +132,24 @@ async function main() {
       include: { blueprints: true },
     });
     if (existingProduct) {
-      const matches = existingProduct.tier === PRODUCT.tier
+      const valuesMatch = existingProduct.tier === PRODUCT.tier
         && existingProduct.name === PRODUCT.name
         && existingProduct.priceMinor === PRODUCT.priceMinor
         && existingProduct.currency === PRODUCT.currency
         && existingProduct.accessDays === PRODUCT.accessDays
         && existingProduct.maximumAttempts === PRODUCT.maximumAttempts
-        && existingProduct.active
-        && existingProduct.blueprints.length === 1
-        && existingProduct.blueprints[0]?.blueprintId === blueprint.id;
-      if (!matches) throw new Error('EXISTING_PRODUCT_CONFIGURATION_MISMATCH');
+        && existingProduct.active;
+      if (!valuesMatch) throw new Error('EXISTING_PRODUCT_CONFIGURATION_MISMATCH');
+      if (existingProduct.blueprints.length === 0) {
+        await transaction.productBlueprint.create({
+          data: { productId: existingProduct.id, blueprintId: blueprint.id },
+        });
+        existingProduct.blueprints.push({ productId: existingProduct.id, blueprintId: blueprint.id });
+      }
+      if (
+        existingProduct.blueprints.length !== 1
+        || existingProduct.blueprints[0]?.blueprintId !== blueprint.id
+      ) throw new Error('EXISTING_PRODUCT_CONFIGURATION_MISMATCH');
       return { product: existingProduct, blueprint, created: false };
     }
 

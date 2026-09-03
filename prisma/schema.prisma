@@ -689,9 +689,10 @@ model TestPart {
   shuffleQuestionGroups  Boolean      @default(false)
   createdAt              DateTime     @default(now())
 
-  testSection    TestSection     @relation(fields: [testSectionId], references: [id], onDelete: Cascade)
-  stimuli        Stimulus[]
-  questionGroups QuestionGroup[]
+  testSection     TestSection             @relation(fields: [testSectionId], references: [id], onDelete: Cascade)
+  stimuli         Stimulus[]
+  questionGroups  QuestionGroup[]
+  assetReferences ContentAssetReference[]
 
   @@unique([testSectionId, sourceKey])
   @@unique([testSectionId, slot])
@@ -717,9 +718,10 @@ model Stimulus {
   reviewStatus       ReviewStatus @default(AUTO_EXTRACTED)
   createdAt          DateTime     @default(now())
 
-  testPart       TestPart               @relation(fields: [testPartId], references: [id], onDelete: Cascade)
-  asset          ContentAsset?          @relation(fields: [assetId], references: [id], onDelete: Restrict)
-  mediaPlaybacks AttemptMediaPlayback[]
+  testPart        TestPart                @relation(fields: [testPartId], references: [id], onDelete: Cascade)
+  asset           ContentAsset?           @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  mediaPlaybacks  AttemptMediaPlayback[]
+  assetReferences ContentAssetReference[]
 
   @@unique([testPartId, sourceKey])
   @@unique([testPartId, displayOrder])
@@ -744,9 +746,10 @@ model ContentAsset {
   reviewStatus     ReviewStatus     @default(AUTO_EXTRACTED)
   createdAt        DateTime         @default(now())
 
-  sourceArtifact SourceArtifact? @relation(fields: [sourceArtifactId], references: [id], onDelete: Restrict)
+  sourceArtifact SourceArtifact?         @relation(fields: [sourceArtifactId], references: [id], onDelete: Restrict)
   stimuli        Stimulus[]
   questionLinks  QuestionAsset[]
+  references     ContentAssetReference[]
 
   @@index([sourceArtifactId])
   @@index([type, reviewStatus])
@@ -778,10 +781,11 @@ model QuestionGroup {
   reviewStatus         ReviewStatus    @default(AUTO_EXTRACTED)
   createdAt            DateTime        @default(now())
 
-  testPart   TestPart        @relation(fields: [testPartId], references: [id], onDelete: Cascade)
-  questions  Question[]
-  answerKey  AnswerKey?
-  assetLinks QuestionAsset[]
+  testPart        TestPart                @relation(fields: [testPartId], references: [id], onDelete: Cascade)
+  questions       Question[]
+  answerKey       AnswerKey?
+  assetLinks      QuestionAsset[]
+  assetReferences ContentAssetReference[]
 
   @@unique([testPartId, sourceKey])
   @@unique([testPartId, displayOrder])
@@ -802,8 +806,9 @@ model Question {
   metadata             Json?
   createdAt            DateTime      @default(now())
 
-  questionGroup    QuestionGroup     @relation(fields: [questionGroupId], references: [id], onDelete: Cascade)
+  questionGroup    QuestionGroup           @relation(fields: [questionGroupId], references: [id], onDelete: Cascade)
   attemptQuestions AttemptQuestion[]
+  assetReferences  ContentAssetReference[]
 
   @@unique([questionGroupId, stableKey])
   @@unique([questionGroupId, displayOrder])
@@ -847,6 +852,29 @@ model QuestionAsset {
 
   @@id([questionGroupId, assetId, role])
   @@index([assetId])
+  @@schema("app_private")
+}
+
+model ContentAssetReference {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  assetId         String   @db.Uuid
+  testPartId      String?  @db.Uuid
+  stimulusId      String?  @db.Uuid
+  questionGroupId String?  @db.Uuid
+  questionId      String?  @db.Uuid
+  createdAt       DateTime @default(now())
+
+  asset         ContentAsset   @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  testPart      TestPart?      @relation(fields: [testPartId], references: [id], onDelete: Cascade)
+  stimulus      Stimulus?      @relation(fields: [stimulusId], references: [id], onDelete: Cascade)
+  questionGroup QuestionGroup? @relation(fields: [questionGroupId], references: [id], onDelete: Cascade)
+  question      Question?      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([testPartId])
+  @@index([stimulusId])
+  @@index([questionGroupId])
+  @@index([questionId])
   @@schema("app_private")
 }
 

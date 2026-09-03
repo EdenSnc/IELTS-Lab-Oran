@@ -1,17 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import { parseServerEnvironment } from '@/lib/env';
 
 const prismaClientSingleton = () => {
-  const dbUrl = process.env.DATABASE_URL?.replace(/^["']|["']$/g, '');
-  
-  if (!dbUrl) {
-    throw new Error('DATABASE_URL is not defined in environment variables');
-  }
+  const dbUrl = parseServerEnvironment(process.env).DATABASE_URL.replace(/^["']|["']$/g, '');
 
   const pool = new Pool({
     connectionString: dbUrl,
-    max: 5,
+    max: 1,
     connectionTimeoutMillis: 10_000,
     idleTimeoutMillis: 30_000,
   });
@@ -28,4 +25,4 @@ const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
 
 export default prisma;
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+globalForPrisma.prisma = prisma;

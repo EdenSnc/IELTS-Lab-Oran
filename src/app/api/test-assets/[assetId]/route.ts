@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { isAssetLinkedToAttemptContent, isAssetLinkedToPublicDemo } from '@/lib/content/asset-authorization';
 import { fetchPrivateAsset } from '@/lib/content/private-asset-storage';
 import { parseFrozenManifestPayload } from '@/lib/attempts/manifest-core';
 import { requireActiveAttemptDevice } from '@/lib/attempts/execution-lease';
@@ -8,6 +9,7 @@ import { requireRequestDeviceSlot } from '@/lib/auth/device-slots';
 import { requireRequestUser } from '@/lib/auth/request-user';
 import { authorizeStrictListeningAsset } from '@/lib/audio/listening-playback';
 import { listeningAssetCacheHeaders } from '@/lib/audio/listening-cache';
+import { logSafeError } from '@/lib/observability/safe-log';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -19,60 +21,9 @@ function inferMimeType(storageKey: string, storedMimeType: string) {
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
-    '.svg': 'image/svg+xml',
     '.webp': 'image/webp',
   };
   return mimeTypes[path.extname(storageKey).toLowerCase()] ?? storedMimeType;
-}
-
-async function isReferencedInline(
-  storageKey: string,
-  allowedPartIds?: string[],
-  allowedGroupIds?: string[],
-) {
-  const reference = `content-asset://${storageKey}`;
-  const publicVersion = {
-    testVersion: { status: 'PUBLISHED' as const, test: { isPublicDemo: true } },
-  };
-  const partWhere = allowedPartIds
-    ? { id: { in: allowedPartIds } }
-    : { testSection: publicVersion };
-  const groupWhere = allowedGroupIds
-    ? { id: { in: allowedGroupIds } }
-    : { testPart: { testSection: publicVersion } };
-
-  const [part, stimulus, group, question] = await Promise.all([
-    prisma.testPart.findFirst({
-      where: { ...partWhere, instructionsHtml: { contains: reference } },
-      select: { id: true },
-    }),
-    prisma.stimulus.findFirst({
-      where: {
-        testPart: partWhere,
-        bodyHtml: { contains: reference },
-        isVisibleToLearner: true,
-      },
-      select: { id: true },
-    }),
-    prisma.questionGroup.findFirst({
-      where: {
-        ...groupWhere,
-        OR: [
-          { instructionsHtml: { contains: reference } },
-          { promptHtml: { contains: reference } },
-        ],
-      },
-      select: { id: true },
-    }),
-    prisma.question.findFirst({
-      where: {
-        questionGroup: groupWhere,
-        promptHtml: { contains: reference },
-      },
-      select: { id: true },
-    }),
-  ]);
-  return Boolean(part || stimulus || group || question);
 }
 
 export async function GET(
@@ -106,7 +57,8 @@ export async function GET(
       const payload = parseFrozenManifestPayload(manifest.payload);
       allowedPartIds = payload.parts.map((part) => part.partId);
       allowedGroupIds = payload.parts.flatMap((part) => part.groupIds);
-    } catch {
+    } catch (error) {
+      logSafeError('TEST_ASSET_AUTHORIZATION_FAILED', error, { assetId, attemptId });
       return NextResponse.json({ error: 'Asset is unavailable.' }, { status: 404 });
     }
   }
@@ -123,26 +75,16 @@ export async function GET(
   if (!asset) {
     return NextResponse.json({ error: 'Asset not found.' }, { status: 404 });
   }
+  if (asset.mimeType === 'image/svg+xml' || path.extname(asset.storageKey).toLowerCase() === '.svg') {
+    return NextResponse.json({ error: 'Asset not found.' }, { status: 404 });
+  }
   const linkedToAllowedContent = attemptId
-    ? asset.stimuli.some((stimulus) => allowedPartIds?.includes(stimulus.testPartId))
-      || await prisma.questionAsset.findFirst({
-        where: { assetId, questionGroupId: { in: allowedGroupIds } },
-        select: { assetId: true },
-      }) !== null
-    : await prisma.contentAsset.findFirst({
-      where: {
-        id: assetId,
-        OR: [
-          { stimuli: { some: { testPart: { testSection: { testVersion: { status: 'PUBLISHED', test: { isPublicDemo: true } } } } } } },
-          { questionLinks: { some: { questionGroup: { testPart: { testSection: { testVersion: { status: 'PUBLISHED', test: { isPublicDemo: true } } } } } } } },
-        ],
-      },
-      select: { id: true },
-    }) !== null;
-  const inlineAllowed = linkedToAllowedContent
-    ? false
-    : await isReferencedInline(asset.storageKey, allowedPartIds, allowedGroupIds);
-  if (!linkedToAllowedContent && !inlineAllowed) {
+    ? await isAssetLinkedToAttemptContent(assetId, {
+      allowedPartIds: allowedPartIds ?? [],
+      allowedGroupIds: allowedGroupIds ?? [],
+    })
+    : await isAssetLinkedToPublicDemo(assetId);
+  if (!linkedToAllowedContent) {
     return NextResponse.json({ error: 'Asset not found.' }, { status: 404 });
   }
   if (attemptId && strictDeviceSlotId) {
@@ -188,7 +130,8 @@ export async function GET(
         ...(contentRange ? { 'Content-Range': contentRange } : {}),
       },
     });
-  } catch {
+  } catch (error) {
+    logSafeError('TEST_ASSET_FETCH_FAILED', error, { assetId, attemptId: attemptId ?? null });
     return NextResponse.json({ error: 'Asset is unavailable.' }, { status: 404 });
   }
 }

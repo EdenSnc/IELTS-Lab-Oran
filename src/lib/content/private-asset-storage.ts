@@ -5,6 +5,16 @@ import path from 'node:path';
 
 const DEFAULT_BUCKET = 'protected-test-assets';
 
+export function assertValidAssetStorageKey(storageKey: string) {
+  if (
+    storageKey.includes('\\')
+    || /[%_*?\[\]]/u.test(storageKey)
+    || storageKey.startsWith('/')
+    || storageKey.split('/').some((segment) => !segment || segment === '.' || segment === '..')
+  ) throw new Error('INVALID_PRIVATE_ASSET_KEY');
+  return storageKey;
+}
+
 function configuration(bucketOverride?: string) {
   const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

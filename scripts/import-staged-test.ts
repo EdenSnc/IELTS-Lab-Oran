@@ -10,6 +10,7 @@ import {
   type StagedTestPackage,
 } from '../src/lib/content/staging-schema.ts';
 import { certifyCompleteMockPackage } from '../src/lib/content/content-certification.ts';
+import { assertValidAssetStorageKey } from '../src/lib/content/private-asset-storage.ts';
 
 function stableStringify(value: unknown): string {
   if (Array.isArray(value)) {
@@ -34,6 +35,22 @@ function inferAssetType(filename: string) {
   if (filename.includes('128116862')) return 'FLOWCHART' as const;
   if (filename.includes('128124906')) return 'BAR_CHART' as const;
   return 'OTHER' as const;
+}
+
+function referencedAssetIds(
+  assetIdByStorageKey: Map<string, string>,
+  ...htmlValues: Array<string | null | undefined>
+) {
+  const ids = new Set<string>();
+  for (const html of htmlValues) {
+    for (const match of html?.matchAll(/content-asset:\/\/([^"' )>]+)/gu) ?? []) {
+      const storageKey = match[1];
+      const assetId = assetIdByStorageKey.get(storageKey);
+      if (!assetId) throw new Error(`Inline asset was not imported: ${storageKey}`);
+      ids.add(assetId);
+    }
+  }
+  return [...ids];
 }
 
 function packagePath(packageRoot: string, filename: string) {
@@ -134,11 +151,13 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
     );
 
     const assetIdByChecksum = new Map<string, string>();
+    const assetIdByStorageKey = new Map<string, string>();
     for (const artifact of staged.source.artifacts.filter(
       (candidate) => candidate.kind === 'AUDIO' || candidate.kind === 'IMAGE',
     )) {
       const sourceArtifact = sourceArtifactByChecksum.get(artifact.checksum);
       if (!sourceArtifact) throw new Error(`Source artifact was not imported: ${artifact.filename}`);
+      assertValidAssetStorageKey(artifact.filename);
       const metadata = artifact.metadata ?? {};
       const durationMs = typeof metadata.durationMs === 'number'
         ? metadata.durationMs
@@ -166,6 +185,7 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
         },
       });
       assetIdByChecksum.set(artifact.checksum, asset.id);
+      assetIdByStorageKey.set(artifact.filename, asset.id);
     }
 
     const test = await transaction.test.upsert({
@@ -257,6 +277,11 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
             shuffleQuestionGroups: part.shuffleQuestionGroups,
           },
         });
+        await transaction.contentAssetReference.createMany({
+          data: referencedAssetIds(assetIdByStorageKey, part.instructionsHtml)
+            .map((assetId) => ({ assetId, testPartId: partRecord.id })),
+          skipDuplicates: true,
+        });
 
         for (const stimulus of part.stimuli) {
           const assetId = stimulus.assetChecksum
@@ -265,7 +290,7 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
           if (stimulus.assetChecksum && !assetId) {
             throw new Error(`Stimulus asset was not imported: ${stimulus.assetChecksum}`);
           }
-          await transaction.stimulus.create({
+          const stimulusRecord = await transaction.stimulus.create({
             data: {
               testPartId: partRecord.id,
               sourceKey: stimulus.sourceKey,
@@ -281,6 +306,11 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
               isVisibleToLearner: stimulus.isVisibleToLearner,
               reviewStatus: stimulus.reviewStatus,
             },
+          });
+          await transaction.contentAssetReference.createMany({
+            data: referencedAssetIds(assetIdByStorageKey, stimulus.bodyHtml)
+              .map((linkedAssetId) => ({ assetId: linkedAssetId, stimulusId: stimulusRecord.id })),
+            skipDuplicates: true,
           });
         }
 
@@ -310,6 +340,11 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
               reviewStatus: group.reviewStatus,
             },
           });
+          await transaction.contentAssetReference.createMany({
+            data: referencedAssetIds(assetIdByStorageKey, group.instructionsHtml, group.promptHtml)
+              .map((assetId) => ({ assetId, questionGroupId: groupRecord.id })),
+            skipDuplicates: true,
+          });
 
           await transaction.question.createMany({
             data: group.questions.map((question) => ({
@@ -322,6 +357,20 @@ async function importPackage(staged: StagedTestPackage, packageRoot: string, isP
               maxMarks: question.maxMarks,
               metadata: question.metadata ? json(question.metadata) : undefined,
             })),
+          });
+          const questionRecords = await transaction.question.findMany({
+            where: { questionGroupId: groupRecord.id },
+            select: { id: true, stableKey: true },
+          });
+          const questionIdByStableKey = new Map(questionRecords.map((question) => [question.stableKey, question.id]));
+          await transaction.contentAssetReference.createMany({
+            data: group.questions.flatMap((question) => {
+              const questionId = questionIdByStableKey.get(question.stableKey);
+              if (!questionId) throw new Error(`Imported question was not found: ${question.stableKey}`);
+              return referencedAssetIds(assetIdByStorageKey, question.promptHtml)
+                .map((assetId) => ({ assetId, questionId }));
+            }),
+            skipDuplicates: true,
           });
 
           if (group.answerKey) {

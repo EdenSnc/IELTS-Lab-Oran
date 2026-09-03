@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { assertAccountReady } from '@/lib/auth/account-readiness';
+import { logSafeError } from '@/lib/observability/safe-log';
 import { CANONICAL_ORIGIN } from '@/lib/seo';
 import {
   ChargilyRequestError,
@@ -164,7 +165,8 @@ export async function createCheckoutForProduct(input: {
         }
         try {
           chargilyAmountFromMinor(product.priceMinor, product.currency);
-        } catch {
+        } catch (error) {
+          logSafeError('PRODUCT_PRICE_BOUNDARY_REJECTED', error, { productId: product.id });
           throw new PaymentServiceError('PRODUCT_PRICE_NOT_SUPPORTED', 409);
         }
         const hash = requestHash({
@@ -228,6 +230,7 @@ export async function createCheckoutForProduct(input: {
     });
   } catch (error) {
     const ambiguous = !(error instanceof ChargilyRequestError) || error.ambiguous;
+    logSafeError('CHARGILY_CHECKOUT_CREATION_FAILED', error, { ambiguous });
     await prisma.paymentAttempt.update({
       where: { id: prepared.paymentAttemptId },
       data: {
@@ -243,7 +246,6 @@ export async function createCheckoutForProduct(input: {
   }
 
   const metadata = chargilyMetadata(checkout.metadata);
-  const checkoutUrl = new URL(checkout.checkout_url);
   const normalizedCheckoutUrl = normalizeChargilyCheckoutUrl(checkout.checkout_url);
   const providerAmount = chargilyAmountFromMinor(prepared.amountMinor, prepared.currency);
   const responseMismatch = {
@@ -256,17 +258,12 @@ export async function createCheckoutForProduct(input: {
     checkoutUrl: !normalizedCheckoutUrl,
   };
   if (Object.values(responseMismatch).some(Boolean)) {
-    console.error('Chargily checkout response integrity mismatch', {
-      mismatch: responseMismatch,
-      expected: { liveMode, amount: providerAmount, currency: prepared.currency },
-      received: {
-        liveMode: checkout.livemode,
-        amount: checkout.amount,
-        currency: checkout.currency,
-        metadataShape: Array.isArray(checkout.metadata) ? 'array' : typeof checkout.metadata,
-        protocol: checkoutUrl.protocol,
-        hostname: checkoutUrl.hostname,
-      },
+    logSafeError('CHARGILY_CHECKOUT_RESPONSE_INTEGRITY_MISMATCH', new Error('UPSTREAM_MISMATCH'), {
+      liveModeMismatch: responseMismatch.liveMode,
+      amountMismatch: responseMismatch.amount,
+      currencyMismatch: responseMismatch.currency,
+      metadataMismatch: responseMismatch.metadata || responseMismatch.orderMetadata || responseMismatch.attemptMetadata,
+      checkoutUrlMismatch: responseMismatch.checkoutUrl,
     });
     await prisma.paymentAttempt.update({
       where: { id: prepared.paymentAttemptId },
@@ -504,7 +501,8 @@ export async function recordPaymentWebhookFailure(rawBody: string, error: unknow
   try {
     const parsed = JSON.parse(rawBody) as { id?: unknown };
     if (typeof parsed.id === 'string') providerEventId = parsed.id.slice(0, 128);
-  } catch {
+  } catch (parseError) {
+    logSafeError('PAYMENT_WEBHOOK_FAILURE_EVENT_ID_UNAVAILABLE', parseError);
     // Store only the payload hash and safe error code for malformed JSON.
   }
   await prisma.paymentWebhookFailure.create({

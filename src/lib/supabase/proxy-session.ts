@@ -10,7 +10,7 @@ export async function refreshSupabaseSession(
   const hasSessionCookie = request.cookies.getAll().some(({ name }) => (
     name.startsWith('sb-') && name.includes('-auth-token')
   ));
-  if (!config || !hasSessionCookie) return response;
+  if (!hasSessionCookie) return response;
 
   const client = createServerClient(config.url, config.publishableKey, {
     cookies: {

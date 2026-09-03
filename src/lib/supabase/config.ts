@@ -1,18 +1,20 @@
+import { parsePublicEnvironment } from '@/lib/env';
+
 export type SupabasePublicConfig = {
   url: string;
   publishableKey: string;
 };
 
-export function getSupabasePublicConfig(): SupabasePublicConfig | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-    ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const environment = parsePublicEnvironment(process.env);
+const config = {
+  url: environment.NEXT_PUBLIC_SUPABASE_URL,
+  publishableKey: environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+} satisfies SupabasePublicConfig;
 
-  return url && publishableKey ? { url, publishableKey } : null;
+export function getSupabasePublicConfig(): SupabasePublicConfig {
+  return config;
 }
 
 export function requireSupabasePublicConfig(): SupabasePublicConfig {
-  const config = getSupabasePublicConfig();
-  if (!config) throw new Error('SUPABASE_AUTH_NOT_CONFIGURED');
   return config;
 }

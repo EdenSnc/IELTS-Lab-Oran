@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { completeAccountOnboarding } from '@/lib/auth/account-readiness';
-import { syncApplicationUser, AuthError } from '@/lib/auth/request-user';
+import { requireRequestUser, AuthError } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { normalizeE164Phone } from '@/lib/phone';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -21,16 +21,14 @@ export async function POST(request: Request) {
     const input = schema.parse(await request.json());
     const whatsapp = normalizeE164Phone(input.whatsapp);
     if (!whatsapp) throw new AuthError('INVALID_WHATSAPP', 400);
-    const client = await createSupabaseServerClient();
-    const { data, error } = await client.auth.getUser();
-    if (error || !data.user) throw new AuthError('AUTH_REQUIRED', 401);
-    await syncApplicationUser(data.user, { syncWhatsapp: false });
+    const user = await requireRequestUser(request);
     await completeAccountOnboarding({
       ...input,
-      userId: data.user.id,
+      userId: user.id,
       whatsapp,
       acceptedFrom: 'account-onboarding',
     });
+    const client = await createSupabaseServerClient();
     await client.auth.updateUser({
       data: {
         full_name: input.name,

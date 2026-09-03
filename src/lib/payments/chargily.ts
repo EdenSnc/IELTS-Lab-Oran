@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
+import { logSafeError } from '@/lib/observability/safe-log';
 
 const checkoutSchema = z.object({
   id: z.string().min(8).max(128),
@@ -162,7 +163,8 @@ export async function createChargilyCheckout(input: {
       cache: 'no-store',
       signal: AbortSignal.timeout(15_000),
     });
-  } catch {
+  } catch (error) {
+    logSafeError('CHARGILY_CHECKOUT_REQUEST_FAILED', error);
     // A timeout or broken connection may occur after Chargily accepted the
     // request. Without a documented provider idempotency key this is ambiguous.
     throw new ChargilyRequestError(true);
@@ -171,7 +173,8 @@ export async function createChargilyCheckout(input: {
   let body: unknown;
   try {
     body = await response.json();
-  } catch {
+  } catch (error) {
+    logSafeError('CHARGILY_CHECKOUT_RESPONSE_INVALID_JSON', error, { status: response.status });
     throw new ChargilyRequestError(true, response.status);
   }
   return checkoutSchema.parse(body);
