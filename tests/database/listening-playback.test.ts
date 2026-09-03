@@ -14,16 +14,24 @@ test('Strict Listening grants one idempotent playback token and rejects refresh 
   process.env.DATABASE_URL = databaseUrl;
   const [
     { default: prisma },
+    { completeAccountOnboarding },
     { createAuthenticatedAttempt },
     { beginListeningPlayback, authorizeStrictListeningAsset },
   ] = await Promise.all([
     import('../../src/lib/prisma'),
+    import('../../src/lib/auth/account-readiness'),
     import('../../src/lib/attempts/attempt-service'),
     import('../../src/lib/audio/listening-playback'),
   ]);
   const suffix = randomUUID();
   const user = await prisma.user.create({
     data: { id: randomUUID(), email: `listening-${suffix}@example.invalid` },
+  });
+  await completeAccountOnboarding({
+    userId: user.id, name: 'Listening Learner',
+    whatsapp: `+213${Math.floor(100000000 + Math.random() * 900000000)}`,
+    wilaya: '31 Oran', preferredLocale: 'en', termsAccepted: true, privacyAccepted: true,
+    marketingAccepted: false, acceptedFrom: 'database-test',
   });
   const device = await prisma.deviceSlot.create({
     data: { userId: user.id, slotNumber: 1, tokenHash: randomBytes(32).toString('hex') },

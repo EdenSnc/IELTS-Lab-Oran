@@ -1,0 +1,30 @@
+import { z } from 'zod';
+import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
+import { requireHumanRequest } from '@/lib/security/bot';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+const requestSchema = z.object({
+  provider: z.enum(['google', 'facebook']),
+  redirectTo: z.url().max(500),
+}).strict();
+
+export async function POST(request: Request) {
+  try {
+    assertSameOrigin(request);
+    await requireHumanRequest();
+    const input = requestSchema.parse(await request.json());
+    const redirect = new URL(input.redirectTo);
+    if (redirect.origin !== new URL(request.url).origin || redirect.pathname !== '/api/auth/callback') {
+      return noStoreJson({ error: 'INVALID_REDIRECT' }, 400);
+    }
+    const client = await createSupabaseServerClient();
+    const { data, error } = await client.auth.signInWithOAuth({
+      provider: input.provider,
+      options: { redirectTo: redirect.toString(), skipBrowserRedirect: true },
+    });
+    if (error || !data.url) return noStoreJson({ error: 'OAUTH_START_FAILED' }, 400);
+    return noStoreJson({ url: data.url });
+  } catch (error) {
+    return apiError(error, 'OAUTH_START_FAILED');
+  }
+}

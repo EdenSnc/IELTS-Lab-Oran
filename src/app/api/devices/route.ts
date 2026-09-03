@@ -11,8 +11,9 @@ import {
   publicDeviceSlot,
   replaceDeviceSlot,
 } from '@/lib/auth/device-slots';
-import { requireRequestUser } from '@/lib/auth/request-user';
+import { AuthError, requireRequestUser, requireRequestUserWithAssurance } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
+import { requireHumanRequest } from '@/lib/security/bot';
 import { requireSupabasePublicConfig } from '@/lib/supabase/config';
 
 const enrollmentSchema = z.object({
@@ -22,12 +23,16 @@ const enrollmentSchema = z.object({
 const replacementSchema = z.object({
   slotNumber: z.number().int().min(1).max(2),
   label: z.string().trim().min(1).max(80).optional(),
-  password: z.string().min(8).max(256),
+  stepUp: z.discriminatedUnion('method', [
+    z.object({ method: z.literal('aal2') }).strict(),
+    z.object({ method: z.literal('email_otp'), token: z.string().trim().length(6) }).strict(),
+  ]),
 }).strict();
 
 export async function GET(request: Request) {
   try {
-    const user = await requireRequestUser(request);
+    const identity = await requireRequestUserWithAssurance(request);
+    const user = identity.user;
     const current = await findRequestDeviceSlot(request, user.id);
     const slots = await prisma.deviceSlot.findMany({
       where: { userId: user.id, revokedAt: null },
@@ -36,6 +41,10 @@ export async function GET(request: Request) {
     return noStoreJson({
       currentSlotId: current?.id ?? null,
       slots: slots.map(publicDeviceSlot),
+      stepUpMethods: {
+        emailOtp: Boolean(user.email),
+        aal2: identity.currentLevel === 'aal2',
+      },
     });
   } catch (error) {
     return apiError(error, 'DEVICE_LIST_FAILED');
@@ -45,6 +54,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
+    await requireHumanRequest();
     const user = await requireRequestUser(request);
     const existing = await findRequestDeviceSlot(request, user.id);
     if (existing) return noStoreJson({ slot: publicDeviceSlot(existing) });
@@ -68,14 +78,25 @@ export async function PATCH(request: Request) {
   try {
     assertSameOrigin(request);
     const user = await requireRequestUser(request);
-    if (!user.email) throw new Error('PASSWORD_REAUTH_UNAVAILABLE');
     const input = replacementSchema.parse(await request.json());
-    const config = requireSupabasePublicConfig();
-    const auth = createClient(config.url, config.publishableKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    const { error } = await auth.auth.signInWithPassword({ email: user.email, password: input.password });
-    if (error) return noStoreJson({ error: 'REAUTHENTICATION_FAILED' }, 401);
+    if (input.stepUp.method === 'aal2') {
+      const assured = await requireRequestUserWithAssurance(request);
+      if (assured.user.id !== user.id || assured.currentLevel !== 'aal2') {
+        throw new AuthError('MFA_AAL2_REQUIRED', 403);
+      }
+    } else {
+      if (!user.email) throw new AuthError('EMAIL_STEP_UP_UNAVAILABLE', 409);
+      const config = requireSupabasePublicConfig();
+      const auth = createClient(config.url, config.publishableKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data, error } = await auth.auth.verifyOtp({
+        email: user.email,
+        token: input.stepUp.token,
+        type: 'email',
+      });
+      if (error || data.user?.id !== user.id) throw new AuthError('REAUTHENTICATION_FAILED', 401);
+    }
 
     const replaced = await replaceDeviceSlot(user.id, input.slotNumber, input.label);
     const response = NextResponse.json(

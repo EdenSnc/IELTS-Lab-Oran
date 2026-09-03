@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { applicationSchema, boundedTallyAnswer } from '@/lib/leads/application';
 import prisma from '@/lib/prisma';
+import { requireHumanRequest } from '@/lib/security/bot';
 
 const MAX_BODY_BYTES = 32_768;
 const phonePattern = /^(?:\+213|0)[567]\d{8}$/;
@@ -212,6 +213,11 @@ export async function POST(request: Request) {
     }
     lead = parseTallyLead(payload);
   } else if (sameOrigin(request)) {
+    try {
+      await requireHumanRequest();
+    } catch {
+      return NextResponse.json({ error: 'ACCESS_DENIED' }, { status: 403 });
+    }
     lead = parseDirectLead(payload);
   }
 

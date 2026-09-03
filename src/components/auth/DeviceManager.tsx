@@ -11,7 +11,11 @@ type DeviceSlot = {
   lastReplacedAt: string | null;
 };
 
-type DevicePayload = { slots: DeviceSlot[]; currentSlotId: string | null };
+type DevicePayload = {
+  slots: DeviceSlot[];
+  currentSlotId: string | null;
+  stepUpMethods: { emailOtp: boolean; aal2: boolean };
+};
 
 export default function DeviceManager({
   autoEnrollEligible,
@@ -24,11 +28,13 @@ export default function DeviceManager({
   const [currentSlotId, setCurrentSlotId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string>();
+  const [stepUpMethods, setStepUpMethods] = useState({ emailOtp: true, aal2: false });
   const attemptedAutomaticEnrollment = useRef(false);
 
   const applyPayload = useCallback((payload: DevicePayload) => {
     setSlots(payload.slots);
     setCurrentSlotId(payload.currentSlotId);
+    setStepUpMethods(payload.stepUpMethods);
     onTrustChange?.(Boolean(payload.currentSlotId));
   }, [onTrustChange]);
 
@@ -106,20 +112,33 @@ export default function DeviceManager({
     event.preventDefault();
     setMessage(undefined);
     const formElement = event.currentTarget;
-    const form = new FormData(formElement);
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const form = new FormData(formElement, submitter);
+    const method = String(form.get('stepUpMethod') ?? 'email_otp');
     const response = await fetch('/api/devices', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         slotNumber,
         label: String(form.get('label') ?? 'Browser'),
-        password: String(form.get('password') ?? ''),
+        stepUp: method === 'aal2'
+          ? { method: 'aal2' }
+          : { method: 'email_otp', token: String(form.get('otp') ?? '') },
       }),
     });
     const payload = await response.json() as { error?: string };
     setMessage(response.ok ? 'Trusted device replaced. The previous browser immediately lost test access.' : (payload.error ?? 'Device replacement failed.'));
     if (response.ok) formElement.reset();
     await load(false);
+  }
+
+  async function sendStepUpCode() {
+    setMessage(undefined);
+    const response = await fetch('/api/devices/step-up', { method: 'POST' });
+    const payload = await response.json() as { error?: string };
+    setMessage(response.ok
+      ? 'A six-digit verification code was sent to your account email.'
+      : (payload.error ?? 'Unable to send a verification code.'));
   }
 
   return (
@@ -145,8 +164,14 @@ export default function DeviceManager({
                 {slot && slot.id !== currentSlotId && (
                   <form className="mt-4 grid gap-2" onSubmit={(event) => void replace(event, slotNumber)}>
                     <input name="label" aria-label={`New label for device ${slotNumber}`} placeholder="New browser name" maxLength={80} required className="rounded-xl border border-black/15 bg-white px-3 py-2 text-sm" />
-                    <input name="password" aria-label="Current password" type="password" autoComplete="current-password" placeholder="Current password" minLength={8} required className="rounded-xl border border-black/15 bg-white px-3 py-2 text-sm" />
-                    <button className="rounded-full border border-black/15 px-3 py-2 text-sm font-semibold transition hover:border-black/25 hover:bg-white">Replace this device</button>
+                    {stepUpMethods.emailOtp && (
+                      <>
+                        <button type="button" onClick={() => void sendStepUpCode()} className="rounded-full border border-black/15 px-3 py-2 text-sm font-semibold transition hover:border-black/25 hover:bg-white">Send email verification code</button>
+                        <input name="otp" aria-label="Email verification code" inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code" minLength={6} maxLength={6} required className="rounded-xl border border-black/15 bg-white px-3 py-2 text-sm" />
+                        <button name="stepUpMethod" value="email_otp" className="rounded-full border border-black/15 px-3 py-2 text-sm font-semibold transition hover:border-black/25 hover:bg-white">Replace with email verification</button>
+                      </>
+                    )}
+                    {stepUpMethods.aal2 && <button name="stepUpMethod" value="aal2" formNoValidate className="rounded-full border border-black/15 px-3 py-2 text-sm font-semibold transition hover:border-black/25 hover:bg-white">Replace with authenticator verification</button>}
                     <p className="text-xs leading-5 text-black/40">Replacement immediately revokes this slot’s old test-access token. Each slot can be replaced once every seven days.</p>
                   </form>
                 )}

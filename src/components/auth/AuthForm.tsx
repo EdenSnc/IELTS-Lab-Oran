@@ -10,7 +10,7 @@ import { normalizeE164Phone } from '@/lib/phone';
 
 export type AuthMode = 'sign-in' | 'sign-up' | 'forgot-password' | 'update-password';
 
-const wilayas = [
+export const wilayas = [
   '01 Adrar', '02 Chlef', '03 Laghouat', '04 Oum El Bouaghi', '05 Batna', '06 Béjaïa', '07 Biskra', '08 Béchar',
   '09 Blida', '10 Bouira', '11 Tamanrasset', '12 Tébessa', '13 Tlemcen', '14 Tiaret', '15 Tizi Ouzou', '16 Alger',
   '17 Djelfa', '18 Jijel', '19 Sétif', '20 Saïda', '21 Skikda', '22 Sidi Bel Abbès', '23 Annaba', '24 Guelma',
@@ -43,7 +43,7 @@ const content = {
   'update-password': {
     eyebrow: 'Secure your account',
     title: 'Choose a new password',
-    description: 'Use at least eight characters and keep it unique to IELTS Lab.',
+    description: 'Use at least ten characters with lowercase, uppercase and a number.',
     submit: 'Update password',
   },
 } as const;
@@ -67,16 +67,19 @@ export default function AuthForm({
   async function signInWithProvider(provider: 'google' | 'facebook') {
     setPending(true);
     setMessage(undefined);
-    const client = createSupabaseBrowserClient();
     const redirectTo = `${window.location.origin}/api/auth/callback?next=/${locale}/account`;
-    const { error } = await client.auth.signInWithOAuth({
-      provider,
-      options: { redirectTo },
+    const response = await fetch('/api/auth/oauth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider, redirectTo }),
     });
-    if (error) {
+    const payload = await response.json() as { url?: string; error?: string };
+    if (!response.ok || !payload.url) {
       setPending(false);
-      setMessage(error.message);
+      setMessage(payload.error ?? 'Unable to start social sign-in.');
+      return;
     }
+    window.location.assign(payload.url);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -90,9 +93,11 @@ export default function AuthForm({
     const fullName = String(form.get('fullName') ?? '').trim();
     const rawWhatsapp = String(form.get('whatsapp') ?? '').trim();
     const whatsapp = mode === 'sign-up' ? normalizeE164Phone(rawWhatsapp) : null;
-    const birthDate = String(form.get('birthDate') ?? '').trim();
     const wilaya = String(form.get('wilaya') ?? '').trim();
     const preferredLocale = String(form.get('preferredLocale') ?? locale);
+    const termsAccepted = form.get('termsAccepted') === 'on';
+    const privacyAccepted = form.get('privacyAccepted') === 'on';
+    const marketingAccepted = form.get('marketingAccepted') === 'on';
 
     if ((mode === 'sign-up' || mode === 'update-password') && password !== confirmPassword) {
       setPending(false);
@@ -104,41 +109,30 @@ export default function AuthForm({
       setMessage('Enter a valid WhatsApp number with its country code.');
       return;
     }
-    if (mode === 'sign-up' && birthDate) {
-      const parsedBirthDate = new Date(`${birthDate}T00:00:00Z`);
-      if (
-        Number.isNaN(parsedBirthDate.getTime())
-        || parsedBirthDate.getUTCFullYear() < 1900
-        || parsedBirthDate > new Date()
-      ) {
-        setPending(false);
-        setMessage('Enter a valid date of birth.');
-        return;
-      }
+    if (mode === 'sign-up' && (!termsAccepted || !privacyAccepted)) {
+      setPending(false);
+      setMessage('Accept the current Terms and Privacy Policy to create an account.');
+      return;
     }
 
     const client = createSupabaseBrowserClient();
     let error: { message: string } | null = null;
 
-    if (mode === 'sign-in') {
-      ({ error } = await client.auth.signInWithPassword({ email, password }));
-    } else if (mode === 'sign-up') {
+    if (mode === 'sign-in' || mode === 'sign-up') {
       const emailRedirectTo = `${window.location.origin}/api/auth/callback?next=/${locale}/account`;
-      ({ error } = await client.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo,
-          data: {
-            full_name: fullName,
-            whatsapp,
-            birth_date: birthDate || null,
-            wilaya,
-            preferred_locale: preferredLocale,
-          },
-        },
-      }));
-      if (!error) setMessage('Check your email to verify your account.');
+      const response = await fetch('/api/auth/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mode === 'sign-in'
+          ? { action: 'sign-in', email, password }
+          : {
+            action: 'sign-up', email, password, fullName, whatsapp, wilaya, preferredLocale,
+            termsAccepted, privacyAccepted, marketingAccepted, emailRedirectTo,
+          }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) error = { message: payload.error ?? 'Authentication failed.' };
+      if (mode === 'sign-up' && response.ok) setMessage('Check your email to verify your account.');
     } else if (mode === 'forgot-password') {
       const redirectTo = `${window.location.origin}/api/auth/callback?next=/${locale}/auth/update-password`;
       ({ error } = await client.auth.resetPasswordForEmail(email, { redirectTo }));
@@ -215,18 +209,13 @@ export default function AuthForm({
               <span className="text-xs font-normal leading-5 text-black/45">Used only for essential test and appointment communication.</span>
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-sm font-semibold text-black/75">
+              <label className="grid gap-2 text-sm font-semibold text-black/75 sm:col-span-2">
                 Wilaya
                 <select name="wilaya" defaultValue="" required className={inputClassName}>
                   <option value="" disabled>Select</option>
                   {wilayas.map((wilaya) => <option key={wilaya} value={wilaya}>{wilaya}</option>)}
                 </select>
                 <span className="text-xs font-normal leading-5 text-black/45">Used for local and in-centre service planning.</span>
-              </label>
-              <label className="grid gap-2 text-sm font-semibold text-black/75">
-                Date of birth <span className="font-normal text-black/40">(optional)</span>
-                <input name="birthDate" type="date" autoComplete="bday" className={inputClassName} />
-                <span className="text-xs font-normal leading-5 text-black/45">Useful for identity and age-appropriate account handling.</span>
               </label>
             </div>
             <label className="grid gap-2 text-sm font-semibold text-black/75">
@@ -250,15 +239,23 @@ export default function AuthForm({
         {needsPassword && (
           <label className="grid gap-2 text-sm font-semibold text-black/75">
             Password
-            <input name="password" type="password" minLength={8} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} required className={inputClassName} placeholder="At least 8 characters" />
+            <input name="password" type="password" minLength={mode === 'sign-in' ? 1 : 10} pattern={mode === 'sign-in' ? undefined : '(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{10,}'} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} required className={inputClassName} placeholder={mode === 'sign-in' ? 'Your password' : 'At least 10 characters'} />
           </label>
         )}
 
         {needsConfirmation && (
           <label className="grid gap-2 text-sm font-semibold text-black/75">
             Confirm password
-            <input name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required className={inputClassName} placeholder="Repeat your password" />
+            <input name="confirmPassword" type="password" minLength={10} pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{10,}" autoComplete="new-password" required className={inputClassName} placeholder="Repeat your password" />
           </label>
+        )}
+
+        {mode === 'sign-up' && (
+          <div className="grid gap-3 rounded-2xl bg-black/[0.025] p-4 text-sm text-black/65">
+            <label className="flex items-start gap-3"><input name="termsAccepted" type="checkbox" required className="mt-1 accent-crimson" /><span>I accept the current Terms.</span></label>
+            <label className="flex items-start gap-3"><input name="privacyAccepted" type="checkbox" required className="mt-1 accent-crimson" /><span>I accept the current Privacy Policy.</span></label>
+            <label className="flex items-start gap-3"><input name="marketingAccepted" type="checkbox" className="mt-1 accent-crimson" /><span>Send me optional IELTS Lab news and offers.</span></label>
+          </div>
         )}
 
         <button disabled={pending} className="mt-2 h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-crimson focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-crimson/20 disabled:cursor-wait disabled:opacity-50">

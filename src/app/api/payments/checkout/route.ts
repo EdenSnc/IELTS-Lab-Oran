@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { requireRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { createCheckoutForProduct } from '@/lib/payments/payment-service';
+import { requireHumanRequest } from '@/lib/security/bot';
 
 const checkoutRequestSchema = z.object({
   productCode: z.string().min(1).max(80),
@@ -11,6 +12,7 @@ const checkoutRequestSchema = z.object({
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
+    await requireHumanRequest();
     const user = await requireRequestUser(request, ['STUDENT']);
     const idempotencyKey = request.headers.get('idempotency-key');
     if (!idempotencyKey) return noStoreJson({ error: 'IDEMPOTENCY_KEY_REQUIRED' }, 400);

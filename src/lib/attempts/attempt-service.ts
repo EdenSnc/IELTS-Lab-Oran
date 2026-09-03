@@ -2,6 +2,7 @@ import 'server-only';
 
 import { randomBytes } from 'node:crypto';
 import { AttemptMode, Prisma } from '@prisma/client';
+import { assertAccountReady } from '@/lib/auth/account-readiness';
 import prisma from '@/lib/prisma';
 import { reserveEntitlementAndCreateAttempt } from '@/lib/db/concurrency';
 import {
@@ -163,6 +164,7 @@ export async function createAuthenticatedAttempt(input: {
   minimumSourceYear?: number;
   archiveIncluded?: boolean;
 }, hooks?: { beforeQuestionMaterialization?: (attemptId: string) => void | Promise<void> }) {
+  await assertAccountReady(input.userId);
   const randomSeed = randomBytes(32).toString('base64url');
   const assembly = await loadAssemblyInput(input.blueprintId);
   const compiled = compileAttemptManifest({

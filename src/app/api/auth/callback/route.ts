@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { syncApplicationUser } from '@/lib/auth/request-user';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 const SAFE_NEXT_PATH = /^\/(en|fr|ar)(?:\/|$)/;
@@ -17,6 +18,17 @@ export async function GET(request: Request) {
   const { error } = await client.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(new URL('/en/auth/sign-in?error=invalid_code', url.origin));
+  }
+
+  if (!next.includes('/auth/update-password')) {
+    const { data } = await client.auth.getUser();
+    if (data.user) {
+      const user = await syncApplicationUser(data.user, { syncWhatsapp: false });
+      if (!user.onboardingCompletedAt) {
+        const locale = next.split('/')[1] || 'en';
+        return NextResponse.redirect(new URL(`/${locale}/account/onboarding`, url.origin));
+      }
+    }
   }
 
   return NextResponse.redirect(new URL(next, url.origin));

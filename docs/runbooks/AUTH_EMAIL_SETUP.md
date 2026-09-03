@@ -11,11 +11,19 @@ Supabase's built-in SMTP service is for development only. IELTS Lab Oran should 
    - Sender name: `IELTS Lab Oran`
    - Sender address: `no-reply@auth.ieltslab.org`
    - Custom SMTP: enabled
+   - Confirm email: enabled
+   - Secure password changes: enabled
+   - Minimum password length: `10`
+   - Required characters: lowercase, uppercase and digits
+   - Session timebox: `720 hours`
+   - Inactivity timeout: `336 hours`
+   - TOTP enrollment and verification: enabled
 5. In **Authentication → Email Templates**, set:
    - Confirm signup subject: `Confirm your IELTS Lab Oran account`
    - Confirm signup body: `supabase/templates/confirmation.html`
    - Reset password subject: `Reset your IELTS Lab Oran password`
    - Reset password body: `supabase/templates/recovery.html`
+   - Magic-link template: include the six-digit `{{ .Token }}` so provider-neutral trusted-device step-up can be completed without a password
 6. Disable open and click tracking for authentication messages in Resend.
 7. Send confirmation and recovery messages to a non-team test address and verify delivery, branding, redirects, and spam placement.
 
@@ -30,6 +38,9 @@ Before enabling either provider, add these Supabase redirect URLs under **Authen
 - Production site URL: `https://www.ieltslab.org`
 - Production redirect: `https://www.ieltslab.org/api/auth/callback`
 - Local redirect: `http://localhost:3000/api/auth/callback`
+- Local IP redirect: `http://127.0.0.1:3000/api/auth/callback`
+
+Production authentication email must use the verified custom SMTP sender before public signup is enabled; Supabase's shared development mail service is not a production fallback.
 
 Google:
 

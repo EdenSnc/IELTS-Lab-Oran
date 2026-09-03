@@ -12,6 +12,7 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
   const [
     { default: prisma },
     { encrypt },
+    { completeAccountOnboarding },
     { createAuthenticatedAttempt },
     { enrollDeviceSlot, enrollInitialDeviceSlot },
     { acquireAttemptExecution, authorizeAttemptSubmission, requireLiveAttemptExecution },
@@ -20,6 +21,7 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
   ] = await Promise.all([
     import('../../src/lib/prisma'),
     import('../../src/lib/crypto'),
+    import('../../src/lib/auth/account-readiness'),
     import('../../src/lib/attempts/attempt-service'),
     import('../../src/lib/auth/device-slots'),
     import('../../src/lib/attempts/execution-lease'),
@@ -30,6 +32,17 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
   const suffix = randomUUID();
   const user = await prisma.user.create({
     data: { id: randomUUID(), email: `attempt-${suffix}@example.invalid` },
+  });
+  await completeAccountOnboarding({
+    userId: user.id,
+    name: 'Attempt Learner',
+    whatsapp: `+213${Math.floor(100000000 + Math.random() * 900000000)}`,
+    wilaya: '31 Oran',
+    preferredLocale: 'en',
+    termsAccepted: true,
+    privacyAccepted: true,
+    marketingAccepted: false,
+    acceptedFrom: 'database-test',
   });
   const source = await prisma.contentSource.create({
     data: { provider: 'OTHER', name: `attempt source ${suffix}` },

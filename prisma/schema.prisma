@@ -236,15 +236,18 @@ enum SpeakingAiAnalysisStatus {
 }
 
 model User {
-  id           String        @id @db.Uuid // Matches Supabase auth.users.id.
-  email        String?       @unique
-  name         String?
-  whatsapp     String?       @unique
-  role         Role          @default(STUDENT)
-  status       AccountStatus @default(ACTIVE)
-  anonymizedAt DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                    String        @id @db.Uuid // Matches Supabase auth.users.id.
+  email                 String?       @unique
+  name                  String?
+  whatsapp              String?       @unique
+  wilaya                String?
+  preferredLocale       String?       @db.VarChar(2)
+  onboardingCompletedAt DateTime?
+  role                  Role          @default(STUDENT)
+  status                AccountStatus @default(ACTIVE)
+  anonymizedAt          DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   accessSessions     AccessSession[]
   deviceSlots        DeviceSlot[]

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { createServerClient } from '@supabase/ssr';
 import { createClient, type User as SupabaseUser } from '@supabase/supabase-js';
-import type { Role, User } from '@prisma/client';
+import { Prisma, type Role, type User } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { normalizeE164Phone } from '@/lib/phone';
 import { requireSupabasePublicConfig } from '@/lib/supabase/config';
@@ -86,26 +86,56 @@ function authWhatsapp(authUser: SupabaseUser) {
     : undefined;
 }
 
-export async function syncApplicationUser(authUser: SupabaseUser) {
+export async function syncApplicationUser(
+  authUser: SupabaseUser,
+  options: { syncWhatsapp?: boolean } = {},
+) {
   const email = authUser.email?.trim().toLowerCase();
   const name = authDisplayName(authUser);
-  const whatsapp = authWhatsapp(authUser);
-  const whatsappOwner = whatsapp
-    ? await prisma.user.findUnique({ where: { whatsapp }, select: { id: true } })
-    : null;
-  const availableWhatsapp = !whatsappOwner || whatsappOwner.id === authUser.id
-    ? whatsapp
-    : undefined;
+  const whatsapp = options.syncWhatsapp === false ? undefined : authWhatsapp(authUser);
+  try {
+    return await prisma.user.upsert({
+      where: { id: authUser.id },
+      create: { id: authUser.id, email, name, whatsapp },
+      update: {
+        ...(email ? { email } : {}),
+        ...(name ? { name } : {}),
+        ...(whatsapp ? { whatsapp } : {}),
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const target = error.meta?.target;
+      if (
+        (Array.isArray(target) ? target.includes('whatsapp') : String(target ?? '').includes('whatsapp'))
+        || error.message.includes('whatsapp')
+      ) {
+        throw new AuthError('WHATSAPP_ALREADY_IN_USE', 409);
+      }
+    }
+    throw error;
+  }
+}
 
-  return prisma.user.upsert({
-    where: { id: authUser.id },
-    create: { id: authUser.id, email, name, whatsapp: availableWhatsapp },
-    update: {
-      ...(email ? { email } : {}),
-      ...(name ? { name } : {}),
-      ...(availableWhatsapp ? { whatsapp: availableWhatsapp } : {}),
-    },
-  });
+export async function requireRequestUserWithAssurance(request: Request) {
+  const devUserId = process.env.SPEAKING_DEV_AUTH_USER_ID;
+  if (process.env.NODE_ENV !== 'production' && devUserId) {
+    const user = await prisma.user.findUnique({ where: { id: devUserId } });
+    if (!user || user.status !== 'ACTIVE') throw new AuthError('ACCOUNT_UNAVAILABLE', 403);
+    return {
+      user,
+      authUser: null,
+      currentLevel: process.env.STAFF_MFA_DEV_AAL2 === 'true' ? 'aal2' as const : 'aal1' as const,
+    };
+  }
+  const identity = await authenticatePrivilegedRequest(request);
+  const user = await syncApplicationUser(identity.authUser);
+  if (user.status !== 'ACTIVE') throw new AuthError('ACCOUNT_UNAVAILABLE', 403);
+  return {
+    user,
+    authUser: identity.authUser,
+    currentLevel: identity.currentLevel === 'aal2' ? 'aal2' as const : 'aal1' as const,
+  };
 }
 
 export async function requireRequestUser(request: Request, roles?: readonly Role[]): Promise<User> {

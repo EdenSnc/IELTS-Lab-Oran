@@ -10,6 +10,7 @@ test('Writing worker finalizes once and releases retryable leases before retry',
   process.env.DATABASE_URL = databaseUrl;
   const [
     { default: prisma },
+    { completeAccountOnboarding },
     { createAuthenticatedAttempt },
     { submitAndGradeObjectiveAttempt },
     { processWritingGradingRun },
@@ -18,6 +19,7 @@ test('Writing worker finalizes once and releases retryable leases before retry',
     { loadStoredAttemptResult },
   ] = await Promise.all([
     import('../../src/lib/prisma'),
+    import('../../src/lib/auth/account-readiness'),
     import('../../src/lib/attempts/attempt-service'),
     import('../../src/lib/attempts/objective-attempt-grading'),
     import('../../src/lib/grading/writing-worker'),
@@ -28,6 +30,12 @@ test('Writing worker finalizes once and releases retryable leases before retry',
   const suffix = randomUUID();
   const user = await prisma.user.create({
     data: { id: randomUUID(), email: `writing-${suffix}@example.invalid` },
+  });
+  await completeAccountOnboarding({
+    userId: user.id, name: 'Writing Learner',
+    whatsapp: `+213${Math.floor(100000000 + Math.random() * 900000000)}`,
+    wilaya: '31 Oran', preferredLocale: 'en', termsAccepted: true, privacyAccepted: true,
+    marketingAccepted: false, acceptedFrom: 'database-test',
   });
   const source = await prisma.contentSource.create({
     data: { provider: 'OTHER', name: `writing source ${suffix}` },

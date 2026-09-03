@@ -3,6 +3,7 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
+import { assertAccountReady } from '@/lib/auth/account-readiness';
 import { CANONICAL_ORIGIN } from '@/lib/seo';
 import {
   ChargilyRequestError,
@@ -64,6 +65,7 @@ export async function createCheckoutForProduct(input: {
   idempotencyKey: string;
   locale: string;
 }) {
+  await assertAccountReady(input.userId);
   const clientKey = idempotencyKeySchema.parse(input.idempotencyKey);
   const locale = localeSchema.parse(input.locale);
   const liveMode = chargilyLiveMode();
@@ -111,6 +113,19 @@ export async function createCheckoutForProduct(input: {
             requestHash: attempt.requestHash,
             existingCheckoutUrl: attempt.checkoutUrl,
           };
+        }
+
+        await transaction.$queryRaw(Prisma.sql`
+          SELECT id FROM app_private."User" WHERE id = ${input.userId}::uuid FOR UPDATE
+        `);
+        const recentCheckoutCount = await transaction.order.count({
+          where: {
+            userId: input.userId,
+            createdAt: { gte: new Date(Date.now() - 10 * 60_000) },
+          },
+        });
+        if (recentCheckoutCount >= 5) {
+          throw new PaymentServiceError('CHECKOUT_RATE_LIMITED', 429);
         }
 
         const product = await transaction.product.findFirst({

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import SignOutButton from '@/components/auth/SignOutButton';
 import AccountPlatform from '@/components/account/AccountPlatform';
 import TestBrand from '@/components/brand/TestBrand';
+import { assertAccountReady } from '@/lib/auth/account-readiness';
 import { syncApplicationUser } from '@/lib/auth/request-user';
 import prisma from '@/lib/prisma';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -17,8 +18,13 @@ export default async function AccountPage({
   const client = await createSupabaseServerClient();
   const { data } = await client.auth.getUser();
   if (!data.user) redirect(`/${locale}/auth/sign-in`);
-  const user = await syncApplicationUser(data.user);
+  const user = await syncApplicationUser(data.user, { syncWhatsapp: false });
   if (user.status !== 'ACTIVE') redirect(`/${locale}/auth/sign-in`);
+  try {
+    await assertAccountReady(user.id);
+  } catch {
+    redirect(`/${locale}/account/onboarding`);
+  }
   const now = new Date();
   const [entitlements, attempts, products, orders] = await Promise.all([
     prisma.entitlement.findMany({
