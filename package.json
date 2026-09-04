@@ -10,6 +10,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/run-tests.mjs",
+    "test:proxy": "node --import tsx --test tests/integration/proxy-routing.test.ts",
     "test:certification": "node scripts/run-tests.mjs tests/certification",
     "test:database": "node scripts/run-tests.mjs tests/database",
     "db:validate": "prisma validate",
