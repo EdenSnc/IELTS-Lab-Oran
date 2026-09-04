@@ -200,6 +200,12 @@ test('HTTP Runtime: global unmatched routes use the custom global 404 without pa
   }
 });
 
+test('HTTP Runtime: valid non-localized staff route reaches its authentication boundary', async () => {
+  const res = await fetch(`${BASE_URL}/staff/operations`, { redirect: 'manual' });
+  assert.equal(res.status, 307);
+  assert.equal(res.headers.get('location'), '/en/auth/sign-in');
+});
+
 test('HTTP Runtime: localized unmatched routes preserve localized 404 behavior', async () => {
   const localizedRoutes = [
     '/en/this-does-not-exist',

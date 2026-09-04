@@ -4,7 +4,7 @@
 
 **Goal:** Restore valid non-localized route groups and make every truly unmatched global URL return the custom HTTP 404 response with `noindex`.
 
-**Architecture:** Keep `next-intl` responsible only for root redirection and recognized locale routes. Pass every other pathname to the Next.js router so real route groups resolve normally and the enabled `global-not-found.tsx` convention handles unmatched paths with native 404 semantics.
+**Architecture:** Keep `next-intl` responsible only for root redirection and recognized locale routes. Delegate the five real non-localized route roots to the App Router, while rewriting every other first segment to the enabled global not-found document with an explicit HTTP 404 status so the top-level `[locale]` segment cannot capture it as a bogus locale.
 
 **Tech Stack:** Next.js 16.3.1 App Router and Proxy, TypeScript, next-intl 4.13.1, Node test runner through tsx.
 
@@ -29,7 +29,7 @@
 
 **Interfaces:**
 - Consumes: the default `proxy(request: NextRequest): Promise<NextResponse>` export from `src/proxy.ts`.
-- Produces: `npm run test:proxy`, a direct integration test proving that valid non-localized and unmatched paths are delegated to the App Router instead of rewritten to `/_not-found`.
+- Produces: `npm run test:proxy`, a direct integration test proving that valid non-localized paths reach the App Router while unmatched paths use the global not-found document with HTTP 404.
 
 - [ ] **Step 1: Write the failing proxy integration test**
 
@@ -41,12 +41,19 @@ import { NextRequest } from 'next/server';
 process.env.NEXT_PUBLIC_SUPABASE_URL ??= 'http://127.0.0.1:54321';
 process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??= 'publishable-integration-key';
 
-test('proxy delegates valid route groups and unknown paths to the App Router', async () => {
+test('proxy delegates valid route groups and returns a real global 404 for unknown paths', async () => {
   const { default: proxy } = await import('../../src/proxy');
-  for (const pathname of ['/sample', '/staff/operations', '/zz', '/random/unmatched/path']) {
+  for (const pathname of ['/sample', '/staff/operations']) {
     const response = await proxy(new NextRequest(`http://localhost${pathname}`));
     assert.equal(response.headers.get('x-middleware-rewrite'), null, `${pathname} must not be rewritten`);
     assert.equal(response.headers.get('location'), null, `${pathname} must not be redirected by locale routing`);
+  }
+
+  for (const pathname of ['/zz', '/random/unmatched/path']) {
+    const response = await proxy(new NextRequest(`http://localhost${pathname}`));
+    assert.equal(response.status, 404, `${pathname} must carry HTTP 404 through the rewrite`);
+    assert.equal(response.headers.get('x-middleware-rewrite'), 'http://localhost/_not-found');
+    assert.equal(response.headers.get('location'), null, `${pathname} must not redirect`);
   }
 });
 ```
@@ -63,9 +70,8 @@ Add this script to `package.json`:
 
 Run: `npm run test:proxy`
 
-Expected: FAIL because `/sample`, `/staff/operations`, `/zz`, and
-`/random/unmatched/path` contain an `x-middleware-rewrite` header targeting
-`/_not-found`.
+Expected: FAIL because `/sample` and `/staff/operations` are incorrectly
+rewritten, and the unknown-path rewrite carries HTTP 200 instead of 404.
 
 - [ ] **Step 4: Commit the red test**
 
@@ -74,32 +80,30 @@ git add package.json tests/integration/proxy-routing.test.ts
 git commit -m "test: cover non-localized proxy routing"
 ```
 
-### Task 2: Delegate non-localized paths to Next.js
+### Task 2: Separate valid route roots from global 404s
 
 **Files:**
 - Modify: `src/proxy.ts`
 
 **Interfaces:**
-- Consumes: `routing.locales`, `handleI18nRouting`, and `NextResponse.next()`.
-- Produces: root redirect, locale routing, and a default App Router continuation without a synthetic rewrite.
+- Consumes: `routing.locales`, `handleI18nRouting`, `NextResponse.next()`, and the existing `/_not-found` matcher exclusion.
+- Produces: root redirect, locale routing, valid application-root continuation, and an HTTP 404 global-not-found rewrite for every unknown first segment.
 
-- [ ] **Step 1: Replace the hard-coded passthrough/rewrite branch**
+- [ ] **Step 1: Complete the application-root boundary and add 404 status**
 
-Replace:
+Add beside the proxy configuration:
 
 ```ts
-  } else if (['api', 'sim', 'speaking'].includes(firstSegment)) {
-    response = NextResponse.next();
-  } else {
-    response = NextResponse.rewrite(new URL('/_not-found', request.url));
-  }
+const applicationRootSegments = new Set(['api', 'sample', 'sim', 'speaking', 'staff']);
 ```
 
-with:
+Use it in the branch:
 
 ```ts
-  } else {
+  } else if (applicationRootSegments.has(firstSegment)) {
     response = NextResponse.next();
+  } else {
+    response = NextResponse.rewrite(new URL('/_not-found', request.url), { status: 404 });
   }
 ```
 
@@ -110,7 +114,8 @@ or matcher in the same edit.
 
 Run: `npm run test:proxy`
 
-Expected: PASS; none of the four paths is rewritten or redirected by proxy.
+Expected: PASS; valid roots continue normally and unknown paths carry a 404
+rewrite to the global not-found document.
 
 - [ ] **Step 3: Run adjacent unit tests**
 
