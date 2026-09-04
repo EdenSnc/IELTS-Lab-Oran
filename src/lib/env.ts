@@ -25,6 +25,13 @@ export function parsePublicEnvironment(source: NodeJS.ProcessEnv | Record<string
   return publicEnvironmentSchema.parse(source);
 }
 
+export function readPublicEnvironment() {
+  return parsePublicEnvironment({
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  });
+}
+
 export function parseServerEnvironment(source: NodeJS.ProcessEnv | Record<string, string | undefined>) {
   return serverEnvironmentSchema.parse(source);
 }

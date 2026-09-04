@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import * as environmentModule from '../../src/lib/env';
 import { parsePublicEnvironment } from '../../src/lib/env';
 import { buildContentSecurityPolicy } from '../../src/lib/security/content-security-policy';
 import { shouldRefreshSupabaseSession } from '../../src/lib/supabase/proxy-policy';
@@ -15,6 +16,36 @@ test('public environment rejects a missing or non-Supabase production origin', (
     NEXT_PUBLIC_SUPABASE_URL: 'https://project-ref.supabase.co',
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'publishable-test-key',
   }).NEXT_PUBLIC_SUPABASE_URL, 'https://project-ref.supabase.co');
+});
+
+test('browser public environment works when only direct process.env key reads are available', () => {
+  const readPublicEnvironment = (
+    environmentModule as typeof environmentModule & {
+      readPublicEnvironment?: () => ReturnType<typeof parsePublicEnvironment>;
+    }
+  ).readPublicEnvironment;
+  assert.equal(typeof readPublicEnvironment, 'function');
+
+  const originalEnvironment = process.env;
+  process.env = new Proxy({}, {
+    get(_target, property) {
+      if (property === 'NEXT_PUBLIC_SUPABASE_URL') return 'https://project-ref.supabase.co';
+      if (property === 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY') return 'publishable-test-key';
+      return undefined;
+    },
+    ownKeys() {
+      return [];
+    },
+  }) as NodeJS.ProcessEnv;
+
+  try {
+    assert.deepEqual(readPublicEnvironment?.(), {
+      NEXT_PUBLIC_SUPABASE_URL: 'https://project-ref.supabase.co',
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'publishable-test-key',
+    });
+  } finally {
+    process.env = originalEnvironment;
+  }
 });
 
 test('nonce CSP preserves Supabase and LiveKit while removing unsafe inline scripts and Tally', () => {

@@ -1,11 +1,11 @@
-import { parsePublicEnvironment } from '@/lib/env';
+import { readPublicEnvironment } from '@/lib/env';
 
 export type SupabasePublicConfig = {
   url: string;
   publishableKey: string;
 };
 
-const environment = parsePublicEnvironment(process.env);
+const environment = readPublicEnvironment();
 const config = {
   url: environment.NEXT_PUBLIC_SUPABASE_URL,
   publishableKey: environment.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
