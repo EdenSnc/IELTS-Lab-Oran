@@ -13,15 +13,20 @@ import WritingLayout from '@/components/mock-test/WritingLayout';
 import StrictDRM from '@/components/mock-test/StrictDRM';
 import NotesSidebar from '@/components/mock-test/NotesSidebar';
 import DiagnosticResults from '@/components/mock-test/DiagnosticResults';
+import FreeSampleResults from '@/components/mock-test/FreeSampleResults';
 
 export default function MockTestClient({
   test,
   onFinish,
   resolveListeningAudio,
+  sampleMode = false,
+  locale = 'en',
 }: {
   test: DeliveryTest;
   onFinish?: () => void | Promise<void>;
   resolveListeningAudio?: (stimulusId: string) => Promise<ListeningAudioResolution>;
+  sampleMode?: boolean;
+  locale?: 'ar' | 'en' | 'fr';
 }) {
   const testPhase = useTestStore((state) => state.testPhase);
   const activeSection = useTestStore((state) => state.activeSection);
@@ -62,7 +67,7 @@ export default function MockTestClient({
   }
 
   if (testPhase === 'results') {
-    return <DiagnosticResults test={test} />;
+    return sampleMode ? <FreeSampleResults locale={locale} /> : <DiagnosticResults test={test} />;
   }
 
   // Map state to Tailwind classes

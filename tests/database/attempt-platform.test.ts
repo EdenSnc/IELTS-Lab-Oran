@@ -18,6 +18,8 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     { acquireAttemptExecution, authorizeAttemptSubmission, requireLiveAttemptExecution },
     { releaseAttempt, saveResponseOptimistically },
     { submitAndGradeObjectiveAttempt },
+    { loadStoredAttemptResult },
+    { recordFunnelEvent },
   ] = await Promise.all([
     import('../../src/lib/prisma'),
     import('../../src/lib/crypto'),
@@ -27,6 +29,8 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
     import('../../src/lib/attempts/execution-lease'),
     import('../../src/lib/db/concurrency'),
     import('../../src/lib/attempts/objective-attempt-grading'),
+    import('../../src/lib/attempts/attempt-results'),
+    import('../../src/lib/growth/funnel-events'),
   ]);
 
   const suffix = randomUUID();
@@ -292,6 +296,7 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
 
   const firstExecution = await acquireAttemptExecution({ attemptId: attempt.id, userId: user.id, deviceSlot: firstDevice });
   assert.ok(firstExecution.leaseToken);
+  assert.equal(await prisma.funnelEvent.count({ where: { attemptId: attempt.id, type: 'ATTEMPT_STARTED' } }), 1);
   await assert.rejects(
     releaseAttempt({
       attemptId: attempt.id,
@@ -367,6 +372,11 @@ test('actual attempt services enforce entitlement, devices, immutable manifests,
   assert.deepEqual(grade.scores, [{ skill: 'READING', rawScore: 1, maximumRawScore: 1, band: null }]);
   const repeated = await submitAndGradeObjectiveAttempt(attempt.id, user.id);
   assert.deepEqual(repeated.scores, grade.scores, 'stored scores must be returned without recalculation');
+  assert.equal(await prisma.funnelEvent.count({ where: { attemptId: attempt.id, type: 'ATTEMPT_SUBMITTED' } }), 1);
+  await loadStoredAttemptResult(attempt.id, user.id);
+  await recordFunnelEvent({ type: 'RESULT_VIEWED', idempotencyKey: `attempt:${attempt.id}:result-viewed`, userId: user.id, attemptId: attempt.id });
+  await recordFunnelEvent({ type: 'RESULT_VIEWED', idempotencyKey: `attempt:${attempt.id}:result-viewed`, userId: user.id, attemptId: attempt.id });
+  assert.equal(await prisma.funnelEvent.count({ where: { attemptId: attempt.id, type: 'RESULT_VIEWED' } }), 1);
 
   await prisma.$disconnect();
 });

@@ -44,7 +44,8 @@
     "storedResults": "Results stored for {days} days",
     "priceLabel": "Mock-test access",
     "cta": "View test access",
-    "secureCheckout": "Secure checkout through Chargily Pay"
+    "secureCheckout": "Secure checkout through Chargily Pay",
+    "freeSample": "Try a free Reading sample"
   },
   "StopTraining": {
     "title": "STOP <mark>TRAINING ON PAPER.</mark>",

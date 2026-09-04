@@ -11,10 +11,21 @@ type Operations = {
   deviceLockouts: Array<{ id: string; userId: string; slotNumber: number; label: string | null; replacementCount: number }>;
 };
 
-export default function StaffOperationsDashboard({ operations }: { operations: Operations }) {
+type AccessCodeSummary = {
+  id: string;
+  codeHint: string;
+  createdAt: string;
+  expiresAt: string | null;
+  redeemedAt: string | null;
+  product: { name: string };
+  redeemedBy: { email: string | null; name: string | null } | null;
+};
+
+export default function StaffOperationsDashboard({ operations, accessCodes, products }: { operations: Operations; accessCodes: AccessCodeSummary[]; products: Array<{ id: string; name: string }> }) {
   const router = useRouter();
   const [message, setMessage] = useState<string>();
   const [pending, setPending] = useState(false);
+  const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
 
   async function action(event: FormEvent<HTMLFormElement>, kind: 'release_attempt' | 'extend_access') {
     event.preventDefault();
@@ -29,6 +40,31 @@ export default function StaffOperationsDashboard({ operations }: { operations: O
     setPending(false);
     setMessage(response.ok ? 'Audited staff action completed.' : (body.error ?? 'Staff action failed.'));
     if (response.ok) router.refresh();
+  }
+
+  async function generateCodes(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setMessage(undefined);
+    setGeneratedCodes([]);
+    const form = new FormData(event.currentTarget);
+    const expiresAt = form.get('expiresAt');
+    const response = await fetch('/api/staff/access-codes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: form.get('productId'),
+        quantity: Number(form.get('quantity')),
+        reason: form.get('reason'),
+        expiresAt: expiresAt ? new Date(String(expiresAt)).toISOString() : null,
+      }),
+    });
+    const body = await response.json() as { error?: string; accessCodes?: Array<{ code: string }> };
+    setPending(false);
+    if (!response.ok) return setMessage(body.error ?? 'Access-code generation failed.');
+    setGeneratedCodes(body.accessCodes?.map(({ code }) => code) ?? []);
+    setMessage('Codes generated. Copy them now; only hashes are stored.');
+    router.refresh();
   }
 
   const cards = [
@@ -58,6 +94,21 @@ export default function StaffOperationsDashboard({ operations }: { operations: O
             <textarea name="reason" placeholder="Audited reason" minLength={5} maxLength={500} required className="rounded-xl border border-black/15 px-4 py-3" />
             <button disabled={pending} className="rounded-full bg-charcoal px-5 py-3 font-semibold text-white">Extend access</button>
           </form>
+        </section>
+        <section className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+          <form onSubmit={(event) => void generateCodes(event)} className="grid content-start gap-3 rounded-3xl bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold">Generate prepaid access codes</h2>
+            <select name="productId" required className="rounded-xl border border-black/15 bg-white px-4 py-3">{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select>
+            <input name="quantity" type="number" min={1} max={50} defaultValue={1} required className="rounded-xl border border-black/15 px-4 py-3" />
+            <input name="expiresAt" type="datetime-local" className="rounded-xl border border-black/15 px-4 py-3" />
+            <textarea name="reason" placeholder="Audited allocation reason" minLength={5} maxLength={500} required className="rounded-xl border border-black/15 px-4 py-3" />
+            <button disabled={pending || !products.length} className="rounded-full bg-charcoal px-5 py-3 font-semibold text-white disabled:opacity-40">Generate codes</button>
+            {!!generatedCodes.length && <pre className="overflow-x-auto rounded-2xl bg-black p-4 text-xs text-white">{generatedCodes.join('\n')}</pre>}
+          </form>
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 className="text-xl font-semibold">Recent access codes</h2>
+            <div className="mt-4 grid gap-2">{accessCodes.map((code) => <div key={code.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-black/[.025] px-4 py-3 text-xs"><span><strong>{code.product.name}</strong> · {code.codeHint}</span><span>{code.redeemedAt ? `Redeemed by ${code.redeemedBy?.email ?? code.redeemedBy?.name ?? 'learner'}` : code.expiresAt ? `Expires ${new Date(code.expiresAt).toLocaleDateString()}` : 'Available'}</span></div>)}</div>
+          </div>
         </section>
         {message && <p role="status" className="mt-5 rounded-2xl bg-white p-4 text-sm">{message}</p>}
         <section className="mt-6 rounded-3xl bg-white p-6 shadow-sm">

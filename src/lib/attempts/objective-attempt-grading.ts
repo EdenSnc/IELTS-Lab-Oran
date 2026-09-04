@@ -2,6 +2,7 @@ import 'server-only';
 
 import { AttemptState, Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { funnelEventData } from '@/lib/growth/funnel-events';
 import { decrypt } from '@/lib/crypto';
 import {
   normalizationSchema,
@@ -256,6 +257,15 @@ export async function submitAndGradeObjectiveAttempt(attemptId: string, userId: 
         completedAt: objectiveOnly ? now : null,
         version: { increment: 1 },
       },
+    });
+    await transaction.funnelEvent.createMany({
+      data: [funnelEventData({
+        type: 'ATTEMPT_SUBMITTED',
+        idempotencyKey: `attempt:${attemptId}:submitted`,
+        userId,
+        attemptId,
+      })],
+      skipDuplicates: true,
     });
     return {
       attemptId,

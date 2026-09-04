@@ -44,7 +44,8 @@
     "storedResults": "Résultats conservés pendant {days} jours",
     "priceLabel": "Accès au test blanc",
     "cta": "Voir l'accès au test",
-    "secureCheckout": "Paiement sécurisé via Chargily Pay"
+    "secureCheckout": "Paiement sécurisé via Chargily Pay",
+    "freeSample": "Essayer un échantillon Reading gratuit"
   },
   "StopTraining": {
     "title": "ARRÊTEZ DE VOUS <mark>ENTRAÎNER SUR PAPIER.</mark>",

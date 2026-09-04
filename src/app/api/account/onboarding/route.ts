@@ -4,6 +4,7 @@ import { requireRequestUser, AuthError } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import { normalizeE164Phone } from '@/lib/phone';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { recordFunnelEvent } from '@/lib/growth/funnel-events';
 
 const schema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -27,6 +28,11 @@ export async function POST(request: Request) {
       userId: user.id,
       whatsapp,
       acceptedFrom: 'account-onboarding',
+    });
+    await recordFunnelEvent({
+      type: 'ONBOARDING_COMPLETED',
+      idempotencyKey: `user:${user.id}:onboarding-completed`,
+      userId: user.id,
     });
     const client = await createSupabaseServerClient();
     await client.auth.updateUser({

@@ -1,17 +1,25 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { ACADEMIC_MOCK_TEST_PRODUCT } from '@/lib/commerce/catalog';
+import prisma from '@/lib/prisma';
+import { recordFunnelEvent } from '@/lib/growth/funnel-events';
 
 export default async function MockTestOffer() {
   const [locale, t] = await Promise.all([
     getLocale(),
     getTranslations('MockTest'),
   ]);
+  const product = await prisma.product.findUnique({
+    where: { code: ACADEMIC_MOCK_TEST_PRODUCT.code, active: true },
+    select: { id: true, currency: true, priceMinor: true, accessDays: true },
+  });
+  if (!product) return null;
+  await recordFunnelEvent({ type: 'PRODUCT_VIEWED', productId: product.id, metadata: { surface: 'landing', locale } });
   const price = new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: ACADEMIC_MOCK_TEST_PRODUCT.currency,
+    currency: product.currency,
     maximumFractionDigits: 0,
-  }).format(ACADEMIC_MOCK_TEST_PRODUCT.priceMinor / 100);
+  }).format(product.priceMinor / 100);
 
   return (
     <section id="mock-test" className="scroll-mt-28 px-6 pb-10 md:px-12">
@@ -22,7 +30,7 @@ export default async function MockTestOffer() {
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/60">{t('description')}</p>
           <div className="mt-7 flex flex-wrap items-center gap-3 text-sm text-white/65">
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2">{t('oneAttempt')}</span>
-            <span className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2">{t('storedResults', { days: ACADEMIC_MOCK_TEST_PRODUCT.accessDays })}</span>
+            <span className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2">{t('storedResults', { days: product.accessDays ?? 0 })}</span>
           </div>
         </div>
         <div className="flex min-w-64 flex-col justify-center border-t border-white/10 bg-white/[0.045] p-8 md:border-l md:border-t-0 md:p-10">
@@ -31,6 +39,7 @@ export default async function MockTestOffer() {
           <Link href="/account" className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-charcoal transition hover:bg-[#ffebee]">
             {t('cta')}
           </Link>
+          <a href={`/sample?locale=${locale}`} className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full border border-white/15 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10">{t('freeSample')}</a>
           <p className="mt-3 text-center text-xs leading-5 text-white/40">{t('secureCheckout')}</p>
         </div>
       </div>

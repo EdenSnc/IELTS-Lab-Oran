@@ -6,6 +6,7 @@ import prisma from '@/lib/prisma';
 import { assertAccountReady } from '@/lib/auth/account-readiness';
 import { logSafeError } from '@/lib/observability/safe-log';
 import { CANONICAL_ORIGIN } from '@/lib/seo';
+import { funnelEventData, recordFunnelEvent } from '@/lib/growth/funnel-events';
 import {
   ChargilyRequestError,
   chargilyAmountFromMinor,
@@ -82,6 +83,7 @@ export async function createCheckoutForProduct(input: {
     amountMinor: number;
     currency: string;
     requestHash: string;
+    productId: string;
     existingCheckoutUrl: string | null;
   } | undefined;
 
@@ -115,6 +117,7 @@ export async function createCheckoutForProduct(input: {
             amountMinor: existing.amountMinor,
             currency: existing.currency,
             requestHash: attempt.requestHash,
+            productId: existing.productId,
             existingCheckoutUrl: attempt.checkoutUrl,
           };
         }
@@ -151,6 +154,7 @@ export async function createCheckoutForProduct(input: {
             amountMinor: unresolved.amountMinor,
             currency: unresolved.currency,
             requestHash: attempt.requestHash,
+            productId: product.id,
             existingCheckoutUrl: attempt.checkoutUrl,
           };
         }
@@ -202,6 +206,7 @@ export async function createCheckoutForProduct(input: {
           amountMinor: order.amountMinor,
           currency: order.currency,
           requestHash: hash,
+          productId: product.id,
           existingCheckoutUrl: null,
         };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
@@ -288,6 +293,13 @@ export async function createCheckoutForProduct(input: {
     },
   });
   if (persisted.count !== 1) throw new PaymentServiceError('CHECKOUT_PERSISTENCE_CONFLICT', 409);
+  await recordFunnelEvent({
+    type: 'CHECKOUT_CREATED',
+    idempotencyKey: `order:${prepared.orderId}:checkout-created`,
+    userId: input.userId,
+    productId: prepared.productId,
+    orderId: prepared.orderId,
+  });
   return { ...prepared, checkoutUrl: normalizedCheckoutUrl! };
 }
 
@@ -418,13 +430,14 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
         data: { status: 'PAID', paidAt: payment.order.paidAt ?? now, cancelledAt: null },
       });
       const existingEntitlement = payment.order.entitlements.at(0);
+      let grantedEntitlementId = existingEntitlement?.id;
       if (existingEntitlement) {
         if (
           existingEntitlement.userId !== payment.order.userId
           || existingEntitlement.productId !== payment.order.productId
         ) throw new PaymentServiceError('ENTITLEMENT_ORDER_MISMATCH', 409);
       } else {
-        await transaction.entitlement.create({
+        const grantedEntitlement = await transaction.entitlement.create({
           data: {
             userId: payment.order.userId,
             productId: payment.order.productId,
@@ -437,7 +450,20 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
             maximumAttempts: payment.order.product.maximumAttempts,
           },
         });
+        grantedEntitlementId = grantedEntitlement.id;
       }
+      if (!grantedEntitlementId) throw new PaymentServiceError('ENTITLEMENT_GRANT_FAILED', 500);
+      await transaction.funnelEvent.createMany({
+        data: [funnelEventData({
+          type: 'ENTITLEMENT_GRANTED',
+          idempotencyKey: `entitlement:${grantedEntitlementId}:granted`,
+          userId: payment.order.userId,
+          productId: payment.order.productId,
+          orderId: payment.order.id,
+          metadata: { source: 'chargily' },
+        })],
+        skipDuplicates: true,
+      });
     } else if (event.type === 'checkout.refunded') {
       const entitlement = payment.order.entitlements.at(0);
       let refundFlag: string | null = null;

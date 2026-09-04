@@ -4,6 +4,7 @@ import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 import prisma from '@/lib/prisma';
 import { requireHumanRequest } from '@/lib/security/bot';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { recordFunnelEvent } from '@/lib/growth/funnel-events';
 
 const emailSchema = z.email().max(320).transform((value) => value.trim().toLowerCase());
 const requestSchema = z.discriminatedUnion('action', [
@@ -35,6 +36,8 @@ export async function POST(request: Request) {
       if (error) return noStoreJson({ error: 'INVALID_CREDENTIALS' }, 401);
       return noStoreJson({ success: true });
     }
+
+    await recordFunnelEvent({ type: 'SIGNUP_STARTED', metadata: { provider: 'email' } });
 
     const redirect = new URL(input.emailRedirectTo);
     if (redirect.origin !== new URL(request.url).origin || redirect.pathname !== '/api/auth/callback') {

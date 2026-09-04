@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import DeviceManager from '@/components/auth/DeviceManager';
+import AccessCodeRedeemer from './AccessCodeRedeemer';
 import AssessmentDashboard, { type AssessmentDashboardProps } from './AssessmentDashboard';
 
 type Props = Omit<AssessmentDashboardProps, 'deviceTrusted'> & {
@@ -17,6 +18,7 @@ export default function AccountPlatform({ autoEnrollEligible, ...dashboard }: Pr
         autoEnrollEligible={autoEnrollEligible}
         onTrustChange={setDeviceTrusted}
       />
+      <AccessCodeRedeemer />
       <AssessmentDashboard {...dashboard} deviceTrusted={deviceTrusted} />
     </>
   );

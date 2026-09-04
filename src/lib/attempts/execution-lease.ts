@@ -5,6 +5,7 @@ import { AttemptMode, AttemptState, Prisma, type DeviceSlot } from '@prisma/clie
 import prisma from '@/lib/prisma';
 import { AuthError } from '@/lib/auth/request-user';
 import type { FrozenManifestPayload } from './manifest-core';
+import { funnelEventData } from '@/lib/growth/funnel-events';
 
 export const ATTEMPT_LEASE_HEADER = 'x-attempt-lease';
 export const SUBMISSION_GRACE_SECONDS = 120;
@@ -86,6 +87,15 @@ export async function acquireAttemptExecution(input: {
           expiresAt: attempt.expiresAt,
         },
       });
+      await transaction.funnelEvent.createMany({
+        data: [funnelEventData({
+          type: 'ATTEMPT_STARTED',
+          idempotencyKey: `attempt:${attempt.id}:started`,
+          userId: input.userId,
+          attemptId: attempt.id,
+        })],
+        skipDuplicates: true,
+      });
       return { mode: attempt.mode, leaseToken: null, attempt: activeAttempt };
     }
 
@@ -141,6 +151,15 @@ export async function acquireAttemptExecution(input: {
         startedAt: attempt.startedAt ?? now,
         expiresAt: attemptExpiresAt,
       },
+    });
+    await transaction.funnelEvent.createMany({
+      data: [funnelEventData({
+        type: 'ATTEMPT_STARTED',
+        idempotencyKey: `attempt:${attempt.id}:started`,
+        userId: input.userId,
+        attemptId: attempt.id,
+      })],
+      skipDuplicates: true,
     });
     return { mode: attempt.mode, leaseToken: issued.token, attempt: activeAttempt };
   }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

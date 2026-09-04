@@ -44,7 +44,8 @@
     "storedResults": "النتائج محفوظة لمدة {days} يوماً",
     "priceLabel": "الوصول إلى الاختبار التجريبي",
     "cta": "عرض الوصول إلى الاختبار",
-    "secureCheckout": "دفع آمن عبر Chargily Pay"
+    "secureCheckout": "دفع آمن عبر Chargily Pay",
+    "freeSample": "جرّب عينة Reading مجانية"
   },
   "StopTraining": {
     "title": "توقف عن <mark>التدريب على الورق.</mark>",

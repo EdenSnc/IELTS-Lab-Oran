@@ -249,23 +249,26 @@ model User {
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
-  accessSessions     AccessSession[]
-  deviceSlots        DeviceSlot[]
-  executionLeases    AttemptExecutionLease[]
-  consents           ConsentRecord[]
-  attempts           AssessmentAttempt[]
-  orders             Order[]
-  entitlements       Entitlement[]
-  salesNotes         SalesNote[]
-  verifiedAnswerKeys AnswerKey[]                    @relation("AnswerKeyVerifier")
-  resolvedIssues     ExtractionIssue[]
-  speakingBookings   SpeakingAppointment[]          @relation("SpeakingLearner")
-  speakingExamining  SpeakingAppointment[]          @relation("SpeakingExaminer")
-  speakingRules      SpeakingAvailabilityRule[]
-  speakingOverrides  SpeakingAvailabilityOverride[]
-  speakingMarkers    SpeakingEvidenceMarker[]
-  speakingScores     SpeakingHumanAssessment[]
-  staffActions       StaffActionAudit[]
+  accessSessions      AccessSession[]
+  deviceSlots         DeviceSlot[]
+  executionLeases     AttemptExecutionLease[]
+  consents            ConsentRecord[]
+  attempts            AssessmentAttempt[]
+  orders              Order[]
+  entitlements        Entitlement[]
+  salesNotes          SalesNote[]
+  verifiedAnswerKeys  AnswerKey[]                    @relation("AnswerKeyVerifier")
+  resolvedIssues      ExtractionIssue[]
+  speakingBookings    SpeakingAppointment[]          @relation("SpeakingLearner")
+  speakingExamining   SpeakingAppointment[]          @relation("SpeakingExaminer")
+  speakingRules       SpeakingAvailabilityRule[]
+  speakingOverrides   SpeakingAvailabilityOverride[]
+  speakingMarkers     SpeakingEvidenceMarker[]
+  speakingScores      SpeakingHumanAssessment[]
+  staffActions        StaffActionAudit[]
+  accessCodesCreated  AccessCode[]                   @relation("AccessCodeCreator")
+  accessCodesRedeemed AccessCode[]                   @relation("AccessCodeRedeemer")
+  funnelEvents        FunnelEvent[]
 
   @@index([status, role])
   @@schema("app_private")
@@ -975,6 +978,7 @@ model AssessmentAttempt {
   executionLease          AttemptExecutionLease?
   entitlementConsumptions EntitlementConsumption[]
   mediaPlaybacks          AttemptMediaPlayback[]
+  funnelEvents            FunnelEvent[]
 
   @@index([userId, state, createdAt])
   @@index([blueprintId])
@@ -1525,6 +1529,19 @@ enum EntitlementConsumptionKind {
   @@schema("app_private")
 }
 
+enum FunnelEventType {
+  PRODUCT_VIEWED
+  SIGNUP_STARTED
+  ONBOARDING_COMPLETED
+  CHECKOUT_CREATED
+  ENTITLEMENT_GRANTED
+  ATTEMPT_STARTED
+  ATTEMPT_SUBMITTED
+  RESULT_VIEWED
+
+  @@schema("app_private")
+}
+
 model Product {
   id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   code            String      @unique
@@ -1542,6 +1559,8 @@ model Product {
   orders       Order[]
   entitlements Entitlement[]
   blueprints   ProductBlueprint[]
+  accessCodes  AccessCode[]
+  funnelEvents FunnelEvent[]
 
   @@index([tier, active])
   @@schema("app_private")
@@ -1576,6 +1595,7 @@ model Order {
   product         Product          @relation(fields: [productId], references: [id], onDelete: Restrict)
   paymentAttempts PaymentAttempt[]
   entitlements    Entitlement[]
+  funnelEvents    FunnelEvent[]
 
   @@index([userId, status, createdAt])
   @@index([productId])
@@ -1657,11 +1677,58 @@ model StaffActionAudit {
   @@schema("app_private")
 }
 
+model AccessCode {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codeHash         String    @unique @db.Char(64)
+  codeHint         String    @db.VarChar(9)
+  productId        String    @db.Uuid
+  createdByUserId  String    @db.Uuid
+  redeemedByUserId String?   @db.Uuid
+  expiresAt        DateTime?
+  redeemedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  product     Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
+  createdBy   User         @relation("AccessCodeCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  redeemedBy  User?        @relation("AccessCodeRedeemer", fields: [redeemedByUserId], references: [id], onDelete: Restrict)
+  entitlement Entitlement?
+
+  @@index([productId, redeemedAt, expiresAt])
+  @@index([createdByUserId, createdAt])
+  @@index([redeemedByUserId, redeemedAt])
+  @@schema("app_private")
+}
+
+model FunnelEvent {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type           FunnelEventType
+  idempotencyKey String?         @unique
+  userId         String?         @db.Uuid
+  productId      String?         @db.Uuid
+  orderId        String?         @db.Uuid
+  attemptId      String?         @db.Uuid
+  metadata       Json?
+  occurredAt     DateTime        @default(now())
+
+  user    User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  product Product?           @relation(fields: [productId], references: [id], onDelete: SetNull)
+  order   Order?             @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  attempt AssessmentAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+
+  @@index([type, occurredAt])
+  @@index([userId, occurredAt])
+  @@index([productId, occurredAt])
+  @@index([orderId])
+  @@index([attemptId])
+  @@schema("app_private")
+}
+
 model Entitlement {
   id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId          String            @db.Uuid
   productId       String            @db.Uuid
   orderId         String?           @db.Uuid
+  accessCodeId    String?           @unique @db.Uuid
   status          EntitlementStatus @default(PENDING)
   startsAt        DateTime?
   endsAt          DateTime?
@@ -1674,6 +1741,7 @@ model Entitlement {
   user         User                     @relation(fields: [userId], references: [id], onDelete: Restrict)
   product      Product                  @relation(fields: [productId], references: [id], onDelete: Restrict)
   order        Order?                   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  accessCode   AccessCode?              @relation(fields: [accessCodeId], references: [id], onDelete: Restrict)
   attempts     AssessmentAttempt[]
   consumptions EntitlementConsumption[]
 
@@ -1699,8 +1767,8 @@ model EntitlementConsumption {
   reversalOf  EntitlementConsumption? @relation("EntitlementConsumptionReversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
   reversedBy  EntitlementConsumption? @relation("EntitlementConsumptionReversal")
 
+  @@unique([attemptId, kind])
   @@index([entitlementId, createdAt])
   @@index([kind, createdAt])
-  @@unique([attemptId, kind])
   @@schema("app_private")
 }

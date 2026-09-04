@@ -103,6 +103,7 @@ test('concurrent verified Chargily webhooks grant exactly one entitlement', {
     assert.equal(persisted?.paymentAttempts[0].providerCheckoutId, providerCheckoutId);
     assert.equal(persisted?.entitlements[0].status, 'ACTIVE');
     assert.equal(persisted?.entitlements[0].maximumAttempts, 2);
+    assert.equal(await prisma.funnelEvent.count({ where: { orderId: order.id, type: 'ENTITLEMENT_GRANTED' } }), 1);
 
     const tampered = rawBody.replace('"amount":295', '"amount":296');
     await assert.rejects(processChargilyWebhook(tampered, signature));

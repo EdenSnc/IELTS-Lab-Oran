@@ -145,6 +145,7 @@ test('checkout creation reuses one unresolved order per user and product within 
     assert.equal(second.checkoutUrl, first.checkoutUrl);
     assert.equal(providerCalls, 1);
     assert.equal(await prisma.order.count({ where: { userId: user.id, productId: product.id } }), 1);
+    assert.equal(await prisma.funnelEvent.count({ where: { orderId: first.orderId, type: 'CHECKOUT_CREATED' } }), 1);
   } finally {
     globalThis.fetch = originalFetch;
   }
