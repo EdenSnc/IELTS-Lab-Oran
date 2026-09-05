@@ -140,6 +140,8 @@ test('payment reconciliation jobs contain only the strict minimal wake-up schema
 
 test('checkout and attempt kill switches fail before account or database work', async () => {
   process.env.DATABASE_URL ??= 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??= 'http://127.0.0.1:54321';
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??= 'publishable-test-key';
   const [{ createCheckoutForProduct }, { createAuthenticatedAttempt }] = await Promise.all([
     import('../../src/lib/payments/payment-service'),
     import('../../src/lib/attempts/attempt-service'),

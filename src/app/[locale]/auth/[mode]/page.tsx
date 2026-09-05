@@ -1,13 +1,9 @@
 import { notFound } from 'next/navigation';
 import AuthForm, { type AuthMode } from '@/components/auth/AuthForm';
+import { authCopyForLocale, authErrorMessage } from '@/components/auth/auth-copy';
 import { getEnabledAuthProviders } from '@/lib/supabase/auth-providers';
 
 const MODES = new Set<AuthMode>(['sign-in', 'sign-up', 'forgot-password', 'update-password']);
-
-const AUTH_ERRORS: Record<string, string> = {
-  missing_code: 'This sign-in or recovery link is incomplete. Request a new password-reset email.',
-  invalid_code: 'This sign-in or recovery link is invalid or expired. Request a new password-reset email.',
-};
 
 export default async function AuthPage({
   params,
@@ -20,6 +16,7 @@ export default async function AuthPage({
   if (!MODES.has(mode as AuthMode)) notFound();
   const providers = await getEnabledAuthProviders();
   const { error } = await searchParams;
+  const copy = authCopyForLocale(locale);
 
   return (
     <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f5f5f3] px-4 py-10 sm:px-6 sm:py-16">
@@ -31,10 +28,10 @@ export default async function AuthPage({
           locale={locale}
           mode={mode as AuthMode}
           providers={providers}
-          initialMessage={error ? AUTH_ERRORS[error] : undefined}
+          initialMessage={error ? authErrorMessage(locale, error) : undefined}
         />
         <p className="mx-auto mt-6 max-w-md text-center text-xs leading-5 text-black/40">
-          Secure access to your IELTS Lab tests, appointments and stored results.
+          {copy.secureAccess}
         </p>
       </div>
     </main>

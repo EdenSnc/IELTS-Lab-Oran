@@ -1,24 +1,21 @@
 import { z } from 'zod';
-import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
+import { apiError, noStoreJson, verifiedRequestOrigin } from '@/lib/http/api';
 import { requireHumanRequest } from '@/lib/security/bot';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { recordFunnelEvent } from '@/lib/growth/funnel-events';
 
 const requestSchema = z.object({
   provider: z.enum(['google', 'facebook']),
-  redirectTo: z.url().max(500),
+  locale: z.enum(['ar', 'en', 'fr']),
   intent: z.enum(['sign-in', 'sign-up']),
 }).strict();
 
 export async function POST(request: Request) {
   try {
-    assertSameOrigin(request);
+    const requestOrigin = verifiedRequestOrigin(request);
     await requireHumanRequest();
     const input = requestSchema.parse(await request.json());
-    const redirect = new URL(input.redirectTo);
-    if (redirect.origin !== new URL(request.url).origin || redirect.pathname !== '/api/auth/callback') {
-      return noStoreJson({ error: 'INVALID_REDIRECT' }, 400);
-    }
+    const redirect = new URL(`/api/auth/callback?next=/${input.locale}/account`, requestOrigin);
     if (input.intent === 'sign-up') {
       await recordFunnelEvent({ type: 'SIGNUP_STARTED', metadata: { provider: input.provider } });
     }

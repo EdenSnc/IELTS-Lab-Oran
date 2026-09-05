@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { recordSignupPolicyConsents } from '@/lib/auth/account-readiness';
-import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
+import { apiError, noStoreJson, verifiedRequestOrigin } from '@/lib/http/api';
 import prisma from '@/lib/prisma';
 import { requireHumanRequest } from '@/lib/security/bot';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -20,13 +20,13 @@ const requestSchema = z.discriminatedUnion('action', [
     termsAccepted: z.literal(true),
     privacyAccepted: z.literal(true),
     marketingAccepted: z.boolean().default(false),
-    emailRedirectTo: z.url().max(500),
+    locale: z.enum(['ar', 'en', 'fr']),
   }).strict(),
 ]);
 
 export async function POST(request: Request) {
   try {
-    assertSameOrigin(request);
+    const requestOrigin = verifiedRequestOrigin(request);
     await requireHumanRequest();
     const input = requestSchema.parse(await request.json());
     const client = await createSupabaseServerClient();
@@ -39,10 +39,7 @@ export async function POST(request: Request) {
 
     await recordFunnelEvent({ type: 'SIGNUP_STARTED', metadata: { provider: 'email' } });
 
-    const redirect = new URL(input.emailRedirectTo);
-    if (redirect.origin !== new URL(request.url).origin || redirect.pathname !== '/api/auth/callback') {
-      return noStoreJson({ error: 'INVALID_REDIRECT' }, 400);
-    }
+    const redirect = new URL(`/api/auth/callback?next=/${input.locale}/account`, requestOrigin);
     const { data, error } = await client.auth.signUp({
       email: input.email,
       password: input.password,
@@ -71,7 +68,7 @@ export async function POST(request: Request) {
         acceptedFrom: 'email-signup',
       });
     }
-    return noStoreJson({ success: true }, 201);
+    return noStoreJson({ success: true, emailConfirmationRequired: !data.session }, 201);
   } catch (error) {
     return apiError(error, 'AUTH_REQUEST_FAILED');
   }

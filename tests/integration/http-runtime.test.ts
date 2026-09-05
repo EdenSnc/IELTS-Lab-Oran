@@ -177,6 +177,23 @@ test('HTTP Runtime: /ar serves correct localized canonical, RTL dir, and hreflan
   assert.ok(!html.includes('ieltslab.tech'));
 });
 
+test('HTTP Runtime: account authentication is localized and excluded from indexing', async () => {
+  const french = await fetch(`${BASE_URL}/fr/auth/sign-in`);
+  assert.equal(french.status, 200);
+  const frenchHtml = await french.text();
+  assert.match(frenchHtml, />Connectez-vous à IELTS Lab</u);
+  assert.match(frenchHtml, /<meta[^>]*name="robots"[^>]*content="noindex, nofollow"/iu);
+  assert.ok(!/<link[^>]*rel="canonical"/iu.test(frenchHtml));
+  assert.ok(!/<meta[^>]*property="og:url"/iu.test(frenchHtml));
+
+  const arabic = await fetch(`${BASE_URL}/ar/auth/sign-in`);
+  assert.equal(arabic.status, 200);
+  const arabicHtml = await arabic.text();
+  assert.match(arabicHtml, />سجّل الدخول إلى IELTS Lab</u);
+  assert.match(arabicHtml, /dir="rtl"/u);
+  assert.match(arabicHtml, /<meta[^>]*name="robots"[^>]*content="noindex, nofollow"/iu);
+});
+
 test('HTTP Runtime: Nonexistent route returns HTTP 404', async () => {
   const res = await fetch(`${BASE_URL}/en/nonexistent-test-page-12345`);
   assert.equal(res.status, 404, 'Nonexistent page must return 404 status code');
