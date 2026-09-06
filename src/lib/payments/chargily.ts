@@ -169,7 +169,13 @@ export async function createChargilyCheckout(input: {
     // request. Without a documented provider idempotency key this is ambiguous.
     throw new ChargilyRequestError(true);
   }
-  if (!response.ok) throw new ChargilyRequestError(false, response.status);
+  if (!response.ok) {
+    // A gateway/server error or request timeout does not prove that checkout
+    // creation was rejected. Preserve reconciliation rather than allow a new
+    // checkout immediately or reject a late authoritative webhook.
+    const ambiguous = response.status >= 500 || response.status === 408;
+    throw new ChargilyRequestError(ambiguous, response.status);
+  }
   let body: unknown;
   try {
     body = await response.json();
