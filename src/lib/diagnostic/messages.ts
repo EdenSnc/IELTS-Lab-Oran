@@ -1,6 +1,12 @@
 export type DiagnosticLocale = 'en' | 'fr' | 'ar';
 
 const en = {
+  staffTitle: 'Diagnostic invitations', email: 'Participant’s account email', find: 'Find account',
+  selectContent: 'Approved diagnostic', invite: 'Send free invitation', inviteSent: 'Invitation created. Share the diagnostic link with the participant.',
+  noAccount: 'No active participant account matches this email.', contentReady: 'Ready', contentPending: 'Source approval required',
+  recentInvitations: 'Recent invitations', participant: 'Participant', openDiagnostic: 'Open diagnostic', revoke: 'Revoke invitation',
+  revokeReason: 'Reason for revoking this invitation', staffHelp: 'Participants need a signed-in account. Only reviewed content can be assigned. Invitations expire after seven days; the full mock is separate.',
+  reconnect: 'Reconnect', retryAudio: 'Resume section audio',
   title: 'Your short diagnostic', eyebrow: 'Diagnostic · invitation only',
   intro: '60 minutes of written work: Listening, Reading and Writing, 20 minutes each. Speaking takes 7 minutes in person, arranged separately.',
   conditions: 'This is a shortened diagnostic, not a full IELTS mock or an official IELTS result. Feedback is diagnostic only; Writing covers Task 2 under shortened conditions.',
@@ -36,6 +42,12 @@ const en = {
 };
 type DiagnosticMessages = { [K in keyof typeof en]: string };
 const fr: DiagnosticMessages = {
+  staffTitle: 'Invitations au diagnostic', email: 'Adresse e-mail du compte du participant', find: 'Rechercher le compte',
+  selectContent: 'Diagnostic validé', invite: 'Envoyer une invitation gratuite', inviteSent: 'Invitation créée. Partagez le lien du diagnostic avec le participant.',
+  noAccount: 'Aucun compte de participant actif ne correspond à cette adresse.', contentReady: 'Prêt', contentPending: 'Validation des sources requise',
+  recentInvitations: 'Invitations récentes', participant: 'Participant', openDiagnostic: 'Ouvrir le diagnostic', revoke: 'Révoquer l’invitation',
+  revokeReason: 'Motif de révocation de cette invitation', staffHelp: 'Les participants doivent se connecter à leur compte. Seul un contenu validé peut être attribué. Les invitations expirent au bout de sept jours ; l’examen blanc complet reste distinct.',
+  reconnect: 'Se reconnecter', retryAudio: 'Reprendre l’audio du module',
   title: 'Votre diagnostic court', eyebrow: 'Diagnostic · sur invitation',
   intro: '60 minutes d’épreuves écrites : compréhension orale, compréhension écrite et expression écrite, 20 minutes chacune. L’expression orale dure 7 minutes en présentiel, organisée séparément.',
   conditions: 'Il s’agit d’un diagnostic raccourci, pas d’un examen blanc complet ni d’un résultat officiel IELTS. Les commentaires sont uniquement diagnostiques ; l’écrit porte sur la tâche 2 dans un temps réduit.',
@@ -67,6 +79,12 @@ const fr: DiagnosticMessages = {
   staleError: 'Une réponse plus récente est déjà enregistrée. La saisie est suspendue pour protéger votre travail ; actualisez la session avant de continuer.', sessionError: 'Cette session ou section n’accepte plus de modifications. Reconnectez-vous pour vérifier son état.',
 };
 const ar: DiagnosticMessages = {
+  staffTitle: 'دعوات الاختبار التشخيصي', email: 'البريد الإلكتروني لحساب المشارك', find: 'البحث عن الحساب',
+  selectContent: 'الاختبار التشخيصي المعتمد', invite: 'إرسال دعوة مجانية', inviteSent: 'تم إنشاء الدعوة. شارك رابط الاختبار التشخيصي مع المشارك.',
+  noAccount: 'لا يوجد حساب مشارك نشط بهذا البريد الإلكتروني.', contentReady: 'جاهز', contentPending: 'يلزم اعتماد المصادر',
+  recentInvitations: 'الدعوات الأخيرة', participant: 'المشارك', openDiagnostic: 'فتح الاختبار التشخيصي', revoke: 'إلغاء الدعوة',
+  revokeReason: 'سبب إلغاء هذه الدعوة', staffHelp: 'يجب على المشاركين تسجيل الدخول إلى حساباتهم. لا يُسند إلا المحتوى المعتمد. تنتهي الدعوات بعد سبعة أيام؛ ويبقى الاختبار التجريبي الكامل منفصلاً.',
+  reconnect: 'إعادة الاتصال', retryAudio: 'استئناف صوت القسم',
   title: 'اختبارك التشخيصي القصير', eyebrow: 'اختبار تشخيصي · بدعوة فقط',
   intro: '60 دقيقة للعمل الكتابي: الاستماع والقراءة والكتابة، 20 دقيقة لكل مهارة. يستغرق التحدث 7 دقائق حضورياً ويُنظَّم بشكل منفصل.',
   conditions: 'هذا اختبار تشخيصي مختصر، وليس اختبار IELTS تجريبياً كاملاً أو نتيجة IELTS رسمية. الملاحظات تشخيصية فقط؛ تشمل الكتابة المهمة الثانية في وقت مختصر.',

@@ -2,18 +2,22 @@
 
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
-import type { DeliverySection, DeliveryStimulus } from '@/lib/content/delivery-types';
+import type { DiagnosticDeliverySection } from '@/lib/diagnostic/delivery-protocol';
 import type { DiagnosticSessionDto } from '@/lib/diagnostic/protocol';
 import { diagnosticMessages, type DiagnosticLocale } from '@/lib/diagnostic/messages';
 import { formatDiagnosticRemaining } from '@/lib/diagnostic/session-core';
 import DiagnosticQuestions, { DiagnosticSource } from './DiagnosticQuestions';
+import DiagnosticAudio from './DiagnosticAudio';
 import styles from './diagnostic.module.css';
 
 export type DiagnosticSaveState = 'saved' | 'saving' | 'offline' | 'conflict';
 export type DiagnosticRunnerProps = {
   locale: DiagnosticLocale;
   session: DiagnosticSessionDto;
-  section: DeliverySection | null;
+  section: DiagnosticDeliverySection | null;
+  sourceNumbers?: Record<string, number | null>;
+  errorMessage?: string | null;
+  onReconnect?: () => void;
   remainingSeconds: number;
   saveStates: Record<string, DiagnosticSaveState>;
   onAnswerChange: (questionId: string, answer: string) => void;
@@ -24,27 +28,16 @@ export type DiagnosticRunnerProps = {
   submitting: boolean;
 };
 
-function AudioSurface({ stimulus, locale }: { stimulus: DeliveryStimulus; locale: DiagnosticLocale }) {
-  const [failed, setFailed] = useState(false);
-  const m = diagnosticMessages[locale];
-  return <section className={styles.panel} aria-label={m.audio}>
-    <h2>{m.audio}</h2><p className={styles.meta}>{m.audioHelp}</p>
-    {/* The integration owns playback, seek/replay policy and incidents. No free-replay native controls. */}
-    <audio className={styles.audio} src={stimulus.assetUrl ?? undefined} preload="metadata" dir="ltr"
-      aria-label={m.audio} data-diagnostic-audio={stimulus.id} onError={() => setFailed(true)}
-      onStalled={() => setFailed(true)} onAbort={() => setFailed(true)} />
-    {(failed || !stimulus.assetUrl) && <p role="alert" className={styles.notice}>{m.audioFailed}</p>}
-  </section>;
-}
-
-export default function DiagnosticRunner({ locale, session, section, remainingSeconds, saveStates, onAnswerChange, onReviewChange, onSubmit, connection, blocked, submitting }: DiagnosticRunnerProps) {
+export default function DiagnosticRunner({ locale, session, section, sourceNumbers, errorMessage, onReconnect, remainingSeconds, saveStates, onAnswerChange, onReviewChange, onSubmit, connection, blocked, submitting }: DiagnosticRunnerProps) {
   const m = diagnosticMessages[locale];
   const [navigation, setNavigation] = useState({ sectionId: section?.id, index: 0 });
   const [confirming, setConfirming] = useState(false);
   const groupHeading = useRef<HTMLHeadingElement | null>(null);
   const submitButton = useRef<HTMLButtonElement | null>(null);
   const confirmHeading = useRef<HTMLHeadingElement | null>(null);
+  const shell = useRef<HTMLDivElement | null>(null);
   useEffect(() => { if (confirming) confirmHeading.current?.focus(); }, [confirming]);
+  useEffect(() => { shell.current?.scrollTo({ top: 0 }); }, [section?.id]);
   const groups = section?.parts.flatMap((part) => part.questionGroups.map((group) => ({ part, group }))) ?? [];
   const index = navigation.sectionId === section?.id ? Math.min(navigation.index, Math.max(0, groups.length - 1)) : 0;
   const active = groups[index];
@@ -80,12 +73,14 @@ export default function DiagnosticRunner({ locale, session, section, remainingSe
   }
   function submit() { if (canSubmit) onSubmit(); }
 
-  return <div className={styles.shell} lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+  return <div ref={shell} className={styles.shell} lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
     <header className={styles.header}>
       <div className={styles.brand} dir="ltr"><Image src="/ielts-lab-mark.svg" alt="" width={34} height={34} /> IELTS Lab</div>
       {!received && <p className={styles.clock}>{m.remaining} <bdi>{formatDiagnosticRemaining(remainingSeconds)}</bdi> {m.minutes}</p>}
       <div className={styles.status} role="status" aria-live="polite"><span>{connection === 'online' ? m.online : m.offline}</span><span>{globalSave}</span></div>
     </header>
+    {errorMessage && <div className={styles.recovery} role="alert"><p>{errorMessage}</p>
+      <button type="button" className={styles.secondary} onClick={onReconnect}>{m.reconnect}</button></div>}
     <main className={styles.container}>
       {received ? <section className={styles.panel}><h1 className={styles.heroTitle}>{m.receipt}</h1><p>{m.receiptHelp}</p></section>
         : <>
@@ -94,7 +89,7 @@ export default function DiagnosticRunner({ locale, session, section, remainingSe
             {blocked && <p role="alert" className={styles.notice}>{m.blocked}</p>}
             {!section || !active ? <p role="alert" className={styles.notice}>{m.unavailable}</p> : <>
               {section.skill === 'WRITING' && <p className={styles.notice}>{m.writingContext}</p>}
-              {section.skill === 'LISTENING' && active.part.stimuli.filter((s) => s.type === 'AUDIO_TRACK').map((stimulus) => <AudioSurface key={stimulus.id} stimulus={stimulus} locale={locale} />)}
+              {section.skill === 'LISTENING' && <DiagnosticAudio tracks={section.audioTracks} elapsedSeconds={1200 - remainingSeconds} locale={locale} enabled={!blocked && connection === 'online'} />}
               <div className={section.skill === 'READING' ? styles.split : undefined}>
                 <section className={section.skill === 'READING' ? styles.passage : undefined} aria-label={section.skill === 'READING' ? m.passage : m.source}>
                   {active.part.stimuli.filter((s) => s.type !== 'AUDIO_TRACK').map((stimulus) => <div key={stimulus.id}>
@@ -131,7 +126,7 @@ export default function DiagnosticRunner({ locale, session, section, remainingSe
             <p>{m.confirmHelp}</p><p>{m.unsaved}: {unsavedIds.size}</p>
             {unsavedIds.size > 0 && <ul>{Array.from(unsavedIds).map((id) => {
               const question = groups.flatMap(({ group }) => group.questions).find((q) => q.id === id);
-              return <li key={id}>{m.question} {question?.sourceNumber ?? '—'} · {saveLabel(id)}</li>;
+              return <li key={id}>{m.question} {question?.sourceNumber ?? sourceNumbers?.[id] ?? '—'} · {saveLabel(id)}</li>;
             })}</ul>}
             {!canSubmit && <p role="status" className={styles.notice}>{m.waitSave}</p>}
             <div className={styles.actions}><button type="button" className={styles.primary} disabled={!canSubmit} onClick={submit}>{submitting ? m.submitting : m.confirmSubmit}</button>

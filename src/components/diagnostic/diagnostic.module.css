@@ -1,4 +1,4 @@
-.shell { min-height: 100dvh; background: #fff; color: var(--color-charcoal, #0a0a0a); padding-bottom: max(2rem, env(safe-area-inset-bottom)); line-height: 1.6; }
+.shell { height: 100dvh; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; background: #fff; color: var(--color-charcoal, #0a0a0a); padding-bottom: max(2rem, env(safe-area-inset-bottom)); line-height: 1.6; }
 .shell[dir='rtl'] { font-family: var(--font-cairo), sans-serif; }
 .header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem 1.5rem; padding: .9rem max(1rem, env(safe-area-inset-left)); border-bottom: 1px solid #dedee1; background: #fffffff2; backdrop-filter: blur(12px); }
 .brand { display: flex; align-items: center; gap: .65rem; font-family: var(--font-inter), sans-serif; font-weight: 750; letter-spacing: -.03em; }
@@ -10,6 +10,7 @@
 .panel h2, .heading { font-weight: 700; font-size: 1.3rem; margin-block: 0 .8rem; }
 .meta { color: #4f5056; font-size: .9rem; }
 .status { display: flex; flex-wrap: wrap; gap: .5rem 1.3rem; font-size: .9rem; }
+.recovery { position: relative; padding: 1rem; border-bottom: 1px solid #dedee1; color: #8d1025; background: #fff; }
 .clock { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 650; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1.25rem; }
 .primary, .secondary { min-height: 44px; border-radius: .9rem; padding: .65rem 1rem; border: 1px solid #b6b6bc; background: #fff; font: inherit; cursor: pointer; }
@@ -49,7 +50,7 @@
 .confirmation { border: 2px solid #8d1025; border-radius: 1.2rem; padding: 1.25rem; margin-block: 1.5rem; scroll-margin-top: 10rem; }
 .focusTarget { scroll-margin-top: 10rem; }
 @media (max-width: 800px) { .split { grid-template-columns: minmax(0, 1fr); } .passage { border-inline-end: 0; border-bottom: 1px solid #dedee1; padding-inline-end: 0; padding-bottom: 1rem; } }
-@media (max-width: 480px) { .header { position: static; } .actions > button { width: 100%; } .primary, .secondary { max-width: 100%; white-space: normal; } .container { padding: 1rem; } }
+@media (max-width: 480px) { .header { gap: .45rem; padding: .65rem 1rem; } .actions > button { width: 100%; } .primary, .secondary { max-width: 100%; white-space: normal; } .container { padding: 1rem; } }
 @media (prefers-reduced-transparency: reduce) { .header { background: #fff; backdrop-filter: none; } }
 @media (prefers-reduced-motion: reduce) { .shell *, .shell *::before, .shell *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 @media (forced-colors: active) { .header, .notice, .primary, .secondary, .input, .essay { background: Canvas; color: CanvasText; border-color: CanvasText; backdrop-filter: none; } .primary { border: 2px solid Highlight; } }

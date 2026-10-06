@@ -105,8 +105,8 @@ export default function DiagnosticIntro({ locale, invitations, ready, busy, erro
       {!ready && !resumable && <p className={styles.notice}>{m.notReady}</p>}
       {error && <p role="alert" className={styles.notice}>{error}</p>}
       <div className={styles.actions}><button type="button" className={styles.primary}
-        disabled={busy || !confirmed || !eligible || (!ready && !resumable)}
-        onClick={() => { if (selected && confirmed && eligible) onStart(selected.id); }}>
+        disabled={busy || (!resumable && !confirmed) || !eligible || (!ready && !resumable)}
+        onClick={() => { if (selected && (resumable || confirmed) && eligible) onStart(selected.id); }}>
         {busy ? m.busy : resumable ? m.resume : m.start}
       </button></div>
     </main>
