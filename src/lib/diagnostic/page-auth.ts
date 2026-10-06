@@ -2,10 +2,11 @@ import 'server-only';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthError, requireRequestUser, requirePrivilegedRequestUser } from '@/lib/auth/request-user';
+import { CANONICAL_ORIGIN } from '@/lib/seo';
 import type { DiagnosticLocale } from './messages';
 
 export async function requireDiagnosticPageUser(locale: DiagnosticLocale, staff = false) {
-  const request = new Request('https://www.ieltslab.org/diagnostic', { headers: await headers() });
+  const request = new Request(`${CANONICAL_ORIGIN}/diagnostic`, { headers: await headers() });
   try {
     return staff ? await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN'])
       : await requireRequestUser(request, ['STUDENT']);

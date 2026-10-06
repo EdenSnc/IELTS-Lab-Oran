@@ -17,7 +17,7 @@ export async function diagnosticFixture(options: {
   noReview?: boolean; staleReview?: boolean; wrongHash?: boolean; missingKey?: boolean; unverifiedKey?: boolean;
   media?: 'missing' | 'wrongType' | 'unverified' | 'wrongHash' | 'unlinked' | 'tooLong';
   visibleMedia?: 'svg' | 'svgExtension' | 'unsafeKey';
-  missingOptions?: boolean; missingPassage?: boolean; unpublished?: boolean; browserChoices?: boolean;
+  missingOptions?: boolean; missingPassage?: boolean; unpublished?: boolean; browserChoices?: boolean; scoringKeys?: boolean;
 } = {}) {
   const url = process.env.TEST_DATABASE_URL!;
   if (new URL(url).hostname !== '127.0.0.1' || new URL(url).port !== '55322') {
@@ -78,7 +78,11 @@ export async function diagnosticFixture(options: {
           const question=randomUUID();questionIds.push(question);
           await client.query(`INSERT INTO app_private."Question" (id,"questionGroupId","stableKey","displayOrder","maxMarks","promptHtml","sourceNumber") VALUES ($1,$2,$3,$4,$5,'SYNTHETIC item',$6)`,[question,group,`q${i}`,i,skill==='WRITING'?0:1,firstSourceNumber+i-1]);
         }
-        if(skill!=='WRITING' && !options.missingKey) await client.query(`INSERT INTO app_private."AnswerKey" ("questionGroupId","encryptedPayload","sourceType","reviewStatus","verifiedById","verifiedAt","updatedAt") VALUES ($1,'synthetic-not-used-by-delivery','HUMAN_VERIFIED',$3::app_private."ReviewStatus",$2,now(),now())`,[group,staff,options.unverifiedKey?'PENDING_REVIEW':'VERIFIED']);
+        if(skill!=='WRITING' && !options.missingKey) {
+          const payload = options.scoringKeys ? (await import('../../src/lib/crypto')).encrypt(JSON.stringify({ strategy: 'PER_ITEM_EXACT',
+            answersByStableKey: Object.fromEntries(Array.from({ length: count }, (_, i) => [`q${i+1}`, ['A','B']])) })) : 'synthetic-not-used-by-delivery';
+          await client.query(`INSERT INTO app_private."AnswerKey" ("questionGroupId","encryptedPayload","sourceType","reviewStatus","verifiedById","verifiedAt","updatedAt") VALUES ($1,$4,'HUMAN_VERIFIED',$3::app_private."ReviewStatus",$2,now(),now())`,[group,staff,options.unverifiedKey?'PENDING_REVIEW':'VERIFIED',payload]);
+        }
         if(!options.noReview) await client.query(`INSERT INTO app_private."DiagnosticContentReview" ("testPartId","contentHash","reviewerId","reviewedAt","reviewDueAt",suitability,"audioAssetId","audioHash","audioDurationSeconds","audioBoundariesVerified") VALUES ($1,$2,$3,now()-interval '2 days',now()+interval '30 days',$4,$5,$6,$7,$8)`,[part,options.wrongHash?'b'.repeat(64):hash,staff,skill==='LISTENING'?'HARDER_LISTENING':skill==='READING'?'REPRESENTATIVE_READING':'TASK_2_DIAGNOSTIC',asset,asset?hash:null,asset?(options.media==='tooLong'?600:500):null,!!asset]);
         if(options.staleReview) await client.query(`INSERT INTO app_private."DiagnosticContentReview" ("testPartId","contentHash","reviewerId","reviewedAt","reviewDueAt",suitability) VALUES ($1,$2,$3,now()-interval '1 day',now()-interval '1 hour',$4)`,[part,hash,staff,skill==='LISTENING'?'HARDER_LISTENING':skill==='READING'?'REPRESENTATIVE_READING':'TASK_2_DIAGNOSTIC']);
       }
