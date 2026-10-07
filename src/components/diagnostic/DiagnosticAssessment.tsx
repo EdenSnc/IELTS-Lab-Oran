@@ -37,7 +37,8 @@ export default function DiagnosticAssessment({ locale, sessionId, initial }: { l
       {locked && <p role="status" className={styles.notice}>{m.released}</p>}
       <div className={styles.reviewList}>{view.assessment.rawScores.map(score => <p className={styles.reviewItem} key={score.skill}>{score.skill === 'LISTENING' ? m.listening : m.reading}: <span dir="ltr">{score.rawScore} / {score.maximumRawScore}</span></p>)}</div>
       <section className={styles.panel}><h2>{m.prompt}</h2><p className={styles.source} dir="ltr" lang="en">{view.prompt}</p><h2>{m.essay}</h2><p className={`${styles.source} ${styles.plainSource}`} dir="ltr" lang="en">{view.essay}</p></section>
-      {!locked && <div className={styles.actions}><button className={styles.secondary} disabled={busy} onClick={() => { void act(async () => {
+      {!locked&&!view.aiAvailable&&<p className={styles.meta}>{m.failed}</p>}
+      {!locked && <div className={styles.actions}><button className={styles.secondary} disabled={busy||!view.aiAvailable} onClick={() => { void act(async () => {
         await diagnosticRequest(endpoint,{ method: 'POST', body: JSON.stringify({ action: 'queueWriting' }) });
         setView(await diagnosticRequest<DiagnosticReviewDto>(endpoint));
       }); }}>{m.queue}</button><button className={styles.secondary} disabled={busy} onClick={() => { void act(async () => {

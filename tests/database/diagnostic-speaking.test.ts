@@ -32,6 +32,7 @@ test('in-person Speaking preserves written work, supports human-only, binds owne
   assert.equal((await service.saveDiagnosticSpeakingConsent({...owner,adultAttested:true,recordingConsented:true,aiConsented:true})).consentVersion,consent.consentVersion);
   const revoked=await service.saveDiagnosticSpeakingConsent({...owner,adultAttested:true,recordingConsented:false,aiConsented:false});
   assert.equal(revoked.eligibility.canAnalyse,false);assert.ok(revoked.privacyRevokedAt);
+  await assert.rejects(service.saveDiagnosticSpeakingConsent({...owner,adultAttested:true,recordingConsented:true,aiConsented:true}),/RECORDING_NOT_ELIGIBLE/u);
   const current=await service.loadDiagnosticSpeaking(staff);
   const notes=await service.saveDiagnosticSpeakingNotes({...staff,expectedVersion:current.version,notes:'Private examiner note, never learner-visible.'});
   await assert.rejects(service.saveDiagnosticSpeakingNotes({...staff,expectedVersion:current.version,notes:'Stale overwrite'}),/SPEAKING_CONFLICT/u);

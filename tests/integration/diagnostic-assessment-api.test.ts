@@ -46,6 +46,7 @@ test('diagnostic assessment HTTP requires owner or staff AAL2 and verifies exact
   await db.diagnosticSession.update({ where: { id: session.id }, data: { state: 'SUBMITTED', submittedAt: new Date() } });
   const loaded = await route.GET(req(),context); assert.equal(loaded.status,200);
   const details = await loaded.json(); assert.equal(details.assessment.rawScores[0].maximumRawScore,20);
+  assert.equal(details.aiAvailable,false);
   assert.ok(!/encryptedPayload|answersByStableKey|writerToken/u.test(JSON.stringify(details)));
   assert.equal((await route.POST(req('POST',{ action: 'release', expectedVersion: 0 },'https://evil.invalid'),context)).status,403);
   assert.equal((await route.POST(req('POST',{ action: 'release', expectedVersion: 0, speakingConductedInPerson: true }),context)).status,409);

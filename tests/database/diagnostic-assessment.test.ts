@@ -10,6 +10,8 @@ test('diagnostic assessment is versioned, owner-private, examiner released and e
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:55321';
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'diagnostic-local-test-key-only';
   process.env.ENCRYPTION_KEY = '11'.repeat(32);
+  process.env.DIAGNOSTIC_AI_ENABLED='true';process.env.DIAGNOSTIC_AI_DATA_USE_APPROVED='true';
+  t.after(()=>{delete process.env.DIAGNOSTIC_AI_ENABLED;delete process.env.DIAGNOSTIC_AI_DATA_USE_APPROVED;});
   const db = diagnosticTestPrisma(); t.after(() => db.$disconnect());
   const sql = new Client({ connectionString: process.env.TEST_DATABASE_URL }); await sql.connect(); t.after(() => sql.end());
   const fixture = await diagnosticFixture({ scoringKeys: true });
@@ -17,6 +19,7 @@ test('diagnostic assessment is versioned, owner-private, examiner released and e
   const { createDiagnosticSession } = await import('../../src/lib/diagnostic/session-service');
   const service = await import('../../src/lib/diagnostic/assessment-service');
   const worker = await import('../../src/lib/diagnostic/writing-service');
+  const consentService=await import('../../src/lib/diagnostic/ai-consent-service');
   const speakingService=await import('../../src/lib/diagnostic/speaking-service');
   async function completeSpeaking(input:{sessionId:string;actorUserId:string}){
     const started=await speakingService.startDiagnosticSpeaking(input);
@@ -36,6 +39,7 @@ test('diagnostic assessment is versioned, owner-private, examiner released and e
   assert.deepEqual(await service.loadDiagnosticReport({ sessionId: session.id, userId: fixture.owner }), { state: 'PENDING' });
   await assert.rejects(service.loadDiagnosticReport({ sessionId: session.id, userId: fixture.stranger }), /NOT_FOUND/u);
   await assert.rejects(service.releaseDiagnosticAssessment({ ...input, expectedVersion: 0 }), /ASSESSMENT_INCOMPLETE/u);
+  await consentService.saveDiagnosticWritingConsent({sessionId:session.id,userId:fixture.owner,adultAttested:true,accepted:true});
   const run = await worker.queueDiagnosticWriting(input);
   assert.equal((await worker.queueDiagnosticWriting(input)).id, run.id);
   // QStash publication is outside the committed transaction; failing publication must not erase work.
@@ -78,6 +82,7 @@ test('diagnostic assessment is versioned, owner-private, examiner released and e
     await sql.query(`UPDATE app_private."DiagnosticSession" SET state='SUBMITTED',"submittedAt"=now() WHERE id=$1`,[next.id]);
     const nextInput={sessionId:next.id,actorUserId:fixture.staff};
     await service.loadDiagnosticAssessment(nextInput);
+    await consentService.saveDiagnosticWritingConsent({sessionId:next.id,userId:fixture.owner,adultAttested:true,accepted:true});
     const delayedRun=await worker.queueDiagnosticWriting(nextInput);
     let finish!:()=>void, start!:()=>void;
     const started=new Promise<void>(resolve=>{start=resolve;});

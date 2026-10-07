@@ -3,12 +3,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {useState} from 'react';
 import type {loadDiagnosticSpeakingStatus} from '@/lib/diagnostic/speaking-service';
+import type {loadDiagnosticWritingConsent} from '@/lib/diagnostic/ai-consent-service';
+import DiagnosticPrivacy from './DiagnosticPrivacy';
 import {diagnosticSpeakingMessages} from '@/lib/diagnostic/speaking-messages';
 import type {DiagnosticLocale} from '@/lib/diagnostic/messages';
 import {diagnosticRequest} from './diagnostic-request';
 import styles from './diagnostic.module.css';
 type View=Awaited<ReturnType<typeof loadDiagnosticSpeakingStatus>>;
-export default function DiagnosticSpeakingStatus({locale,sessionId,initial}:{locale:DiagnosticLocale;sessionId:string;initial:View}){
+export default function DiagnosticSpeakingStatus({locale,sessionId,initial,initialWriting}:{locale:DiagnosticLocale;sessionId:string;initial:View;initialWriting:Awaited<ReturnType<typeof loadDiagnosticWritingConsent>>}){
   const m=diagnosticSpeakingMessages[locale];const [view,setView]=useState(initial),[busy,setBusy]=useState(false),[error,setError]=useState(false);
   const endpoint=`/api/diagnostic/sessions/${sessionId}/speaking`;
   return <div className={styles.shell} lang={locale} dir={locale==='ar'?'rtl':'ltr'}><header className={styles.header}><Link className={styles.brand} href={`/${locale}`} dir="ltr"><Image src="/ielts-lab-mark.svg" alt="" width={38} height={38}/>IELTS Lab</Link></header>
@@ -17,6 +19,6 @@ export default function DiagnosticSpeakingStatus({locale,sessionId,initial}:{loc
       <p className={styles.meta}>{m.capturePending}</p><p className={styles.meta}>{m.policy}</p>
       <button className={styles.secondary} disabled={busy} onClick={()=>{if(busy)return;setBusy(true);setError(false);void diagnosticRequest<View>(endpoint).then(setView).catch(()=>setError(true)).finally(()=>setBusy(false));}}>{m.status}</button>
       {error&&<p role="alert" className={styles.notice}>{m.error}</p>}
-    </section><div className={styles.actions}><Link className={styles.secondary} href={`/${locale}/diagnostic/${sessionId}/report`}>{m.review}</Link><Link className={styles.secondary} href={`/${locale}/diagnostic`}>{m.back}</Link></div></main>
+    </section><DiagnosticPrivacy locale={locale} sessionId={sessionId} initialSpeaking={view} initialWriting={initialWriting} onSpeakingChange={setView}/><div className={styles.actions}><Link className={styles.secondary} href={`/${locale}/diagnostic/${sessionId}/report`}>{m.review}</Link><Link className={styles.secondary} href={`/${locale}/diagnostic`}>{m.back}</Link></div></main>
   </div>;
 }

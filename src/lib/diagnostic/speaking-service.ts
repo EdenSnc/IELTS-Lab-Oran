@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { diagnosticNow,diagnosticTransaction,type DiagnosticTransaction } from './content-service';
 import { assertDiagnosticExaminer } from './assessment-service';
 import { DiagnosticError } from './protocol';
+import {diagnosticAiAvailable} from './ai-consent-service';
 import { deriveDiagnosticSpeakingWindow,diagnosticRecordingEligibility,DIAGNOSTIC_RECORDING_POLICY_VERSION,DIAGNOSTIC_AI_POLICY_VERSION } from './speaking-core';
 
 const consentSchema=z.object({adultAttested:z.boolean(),recordingConsented:z.boolean(),aiConsented:z.boolean()}).strict();
@@ -20,6 +21,7 @@ function status(row:DiagnosticSpeakingSession|null,now:Date){
     window:window?{...window,deadline:window.deadline.toISOString(),sectionDeadline:window.sectionDeadline?.toISOString()??null}:null,
     adultAttested:row?.adultAttested??false,recordingConsented:row?.recordingConsented??false,aiConsented:row?.aiConsented??false,
     consentVersion:row?.consentVersion??0,privacyRevokedAt:row?.privacyRevokedAt?.toISOString()??null,
+    captureAvailable:process.env.DIAGNOSTIC_RECORDING_ENABLED==='true',aiAvailable:diagnosticAiAvailable(),
     eligibility:diagnosticRecordingEligibility(row??{adultAttested:false,recordingConsented:false,aiConsented:false})};
 }
 function staffView(row:DiagnosticSpeakingSession,now:Date){return{...status(row,now),id:row.id,version:row.version,notes:row.notes};}
@@ -34,10 +36,14 @@ export async function saveDiagnosticSpeakingConsent(input:{sessionId:string;user
     const now=await diagnosticNow(tx);
     const previous=await tx.diagnosticSpeakingSession.upsert({where:{sessionId:input.sessionId},update:{},create:{sessionId:input.sessionId}});
     if(previous.adultAttested===decisions.adultAttested&&previous.recordingConsented===decisions.recordingConsented&&previous.aiConsented===decisions.aiConsented)return status(previous,now);
+    if(previous.privacyRevokedAt&&(decisions.recordingConsented||decisions.aiConsented))throw new DiagnosticError('RECORDING_NOT_ELIGIBLE',409);
+    const existingCapture=await tx.diagnosticRecording.findUnique({where:{speakingId:previous.id},select:{id:true}});
+    if(existingCapture&&((decisions.recordingConsented&&!previous.recordingConsented)||(decisions.aiConsented&&!previous.aiConsented)))throw new DiagnosticError('RECORDING_NOT_ELIGIBLE',409);
     // Consent cannot retrospectively authorize capture after an interview has ended.
     if(['COMPLETED','CANCELLED'].includes(previous.state)&&decisions.recordingConsented&&!previous.recordingConsented)throw new DiagnosticError('RECORDING_NOT_ELIGIBLE',409);
     const revoked=(previous.recordingConsented&&!decisions.recordingConsented)||(previous.aiConsented&&!decisions.aiConsented);
     const saved=await tx.diagnosticSpeakingSession.update({where:{id:previous.id},data:{...decisions,consentVersion:{increment:1},version:{increment:1},updatedAt:now,...(revoked?{privacyRevokedAt:now}:{})}});
+    if(revoked)await tx.diagnosticRecording.updateMany({where:{speakingId:previous.id,state:{in:['UPLOADING','READY']}},data:{state:'DELETE_PENDING'}});
     for(const choice of [{type:'RECORDING' as const,accepted:decisions.recordingConsented,previous:previous.recordingConsented,policyVersion:DIAGNOSTIC_RECORDING_POLICY_VERSION},
       {type:'AI_ASSISTED_GRADING' as const,accepted:decisions.aiConsented,previous:previous.aiConsented,policyVersion:DIAGNOSTIC_AI_POLICY_VERSION}]){
       if(choice.accepted!==choice.previous)await tx.consentRecord.create({data:{userId:input.userId,type:choice.type,action:choice.accepted?'ACCEPTED':'WITHDRAWN',policyVersion:choice.policyVersion,

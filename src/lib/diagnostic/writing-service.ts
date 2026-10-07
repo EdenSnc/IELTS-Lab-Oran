@@ -1,5 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
+import { Prisma } from '@prisma/client';
 import { GoogleGenAI } from '@google/genai';
 import { Client } from '@upstash/qstash';
 import { load } from 'cheerio';
@@ -10,6 +11,7 @@ import { assertDiagnosticExaminer, loadDiagnosticAssessment } from './assessment
 import { diagnosticNow, diagnosticTransaction } from './content-service';
 import { loadOwnedDiagnosticSource } from './session-service';
 import { DiagnosticError } from './protocol';
+import { assertDiagnosticWritingAiConsent,diagnosticAiAvailable } from './ai-consent-service';
 import { buildDiagnosticWritingPrompt, diagnosticWritingFeedbackSchema, parseDiagnosticWritingFeedback,
   diagnosticWritingInputHash, DIAGNOSTIC_WRITING_PROMPT_VERSION } from './writing-core';
 
@@ -33,25 +35,28 @@ export async function loadDiagnosticWritingInput(sessionId: string) {
   return { ...input, inputHash: diagnosticWritingInputHash(input) };
 }
 export async function queueDiagnosticWriting(input: { sessionId: string; actorUserId: string }) {
+  if(!diagnosticAiAvailable())throw new DiagnosticError('AI_UNAVAILABLE',503);
   await loadDiagnosticAssessment(input);
   const source = await loadDiagnosticWritingInput(input.sessionId);
   return diagnosticTransaction(async tx => {
     await tx.$queryRaw`SELECT id FROM app_private."DiagnosticSession" WHERE id=${input.sessionId}::uuid FOR UPDATE`;
     await assertDiagnosticExaminer(tx,input);
+    const consentVersion=await assertDiagnosticWritingAiConsent(tx,input.sessionId);
     const assessment = await tx.diagnosticAssessment.findUniqueOrThrow({ where: { sessionId: input.sessionId } });
     if (assessment.state !== 'DRAFT') throw new DiagnosticError('ASSESSMENT_RELEASED',409);
     return tx.diagnosticWritingRun.upsert({ where: { sessionId_inputHash_promptVersion: {
       sessionId: input.sessionId, inputHash: source.inputHash, promptVersion: source.promptVersion,
     } }, update: {}, create: { sessionId: input.sessionId, manifestHash: source.manifestHash,
-      inputHash: source.inputHash, promptVersion: source.promptVersion } });
+      inputHash: source.inputHash, promptVersion: source.promptVersion,consentVersion } });
   });
 }
 export async function loadDiagnosticReview(input: { sessionId: string; actorUserId: string }) {
   const assessment = await loadDiagnosticAssessment(input);
   const writing = await loadDiagnosticWritingInput(input.sessionId);
+  const consent=await prisma.diagnosticSession.findUniqueOrThrow({where:{id:input.sessionId},select:{writingAiAdultAttested:true,writingAiConsented:true,writingAiRevokedAt:true}});
   const row = await prisma.diagnosticWritingRun.findFirst({ where: { sessionId: input.sessionId }, orderBy: { createdAt: 'desc' },
     select: { id: true, state: true, feedback: true, model: true, promptVersion: true, errorCode: true } });
-  return { assessment, prompt: writing.prompt, essay: writing.answer,
+  return { assessment, prompt: writing.prompt, essay: writing.answer,aiAvailable:diagnosticAiAvailable()&&consent.writingAiAdultAttested&&consent.writingAiConsented&&!consent.writingAiRevokedAt,
     run: row ? { ...row, feedback: row.state === 'SUCCEEDED' ? parseDiagnosticWritingFeedback(row.feedback,writing.answer) : null } : null };
 }
 export type DiagnosticReviewDto = Awaited<ReturnType<typeof loadDiagnosticReview>>;
@@ -65,6 +70,8 @@ const publishJob: JobPublisher = async body => {
 export async function publishDiagnosticWriting(runId: string, publish: JobPublisher = publishJob) {
   const run = await prisma.diagnosticWritingRun.findUniqueOrThrow({ where: { id: runId } });
   if (run.state !== 'QUEUED') return { skipped: true };
+  if(!diagnosticAiAvailable())return{skipped:true};
+  await diagnosticTransaction(tx=>assertDiagnosticWritingAiConsent(tx,run.sessionId,run.consentVersion));
   // Durable QUEUED row exists before any network call. Recovery discovers a missed publish.
   try {
     await publish({ version: 1, type: 'DIAGNOSTIC_WRITING', runId });
@@ -79,6 +86,7 @@ export async function publishDiagnosticWriting(runId: string, publish: JobPublis
 type GenerateResult = { feedback: unknown; model: string; usage: { inputTokens: number; outputTokens: number } };
 type Generator = (input: Awaited<ReturnType<typeof loadDiagnosticWritingInput>>) => Promise<GenerateResult>;
 const generateFeedback: Generator = async input => {
+  if(!diagnosticAiAvailable())throw new DiagnosticError('AI_UNAVAILABLE',503);
   if (!process.env.GEMINI_API_KEY) throw new Error('WRITING_AI_NOT_CONFIGURED');
   // Reuse the deployed model configuration, not a second model/provider framework.
   const model = (process.env.GEMINI_WRITING_MODELS ?? 'gemini-3.5-flash-lite').split(',')[0].trim();
@@ -108,6 +116,15 @@ export async function processDiagnosticWriting(runId: string, generate: Generato
     if (!run) return null; // Delayed job after deletion is a successful no-op.
     const now = await diagnosticNow(tx);
     if (['SUCCEEDED','FAILED','CANCELLED'].includes(run.state)) return { run, claimed: false };
+    if(now.getTime()>=run.createdAt.getTime()+30*86400000){
+      const expired=await tx.diagnosticWritingRun.update({where:{id:runId},data:{state:'CANCELLED',feedback:Prisma.DbNull,leaseOwner:null,leaseExpiresAt:null,completedAt:now,errorCode:'RETENTION_EXPIRED'}});
+      return{run:expired,claimed:false};
+    }
+    if(!diagnosticAiAvailable())return{run,claimed:false};
+    try{await assertDiagnosticWritingAiConsent(tx,run.sessionId,run.consentVersion);}catch{
+      const cancelled=await tx.diagnosticWritingRun.update({where:{id:runId},data:{state:'CANCELLED',feedback:Prisma.DbNull,leaseOwner:null,leaseExpiresAt:null,completedAt:now,errorCode:'CONSENT_REQUIRED'}});
+      return{run:cancelled,claimed:false};
+    }
     if (run.session.assessment?.state !== 'DRAFT') {
       const cancelled = await tx.diagnosticWritingRun.update({ where: { id: runId }, data: {
         state: 'CANCELLED', leaseOwner: null, leaseExpiresAt: null, completedAt: now, errorCode: 'REPORT_NOT_DRAFT',
@@ -138,7 +155,7 @@ export async function processDiagnosticWriting(runId: string, generate: Generato
       const now = await diagnosticNow(tx);
       // Compare-and-set fencing prevents expired/replaced workers or a released report from changing state.
       await tx.diagnosticWritingRun.updateMany({ where: { id: runId, state: 'RUNNING', leaseOwner,
-        leaseExpiresAt: { gt: now }, session: { assessment: { state: 'DRAFT' } } }, data: {
+        leaseExpiresAt: { gt: now }, session: { assessment: { state: 'DRAFT' },writingAiConsented:true,writingAiAdultAttested:true,writingAiRevokedAt:null,writingConsentVersion:claim.run.consentVersion } }, data: {
         state: 'SUCCEEDED', feedback, model: metadata.model, usage: metadata.usage,
         leaseOwner: null, leaseExpiresAt: null, completedAt: now,
       } });
@@ -156,6 +173,7 @@ export async function processDiagnosticWriting(runId: string, generate: Generato
   return { state: final?.state ?? 'MISSING' };
 }
 export async function recoverDiagnosticWriting(publish: (runId: string) => Promise<unknown> = publishDiagnosticWriting) {
+  if(!diagnosticAiAvailable())return[];
   const now = new Date();
   await prisma.diagnosticWritingRun.updateMany({ where: { state: 'RUNNING', leaseExpiresAt: { lte: now } },
     data: { state: 'QUEUED', leaseOwner: null, leaseExpiresAt: null, lastEnqueuedAt: null, errorCode: 'LEASE_EXPIRED' } });

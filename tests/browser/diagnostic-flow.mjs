@@ -176,6 +176,15 @@ try {
     refresh_token: 'synthetic-staff-refresh', token_type: 'bearer', expires_at: expires, expires_in: 7200, user: staffAuthUser })).toString('base64url'),
     domain: '127.0.0.1', path: '/', sameSite: 'Lax' }]);
   const examiner = await staffContext.newPage(); examiner.on('pageerror', error => errors.push(error.message));
+  await page.goto(`http://127.0.0.1:3009/en/diagnostic/${sessionId}/speaking`);
+  await page.getByRole('heading',{name:'Recording preferences',exact:true}).waitFor({timeout:4000});
+  assert.equal(await page.getByLabel('I agree to audio recording for this diagnostic.',{exact:true}).isChecked(),false);
+  assert.equal(await page.getByLabel('I agree to audio recording for this diagnostic.',{exact:true}).isDisabled(),true);
+  await page.getByLabel('I am 18 or older.',{exact:true}).check();
+  await page.getByRole('button',{name:'Save preferences',exact:true}).click();
+  await page.getByText('Preferences saved.',{exact:true}).waitFor();
+  assert.equal(await page.getByLabel('I agree to Google Gemini analysis of my submitted diagnostic essay.',{exact:true}).isDisabled(),true);
+  pass('participant controls optional adult/privacy preferences; unavailable recording and AI stay disabled');
   await examiner.goto(`http://127.0.0.1:3009/en/diagnostic/examiner/${sessionId}`);
   await examiner.getByRole('button',{name:'Start Speaking',exact:true}).click();
   await examiner.getByLabel('Private examiner notes',{exact:true}).fill('Private synthetic observation, never participant-visible.');
