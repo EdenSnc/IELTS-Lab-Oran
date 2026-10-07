@@ -9,9 +9,11 @@ import { authCopyForLocale } from './auth-copy';
 export default function OnboardingForm({
   locale,
   initial,
+  diagnosticNext,
 }: {
   locale: string;
   initial: { name: string; whatsapp: string; wilaya: string; preferredLocale: string };
+  diagnosticNext?: string;
 }) {
   const router = useRouter();
   const copy = authCopyForLocale(locale);
@@ -51,7 +53,7 @@ export default function OnboardingForm({
         : copy.onboarding.failed);
       return;
     }
-    router.replace(`/${locale}/account`);
+    router.replace(diagnosticNext ?? `/${locale}/account`);
     router.refresh();
   }
 

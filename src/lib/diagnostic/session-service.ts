@@ -11,6 +11,17 @@ import { DiagnosticError,type DiagnosticResponseDto,type DiagnosticSessionDto,ty
 const includeResponses={responses:true} satisfies Prisma.DiagnosticSessionInclude;
 type StoredSession=Prisma.DiagnosticSessionGetPayload<{include:typeof includeResponses}>;
 
+async function finalizeExpired(tx:DiagnosticTransaction,session:StoredSession,now:Date):Promise<StoredSession> {
+  if(session.state!=='ACTIVE' || now<session.deadline) return session;
+  // Logical cutoff is the frozen deadline, even when no browser was open to submit.
+  // The guarded update plus serializable retries makes concurrent reads idempotent.
+  const closed=await tx.diagnosticSession.updateMany({where:{id:session.id,state:'ACTIVE',deadline:{lte:now}},data:{
+    state:'SUBMITTED',submittedAt:session.deadline,writerTokenHash:null,writerExpiresAt:null,version:{increment:1},
+  }});
+  if(closed.count) await tx.diagnosticResponse.updateMany({where:{sessionId:session.id,finalizedAt:null},data:{finalizedAt:session.deadline}});
+  return tx.diagnosticSession.findUniqueOrThrow({where:{id:session.id},include:includeResponses});
+}
+
 async function activeOwner(tx:DiagnosticTransaction,userId:string) {
   const user=await tx.user.findUnique({where:{id:userId},select:{status:true}});
   if(!user || user.status!=='ACTIVE') throw new DiagnosticError('ACCOUNT_UNAVAILABLE',403);
@@ -82,27 +93,34 @@ export async function createDiagnosticSession(input:{invitationId:string;userId:
 
 /** Trusted delivery/asset boundary. Server-only: never serialize this return value. */
 export async function loadOwnedDiagnosticSource(input:{sessionId:string;userId:string}) {
-  return diagnosticTransaction(async tx=>({
-    ...await ownedSession(tx,input.sessionId,input.userId),now:await diagnosticNow(tx),
-  }));
+  return diagnosticTransaction(async tx=>{
+    const source=await ownedSession(tx,input.sessionId,input.userId);
+    const now=await diagnosticNow(tx);
+    return {...source,session:await finalizeExpired(tx,source.session,now),now};
+  });
 }
 
 export async function loadDiagnosticSession(input:{sessionId:string;userId:string}):Promise<DiagnosticSessionDto> {
   return diagnosticTransaction(async tx=>{
     const {session}=await ownedSession(tx,input.sessionId,input.userId);
-    return sessionDto(session,await diagnosticNow(tx));
+    const now=await diagnosticNow(tx);
+    return sessionDto(await finalizeExpired(tx,session,now),now);
   });
 }
 
-export async function acquireDiagnosticWriter(input:{sessionId:string;userId:string;previousToken?:string}):Promise<DiagnosticWriterDto> {
+export async function acquireDiagnosticWriter(input:{sessionId:string;userId:string;previousToken?:string;claimToken?:string}):Promise<DiagnosticWriterDto> {
   return diagnosticTransaction(async tx=>{
     const {session}=await ownedSession(tx,input.sessionId,input.userId,true);
     const now=await diagnosticNow(tx);
     if(session.state==='SUBMITTED') throw new DiagnosticError('SESSION_SUBMITTED',409);
     if(now>=session.deadline) throw new DiagnosticError('SESSION_EXPIRED',409);
-    const renewing=tokenMatches(session,input.previousToken) && !!session.writerExpiresAt && session.writerExpiresAt>now;
+    if(input.claimToken!==undefined && !/^[A-Za-z0-9_-]{43}$/u.test(input.claimToken)) throw new DiagnosticError('INVALID_RESPONSE',400);
+    const supplied=input.claimToken??input.previousToken;
+    const renewing=tokenMatches(session,supplied) && !!session.writerExpiresAt && session.writerExpiresAt>now;
     if(!renewing && session.writerExpiresAt && session.writerExpiresAt>now) throw new DiagnosticError('WRITER_CONFLICT',409);
-    const writerToken=renewing?input.previousToken!:randomBytes(32).toString('base64url');
+    // Owner authentication remains mandatory. A tab persists this random claim
+    // before sending, so a lost issuance acknowledgement cannot strand its lease.
+    const writerToken=renewing?supplied!:input.claimToken??randomBytes(32).toString('base64url');
     const expiresAt=new Date(now.getTime()+90000);
     const updated=await tx.diagnosticSession.update({where:{id:session.id},data:{writerTokenHash:hashToken(writerToken),writerExpiresAt:expiresAt,version:{increment:1}},include:includeResponses});
     return {writerToken,expiresAt:expiresAt.toISOString(),session:sessionDto(updated,now)};
@@ -116,8 +134,8 @@ export async function saveDiagnosticResponse(input:{
   return diagnosticTransaction(async tx=>{
     const {session,manifest}=await ownedSession(tx,input.sessionId,input.userId,true);
     const now=await diagnosticNow(tx);
-    requireWriter(session,input.writerToken,now);
     if(session.state==='SUBMITTED') throw new DiagnosticError('SESSION_SUBMITTED',409);
+    requireWriter(session,input.writerToken,now);
     if(typeof input.answer!=='string' || input.answer.length>20000 || typeof input.markedForReview!=='boolean'
       || !Number.isSafeInteger(input.expectedVersion) || input.expectedVersion<0) throw new DiagnosticError('INVALID_RESPONSE',400);
     const question=manifest.questions.find(q=>q.questionId===input.questionId);

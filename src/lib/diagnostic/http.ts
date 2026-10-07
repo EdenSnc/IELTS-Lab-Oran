@@ -9,7 +9,10 @@ export const diagnosticIdSchema = z.string().uuid();
 export const invitationBodySchema = z.object({ recipientId: diagnosticIdSchema, blueprintId: diagnosticIdSchema }).strict();
 export const revocationBodySchema = z.object({ reason: z.string().trim().min(1).max(2000) }).strict();
 export const startBodySchema = z.object({ invitationId: diagnosticIdSchema, preflightConfirmed: z.literal(true) }).strict();
-export const writerBodySchema = z.object({ previousToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/u).optional() }).strict();
+export const writerBodySchema = z.object({
+  previousToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/u).optional(),
+  claimToken: z.string().regex(/^[A-Za-z0-9_-]{43}$/u).optional(),
+}).strict();
 export const responseBodySchema = z.object({
   questionId: diagnosticIdSchema, expectedVersion: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
   answer: z.string().max(20000), markedForReview: z.boolean(),

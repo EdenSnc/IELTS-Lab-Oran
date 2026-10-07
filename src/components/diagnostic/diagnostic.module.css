@@ -47,6 +47,7 @@
 .reviewItem { border: 1px solid #dedee1; border-radius: .8rem; padding: .6rem .8rem; flex: 1 1 12rem; }
 .reviewItem label { display: flex; align-items: flex-start; gap: .5rem; }
 .audio { width: 100%; max-width: 36rem; direction: ltr; }
+.sourceImage { display: block; max-width: 100%; height: auto; margin-block: 1rem; }
 .confirmation { border: 2px solid #8d1025; border-radius: 1.2rem; padding: 1.25rem; margin-block: 1.5rem; scroll-margin-top: 10rem; }
 .focusTarget { scroll-margin-top: 10rem; }
 @media (max-width: 800px) { .split { grid-template-columns: minmax(0, 1fr); } .passage { border-inline-end: 0; border-bottom: 1px solid #dedee1; padding-inline-end: 0; padding-bottom: 1rem; } }

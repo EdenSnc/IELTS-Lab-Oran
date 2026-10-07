@@ -58,7 +58,7 @@ export default function DiagnosticClient({ locale, initialSession, initialSectio
           { method: 'PUT', headers: { [DIAGNOSTIC_WRITER_HEADER]: ref.current.token }, body: JSON.stringify(draft) });
         return response;
       });
-      if (ref.current.live) { setConnection('online'); setErrorCode(undefined); }
+      if (ref.current.live) { setConnection(navigator.onLine ? 'online' : 'offline'); setErrorCode(undefined); }
     } catch (error) {
       if (!ref.current.live) return;
       if (error instanceof TypeError) setConnection('offline');
@@ -87,12 +87,17 @@ export default function DiagnosticClient({ locale, initialSession, initialSectio
       const window = deriveDiagnosticWindow({ startedAt: new Date(ref.current.session.startedAt), now: new Date(estimatedNow()) });
       if (ref.current.session.state === 'SUBMITTED') return;
       if (window.stage === 'SUBMITTED') { await submit(true); return; }
+      if (!ref.current.token) {
+        const bytes = crypto.getRandomValues(new Uint8Array(32));
+        ref.current.token = btoa(String.fromCharCode(...bytes)).replace(/\+/gu, '-').replace(/\//gu, '_').replace(/=+$/u, '');
+        try { sessionStorage.setItem(tokenKey, ref.current.token); } catch { /* In-memory retry remains available. */ }
+      }
       const writer = await diagnosticRequest<DiagnosticWriterDto>(`${root}/writer`, { method: 'POST',
-        body: JSON.stringify(ref.current.token ? { previousToken: ref.current.token } : {}) });
+        body: JSON.stringify({ claimToken: ref.current.token }) });
       if (!ref.current.live) return;
       ref.current.token = writer.writerToken; ref.current.leaseUntil = Date.parse(writer.expiresAt) - 500;
       try { sessionStorage.setItem(tokenKey, writer.writerToken); } catch { /* Storage is optional; server lease still protects editing. */ }
-      absorb(writer.session); setBlocked(false); setConnection('online'); setErrorCode(undefined);
+      absorb(writer.session); setBlocked(false); setConnection(navigator.onLine ? 'online' : 'offline'); setErrorCode(undefined);
       await content(); await flush();
     } catch (error) {
       if (!ref.current.live) return;

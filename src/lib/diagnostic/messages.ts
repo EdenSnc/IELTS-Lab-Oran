@@ -1,6 +1,8 @@
 export type DiagnosticLocale = 'en' | 'fr' | 'ar';
 
 const en = {
+  mediaFailed: 'A source image could not load. Reconnect and retry, or contact staff. Session time is not extended automatically.', retryImage: 'Retry image',
+  receiptPending: 'Some unsaved changes were not included. Only answers acknowledged before the cutoff were submitted. Contact staff if you need help.',
   staffTitle: 'Diagnostic invitations', email: 'Participant’s account email', find: 'Find account',
   selectContent: 'Approved diagnostic', invite: 'Send free invitation', inviteSent: 'Invitation created. Share the diagnostic link with the participant.',
   noAccount: 'No active participant account matches this email.', contentReady: 'Ready', contentPending: 'Source approval required',
@@ -42,6 +44,8 @@ const en = {
 };
 type DiagnosticMessages = { [K in keyof typeof en]: string };
 const fr: DiagnosticMessages = {
+  mediaFailed: 'Une image du sujet n’a pas pu être chargée. Reconnectez-vous et réessayez, ou contactez l’équipe. Le temps n’est pas prolongé automatiquement.', retryImage: 'Recharger l’image',
+  receiptPending: 'Certaines modifications non enregistrées n’ont pas été incluses. Seules les réponses confirmées avant la limite ont été soumises. Contactez l’équipe si nécessaire.',
   staffTitle: 'Invitations au diagnostic', email: 'Adresse e-mail du compte du participant', find: 'Rechercher le compte',
   selectContent: 'Diagnostic validé', invite: 'Envoyer une invitation gratuite', inviteSent: 'Invitation créée. Partagez le lien du diagnostic avec le participant.',
   noAccount: 'Aucun compte de participant actif ne correspond à cette adresse.', contentReady: 'Prêt', contentPending: 'Validation des sources requise',
@@ -79,6 +83,8 @@ const fr: DiagnosticMessages = {
   staleError: 'Une réponse plus récente est déjà enregistrée. La saisie est suspendue pour protéger votre travail ; actualisez la session avant de continuer.', sessionError: 'Cette session ou section n’accepte plus de modifications. Reconnectez-vous pour vérifier son état.',
 };
 const ar: DiagnosticMessages = {
+  mediaFailed: 'تعذّر تحميل صورة من الموضوع. أعد الاتصال وحاول مجدداً أو تواصل مع الفريق. لا يُمدَّد وقت الجلسة تلقائياً.', retryImage: 'إعادة تحميل الصورة',
+  receiptPending: 'لم تُدرج بعض التغييرات غير المحفوظة. سُلّمت فقط الإجابات التي أكّد الخادم حفظها قبل انتهاء الوقت. تواصل مع الفريق إذا احتجت إلى المساعدة.',
   staffTitle: 'دعوات الاختبار التشخيصي', email: 'البريد الإلكتروني لحساب المشارك', find: 'البحث عن الحساب',
   selectContent: 'الاختبار التشخيصي المعتمد', invite: 'إرسال دعوة مجانية', inviteSent: 'تم إنشاء الدعوة. شارك رابط الاختبار التشخيصي مع المشارك.',
   noAccount: 'لا يوجد حساب مشارك نشط بهذا البريد الإلكتروني.', contentReady: 'جاهز', contentPending: 'يلزم اعتماد المصادر',

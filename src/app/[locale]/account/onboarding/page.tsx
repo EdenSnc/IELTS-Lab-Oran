@@ -5,9 +5,11 @@ import { assertAccountReady } from '@/lib/auth/account-readiness';
 import { syncApplicationUser } from '@/lib/auth/request-user';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { authCopyForLocale } from '@/components/auth/auth-copy';
+import { diagnosticAuthReturn } from '@/lib/diagnostic/auth-return';
 
-export default async function AccountOnboardingPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function AccountOnboardingPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ next?: string }> }) {
   const { locale } = await params;
+  const next = diagnosticAuthReturn((await searchParams).next, locale);
   const copy = authCopyForLocale(locale);
   const client = await createSupabaseServerClient();
   const { data } = await client.auth.getUser();
@@ -21,7 +23,7 @@ export default async function AccountOnboardingPage({ params }: { params: Promis
     } catch {
       // A completed profile must re-accept newly published policy versions here.
     }
-    if (ready) redirect(`/${locale}/account`);
+    if (ready) redirect(next ?? `/${locale}/account`);
   }
   const metadata = data.user.user_metadata ?? {};
 
@@ -32,7 +34,7 @@ export default async function AccountOnboardingPage({ params }: { params: Promis
         <p className="mt-9 text-xs font-bold uppercase tracking-[0.18em] text-crimson">{copy.onboarding.eyebrow}</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em]">{copy.onboarding.title}</h1>
         <p className="mt-3 text-sm leading-6 text-black/55">{copy.onboarding.description}</p>
-        <OnboardingForm locale={locale} initial={{
+        <OnboardingForm locale={locale} diagnosticNext={next} initial={{
           name: user.name ?? (typeof metadata.full_name === 'string' ? metadata.full_name : ''),
           whatsapp: typeof metadata.whatsapp === 'string' ? metadata.whatsapp : '',
           wilaya: typeof metadata.wilaya === 'string' ? metadata.wilaya : '',

@@ -27,11 +27,13 @@ export default function AuthForm({
   mode,
   providers,
   initialMessage,
+  diagnosticNext,
 }: {
   locale: string;
   mode: AuthMode;
   providers: EnabledAuthProviders;
   initialMessage?: string;
+  diagnosticNext?: string;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | undefined>(initialMessage);
@@ -45,7 +47,7 @@ export default function AuthForm({
     const response = await fetch('/api/auth/oauth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, locale, intent: mode === 'sign-up' ? 'sign-up' : 'sign-in' }),
+      body: JSON.stringify({ provider, locale, intent: mode === 'sign-up' ? 'sign-up' : 'sign-in', ...(diagnosticNext ? { next: diagnosticNext } : {}) }),
     });
     const payload = await response.json() as { url?: string; error?: string };
     if (!response.ok || !payload.url) {
@@ -100,14 +102,14 @@ export default function AuthForm({
           ? { action: 'sign-in', email, password }
           : {
             action: 'sign-up', email, password, fullName, whatsapp, wilaya, preferredLocale,
-            termsAccepted, privacyAccepted, marketingAccepted, locale,
+            termsAccepted, privacyAccepted, marketingAccepted, locale, ...(diagnosticNext ? { next: diagnosticNext } : {}),
           }),
       });
       const payload = await response.json() as { error?: string; emailConfirmationRequired?: boolean };
       if (!response.ok) error = { message: authErrorMessage(locale, payload.error ?? 'AUTH_REQUEST_FAILED') };
       if (mode === 'sign-up' && response.ok) {
         if (payload.emailConfirmationRequired === false) {
-          router.replace(`/${locale}/account/onboarding`);
+          router.replace(`/${locale}/account/onboarding${diagnosticNext ? `?next=${encodeURIComponent(diagnosticNext)}` : ''}`);
           router.refresh();
           return;
         }
@@ -127,7 +129,7 @@ export default function AuthForm({
       return;
     }
     if (mode === 'sign-in' || mode === 'update-password') {
-      router.replace(`/${locale}/account`);
+      router.replace(mode === 'sign-in' && diagnosticNext ? diagnosticNext : `/${locale}/account`);
       router.refresh();
     }
   }
@@ -252,11 +254,11 @@ export default function AuthForm({
       <div className="mt-7 border-t border-black/[0.07] pt-6 text-center text-sm text-black/55">
         {mode === 'sign-in' && (
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
-            <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-up`}>{localized.createAccount}</Link>
+            <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-up${diagnosticNext ? `?next=${encodeURIComponent(diagnosticNext)}` : ''}`}>{localized.createAccount}</Link>
             <Link className="hover:text-charcoal" href={`/${locale}/auth/forgot-password`}>{localized.forgotPassword}</Link>
           </div>
         )}
-        {mode === 'sign-up' && <p>{localized.alreadyRegistered} <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-in`}>{localized.signIn}</Link></p>}
+        {mode === 'sign-up' && <p>{localized.alreadyRegistered} <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-in${diagnosticNext ? `?next=${encodeURIComponent(diagnosticNext)}` : ''}`}>{localized.signIn}</Link></p>}
         {mode === 'forgot-password' && <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-in`}>{localized.backToSignIn}</Link>}
       </div>
     </section>

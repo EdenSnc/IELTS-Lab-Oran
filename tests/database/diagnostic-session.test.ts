@@ -112,6 +112,15 @@ test('standalone diagnostic services enforce account invitations, atomic start, 
       } finally {await client.query('ROLLBACK');}
     });
     let writer=await service.acquireDiagnosticWriter({sessionId:session.id,userId:f.owner});
+    await t.test('a lost writer issuance acknowledgement can retry its persisted claim without waiting out the lease',async()=>{
+      const invitation=await issue();const active=await service.createDiagnosticSession({invitationId:invitation.id,userId:f.owner});
+      const claimToken=Buffer.alloc(32,42).toString('base64url');
+      await service.acquireDiagnosticWriter({sessionId:active.id,userId:f.owner,claimToken});
+      const recovered=await service.acquireDiagnosticWriter({sessionId:active.id,userId:f.owner,claimToken});
+      assert.equal(recovered.writerToken,claimToken);assert.equal(recovered.session.deadline,active.deadline);
+      await assert.rejects(service.acquireDiagnosticWriter({sessionId:active.id,userId:f.owner,claimToken:Buffer.alloc(32,43).toString('base64url')}),error('WRITER_CONFLICT'));
+      await assert.rejects(service.acquireDiagnosticWriter({sessionId:active.id,userId:f.stranger,claimToken}),error('NOT_FOUND'));
+    });
     await t.test('writer conflicts, heartbeat and expiry recovery never shift deadline',async()=>{
       assert.equal(Buffer.from(writer.writerToken,'base64url').length,32);
       await assert.rejects(service.acquireDiagnosticWriter({sessionId:session.id,userId:f.owner}),error('WRITER_CONFLICT'));
@@ -143,6 +152,23 @@ test('standalone diagnostic services enforce account invitations, atomic start, 
       assert.equal(final.responses.find(r=>r.questionId===save.questionId)?.answer,save.answer);
       const duplicate=await service.submitDiagnosticSession({sessionId:session.id,userId:f.owner,writerToken:''});
       assert.equal(duplicate.submittedAt,final.submittedAt);assert.equal(duplicate.version,final.version);
+    });
+    await t.test('expired sessions finalize on read even when the browser never submits',async()=>{
+      const invitation=await issue();const active=await service.createDiagnosticSession({invitationId:invitation.id,userId:f.owner});
+      const editing=await service.acquireDiagnosticWriter({sessionId:active.id,userId:f.owner});
+      await service.saveDiagnosticResponse({sessionId:active.id,userId:f.owner,writerToken:editing.writerToken,
+        questionId:f.questionIds[0],expectedVersion:0,answer:'acknowledged',markedForReview:false});
+      await client.query(`UPDATE app_private."DiagnosticSession" SET "startedAt"=date_trunc('milliseconds',now())-interval '1 hour',deadline=date_trunc('milliseconds',now()) WHERE id=$1`,[active.id]);
+      const before=await prisma.diagnosticSession.findUniqueOrThrow({where:{id:active.id}});
+      const reads=await Promise.all([0,1].map(()=>service.loadDiagnosticSession({sessionId:active.id,userId:f.owner})));
+      for(const read of reads) {
+        assert.equal(read.state,'SUBMITTED');assert.equal(read.submittedAt,before.deadline.toISOString());
+        assert.equal(read.responses.find(response=>response.questionId===f.questionIds[0])?.answer,'acknowledged');
+        assert.ok(read.responses.every(response=>response.finalizedAt===read.submittedAt));
+      }
+      assert.equal(reads[0].version,before.version+1);assert.equal(reads[1].version,reads[0].version);
+      const replay=await service.submitDiagnosticSession({sessionId:active.id,userId:f.owner,writerToken:''});
+      assert.equal(replay.submittedAt,reads[0].submittedAt);
     });
     await t.test('server-scheduled Reading and Writing stages reject prior-section saves',async()=>{
       const invitation=await issue();const active=await service.createDiagnosticSession({invitationId:invitation.id,userId:f.owner});

@@ -8,6 +8,7 @@ import { diagnosticMessages, type DiagnosticLocale } from '@/lib/diagnostic/mess
 import { formatDiagnosticRemaining } from '@/lib/diagnostic/session-core';
 import DiagnosticQuestions, { DiagnosticSource } from './DiagnosticQuestions';
 import DiagnosticAudio from './DiagnosticAudio';
+import DiagnosticImage from './DiagnosticImage';
 import styles from './diagnostic.module.css';
 
 export type DiagnosticSaveState = 'saved' | 'saving' | 'offline' | 'conflict';
@@ -32,6 +33,7 @@ export default function DiagnosticRunner({ locale, session, section, sourceNumbe
   const m = diagnosticMessages[locale];
   const [navigation, setNavigation] = useState({ sectionId: section?.id, index: 0 });
   const [confirming, setConfirming] = useState(false);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const groupHeading = useRef<HTMLHeadingElement | null>(null);
   const submitButton = useRef<HTMLButtonElement | null>(null);
   const confirmHeading = useRef<HTMLHeadingElement | null>(null);
@@ -51,7 +53,8 @@ export default function DiagnosticRunner({ locale, session, section, sourceNumbe
   const hasSaving = Object.values(saveStates).includes('saving');
   const received = session.state === 'SUBMITTED';
   const expired = session.window.stage === 'SUBMITTED';
-  const readOnly = blocked || hasConflict || submitting || received || expired || remainingSeconds <= 0 || section?.skill !== session.window.stage;
+  const mediaUnavailable = section?.parts.some(part => part.stimuli.some(stimulus => failedImages[stimulus.id])) ?? false;
+  const readOnly = mediaUnavailable || blocked || hasConflict || submitting || received || expired || remainingSeconds <= 0 || section?.skill !== session.window.stage;
   const canSubmit = !received && !submitting && (expired || (!blocked && connection === 'online' && !hasConflict && !hasSaving && !unsavedIds.size));
   const title = session.window.stage === 'LISTENING' ? m.listening : session.window.stage === 'READING' ? m.reading : m.writing;
   const stageNumber = session.window.stage === 'LISTENING' ? 1 : session.window.stage === 'READING' ? 2 : 3;
@@ -82,7 +85,9 @@ export default function DiagnosticRunner({ locale, session, section, sourceNumbe
     {errorMessage && <div className={styles.recovery} role="alert"><p>{errorMessage}</p>
       <button type="button" className={styles.secondary} onClick={onReconnect}>{m.reconnect}</button></div>}
     <main className={styles.container}>
-      {received ? <section className={styles.panel}><h1 className={styles.heroTitle}>{m.receipt}</h1><p>{m.receiptHelp}</p></section>
+      {received ? <section className={styles.panel}><h1 className={styles.heroTitle}>{m.receipt}</h1><p>{m.receiptHelp}</p>
+        {unsavedIds.size > 0 && <p role="alert" className={styles.notice}>{m.receiptPending} {m.unsaved}: {unsavedIds.size}</p>}
+      </section>
         : <>
           {expired ? <section className={styles.panel}><h1 className={styles.heroTitle}>{m.timeEnded}</h1><p>{m.timeEndedHelp}</p></section> : <>
             <div className={styles.stageHeading}><p className={styles.meta}>{m.stage} {stageNumber} {m.of} 3</p><h1 className={styles.heroTitle}>{title}</h1></div>
@@ -94,6 +99,9 @@ export default function DiagnosticRunner({ locale, session, section, sourceNumbe
                 <section className={section.skill === 'READING' ? styles.passage : undefined} aria-label={section.skill === 'READING' ? m.passage : m.source}>
                   {active.part.stimuli.filter((s) => s.type !== 'AUDIO_TRACK').map((stimulus) => <div key={stimulus.id}>
                     {stimulus.title && <h2 lang="en" dir="ltr" className={styles.heading}>{stimulus.title}</h2>}
+                    {stimulus.assetUrl && !stimulus.bodyHtml?.includes(stimulus.assetUrl) && <DiagnosticImage src={stimulus.assetUrl}
+                      description={stimulus.title ?? stimulus.plainText ?? ''} locale={locale}
+                      onAvailability={available => setFailedImages(previous => previous[stimulus.id] === !available ? previous : { ...previous, [stimulus.id]: !available })} />}
                     {stimulus.bodyHtml ? <DiagnosticSource html={stimulus.bodyHtml} /> : stimulus.plainText ? <p lang="en" dir="ltr" className={`${styles.source} ${styles.plainSource}`}>{stimulus.plainText}</p> : null}
                   </div>)}
                 </section>

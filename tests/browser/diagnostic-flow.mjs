@@ -2,10 +2,12 @@
 // Synthetic, isolated local DB only. Never uses a live account or real source media.
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { Client } from 'pg';
+import sharp from 'sharp';
 import { diagnosticFixture, diagnosticTestPrisma } from '../helpers/diagnostic-fixture.ts';
 
 const db = 'postgresql://postgres:postgres@127.0.0.1:55322/postgres';
@@ -24,18 +26,53 @@ const artifacts = path.resolve('.superpowers/sdd/PLAN-2026-10-06/browser');
 const assetsRoot = path.join(artifacts, 'assets'); await mkdir(assetsRoot, { recursive: true });
 // Deliberately synthetic silent PCM; same bounded duration as fixture metadata.
 const samples = 8000 * 500, wave = Buffer.alloc(44 + samples * 2);
+const png = await sharp({ create: { width: 16, height: 16, channels: 4, background: { r: 220, g: 220, b: 220, alpha: 1 } } }).png().toBuffer();
 wave.write('RIFF'); wave.writeUInt32LE(wave.length - 8, 4); wave.write('WAVEfmt ', 8);
 wave.writeUInt32LE(16, 16); wave.writeUInt16LE(1, 20); wave.writeUInt16LE(1, 22);
 wave.writeUInt32LE(8000, 24); wave.writeUInt32LE(16000, 28); wave.writeUInt16LE(2, 32);
 wave.writeUInt16LE(16, 34); wave.write('data', 36); wave.writeUInt32LE(samples * 2, 40);
 for (const asset of await prisma.contentAsset.findMany({ where: { id: { in: [...fixture.assetIds, fixture.visibleImageId] } } })) {
   const target = path.join(assetsRoot, asset.storageKey); await mkdir(path.dirname(target), { recursive: true });
-  await writeFile(target, asset.type === 'AUDIO' ? wave : Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jHwAAAABJRU5ErkJggg==', 'base64'));
+  await writeFile(target, asset.type === 'AUDIO' ? wave : png);
 }
 const output = [];
-const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', '--port', '3009'], {
-  cwd: process.cwd(), env: { ...process.env, NODE_ENV: 'development', SPEAKING_DEV_AUTH_USER_ID: fixture.owner,
-    SUPABASE_SERVICE_ROLE_KEY: undefined, PRIVATE_TEST_ASSET_LOCAL_ROOT: assetsRoot }, stdio: ['ignore', 'pipe', 'pipe'],
+// Stub only the external identity/storage transports. The production app, its
+// authorization, cookies, route matching and PostgreSQL transactions remain real.
+const expires = Math.floor(Date.now() / 1000) + 7200;
+const jwt = [Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'),
+  Buffer.from(JSON.stringify({ sub: fixture.owner, aud: 'authenticated', role: 'authenticated', exp: expires, iat: expires - 7200 })).toString('base64url'), 'synthetic-signature'].join('.');
+const authUser = { id: fixture.owner, aud: 'authenticated', role: 'authenticated', email: `${fixture.owner}@synthetic.invalid`,
+  app_metadata: { provider: 'email', providers: ['email'] }, user_metadata: {}, created_at: new Date().toISOString() };
+const transport = createServer(async (request, response) => {
+  const url = new URL(request.url, 'http://127.0.0.1:55321');
+  if (url.pathname === '/auth/v1/user') {
+    response.setHeader('Content-Type', 'application/json');
+    if (request.headers.authorization !== `Bearer ${jwt}`) { response.writeHead(401); response.end('{"message":"invalid test token"}'); }
+    else response.end(JSON.stringify(authUser));
+    return;
+  }
+  const prefix = '/storage/v1/object/authenticated/protected-test-assets/';
+  if (url.pathname.startsWith(prefix)) {
+    try {
+      const key = decodeURIComponent(url.pathname.slice(prefix.length));
+      const target = path.resolve(assetsRoot, key);
+      if (!target.startsWith(assetsRoot + path.sep)) throw new Error('unsafe test key');
+      const bytes = await readFile(target); response.setHeader('Accept-Ranges', 'bytes');
+      const range = /^bytes=(\d+)-(\d*)$/u.exec(request.headers.range ?? '');
+      if (range) {
+        const start = Number(range[1]), end = Math.min(range[2] ? Number(range[2]) : bytes.length - 1, bytes.length - 1);
+        if (start > end || start >= bytes.length) { response.writeHead(416, { 'Content-Range': `bytes */${bytes.length}` }); response.end(); return; }
+        response.writeHead(206, { 'Content-Range': `bytes ${start}-${end}/${bytes.length}`, 'Content-Length': end - start + 1 }); response.end(bytes.subarray(start, end + 1));
+      } else { response.setHeader('Content-Length', bytes.length); response.end(bytes); }
+    } catch { response.writeHead(404); response.end(); }
+    return;
+  }
+  response.writeHead(404); response.end();
+});
+await new Promise((resolve, reject) => { transport.once('error', reject); transport.listen(55321, '127.0.0.1', resolve); });
+const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--port', '3009'], {
+  cwd: process.cwd(), env: { ...process.env, NODE_ENV: 'production', SPEAKING_DEV_AUTH_USER_ID: undefined,
+    SUPABASE_SERVICE_ROLE_KEY: 'diagnostic-storage-test-key-only' }, stdio: ['ignore', 'pipe', 'pipe'],
 });
 server.stdout.on('data', data => output.push(String(data))); server.stderr.on('data', data => output.push(String(data)));
 let browser, page;
@@ -48,14 +85,18 @@ async function until(check, description, timeout = 30000) {
   throw new Error(`Timed out: ${description}`);
 }
 try {
-  await until(async () => { try { return (await fetch('http://127.0.0.1:3009/en/diagnostic')).status === 200; } catch { return false; } }, 'local dev server', 90000);
+  await until(async () => { try { return (await fetch('http://127.0.0.1:3009/favicon.ico')).status === 200; } catch { return false; } }, 'local production server', 30000);
   browser = await chromium.launch({ headless: true, channel: 'msedge' });
   const context = await browser.newContext({ viewport: { width: 1280, height: 850 } });
+  await context.addCookies([{ name: 'sb-127-auth-token', value: 'base64-' + Buffer.from(JSON.stringify({ access_token: jwt,
+    refresh_token: 'synthetic-refresh', token_type: 'bearer', expires_at: expires, expires_in: 7200, user: authUser })).toString('base64url'),
+    domain: '127.0.0.1', path: '/', sameSite: 'Lax' }]);
   page = await context.newPage();
+  page.on('dialog', async dialog => { console.log('Browser dialog:', dialog.type()); await dialog.accept(); });
   page.on('pageerror', error => errors.push(error.message));
   page.on('response', async response => {
     if (response.status() >= 400 && response.url().includes('/api/diagnostic/') && !response.url().includes('/assets/')) {
-      try { console.log('API failure', response.status(), (await response.json()).error ?? 'UNKNOWN'); } catch { console.log('API failure', response.status(), 'NON_JSON'); }
+      try { console.log('API failure', new URL(response.url()).pathname, response.status(), (await response.json()).error ?? 'UNKNOWN'); } catch { console.log('API failure', new URL(response.url()).pathname, response.status(), 'NON_JSON'); }
     }
   });
   await page.goto('http://127.0.0.1:3009/en/diagnostic');
@@ -81,6 +122,7 @@ try {
   assert.equal(await prisma.diagnosticResponse.count({ where: { sessionId, answer: 'A' } }), 0);
   await context.setOffline(false);
   await until(async () => await prisma.diagnosticResponse.count({ where: { sessionId, answer: 'A' } }) === 1, 'offline retry');
+  await until(async () => await page.locator('header [role=status] span').last().innerText() === 'Saved', 'frontend save acknowledgement');
   pass('offline work is not falsely saved; reconnect persists it');
   const second = await context.newPage(); await second.goto(page.url());
   await second.getByRole('alert').filter({ hasText: 'open elsewhere' }).waitFor();
@@ -97,6 +139,11 @@ try {
   pass('exact section boundary advances to Reading without a timer reset');
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto(`http://127.0.0.1:3009/ar/diagnostic/${sessionId}`);
+  const readingInput = page.locator('main input:not([type=checkbox]):not([type=radio])').first();
+  await until(() => readingInput.isEnabled(), 'Arabic writer resumed');
+  const sourceImage = page.locator('img[src*="/assets/"]').first();
+  await until(() => sourceImage.evaluate(image => image.complete && image.naturalWidth > 0), 'protected source image rendered');
+  pass('protected standalone source image loads with authenticated cookies');
   assert.equal(await page.locator('html').getAttribute('dir'), 'rtl');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await page.evaluate(() => { document.querySelector('header').parentElement.scrollTop = 650; });
@@ -119,10 +166,13 @@ try {
   pass('French Task2 saves and irreversible submission finalizes all response slots');
   assert.deepEqual(errors, []); pass('no uncaught browser application errors');
 } catch (error) {
+  console.error('Flow failure:', error);
   console.error('Browser errors:', errors);
   if (page && !page.isClosed()) {
-    await writeFile(path.join(artifacts, 'failure.html'), await page.content());
-    await page.screenshot({ path: path.join(artifacts, 'failure.png'), fullPage: true });
+    try {
+      await writeFile(path.join(artifacts, 'failure.html'), await page.content());
+      await page.screenshot({ path: path.join(artifacts, 'failure.png'), fullPage: true });
+    } catch { /* Never replace the actual assertion with an artifact/navigation error. */ }
   }
   throw error;
 } finally {
@@ -130,6 +180,7 @@ try {
   if (process.platform === 'win32' && server.exitCode === null) spawnSync('taskkill', ['/pid', String(server.pid), '/t', '/f'], { windowsHide: true, stdio: 'ignore' });
   else server.kill();
   await sql.end(); await prisma.$disconnect();
+  transport.closeAllConnections(); await new Promise(resolve => transport.close(resolve));
   await writeFile(path.join(artifacts, 'server.log'), output.join(''));
   await writeFile(path.join(artifacts, 'result.json'), JSON.stringify({ checks }, null, 2));
 }

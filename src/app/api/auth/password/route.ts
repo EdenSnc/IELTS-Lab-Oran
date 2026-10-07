@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import { requireHumanRequest } from '@/lib/security/bot';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { recordFunnelEvent } from '@/lib/growth/funnel-events';
+import { diagnosticAuthReturn } from '@/lib/diagnostic/auth-return';
 
 const emailSchema = z.email().max(320).transform((value) => value.trim().toLowerCase());
 const requestSchema = z.discriminatedUnion('action', [
@@ -21,6 +22,7 @@ const requestSchema = z.discriminatedUnion('action', [
     privacyAccepted: z.literal(true),
     marketingAccepted: z.boolean().default(false),
     locale: z.enum(['ar', 'en', 'fr']),
+    next: z.string().max(2048).optional(),
   }).strict(),
 ]);
 
@@ -40,6 +42,8 @@ export async function POST(request: Request) {
     await recordFunnelEvent({ type: 'SIGNUP_STARTED', metadata: { provider: 'email' } });
 
     const redirect = new URL(`/api/auth/callback?next=/${input.locale}/account`, requestOrigin);
+    const diagnosticNext = diagnosticAuthReturn(input.next, input.locale);
+    if (diagnosticNext) redirect.searchParams.set('next', diagnosticNext);
     const { data, error } = await client.auth.signUp({
       email: input.email,
       password: input.password,
