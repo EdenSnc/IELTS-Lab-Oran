@@ -6,6 +6,7 @@ import type { DiagnosticStaffOverview } from '@/lib/diagnostic/staff-service';
 import { diagnosticMessages, diagnosticErrorMessage, type DiagnosticLocale } from '@/lib/diagnostic/messages';
 import { diagnosticRequest } from './diagnostic-request';
 import { diagnosticAssessmentMessages } from '@/lib/diagnostic/assessment-messages';
+import { diagnosticSpeakingMessages } from '@/lib/diagnostic/speaking-messages';
 import styles from './diagnostic.module.css';
 
 export default function DiagnosticStaff({ locale, initialOverview }: { locale: DiagnosticLocale; initialOverview: DiagnosticStaffOverview }) {
@@ -47,6 +48,7 @@ export default function DiagnosticStaff({ locale, initialOverview }: { locale: D
       <section className={styles.panel}><h2>{m.recentInvitations}</h2>{overview.invitations.map(item => <article className={styles.reviewItem} key={item.id}>
         <p>{item.recipient.name ?? item.recipient.email}</p><p className={styles.meta}>{item.session ? item.session.state === 'SUBMITTED' ? m.submittedStatus : m.used : item.revokedAt ? m.revoked : m.expires}: {new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'Africa/Algiers' }).format(new Date(item.expiresAt))}</p>
         {item.session?.state === 'SUBMITTED' && <Link className={styles.secondary} href={`/${locale}/diagnostic/staff/${item.session.id}`}>{diagnosticAssessmentMessages[locale].reviewTitle}</Link>}
+        {item.session?.state === 'SUBMITTED' && <Link className={styles.secondary} href={`/${locale}/diagnostic/examiner/${item.session.id}`}>{diagnosticSpeakingMessages[locale].title}</Link>}
         {!item.session && !item.revokedAt && <button className={styles.secondary} disabled={busy} onClick={() => {
           setRevoking(item.id); setReason('');
         }}>{m.revoke}</button>}

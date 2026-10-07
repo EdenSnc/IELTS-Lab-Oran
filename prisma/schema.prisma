@@ -274,6 +274,7 @@ model User {
   diagnosticReviews DiagnosticContentReview[]
   diagnosticSessions DiagnosticSession[]
   diagnosticAssessmentsReviewed DiagnosticAssessment[]
+  diagnosticSpeakingSessionsExamined DiagnosticSpeakingSession[]
 
   @@index([status, role])
   @@schema("app_private")
@@ -1002,10 +1003,34 @@ model DiagnosticSession {
   responses DiagnosticResponse[]
   assessment DiagnosticAssessment?
   writingRuns DiagnosticWritingRun[]
+  speaking DiagnosticSpeakingSession?
   @@unique([invitationId, userId, blueprintId])
   @@index([userId, startedAt])
   @@index([blueprintId])
   @@index([state, deadline])
+  @@schema("app_private")
+}
+
+model DiagnosticSpeakingSession {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String @unique @db.Uuid
+  examinerId String? @db.Uuid
+  state String @default("NOT_STARTED")
+  startedAt DateTime?
+  deadline DateTime?
+  completedAt DateTime?
+  notes String @default("") @db.Text
+  version Int @default(0)
+  adultAttested Boolean @default(false)
+  recordingConsented Boolean @default(false)
+  aiConsented Boolean @default(false)
+  consentVersion Int @default(0)
+  privacyRevokedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  session DiagnosticSession @relation(fields:[sessionId],references:[id],onDelete:Cascade,onUpdate:NoAction)
+  examiner User? @relation(fields:[examinerId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  @@index([examinerId,state])
   @@schema("app_private")
 }
 

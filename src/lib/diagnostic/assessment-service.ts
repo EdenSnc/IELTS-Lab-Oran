@@ -79,6 +79,8 @@ export async function releaseDiagnosticAssessment(input: { sessionId: string; ac
     if (row.state !== 'DRAFT') throw new DiagnosticError('ASSESSMENT_RELEASED',409);
     if (row.version !== input.expectedVersion) throw new DiagnosticError('ASSESSMENT_CONFLICT',409);
     if (!row.writing || !row.speaking || !row.reviewedById || input.speakingConductedInPerson !== true) throw new DiagnosticError('ASSESSMENT_INCOMPLETE',409);
+    const interview=await tx.diagnosticSpeakingSession.findUnique({where:{sessionId:input.sessionId},select:{state:true}});
+    if(interview?.state!=='COMPLETED')throw new DiagnosticError('ASSESSMENT_INCOMPLETE',409);
     diagnosticSpeakingFeedbackSchema.parse(row.speaking);
     const now = await diagnosticNow(tx);
     const saved = await tx.diagnosticAssessment.update({ where: { id: row.id }, data: {

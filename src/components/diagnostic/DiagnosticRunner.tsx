@@ -7,6 +7,7 @@ import type { DiagnosticDeliverySection } from '@/lib/diagnostic/delivery-protoc
 import type { DiagnosticSessionDto } from '@/lib/diagnostic/protocol';
 import { diagnosticMessages, type DiagnosticLocale } from '@/lib/diagnostic/messages';
 import { diagnosticAssessmentMessages } from '@/lib/diagnostic/assessment-messages';
+import { diagnosticSpeakingMessages } from '@/lib/diagnostic/speaking-messages';
 import { formatDiagnosticRemaining } from '@/lib/diagnostic/session-core';
 import DiagnosticQuestions, { DiagnosticSource } from './DiagnosticQuestions';
 import DiagnosticAudio from './DiagnosticAudio';
@@ -90,6 +91,7 @@ export default function DiagnosticRunner({ locale, session, section, sourceNumbe
       {received ? <section className={styles.panel}><h1 className={styles.heroTitle}>{m.receipt}</h1><p>{m.receiptHelp}</p>
         {unsavedIds.size > 0 && <p role="alert" className={styles.notice}>{m.receiptPending} {m.unsaved}: {unsavedIds.size}</p>}
         <div className={styles.actions}><Link className={styles.secondary} href={`/${locale}/diagnostic/${session.id}/report`}>{diagnosticAssessmentMessages[locale].title}</Link></div>
+        <div className={styles.actions}><Link className={styles.secondary} href={`/${locale}/diagnostic/${session.id}/speaking`}>{diagnosticSpeakingMessages[locale].title}</Link></div>
       </section>
         : <>
           {expired ? <section className={styles.panel}><h1 className={styles.heroTitle}>{m.timeEnded}</h1><p>{m.timeEndedHelp}</p></section> : <>

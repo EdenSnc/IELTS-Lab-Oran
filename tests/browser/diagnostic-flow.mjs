@@ -176,6 +176,22 @@ try {
     refresh_token: 'synthetic-staff-refresh', token_type: 'bearer', expires_at: expires, expires_in: 7200, user: staffAuthUser })).toString('base64url'),
     domain: '127.0.0.1', path: '/', sameSite: 'Lax' }]);
   const examiner = await staffContext.newPage(); examiner.on('pageerror', error => errors.push(error.message));
+  await examiner.goto(`http://127.0.0.1:3009/en/diagnostic/examiner/${sessionId}`);
+  await examiner.getByRole('button',{name:'Start Speaking',exact:true}).click();
+  await examiner.getByLabel('Private examiner notes',{exact:true}).fill('Private synthetic observation, never participant-visible.');
+  await examiner.getByRole('button',{name:'Save notes',exact:true}).click();
+  await examiner.getByText('Notes saved.',{exact:true}).waitFor();
+  const speakingBefore=await prisma.diagnosticSpeakingSession.findUnique({where:{sessionId}});
+  await examiner.reload();
+  assert.equal((await prisma.diagnosticSpeakingSession.findUnique({where:{sessionId}})).startedAt.toISOString(),speakingBefore.startedAt.toISOString());
+  const speakingOwner=await page.request.get(`http://127.0.0.1:3009/api/diagnostic/sessions/${sessionId}/speaking`);
+  assert.ok(!JSON.stringify(await speakingOwner.json()).includes('Private synthetic observation'));
+  await sql.query(`WITH clock AS MATERIALIZED(SELECT date_trunc('milliseconds',clock_timestamp()) AT TIME ZONE 'UTC' AS now)
+    UPDATE app_private."DiagnosticSpeakingSession" SET "startedAt"=clock.now-interval '7 minutes',deadline=clock.now FROM clock WHERE "sessionId"=$1`,[sessionId]);
+  await examiner.getByRole('button',{name:'Check status',exact:true}).click();
+  await examiner.getByRole('button',{name:'Complete Speaking',exact:true}).click();
+  await examiner.getByText('Completed',{exact:true}).waitFor();
+  pass('human-only Speaking uses fixed server clock, private notes and explicit completion');
   await examiner.goto(`http://127.0.0.1:3009/en/diagnostic/staff/${sessionId}`);
   for (const criterion of ['Task response','Coherence and cohesion','Lexical resource','Grammatical range and accuracy']) {
     await examiner.getByLabel(criterion, { exact: true }).fill('Examiner-reviewed observation from this synthetic response.');
