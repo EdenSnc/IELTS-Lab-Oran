@@ -47,7 +47,7 @@ export function assertDiagnosticStructure(payload: DiagnosticManifestPayload): v
       if (!review.audio) reject('DIAGNOSTIC_AUDIO_MISSING');
       if (audioIds.has(review.audio.assetId)) reject('DIAGNOSTIC_DUPLICATE_AUDIO');
       audioIds.add(review.audio.assetId);
-      audioDuration += review.audio.durationSeconds;
+      audioDuration += Math.round(review.audio.durationSeconds*1000);
     } else if (review.audio) reject('DIAGNOSTIC_AUDIO_SKILL_INVALID');
 
     const partStart = cursor;
@@ -79,7 +79,7 @@ export function assertDiagnosticStructure(payload: DiagnosticManifestPayload): v
     ) reject('DIAGNOSTIC_QUESTION_COUNTS_INVALID');
   }
   if (cursor !== payload.questions.length) reject('DIAGNOSTIC_QUESTION_MAPPING_INVALID');
-  if (audioDuration + DIAGNOSTIC_PROFILE.audioAllowanceSeconds > DIAGNOSTIC_PROFILE.listeningSeconds) {
+  if (audioDuration + DIAGNOSTIC_PROFILE.audioAllowanceSeconds*1000 > DIAGNOSTIC_PROFILE.listeningSeconds*1000) {
     reject('DIAGNOSTIC_AUDIO_TOO_LONG');
   }
 }

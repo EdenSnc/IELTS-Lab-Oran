@@ -77,8 +77,8 @@ export function compileDiagnosticManifest(input: {
 
   const compiled = compileAttemptManifest({ blueprint: input.blueprint, candidates, seed: input.seed });
   const selectedReviews = compiled.payload.parts.map((part) => byPart.get(part.partId)!);
-  const duration = selectedReviews.reduce((sum, review) => sum + (review.audio?.durationSeconds ?? 0), 0);
-  if (duration + DIAGNOSTIC_PROFILE.audioAllowanceSeconds > DIAGNOSTIC_PROFILE.listeningSeconds) {
+  const durationMs = selectedReviews.reduce((sum, review) => sum + Math.round((review.audio?.durationSeconds ?? 0)*1000), 0);
+  if (durationMs + DIAGNOSTIC_PROFILE.audioAllowanceSeconds*1000 > DIAGNOSTIC_PROFILE.listeningSeconds*1000) {
     reject('DIAGNOSTIC_AUDIO_TOO_LONG');
   }
   const payload = parseDiagnosticManifestPayload({

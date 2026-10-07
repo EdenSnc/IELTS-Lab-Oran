@@ -33,7 +33,7 @@ function qstashReceiver() {
   return new Receiver({ currentSigningKey, nextSigningKey });
 }
 
-export function qstashEndpoint(path: '/api/internal/grading/writing' | '/api/internal/grading/recover' | '/api/internal/payments/reconcile') {
+export function qstashEndpoint(path: '/api/internal/grading/writing' | '/api/internal/grading/recover' | '/api/internal/payments/reconcile' | '/api/internal/diagnostic/writing' | '/api/internal/diagnostic/recover') {
   return `${callbackBaseUrl()}${path}` as const;
 }
 

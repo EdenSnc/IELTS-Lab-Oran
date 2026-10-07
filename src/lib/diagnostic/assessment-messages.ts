@@ -1,0 +1,51 @@
+import type { DiagnosticLocale } from './messages';
+const en = {
+  title: 'Diagnostic report', reviewTitle: 'Review diagnostic feedback', pending: 'Awaiting examiner approval', pendingHelp: 'Your written work is saved. Speaking and examiner review must be completed before feedback is released.',
+  expired: 'Report access has ended', expiredHelp: 'Diagnostic feedback is available for 90 days after release. Contact staff if you need assistance.',
+  disclaimer: 'A shortened preparation diagnostic—not an official IELTS result, full mock or overall band.',
+  reading: 'Reading', listening: 'Listening', writing: 'Writing · Task 2 only', speaking: 'Speaking · in person', rawMarks: 'Raw marks', answered: 'Answered',
+  priorities: 'Priority next steps', limitations: 'Limitations', aiUsed: 'AI-assisted writing feedback, reviewed by an examiner', expires: 'Available until', back: 'Back to diagnostics',
+  taskResponse: 'Task response', coherence: 'Coherence and cohesion', vocabulary: 'Lexical resource', grammar: 'Grammatical range and accuracy',
+  essay: 'Submitted response', prompt: 'Original Task 2 prompt', evidence: 'Exact quotations (one per line)', nextSteps: 'Priority next steps',
+  writingLimitations: 'Writing limitations', speakingObservations: 'Speaking observations', speakingLimitations: 'Speaking limitations',
+  save: 'Save examiner feedback', saved: 'Feedback saved.', release: 'Release participant report', released: 'Released',
+  attest: 'I conducted the in-person Speaking diagnostic and reviewed all feedback.', queue: 'Request AI writing suggestions', apply: 'Use suggestions as an editable draft',
+  refresh: 'Check analysis status', queued: 'Analysis pending. You can continue with human-only assessment.', failed: 'AI analysis unavailable. Complete the feedback manually.',
+  confirmHelp: 'Save any edits before release. Released feedback is locked; AI suggestions are never published automatically.',
+  conflict: 'Another examiner saved a newer version. Refresh the review before editing again.', incomplete: 'Save all four writing criteria and the in-person Speaking observations before release.',
+  shortened: 'Shortened 20-minute Task 2 diagnostic.',
+};
+type Messages = { [K in keyof typeof en]: string };
+const fr: Messages = {
+  title: 'Rapport du diagnostic', reviewTitle: 'Valider les commentaires du diagnostic', pending: 'En attente de validation', pendingHelp: 'Votre travail écrit est enregistré. L’entretien oral et la validation de l’examinateur doivent être terminés avant la publication des commentaires.',
+  expired: 'L’accès au rapport a expiré', expiredHelp: 'Les commentaires sont accessibles pendant 90 jours après leur publication. Contactez l’équipe si nécessaire.',
+  disclaimer: 'Un diagnostic de préparation abrégé, et non un résultat IELTS officiel, un examen blanc complet ou une note globale.',
+  reading: 'Compréhension écrite', listening: 'Compréhension orale', writing: 'Expression écrite · tâche 2 uniquement', speaking: 'Expression orale · en présentiel', rawMarks: 'Points obtenus', answered: 'Réponses données',
+  priorities: 'Prochaines étapes prioritaires', limitations: 'Limites de l’évaluation', aiUsed: 'Commentaires écrits assistés par IA et validés par un examinateur', expires: 'Accessible jusqu’au', back: 'Retour aux diagnostics',
+  taskResponse: 'Réponse à la tâche', coherence: 'Cohérence et cohésion', vocabulary: 'Ressources lexicales', grammar: 'Étendue et précision grammaticales',
+  essay: 'Réponse soumise', prompt: 'Sujet original de la tâche 2', evidence: 'Citations exactes (une par ligne)', nextSteps: 'Prochaines étapes prioritaires',
+  writingLimitations: 'Limites de l’évaluation écrite', speakingObservations: 'Observations sur l’expression orale', speakingLimitations: 'Limites de l’évaluation orale',
+  save: 'Enregistrer les commentaires', saved: 'Commentaires enregistrés.', release: 'Publier le rapport du participant', released: 'Publié',
+  attest: 'J’ai conduit le diagnostic oral en présentiel et vérifié tous les commentaires.', queue: 'Demander des suggestions écrites à l’IA', apply: 'Utiliser les suggestions comme brouillon modifiable',
+  refresh: 'Vérifier l’état de l’analyse', queued: 'Analyse en attente. Vous pouvez poursuivre une évaluation entièrement humaine.', failed: 'Analyse IA indisponible. Complétez les commentaires manuellement.',
+  confirmHelp: 'Enregistrez vos modifications avant la publication. Les commentaires publiés sont verrouillés ; les suggestions IA ne sont jamais publiées automatiquement.',
+  conflict: 'Un autre examinateur a enregistré une version plus récente. Actualisez l’évaluation avant de modifier à nouveau.', incomplete: 'Enregistrez les quatre critères écrits et les observations de l’entretien oral en présentiel avant la publication.',
+  shortened: 'Diagnostic abrégé : tâche 2 en 20 minutes.',
+};
+const ar: Messages = {
+  title: 'تقرير الاختبار التشخيصي', reviewTitle: 'مراجعة ملاحظات الاختبار التشخيصي', pending: 'بانتظار اعتماد الممتحن', pendingHelp: 'تم حفظ عملك الكتابي. يجب إتمام المقابلة الشفهية ومراجعة الممتحن قبل نشر الملاحظات.',
+  expired: 'انتهت مدة الوصول إلى التقرير', expiredHelp: 'تتوفر الملاحظات لمدة 90 يوماً بعد نشرها. تواصل مع الفريق إذا احتجت إلى مساعدة.',
+  disclaimer: 'اختبار تشخيصي تحضيري مختصر، وليس نتيجة IELTS رسمية أو امتحاناً تجريبياً كاملاً أو درجة إجمالية.',
+  reading: 'القراءة', listening: 'الاستماع', writing: 'الكتابة · المهمة الثانية فقط', speaking: 'التحدث · حضورياً', rawMarks: 'النقاط المحصّلة', answered: 'الأسئلة المجاب عنها',
+  priorities: 'خطوات التحسين ذات الأولوية', limitations: 'حدود التقييم', aiUsed: 'ملاحظات كتابية بمساعدة الذكاء الاصطناعي راجعها ممتحن', expires: 'متاح حتى', back: 'العودة إلى الاختبارات التشخيصية',
+  taskResponse: 'الاستجابة للمهمة', coherence: 'الترابط والتماسك', vocabulary: 'الموارد المعجمية', grammar: 'تنوع القواعد ودقتها',
+  essay: 'الإجابة المقدّمة', prompt: 'موضوع المهمة الثانية الأصلي', evidence: 'اقتباسات مطابقة للإجابة (واحد في كل سطر)', nextSteps: 'خطوات التحسين ذات الأولوية',
+  writingLimitations: 'حدود تقييم الكتابة', speakingObservations: 'ملاحظات التحدث', speakingLimitations: 'حدود تقييم التحدث',
+  save: 'حفظ ملاحظات الممتحن', saved: 'تم حفظ الملاحظات.', release: 'نشر تقرير المشارك', released: 'تم النشر',
+  attest: 'أجريت الاختبار التشخيصي الشفهي حضورياً وراجعت جميع الملاحظات.', queue: 'طلب اقتراحات للكتابة من الذكاء الاصطناعي', apply: 'استخدام الاقتراحات كمسودة قابلة للتعديل',
+  refresh: 'التحقق من حالة التحليل', queued: 'التحليل قيد الانتظار. يمكنك المتابعة بتقييم بشري فقط.', failed: 'تحليل الذكاء الاصطناعي غير متاح. أكمل الملاحظات يدوياً.',
+  confirmHelp: 'احفظ التعديلات قبل النشر. تُقفل الملاحظات المنشورة؛ ولا تُنشر اقتراحات الذكاء الاصطناعي تلقائياً أبداً.',
+  conflict: 'حفظ ممتحن آخر نسخة أحدث. حدّث صفحة المراجعة قبل متابعة التعديل.', incomplete: 'احفظ معايير الكتابة الأربعة وملاحظات المقابلة الشفهية الحضورية قبل النشر.',
+  shortened: 'اختبار تشخيصي مختصر للمهمة الثانية في 20 دقيقة.',
+};
+export const diagnosticAssessmentMessages = { en, fr, ar } satisfies Record<DiagnosticLocale, Messages>;

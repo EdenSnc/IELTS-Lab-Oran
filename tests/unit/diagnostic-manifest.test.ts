@@ -73,6 +73,18 @@ for (const readingCount of [13, 14]) {
   });
 }
 
+test('real encoded audio retains millisecond-accurate duration and cannot exceed the allowance by one millisecond', () => {
+  const input = fixture();
+  input.reviews[0].audio!.durationSeconds = 540.333;
+  input.reviews[1].audio!.durationSeconds = 539.667;
+  const result = compileDiagnosticManifest(input);
+  assert.equal(result.payload.diagnostic.reviews[0].audio!.durationSeconds, 540.333);
+  input.reviews[1].audio!.durationSeconds = 539.668;
+  assert.throws(() => compileDiagnosticManifest(input), /DIAGNOSTIC_AUDIO_TOO_LONG/u);
+  input.reviews[1].audio!.durationSeconds = 500.1234;
+  assert.throws(() => compileDiagnosticManifest(input));
+});
+
 const badInputs: Array<[string, (input: ReturnType<typeof fixture>) => void]> = [
   ['unpublished blueprint', (i) => { i.blueprint.status = 'DRAFT'; }],
   ['wrong variant', (i) => { i.blueprint.variant = 'GENERAL_TRAINING'; }],

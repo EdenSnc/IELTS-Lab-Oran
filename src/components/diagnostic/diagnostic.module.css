@@ -46,6 +46,10 @@
 .reviewList { display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1.5rem; }
 .reviewItem { border: 1px solid #dedee1; border-radius: .8rem; padding: .6rem .8rem; flex: 1 1 12rem; }
 .reviewItem label { display: flex; align-items: flex-start; gap: .5rem; }
+.feedbackItem { margin-block: 1.5rem; overflow-wrap: anywhere; }
+.panel :is(ul,ol) { padding-inline-start: 1.5rem; list-style-position: outside; }
+.panel ul { list-style-type: disc; }
+.panel ol { list-style-type: decimal; }
 .audio { width: 100%; max-width: 36rem; direction: ltr; }
 .sourceImage { display: block; max-width: 100%; height: auto; margin-block: 1rem; }
 .confirmation { border: 2px solid #8d1025; border-radius: 1.2rem; padding: 1.25rem; margin-block: 1.5rem; scroll-margin-top: 10rem; }

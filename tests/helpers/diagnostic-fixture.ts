@@ -18,6 +18,7 @@ export async function diagnosticFixture(options: {
   media?: 'missing' | 'wrongType' | 'unverified' | 'wrongHash' | 'unlinked' | 'tooLong';
   visibleMedia?: 'svg' | 'svgExtension' | 'unsafeKey';
   missingOptions?: boolean; missingPassage?: boolean; unpublished?: boolean; browserChoices?: boolean; scoringKeys?: boolean;
+  audioDurationMs?: number;
 } = {}) {
   const url = process.env.TEST_DATABASE_URL!;
   if (new URL(url).hostname !== '127.0.0.1' || new URL(url).port !== '55322') {
@@ -62,7 +63,7 @@ export async function diagnosticFixture(options: {
         let asset: string | null = null;
         if (skill === 'LISTENING' && options.media !== 'missing') {
           asset = randomUUID(); assetIds.push(asset);
-          await client.query(`INSERT INTO app_private."ContentAsset" (id,type,"storageKey",checksum,"mimeType","durationMs","reviewStatus") VALUES ($1,$2::app_private."ContentAssetType",$3,$4,'audio/mpeg',$5,$6::app_private."ReviewStatus")`,[asset, options.media === 'wrongType' ? 'PHOTO':'AUDIO',`synthetic/${id}/${slot.replaceAll('_','-')}.mp3`, options.media==='wrongHash'?'b'.repeat(64):hash,options.media==='tooLong'?600000:500000,options.media==='unverified'?'PENDING_REVIEW':'VERIFIED']);
+          await client.query(`INSERT INTO app_private."ContentAsset" (id,type,"storageKey",checksum,"mimeType","durationMs","reviewStatus") VALUES ($1,$2::app_private."ContentAssetType",$3,$4,'audio/mpeg',$5,$6::app_private."ReviewStatus")`,[asset, options.media === 'wrongType' ? 'PHOTO':'AUDIO',`synthetic/${id}/${slot.replaceAll('_','-')}.mp3`, options.media==='wrongHash'?'b'.repeat(64):hash,options.media==='tooLong'?600000:options.audioDurationMs??500000,options.media==='unverified'?'PENDING_REVIEW':'VERIFIED']);
           if (options.media !== 'unlinked') await client.query(`INSERT INTO app_private."ContentAssetReference" ("assetId","testPartId") VALUES ($1,$2)`,[asset,part]);
         }
         const type = skill==='READING'?'READING_PASSAGE':skill==='LISTENING'?'SHARED_CONTEXT':'WRITING_PROMPT';
@@ -83,7 +84,7 @@ export async function diagnosticFixture(options: {
             answersByStableKey: Object.fromEntries(Array.from({ length: count }, (_, i) => [`q${i+1}`, ['A','B']])) })) : 'synthetic-not-used-by-delivery';
           await client.query(`INSERT INTO app_private."AnswerKey" ("questionGroupId","encryptedPayload","sourceType","reviewStatus","verifiedById","verifiedAt","updatedAt") VALUES ($1,$4,'HUMAN_VERIFIED',$3::app_private."ReviewStatus",$2,now(),now())`,[group,staff,options.unverifiedKey?'PENDING_REVIEW':'VERIFIED',payload]);
         }
-        if(!options.noReview) await client.query(`INSERT INTO app_private."DiagnosticContentReview" ("testPartId","contentHash","reviewerId","reviewedAt","reviewDueAt",suitability,"audioAssetId","audioHash","audioDurationSeconds","audioBoundariesVerified") VALUES ($1,$2,$3,now()-interval '2 days',now()+interval '30 days',$4,$5,$6,$7,$8)`,[part,options.wrongHash?'b'.repeat(64):hash,staff,skill==='LISTENING'?'HARDER_LISTENING':skill==='READING'?'REPRESENTATIVE_READING':'TASK_2_DIAGNOSTIC',asset,asset?hash:null,asset?(options.media==='tooLong'?600:500):null,!!asset]);
+        if(!options.noReview) await client.query(`INSERT INTO app_private."DiagnosticContentReview" ("testPartId","contentHash","reviewerId","reviewedAt","reviewDueAt",suitability,"audioAssetId","audioHash","audioDurationSeconds","audioBoundariesVerified") VALUES ($1,$2,$3,now()-interval '2 days',now()+interval '30 days',$4,$5,$6,$7,$8)`,[part,options.wrongHash?'b'.repeat(64):hash,staff,skill==='LISTENING'?'HARDER_LISTENING':skill==='READING'?'REPRESENTATIVE_READING':'TASK_2_DIAGNOSTIC',asset,asset?hash:null,asset?(options.media==='tooLong'?600:(options.audioDurationMs??500000)/1000):null,!!asset]);
         if(options.staleReview) await client.query(`INSERT INTO app_private."DiagnosticContentReview" ("testPartId","contentHash","reviewerId","reviewedAt","reviewDueAt",suitability) VALUES ($1,$2,$3,now()-interval '1 day',now()-interval '1 hour',$4)`,[part,hash,staff,skill==='LISTENING'?'HARDER_LISTENING':skill==='READING'?'REPRESENTATIVE_READING':'TASK_2_DIAGNOSTIC']);
       }
     }

@@ -12,14 +12,14 @@ import { diagnosticFixture, diagnosticTestPrisma } from '../helpers/diagnostic-f
 
 const db = 'postgresql://postgres:postgres@127.0.0.1:55322/postgres';
 process.env.TEST_DATABASE_URL = db; process.env.DATABASE_URL = db;
-process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:55321';
+process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:55621';
 process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'diagnostic-local-test-key-only';
 process.env.ENCRYPTION_KEY = '11'.repeat(32);
 const prisma = diagnosticTestPrisma();
 const sql = new Client({ connectionString: db }); await sql.connect();
 const modulePath = process.argv[2];
 const { chromium } = await import(modulePath ? pathToFileURL(path.resolve(modulePath)).href : 'playwright');
-const fixture = await diagnosticFixture({ browserChoices: true });
+const fixture = await diagnosticFixture({ browserChoices: true, scoringKeys: true });
 const { issueDiagnosticInvitation } = await import('../../src/lib/diagnostic/invitation-service.ts');
 const invitation = await issueDiagnosticInvitation({ recipientId: fixture.owner, blueprintId: fixture.blueprint, actorUserId: fixture.staff });
 const artifacts = path.resolve('.superpowers/sdd/PLAN-2026-10-06/browser');
@@ -43,12 +43,16 @@ const jwt = [Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString(
   Buffer.from(JSON.stringify({ sub: fixture.owner, aud: 'authenticated', role: 'authenticated', exp: expires, iat: expires - 7200 })).toString('base64url'), 'synthetic-signature'].join('.');
 const authUser = { id: fixture.owner, aud: 'authenticated', role: 'authenticated', email: `${fixture.owner}@synthetic.invalid`,
   app_metadata: { provider: 'email', providers: ['email'] }, user_metadata: {}, created_at: new Date().toISOString() };
+const staffJwt = [Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'),
+  Buffer.from(JSON.stringify({ sub: fixture.staff, aud: 'authenticated', role: 'authenticated', aal: 'aal2', exp: expires, iat: expires - 7200 })).toString('base64url'), Buffer.from('synthetic-staff-signature').toString('base64url')].join('.');
+const staffAuthUser = { ...authUser, id: fixture.staff, email: `${fixture.staff}@synthetic.invalid` };
 const transport = createServer(async (request, response) => {
-  const url = new URL(request.url, 'http://127.0.0.1:55321');
+  const url = new URL(request.url, 'http://127.0.0.1:55621');
   if (url.pathname === '/auth/v1/user') {
     response.setHeader('Content-Type', 'application/json');
-    if (request.headers.authorization !== `Bearer ${jwt}`) { response.writeHead(401); response.end('{"message":"invalid test token"}'); }
-    else response.end(JSON.stringify(authUser));
+    if (request.headers.authorization === `Bearer ${staffJwt}`) response.end(JSON.stringify(staffAuthUser));
+    else if (request.headers.authorization === `Bearer ${jwt}`) response.end(JSON.stringify(authUser));
+    else { response.writeHead(401); response.end('{"message":"invalid test token"}'); }
     return;
   }
   const prefix = '/storage/v1/object/authenticated/protected-test-assets/';
@@ -69,7 +73,7 @@ const transport = createServer(async (request, response) => {
   }
   response.writeHead(404); response.end();
 });
-await new Promise((resolve, reject) => { transport.once('error', reject); transport.listen(55321, '127.0.0.1', resolve); });
+await new Promise((resolve, reject) => { transport.once('error', reject); transport.listen(55621, '127.0.0.1', resolve); });
 const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--port', '3009'], {
   cwd: process.cwd(), env: { ...process.env, NODE_ENV: 'production', SPEAKING_DEV_AUTH_USER_ID: undefined,
     SUPABASE_SERVICE_ROLE_KEY: 'diagnostic-storage-test-key-only' }, stdio: ['ignore', 'pipe', 'pipe'],
@@ -164,6 +168,37 @@ try {
   assert.equal(await prisma.diagnosticResponse.count({ where: { sessionId, finalizedAt: null } }), 0);
   assert.equal(await page.locator('audio').count(), 0);
   pass('French Task2 saves and irreversible submission finalizes all response slots');
+  await page.goto(`http://127.0.0.1:3009/fr/diagnostic/${sessionId}/report`);
+  await page.getByRole('heading', { name: 'En attente de validation', exact: true }).waitFor();
+  pass('participant sees pending state, not private examiner draft');
+  const staffContext = await browser.newContext({ viewport: { width: 1280, height: 850 } });
+  await staffContext.addCookies([{ name: 'sb-127-auth-token', value: 'base64-' + Buffer.from(JSON.stringify({ access_token: staffJwt,
+    refresh_token: 'synthetic-staff-refresh', token_type: 'bearer', expires_at: expires, expires_in: 7200, user: staffAuthUser })).toString('base64url'),
+    domain: '127.0.0.1', path: '/', sameSite: 'Lax' }]);
+  const examiner = await staffContext.newPage(); examiner.on('pageerror', error => errors.push(error.message));
+  await examiner.goto(`http://127.0.0.1:3009/en/diagnostic/staff/${sessionId}`);
+  for (const criterion of ['Task response','Coherence and cohesion','Lexical resource','Grammatical range and accuracy']) {
+    await examiner.getByLabel(criterion, { exact: true }).fill('Examiner-reviewed observation from this synthetic response.');
+  }
+  await examiner.getByLabel('Speaking observations', { exact: true }).fill('SYNTHETIC in-person observation, not a real participant.');
+  await examiner.getByLabel('Speaking limitations', { exact: true }).fill('Short in-person diagnostic; synthetic browser fixture.');
+  await examiner.getByLabel('Priority next steps', { exact: true }).fill('Develop one specific example.');
+  await examiner.getByRole('button', { name: 'Save examiner feedback', exact: true }).click();
+  await examiner.getByText('Feedback saved.', { exact: true }).waitFor();
+  const candidatePending = await page.request.get(`http://127.0.0.1:3009/api/diagnostic/sessions/${sessionId}/report`);
+  assert.deepEqual(await candidatePending.json(), { state: 'PENDING' });
+  await examiner.getByRole('checkbox', { name: 'I conducted the in-person Speaking diagnostic and reviewed all feedback.', exact: true }).check();
+  await examiner.getByRole('button', { name: 'Release participant report', exact: true }).click();
+  await examiner.getByText('Released', { exact: true }).waitFor();
+  assert.equal((await prisma.diagnosticAssessment.findUnique({ where: { sessionId } })).state, 'RELEASED');
+  pass('staff AAL2 review saves real draft and explicitly releases report');
+  await page.goto(`http://127.0.0.1:3009/ar/diagnostic/${sessionId}/report`);
+  await page.getByRole('heading', { name: 'تقرير الاختبار التشخيصي', exact: true }).waitFor();
+  assert.ok((await page.locator('main').innerText()).includes('Develop one specific example.'));
+  await page.setViewportSize({ width: 320, height: 800 });
+  const reportWidth = await page.locator('main').evaluate(element => ({ scroll: element.scrollWidth, width: element.clientWidth }));
+  assert.ok(reportWidth.scroll <= reportWidth.width+1);
+  pass('released Arabic report is owner scoped and reflows at 320px');
   assert.deepEqual(errors, []); pass('no uncaught browser application errors');
 } catch (error) {
   console.error('Flow failure:', error);

@@ -85,7 +85,7 @@ function audioValid(part: DiagnosticSourcePart, review: DiagnosticReview): boole
     ?? part.stimuli.find(s => s.assetId === audio.assetId)?.asset;
   if (!linked || linked.type !== 'AUDIO' || linked.reviewStatus !== 'VERIFIED'
     || linked.checksum !== audio.sha256 || !linked.mimeType.startsWith('audio/')
-    || linked.durationMs !== audio.durationSeconds * 1000) return false;
+    || linked.durationMs !== Math.round(audio.durationSeconds * 1000)) return false;
   // Reject an asset explicitly linked to another part (full-test recordings).
   return !part.stimuli.some(s => s.assetId === audio.assetId
     && ((s.audioStartMs !== null && s.audioStartMs !== 0)

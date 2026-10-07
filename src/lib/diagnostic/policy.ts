@@ -29,7 +29,8 @@ export const diagnosticReviewSchema = z.object({
   audio: z.object({
     assetId: z.uuid(),
     sha256: hash,
-    durationSeconds: z.number().int().positive(),
+    durationSeconds: z.number().positive().max(1080).refine(seconds => Math.abs(seconds*1000-Math.round(seconds*1000)) < 0.000001,
+      { message: 'Audio duration must be accurate to whole milliseconds' }),
     boundariesVerified: z.literal(true),
   }).strict().optional(),
 }).strict().refine((review) => Date.parse(review.reviewedAt) < Date.parse(review.reviewDueAt), {

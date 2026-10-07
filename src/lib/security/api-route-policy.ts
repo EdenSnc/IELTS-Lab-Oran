@@ -8,6 +8,8 @@ export const PUBLIC_API_ROUTES = {
   '/api/internal/grading/recover': 'QStash consumer verifies the signed raw request body.',
   '/api/internal/grading/writing': 'QStash consumer verifies the signed raw request body.',
   '/api/internal/payments/reconcile': 'QStash consumer verifies the signed raw request body.',
+  '/api/internal/diagnostic/writing': 'Diagnostic worker verifies the signed exact bounded raw request body.',
+  '/api/internal/diagnostic/recover': 'Diagnostic recovery verifies the signed exact bounded raw request body.',
   '/api/leads': 'Public intake validates BotID or the Tally webhook signature.',
   '/api/payments/webhooks/chargily': 'Chargily webhook verifies the signed raw request body.',
   '/api/speaking/webhooks/livekit': 'LiveKit webhook verifies the provider authorization signature.',
