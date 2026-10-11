@@ -31,28 +31,52 @@ reverted to bypass that gate. The older paid mock remains separate.
 9. Repeat the start/read/report screens under `/fr/` and `/ar/`, including narrow
    mobile/RTL and keyboard navigation. English IELTS stimuli deliberately stay English.
 
-For a **quick automated rehearsal without real users, charges or AI API calls**,
-the local isolated diagnostic DB must be running on port 55322. From PowerShell:
+## Double-click local test
 
-```powershell
-cd "C:\Users\Admin\Documents\IELTS Lab\IELTS-Lab-Oran-diagnostic"
-$env:DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:55322/postgres"
-$env:NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:55621"
-$env:NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="diagnostic-local-test-key-only"
-$env:SUPABASE_SERVICE_ROLE_KEY="diagnostic-storage-test-key-only"
-$env:ENCRYPTION_KEY="11" * 32
-npm run build
-node --conditions=react-server --import tsx tests/browser/readiness-flow.mjs "C:/Users/Admin/AppData/Local/npm-cache/_npx/9833c18b2d85bc59/node_modules/playwright/index.mjs"
+Open `C:\Users\Admin\Documents\IELTS Lab\IELTS-Lab-Oran-diagnostic` in Explorer
+and double-click **TEST-READINESS.cmd**. It checks/starts Docker and the existing
+isolated test database, sets process-only QA configuration and reuses your existing
+local build (or starts development if there is no build). No env commands to paste.
+
+Two Edge windows open automatically, already signed in to separate local roles:
+participant intake and teacher workspace. They are isolated browser profiles;
+opening the printed URL in your normal browser does not copy their QA login.
+
+1. In the participant window check the headphone/time and contact checkboxes, then
+   click **Start the 42-minute screen**. Test actual audio and enter an answer.
+2. Wait for **Saved at IELTSLab**, reload and verify the answer remains.
+3. In the launcher's black terminal type `reading` and press Enter to preview Reading.
+4. Type `writing` and Enter to preview Writing. Enter text and wait for Saved.
+5. Type `end` and Enter to submit through the real local state machine. This skips
+   local test time only; it does not modify production exam timing or invent answers.
+6. In the teacher window open **Local Test Participant**. Try changing Writing
+   ratings, adding notes and saving. For Speaking, follow the in-person examiner
+   link and click **Start Speaking**; type `speaking-end` in the terminal to finish
+   its local clock, then click **Complete Speaking** in the examiner window.
+7. Return to the teacher review, set Speaking ratings and notes, save and explicitly
+   release. Reload the participant window and verify only the released result appears.
+8. Type `quit` and Enter in the terminal to stop both local servers and close the
+   test browser. Do this before closing the terminal. Commands never move clocks
+   backwards. Keep real personal data out of this local QA instance.
+
+For the automated check from either CMD or PowerShell, run this one command:
+
+```text
+"C:\Users\Admin\Documents\IELTS Lab\IELTS-Lab-Oran-diagnostic\TEST-READINESS.cmd" -Automated
 ```
+
+Because the path has spaces, wrap the script path in double quotes when running
+it in CMD; in PowerShell prepend `&` to the quoted path. Double-click needs neither.
 
 The existing harness creates isolated QA users, starts/stops its own production
 server, exercises real app/content/database flows and saves screenshots/booklets
 under `.superpowers/sdd/PLAN-2026-10-06/readiness-browser`. Its external identity
 and AI responses are controlled doubles, not proof of real OAuth/provider delivery.
 Do not deploy this test build or reuse these process-only values as real credentials.
-Open a fresh PowerShell window afterwards to avoid carrying test overrides into
-normal commands. The cached Playwright path is this machine's verified location;
-use the installed module location if it changes.
+The launcher sets test variables in its own child process and leaves `.env` and
+the parent terminal unchanged. AI, real authentication/email and payments are not
+live-tested by this manual workspace; human assessment remains usable. Real AI
+requires the separate deployment/privacy/provider gates above.
 
 ## Verify QStash delivery, not just installation
 
