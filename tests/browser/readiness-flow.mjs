@@ -37,6 +37,15 @@ const base='http://127.0.0.1:3010',artifacts=path.resolve('.superpowers/sdd/PLAN
 let browser;const errors=[],passes=[];
 const pass=name=>{passes.push(name);console.log('PASS '+name);};
 async function until(check,label,timeout=30000){const end=Date.now()+timeout;while(Date.now()<end){if(await check())return;await new Promise(r=>setTimeout(r,200));}throw new Error('Timed out: '+label);}
+async function readinessLayout(page){
+ assert.equal(await page.locator('main').evaluate(el=>el.scrollWidth<=el.clientWidth),true,'readiness main must reflow without clipping');
+ const undersized=await page.locator('header a, main nav a, main button, main input:not([type=checkbox]):not([type=radio]), main select').evaluateAll(elements=>elements.filter(el=>el.getBoundingClientRect().height>0&&el.getBoundingClientRect().height<44).map(el=>el.textContent||el.getAttribute('name')));
+ assert.deepEqual(undersized,[],'visible readiness controls must have 44px targets');
+ for(const panel of await page.locator('main > form, main > section:has(fieldset)').all()){
+  assert.equal(await panel.evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)','question/intake surfaces must remain opaque');
+  assert.equal(await panel.evaluate(el=>getComputedStyle(el).backdropFilter),'none','question/intake surfaces must not blur');
+ }
+}
 async function account(name){const context=await browser.newContext({viewport:{width:1280,height:850}});const {token,user}=identities.get(name);
  await context.addCookies([{name:'sb-127-auth-token',value:'base64-'+Buffer.from(JSON.stringify({access_token:token,refresh_token:'qa-refresh',token_type:'bearer',expires_at:exp,expires_in:7200,user})).toString('base64url'),domain:'127.0.0.1',path:'/',sameSite:'Lax'}]);return context;}
 try{
@@ -48,11 +57,20 @@ try{
  assert.equal((await context.request.get(base+'/api/diagnostic/readiness/staff')).status(),403);pass('candidate keys require staff and AAL2');
  if(!process.argv.includes('--print-only')){
  const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
- await page.goto(base+'/en/diagnostic/readiness');await page.locator('input[name=name]').fill('Readiness Browser Participant');await page.locator('input[name=phone]').fill('+213780000004');
+ await page.goto(base+'/en/diagnostic/readiness');await page.locator('input[name=name]').waitFor();
+ await readinessLayout(page);await page.setViewportSize({width:360,height:800});await readinessLayout(page);
+ const reference=page.locator('main nav a').first();await reference.focus();assert.ok(await reference.evaluate(el=>parseFloat(getComputedStyle(el).outlineWidth)>=3),'readiness reference links need visible keyboard focus');
+ await page.setViewportSize({width:1280,height:850});
+ await page.locator('input[name=name]').fill('Readiness Browser Participant');await page.locator('input[name=phone]').fill('+213780000004');
  await page.locator('select[name=pathway]').selectOption('GENERAL_TRAINING');await page.locator('input[name=audio]').check();await page.locator('input[name=consent]').check();
  await page.getByRole('button',{name:'Start the 42-minute screen',exact:true}).click();await page.waitForURL(/\/readiness\/[a-f0-9-]{36}$/u);
  const id=page.url().split('/').at(-1),input=page.locator('main input:not([type=radio]):not([type=checkbox])').first();
  await until(()=>input.isEnabled(),'writer lease');
+ await readinessLayout(page);
+ await page.emulateMedia({forcedColors:'active',reducedMotion:'reduce'});
+ assert.equal(await page.locator('header').evaluate(el=>getComputedStyle(el).backdropFilter),'none','forced colors must remove readiness glass');
+ await page.emulateMedia({forcedColors:'none',reducedMotion:'no-preference'});
+ pass('readiness desktop / 360px intake has solid content, 44px targets, link focus and accessible glass fallback');
  assert.equal(await prisma.diagnosticSession.count({where:{userId:ids.owner}}),1);assert.equal(await prisma.entitlement.count({where:{userId:ids.owner}}),0);
  assert.equal((await stranger.request.get(`${base}/api/diagnostic/readiness/${id}`)).status(),404);
  const payload=await (await context.request.get(`${base}/api/diagnostic/readiness/${id}`)).json();
@@ -80,6 +98,7 @@ try{
  assert.equal(await page.getByRole('textbox',{name:'L1',exact:true}).inputValue(),'late offline listening draft');
  pass('offline work past a section boundary is retained as an excluded copy, not lost or allowed to block later answers');
  await page.goto(`${base}/ar/diagnostic/readiness/${id}`);await until(()=>page.locator('main input[type=radio]').first().isEnabled(),'Arabic Reading');
+ await page.setViewportSize({width:360,height:800});await readinessLayout(page);
  await page.setViewportSize({width:320,height:740});assert.equal(await page.locator('html').getAttribute('dir'),'rtl');assert.ok((await page.locator('main').innerText()).includes('Railway Season Tickets'));
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:path.join(artifacts,'arabic-mobile.png'),fullPage:true});pass('GT Reading is authentic; Arabic mobile reflows without horizontal overflow');
  const writingStart=new Date(Date.now()-1561000);await prisma.diagnosticSession.update({where:{id},data:{startedAt:writingStart,deadline:new Date(writingStart.getTime()+3060000)}});
@@ -96,6 +115,10 @@ try{
  await page.getByRole('checkbox',{name:'I agree to Google Gemini analysis of my submitted diagnostic essay.',exact:true}).check();
  await page.getByRole('button',{name:'Save Writing preferences',exact:true}).click();await page.getByRole('status').filter({hasText:'Writing preferences saved.'}).waitFor();
  const teacher=await staff.newPage();teacher.on('pageerror',e=>errors.push(e.message));await teacher.goto(`${base}/en/diagnostic/staff/readiness/${id}`);
+ await teacher.getByRole('button',{name:'Request AI writing suggestions',exact:true}).waitFor();
+ await teacher.setViewportSize({width:360,height:800});await readinessLayout(teacher);
+ await teacher.screenshot({path:path.join(artifacts,'teacher-mobile.png'),fullPage:true});
+ await teacher.setViewportSize({width:1280,height:850});
  await teacher.getByRole('button',{name:'Request AI writing suggestions',exact:true}).click();
  await until(async()=>await prisma.diagnosticWritingRun.count({where:{sessionId:id}})===1,'durable Writing run');
  const aiRun=await prisma.diagnosticWritingRun.findFirstOrThrow({where:{sessionId:id},orderBy:{createdAt:'desc'}});
@@ -120,6 +143,8 @@ try{
  pass('separate seven-minute human Speaking flow returns to the matching readiness review, not the old assessment');
  await teacher.reload();await teacher.getByRole('button',{name:'Release result to participant',exact:true}).click();await until(async()=>await prisma.diagnosticAssessment.count({where:{sessionId:id,state:'RELEASED'}})===1,'teacher release');
  await page.reload();await page.getByRole('heading',{name:'Readiness result',exact:true}).waitFor();assert.ok((await page.locator('main').innerText()).includes('Conditional'));
+ await page.setViewportSize({width:360,height:800});await readinessLayout(page);
+ await page.screenshot({path:path.join(artifacts,'result-mobile.png'),fullPage:true});
  pass('Writing review reloads safely; missing Speaking stays Conditional and released owner result renders');
  }
  const packet=await staff.request.get(base+'/api/diagnostic/readiness/staff');assert.equal(packet.status(),200);

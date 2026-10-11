@@ -195,13 +195,16 @@ export async function readinessStaffView(actorUserId:string,sessionId?:string) {
     const now=await diagnosticNow(tx);
     const result=[];
     for(const row of rows){const s=await advance(tx,row,now);const {manifest,runtime}=source(s);
+      let writingConsentValid=s.writingAiAdultAttested&&s.writingAiConsented&&!s.writingAiRevokedAt;
+      if(writingConsentValid&&sessionId){try{await assertDiagnosticWritingAiConsent(tx,s.id,s.writingConsentVersion);}
+        catch(error){if(!(error instanceof DiagnosticError)||error.code!=='AI_CONSENT_REQUIRED')throw error;writingConsentValid=false;}}
       const run=sessionId?await tx.diagnosticWritingRun.findFirst({where:{sessionId:s.id,promptVersion:READINESS_WRITING_PROMPT_VERSION,createdAt:{gt:new Date(now.getTime()-30*86400000)}},orderBy:{createdAt:'desc'},select:{id:true,state:true,feedback:true}}):null;
       const essay=s.responses.find(r=>r.questionId===manifest.itemIds.W1)!.answer;
       result.push({id:s.id,state:s.state,intake:runtime.intake,cohort:s.invitation.cohort,extension:runtime.extension,startedAt:s.startedAt.toISOString(),
         completionSeconds:s.submittedAt?(s.submittedAt.getTime()-s.startedAt.getTime())/1000:null,
         scores:s.state==='SUBMITTED'?scores(s):null,writing:essay,
-        writingAi:{available:diagnosticAiAvailable()&&s.writingAiAdultAttested&&s.writingAiConsented&&!s.writingAiRevokedAt,
-          run:run?{id:run.id,state:run.state,feedback:run.state==='SUCCEEDED'&&s.writingAiConsented&&!s.writingAiRevokedAt?parseReadinessWritingFeedback(run.feedback,essay):null}:null},
+        writingAi:{available:diagnosticAiAvailable()&&writingConsentValid,
+          run:run?{id:run.id,state:run.state,feedback:run.state==='SUCCEEDED'&&writingConsentValid?parseReadinessWritingFeedback(run.feedback,essay):null}:null},
         assessment:s.assessment?{version:s.assessment.version,state:s.assessment.state,readiness:s.assessment.readiness}:null,
         ...(sessionId?{pack:manifest.pack,answers:answers(s,manifest)}:{})});}
     return result;

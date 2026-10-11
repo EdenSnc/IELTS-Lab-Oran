@@ -11,6 +11,6 @@ export async function GET(request:Request,context:Context){try{
 }catch(error){return diagnosticApiError(error);}}
 export async function POST(request:Request,context:Context){try{
  assertSameOrigin(request);const user=await requireRequestUser(request,['STUDENT']);const sessionId=diagnosticIdSchema.parse((await context.params).sessionId);
- const body=await parseDiagnosticBody(request,z.object({adultAttested:z.boolean(),accepted:z.boolean()}).strict(),{maxBytes:1000});
+ const body=await parseDiagnosticBody(request,z.object({adultAttested:z.boolean(),accepted:z.boolean(),provider:z.enum(['gemini','deepseek']).optional()}).strict(),{maxBytes:1000});
  return noStoreJson(await saveDiagnosticWritingConsent({sessionId,userId:user.id,...body}));
 }catch(error){return diagnosticApiError(error);}}

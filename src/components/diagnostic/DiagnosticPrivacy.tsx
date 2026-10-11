@@ -17,7 +17,7 @@ export default function DiagnosticPrivacy({locale,sessionId,initialSpeaking,init
   try{if(kind==='speaking'){
    const value=await diagnosticRequest<Speaking>(`/api/diagnostic/sessions/${sessionId}/speaking`,{method:'POST',body:JSON.stringify({adultAttested:speaking.adultAttested,recordingConsented:speaking.recordingConsented,aiConsented:speaking.aiConsented})});
    setSpeaking(value);onSpeakingChange(value);
-  }else setWriting(await diagnosticRequest<Writing>(`/api/diagnostic/sessions/${sessionId}/consent`,{method:'POST',body:JSON.stringify({adultAttested:writing.adultAttested,accepted:writing.accepted})}));
+  }else setWriting(await diagnosticRequest<Writing>(`/api/diagnostic/sessions/${sessionId}/consent`,{method:'POST',body:JSON.stringify({adultAttested:writing.adultAttested,accepted:writing.accepted,provider:writing.provider})}));
   setSaved(kind);
   }catch{setError(true);}finally{setBusy(false);}
  }
@@ -32,12 +32,12 @@ export default function DiagnosticPrivacy({locale,sessionId,initialSpeaking,init
    {speaking.privacyRevokedAt?<p>{p.withdrawn}</p>:<button className={styles.secondary} disabled={busy}>{m.saveConsent}</button>}
    {saved==='speaking'&&<p role="status">{m.consentSaved}</p>}
   </section></form>
-  <form noValidate onSubmit={event=>{event.preventDefault();void save('writing');}}><section className={styles.panel}><h2>{p.writingTitle}</h2><p>{p.help}</p><p className={styles.meta}>{p.provider}</p>
+  <form noValidate onSubmit={event=>{event.preventDefault();void save('writing');}}><section className={styles.panel}><h2>{p.writingTitle}</h2><p>{p.help}</p><p className={styles.meta}>{writing.provider==='deepseek'?p.deepseekProvider:p.provider}</p>
    {!writing.available&&<p className={styles.meta}>{p.unavailable}</p>}
    <label className={styles.option}><input type="checkbox" checked={writing.adultAttested} disabled={busy||!!writing.revokedAt}
     onChange={event=>{setSaved(undefined);setWriting(value=>({...value,adultAttested:event.target.checked,...(!event.target.checked?{accepted:false}:{})}));}}/><span>{p.adult}</span></label>
    <label className={styles.option}><input type="checkbox" checked={writing.accepted} disabled={busy||!!writing.revokedAt||(!writing.available&&!writing.accepted)||!writing.adultAttested}
-    onChange={event=>{setSaved(undefined);setWriting(value=>({...value,accepted:event.target.checked}));}}/><span>{p.writing}</span></label>
+    onChange={event=>{setSaved(undefined);setWriting(value=>({...value,accepted:event.target.checked}));}}/><span>{writing.provider==='deepseek'?p.deepseekWriting:p.writing}</span></label>
    {writing.revokedAt?<p>{p.withdrawn}</p>:<button className={styles.secondary} disabled={busy}>{p.save}</button>}
    {saved==='writing'&&<p role="status">{p.saved}</p>}
   </section></form>

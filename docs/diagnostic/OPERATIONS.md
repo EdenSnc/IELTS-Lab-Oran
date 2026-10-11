@@ -43,7 +43,7 @@ Use an examiner-checked de-identified transcript where appropriate; pronunciatio
 cannot be assessed from text alone. Human feedback always remains available.
 Application deletion does not erase Google safety logs, training use or backups.
 
-The selected implementation is direct **post-session Gemini 3.5 Flash-Lite**:
+The default implementation is direct **post-session Gemini 3.5 Flash-Lite**:
 one audio request produces a private transcript and advisory observations. No
 Live API, separate transcription account or paid fallback is needed. Official
 model documentation confirms audio input and structured output; Live is not
@@ -116,3 +116,67 @@ application verifies the bounded exact raw body and signature before doing work.
 Do not enable capture without a successful scheduled invocation and storage retry
 verification. Cleanup cancels 30-day AI data, clears private notes, expires 90-day
 reports and retries deletion tombstones. Its timing never extends read access.
+
+## Provider switch and cost controls
+
+Readiness Writing defaults to `DIAGNOSTIC_WRITING_PROVIDER=gemini`. To switch,
+set `DIAGNOSTIC_WRITING_PROVIDER=deepseek`,
+`DIAGNOSTIC_DEEPSEEK_MODEL=deepseek-flash` and server-only `DEEPSEEK_API_KEY`.
+Redeploy; participants must explicitly consent to DeepSeek before new requests.
+Prior Google consent is not transferable. Existing Writing runs are not relabelled
+as a different provider; input hashes separate providers. No automatic fallback,
+new API subscription, top-up or billing activation occurs. DeepSeek is metered,
+not an assured free API. A quota failure leaves human review available; configuration
+and empty-balance failures stop rather than repeatedly spending requests.
+Speaking audio remains Gemini: the selected DeepSeek API is not an audio
+transcription replacement. Pronunciation remains an examiner rating. The older
+diagnostic and commercial mock do not inherit this readiness provider switch.
+
+One bounded request per run; successful runs are reused. Writing output is capped
+at 3,000 tokens, HTTP responses at 64 KiB, provider timeout at 45 seconds. Strict
+schema and exact quotation validation still run before any teacher uses the draft.
+Do not reduce rubric quality by silently truncating essays or evidence. Calibrate
+provider changes against teacher-reviewed examples before using them for real
+participants; switching providers alone is not evidence of equivalent quality.
+
+QStash remains the wake-up/retry transport; PostgreSQL owns durable state. Keeping
+only DB rows would require another reliable scheduler/worker, retry/backoff and
+monitoring. DB+cron is possible but is not a simpler like-for-like replacement here.
+Upstash public pricing checked 2026-10-11 lists 1,000 delivery attempts/day free;
+if this account's console says 500, operate within 500. Retries and schedules count.
+Six four-hour recovery invocations/day plus two first-delivery AI jobs/participant
+would allow about 247 participants/day at 500 attempts, before retries, other jobs
+and Gemini limits. This is arithmetic, not guaranteed capacity. Confirm the actual
+account plan; never upgrade it automatically. Official references:
+https://upstash.com/pricing/qstash ,
+https://api-docs.deepseek.com/quick_start/pricing/ ,
+https://api-docs.deepseek.com/guides/json_mode/ .
+
+## Environment locations
+
+No QStash-specific environment file is required. For local work, use the existing
+ignored `.env` in the checkout actually being run; standalone scripts already
+using dotenv load that file. Do not overwrite another checkout's secrets or commit
+them. `.env.example` is documentation, not the live credentials file. Next.js local
+override files, if present, take precedence over `.env`; check those before changing
+a value that appears ineffective.
+
+For deployment, use Vercel project `ielts-lab-oran` → Settings → Environment Variables.
+`QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`,
+`GEMINI_API_KEY` and optional `DEEPSEEK_API_KEY` are Secrets, never NEXT_PUBLIC.
+Production `QSTASH_CALLBACK_BASE_URL=https://www.ieltslab.org`; Preview requires
+its own accessible deployment origin and isolated database/storage. Scope Preview
+diagnostic flags to `codex/short-diagnostic` while validating. A protected Preview
+needs an explicitly configured delivery bypass; do not disable project protection.
+Do not let Preview callbacks target Production. The integration-provided QSTASH_URL
+is not the application callback origin. Development values are only needed for
+real local provider tests; localhost is not publicly reachable by QStash without
+a deliberately configured local development transport/tunnel.
+
+`DIAGNOSTIC_WRITING_PROVIDER`, `DIAGNOSTIC_WRITING_MODEL`,
+`DIAGNOSTIC_DEEPSEEK_MODEL`, `DIAGNOSTIC_SPEAKING_MODEL`,
+`PRIVATE_DIAGNOSTIC_RECORDING_BUCKET` and QSTASH_CALLBACK_BASE_URL are Config values.
+Keep `DIAGNOSTIC_AI_ENABLED`, `DIAGNOSTIC_AI_DATA_USE_APPROVED` and
+`DIAGNOSTIC_RECORDING_ENABLED` false until their documented content/privacy/storage
+gates pass. They are not substitutes for participant consent. Env changes require
+a new deployment and local process restart; never send secrets in chat or screenshots.

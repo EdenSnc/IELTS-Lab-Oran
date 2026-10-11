@@ -10,7 +10,7 @@ import { readinessMarkingDraft } from '@/lib/diagnostic/readiness-client-core';
 import {diagnosticAssessmentMessages} from '@/lib/diagnostic/assessment-messages';
 import DiagnosticSpeakingAnalysis from './DiagnosticSpeakingAnalysis';
 import { diagnosticRequest } from './diagnostic-request';
-import styles from './diagnostic.module.css';
+import styles from './readiness.module.css';
 type Row=Awaited<ReturnType<typeof readinessStaffView>>[number];
 type Mark={writing:number[];speaking:number[]|null;notes:string;decision:string;overrideReason:string;writingRunId?:string|null;speakingRunId?:string|null};
 export default function ReadinessStaff({locale,sessionId}:{locale:DiagnosticLocale;sessionId?:string}){
@@ -31,7 +31,7 @@ export default function ReadinessStaff({locale,sessionId}:{locale:DiagnosticLoca
    <p className={styles.meta} lang="en" dir="ltr">{criterion.foundation}<br/>{criterion.conditional}<br/>{criterion.ready}</p>
    <select className={styles.input} value={values[index]} onChange={e=>{const next=[...values];next[index]=Number(e.target.value);setMark({...mark,[kind]:next});setConfirmed(false);}}><option value={-1}>—</option>{m.ratings.map((text,i)=><option key={i} value={i}>{text}</option>)}</select></fieldset>);}
  return <div className={styles.shell} lang={locale} dir={locale==='ar'?'rtl':'ltr'}><main className={styles.container}><h1 className={styles.heroTitle}>{m.teacher}</h1><p>{m.internal}</p>
-  <div className={styles.actions}><Link className={styles.secondary} target="_blank" href={`/${locale}/diagnostic/staff/readiness/print`}>{m.keys}</Link><Link className={styles.secondary} href={`/${locale}/diagnostic/staff/readiness`}>{m.teacher}</Link></div>
+  <nav className={styles.resources}><Link target="_blank" href={`/${locale}/diagnostic/staff/readiness/print`}>{m.keys}</Link><Link href={`/${locale}/diagnostic/staff/readiness`}>{m.teacher}</Link></nav>
   {error&&<p role="alert" className={styles.notice}>{error}</p>}{confirmed&&<p role="status">{m.confirmed}</p>}
   {!sessionId?<><form className={styles.panel} onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);void action({action:'activate',keyReviewConfirmed:f.get('review')==='on'});}}><label className={styles.check}><input name="review" type="checkbox" required/>{m.reviewConfirm}</label><button className={styles.primary} disabled={busy}>{m.activate}</button></form>
    <form className={styles.panel} onSubmit={e=>void invite(e)}><h2>{m.invite}</h2><label className={styles.label}>{m.email}<input className={styles.input} name="email" type="email" required/></label><label className={styles.label}>{m.cohort}<input className={styles.input} name="cohort" defaultValue="CEIL_AUTUMN_2026" pattern="[A-Za-z0-9_-]{1,80}" required/></label><button className={styles.primary} disabled={busy}>{m.invite}</button></form>
@@ -56,17 +56,17 @@ export default function ReadinessStaff({locale,sessionId}:{locale:DiagnosticLoca
    </section>}
    <details className={styles.panel} lang="en" dir="ltr"><summary>{m.speak}</summary><p>{pack.speaking.examinerInstructions}</p><h2>Familiar questions · 2 minutes</h2><ol>{pack.speaking.familiarQuestions.map(q=><li key={q}>{q}</li>)}</ol><h2>Preparation · 1 minute / long turn · 1½ minutes</h2><p>{pack.speaking.longTurn.instruction}</p><p>{pack.speaking.longTurn.prompt}</p><ul>{pack.speaking.longTurn.bullets.map(q=><li key={q}>{q}</li>)}</ul><h2>Follow-up · 2½ minutes</h2><ol>{pack.speaking.followUp.map(q=><li key={q}>{q}</li>)}</ol></details>
    {row.state==='SUBMITTED'&&<div className={styles.actions}><Link className={styles.secondary} target="_blank" href={`/${locale}/diagnostic/examiner/${row.id}`}>{m.speak}</Link></div>}
-   {row.state==='SUBMITTED'&&<DiagnosticSpeakingAnalysis locale={locale} sessionId={row.id} locked={row.assessment?.state==='RELEASED'} assessmentBusy={busy} onApply={(runId,feedback,ratings)=>{
+   {row.state==='SUBMITTED'&&<div className={styles.embedded}><DiagnosticSpeakingAnalysis locale={locale} sessionId={row.id} locked={row.assessment?.state==='RELEASED'} assessmentBusy={busy} onApply={(runId,feedback,ratings)=>{
      if(busy||!ratings||row.assessment?.state==='RELEASED')return;
      setMark(prior=>({...prior,speakingRunId:runId,speaking:[ratings.FLUENCY_COHERENCE??-1,ratings.LEXICAL_RESOURCE??-1,ratings.GRAMMAR??-1,prior.speaking?.[3]??-1],
        notes:[prior.notes,...feedback.observations,...feedback.nextSteps,...feedback.limitations].filter(Boolean).join('\n').slice(0,4000)}));setConfirmed(false);
-   }}/>}
+   }}/></div>}
    <form className={styles.panel} onSubmit={e=>{e.preventDefault();save(false);}}><p>{m.ratingHelp}</p>{ratings('writing',pack.writing.rubric)}
     <label className={styles.check}><input type="checkbox" checked={mark.speaking!==null} onChange={e=>{setMark({...mark,speaking:e.target.checked?[-1,-1,-1,-1]:null,speakingRunId:null});setConfirmed(false);}}/>{m.speak}</label>{mark.speaking===null?<p>{m.unassessed}</p>:ratings('speaking',pack.speaking.rubric)}
     <label className={styles.label}>{m.notes}<textarea className={styles.essay} maxLength={4000} minLength={10} value={mark.notes} onChange={e=>{setMark({...mark,notes:e.target.value});setConfirmed(false);}} required/></label>
     <label className={styles.label}>{m.decision}<select className={styles.input} value={mark.decision} onChange={e=>{setMark({...mark,decision:e.target.value});setConfirmed(false);}}><option value="">{m.automatic}</option><option value="READY">{m.ready}</option><option value="CONDITIONAL">{m.conditional}</option><option value="FOUNDATION">{m.foundation}</option></select></label>
     <label className={styles.label}>{m.override}<textarea className={styles.input} maxLength={1500} value={mark.overrideReason} onChange={e=>{setMark({...mark,overrideReason:e.target.value});setConfirmed(false);}}/></label>
-    <div className={styles.actions}><button className={styles.primary} disabled={busy||row.state!=='SUBMITTED'||row.assessment?.state==='RELEASED'}>{m.save}</button><button type="button" className={styles.secondary} disabled={busy||row.state!=='SUBMITTED'||row.assessment?.state==='RELEASED'} onClick={()=>save(true)}>{m.release}</button></div>
+    <div className={styles.actionBar}><button className={styles.primary} disabled={busy||row.state!=='SUBMITTED'||row.assessment?.state==='RELEASED'}>{m.save}</button><button type="button" className={styles.secondary} disabled={busy||row.state!=='SUBMITTED'||row.assessment?.state==='RELEASED'} onClick={()=>save(true)}>{m.release}</button></div>
    </form></>:<p>{m.loading}</p>}
  </main></div>;
 }

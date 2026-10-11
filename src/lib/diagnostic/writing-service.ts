@@ -1,5 +1,5 @@
 import 'server-only';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { GoogleGenAI } from '@google/genai';
 import { Client } from '@upstash/qstash';
@@ -16,6 +16,7 @@ import { buildDiagnosticWritingPrompt, diagnosticWritingFeedbackSchema, parseDia
   diagnosticWritingInputHash, DIAGNOSTIC_WRITING_PROMPT_VERSION } from './writing-core';
 import {loadReadinessWritingInput,ensureReadinessWritingAssessment} from './readiness-service';
 import {READINESS_WRITING_PROMPT_VERSION,buildReadinessWritingPrompt,readinessWritingFeedbackSchema,parseReadinessWritingFeedback} from './readiness-writing-core';
+import {generateDeepSeekWriting,readDiagnosticWritingProvider} from './ai-provider';
 
 export const diagnosticWritingJobSchema = z.object({ version: z.literal(1), type: z.literal('DIAGNOSTIC_WRITING'), runId: z.uuid() }).strict();
 export const diagnosticRecoveryJobSchema = z.object({ version: z.literal(1), type: z.literal('RECOVER_DIAGNOSTIC_WRITING') }).strict();
@@ -23,7 +24,9 @@ export const diagnosticRecoveryJobSchema = z.object({ version: z.literal(1), typ
 export async function loadDiagnosticWritingInput(sessionId: string) {
   const target = await prisma.diagnosticSession.findUnique({ where: { id: sessionId }, select: { userId: true,readiness:true } });
   if (!target) throw new DiagnosticError('NOT_FOUND',404);
-  if(target.readiness!==null){const input=await loadReadinessWritingInput(sessionId);return {...input,inputHash:diagnosticWritingInputHash(input)};}
+  if(target.readiness!==null){const input=await loadReadinessWritingInput(sessionId),hash=diagnosticWritingInputHash(input);
+    const {provider}=readDiagnosticWritingProvider();
+    return {...input,inputHash:provider==='gemini'?hash:createHash('sha256').update(JSON.stringify([hash,provider])).digest('hex')};}
   const source = await loadOwnedDiagnosticSource({ sessionId, userId: target.userId });
   if (source.session.state !== 'SUBMITTED' || source.session.responses.some(response => !response.finalizedAt)) throw new DiagnosticError('WRITTEN_NOT_SUBMITTED',409);
   const question = source.manifest.questions.find(item => item.skill === 'WRITING')!;
@@ -91,15 +94,15 @@ type GenerateResult = { feedback: unknown; model: string; usage: { inputTokens: 
 type Generator = (input: Awaited<ReturnType<typeof loadDiagnosticWritingInput>>) => Promise<GenerateResult>;
 export const generateDiagnosticWritingFeedback: Generator = async input => {
   if(!diagnosticAiAvailable())throw new DiagnosticError('AI_UNAVAILABLE',503);
-  if (!process.env.GEMINI_API_KEY) throw new Error('WRITING_AI_NOT_CONFIGURED');
-  // Diagnostic model selection must not inherit the ordinary mock's model list.
-  const model = process.env.DIAGNOSTIC_WRITING_MODEL?.trim() || 'gemini-3.5-flash-lite';
-  if (!model) throw new Error('WRITING_AI_NOT_CONFIGURED');
   const readiness=input.promptVersion===READINESS_WRITING_PROMPT_VERSION;
+  const {provider,model}=readDiagnosticWritingProvider(process.env,readiness);
   const prompt = readiness?buildReadinessWritingPrompt({...input,rubric:input.rubric!}):buildDiagnosticWritingPrompt(input);
+  const schema=readiness?readinessWritingFeedbackSchema:diagnosticWritingFeedbackSchema;
+  if(provider==='deepseek')return generateDeepSeekWriting({apiKey:process.env.DEEPSEEK_API_KEY??'',model,...prompt,schema});
+  if (!process.env.GEMINI_API_KEY) throw new Error('AI_PROVIDER_CONFIGURATION');
   const result = await new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { timeout: 45_000 } }).models.generateContent({
     model, contents: [{ role: 'user', parts: [{ text: prompt.data }] }], config: {
-      systemInstruction: prompt.system, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(readiness?readinessWritingFeedbackSchema:diagnosticWritingFeedbackSchema),
+      systemInstruction: prompt.system, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(schema),
       maxOutputTokens: 3000,
     },
   });
@@ -160,6 +163,10 @@ export async function processDiagnosticWriting(runId: string, generate: Generato
       outputTokens: z.number().int().nonnegative().max(10000000) }).strict() }).parse({ model: result.model, usage: result.usage });
     await diagnosticTransaction(async tx => {
       const now = await diagnosticNow(tx);
+      try{await assertDiagnosticWritingAiConsent(tx,claim.run.sessionId,claim.run.consentVersion);}
+      catch(error){if(!(error instanceof DiagnosticError)||error.code!=='AI_CONSENT_REQUIRED')throw error;
+        await tx.diagnosticWritingRun.updateMany({where:{id:runId,state:'RUNNING',leaseOwner},data:{state:'CANCELLED',feedback:Prisma.DbNull,
+          leaseOwner:null,leaseExpiresAt:null,completedAt:now,errorCode:'PROVIDER_OR_CONSENT_CHANGED'}});return;}
       // Compare-and-set fencing prevents expired/replaced workers or a released report from changing state.
       await tx.diagnosticWritingRun.updateMany({ where: { id: runId, state: 'RUNNING', leaseOwner,
         leaseExpiresAt: { gt: now }, session: { assessment: { state: 'DRAFT' },writingAiConsented:true,writingAiAdultAttested:true,writingAiRevokedAt:null,writingConsentVersion:claim.run.consentVersion } }, data: {
@@ -168,11 +175,12 @@ export async function processDiagnosticWriting(runId: string, generate: Generato
       } });
     });
   } catch (error) {
-    const permanent = error instanceof DiagnosticError || (error instanceof Error && /^DIAGNOSTIC_WRITING_(?:INPUT|OUTPUT)_INVALID$/u.test(error.message));
+    const providerCode=error instanceof Error&&/^AI_PROVIDER_(?:CONFIGURATION|BALANCE|RATE_LIMIT)$/u.test(error.message)?error.message:null;
+    const permanent = error instanceof DiagnosticError || providerCode==='AI_PROVIDER_CONFIGURATION'||providerCode==='AI_PROVIDER_BALANCE' || (error instanceof Error && /^DIAGNOSTIC_WRITING_(?:INPUT|OUTPUT)_INVALID$/u.test(error.message));
     console.error('DIAGNOSTIC_WRITING_RUN_FAILED', { runId, permanent });
     await prisma.diagnosticWritingRun.updateMany({ where: { id: runId, state: 'RUNNING', leaseOwner }, data: {
       state: permanent || claim.run.attempts >= 5 ? 'FAILED' : 'QUEUED', leaseOwner: null, leaseExpiresAt: null,
-      lastEnqueuedAt: null, errorCode: permanent ? 'INVALID_EVIDENCE' : 'AI_RETRYABLE',
+      lastEnqueuedAt: null, errorCode: providerCode??(permanent ? 'INVALID_EVIDENCE' : 'AI_RETRYABLE'),
       ...(permanent || claim.run.attempts >= 5 ? { completedAt: new Date() } : {}),
     } });
   }
