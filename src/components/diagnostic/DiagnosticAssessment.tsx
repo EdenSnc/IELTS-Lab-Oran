@@ -5,18 +5,23 @@ import { useState } from 'react';
 import type { DiagnosticReviewDto } from '@/lib/diagnostic/writing-service';
 import type { DiagnosticWritingFeedback } from '@/lib/diagnostic/writing-core';
 import { diagnosticAssessmentMessages } from '@/lib/diagnostic/assessment-messages';
+import {diagnosticAnalysisMessages} from '@/lib/diagnostic/analysis-messages';
 import { diagnosticErrorMessage, type DiagnosticLocale } from '@/lib/diagnostic/messages';
 import { diagnosticRequest } from './diagnostic-request';
 import styles from './diagnostic.module.css';
+import DiagnosticSpeakingAnalysis from './DiagnosticSpeakingAnalysis';
 
 const lines = (value: string) => value.split('\n').map(item => item.trim()).filter(Boolean);
 export default function DiagnosticAssessment({ locale, sessionId, initial }: { locale: DiagnosticLocale; sessionId: string; initial: DiagnosticReviewDto }) {
   const m = diagnosticAssessmentMessages[locale];
+  const analysisMessages=diagnosticAnalysisMessages[locale];
   const [view,setView] = useState(initial); const [busy,setBusy] = useState(false);
   const [writing,setWriting] = useState<DiagnosticWritingFeedback>(initial.assessment.writing ?? {
     criteria: (['TASK_RESPONSE','COHERENCE_COHESION','LEXICAL_RESOURCE','GRAMMAR'] as const).map(criterion => ({ criterion, observation: '', evidence: [] })), nextSteps: [], limitations: [m.shortened],
   });
   const [writingRunId,setWritingRunId] = useState<string | null>(initial.assessment.writingRunId);
+  const [speakingRunId,setSpeakingRunId]=useState<string|null>(initial.assessment.speakingRunId);
+  const [speakingNextSteps,setSpeakingNextSteps]=useState(initial.assessment.speaking?.nextSteps??[]);
   const [speaking,setSpeaking] = useState(initial.assessment.speaking?.observations.join('\n') ?? '');
   const [speakingLimitations,setSpeakingLimitations] = useState(initial.assessment.speaking?.limitations.join('\n') ?? '');
   const [nextSteps,setNextSteps] = useState(initial.assessment.nextSteps.join('\n'));
@@ -50,9 +55,13 @@ export default function DiagnosticAssessment({ locale, sessionId, initial }: { l
       </div>}
       {view.run && ['QUEUED','RUNNING'].includes(view.run.state) && <p role="status" className={styles.meta}>{m.queued}</p>}
       {view.run?.state === 'FAILED' && <p role="status" className={styles.notice}>{m.failed}</p>}
+      <DiagnosticSpeakingAnalysis locale={locale} sessionId={sessionId} locked={locked} assessmentBusy={busy} onApply={(runId,feedback)=>{
+        if(busy||locked)return;change(()=>{
+        setSpeakingRunId(runId);setSpeaking(feedback.observations.join('\n'));setSpeakingLimitations(feedback.limitations.join('\n'));setSpeakingNextSteps(feedback.nextSteps);
+      });}}/>
       <form noValidate onSubmit={event => { event.preventDefault(); void act(async () => {
         const value = await diagnosticRequest<DiagnosticReviewDto['assessment']>(endpoint,{ method: 'POST', body: JSON.stringify({ action: 'save', expectedVersion: view.assessment.version,
-          writing, writingRunId, speaking: speaking.trim() ? { observations: lines(speaking), nextSteps: [], limitations: lines(speakingLimitations) } : null, nextSteps: lines(nextSteps) }) });
+          writing, writingRunId,speakingRunId, speaking: speaking.trim() ? { observations: lines(speaking), nextSteps: speakingNextSteps, limitations: lines(speakingLimitations) } : null, nextSteps: lines(nextSteps) }) });
         setView(previous => ({ ...previous, assessment: value })); setDirty(false); setSaved(true);
       }); }}>
         <fieldset className={styles.fieldset} disabled={busy || locked}><section className={styles.panel}><h2>{m.writing}</h2>
@@ -66,6 +75,10 @@ export default function DiagnosticAssessment({ locale, sessionId, initial }: { l
           </div>)}<label className={styles.label} htmlFor="writing-limits">{m.writingLimitations}</label><textarea className={styles.input} id="writing-limits" rows={3} maxLength={6005}
             value={writing.limitations.join('\n')} onChange={event => change(() => setWriting(previous => ({ ...previous, limitations: event.target.value.split('\n') })))}/>
         </section><section className={styles.panel}><h2>{m.speaking}</h2>
+          {!locked&&speakingRunId&&<><p className={styles.meta}>{analysisMessages.humanOnlyHelp}</p><div className={styles.actions}>
+            <button type="button" className={styles.secondary} disabled={busy} onClick={()=>change(()=>{
+              setSpeakingRunId(null);setSpeaking('');setSpeakingLimitations('');setSpeakingNextSteps([]);
+            })}>{analysisMessages.humanOnly}</button></div></>}
           <label className={styles.label} htmlFor="speaking-observations">{m.speakingObservations}</label><textarea className={styles.input} id="speaking-observations" rows={4} maxLength={9608} value={speaking} onChange={event => change(() => setSpeaking(event.target.value))}/>
           <label className={styles.label} htmlFor="speaking-limits">{m.speakingLimitations}</label><textarea className={styles.input} id="speaking-limits" rows={3} maxLength={6005} value={speakingLimitations} onChange={event => change(() => setSpeakingLimitations(event.target.value))}/>
         </section><section className={styles.panel}><label className={styles.label} htmlFor="priority-next">{m.nextSteps}</label><textarea className={styles.input} id="priority-next" rows={3} maxLength={3603} value={nextSteps} onChange={event => change(() => setNextSteps(event.target.value))}/></section>

@@ -7,6 +7,7 @@ import { diagnosticMessages, diagnosticErrorMessage, type DiagnosticLocale } fro
 import { diagnosticRequest } from './diagnostic-request';
 import { diagnosticAssessmentMessages } from '@/lib/diagnostic/assessment-messages';
 import { diagnosticSpeakingMessages } from '@/lib/diagnostic/speaking-messages';
+import { readinessMessages } from '@/lib/diagnostic/readiness-messages';
 import styles from './diagnostic.module.css';
 
 export default function DiagnosticStaff({ locale, initialOverview }: { locale: DiagnosticLocale; initialOverview: DiagnosticStaffOverview }) {
@@ -29,6 +30,7 @@ export default function DiagnosticStaff({ locale, initialOverview }: { locale: D
   return <div className={styles.shell} lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
     <header className={styles.header}><Link className={styles.brand} href={`/${locale}`} dir="ltr"><Image src="/ielts-lab-mark.svg" alt="" width={38} height={38} />IELTS Lab</Link></header>
     <main className={styles.container}><h1 className={styles.heroTitle}>{m.staffTitle}</h1><p className={styles.meta}>{m.staffHelp}</p>
+      <div className={styles.actions}><Link className={styles.secondary} href={`/${locale}/diagnostic/staff/readiness`}>{readinessMessages[locale].title} · Academic / General Training</Link></div>
       <section className={styles.panel}><form noValidate onSubmit={event => { event.preventDefault(); void act(() => refresh(true)); }}>
         <label className={styles.label} htmlFor="diagnostic-email">{m.email}</label><input id="diagnostic-email" className={styles.input} type="email" autoComplete="off" dir="ltr" value={email} onChange={event => { setEmail(event.target.value); setSearched(false); }} />
         <div className={styles.actions}><button className={styles.secondary} disabled={busy || !email.trim()}>{m.find}</button></div>

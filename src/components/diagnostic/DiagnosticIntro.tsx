@@ -1,6 +1,8 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
+import { readinessMessages } from '@/lib/diagnostic/readiness-messages';
 import { useEffect, useRef, useState } from 'react';
 import type { DiagnosticInvitationDto } from '@/lib/diagnostic/protocol';
 import { diagnosticErrorMessage, diagnosticMessages, type DiagnosticLocale } from '@/lib/diagnostic/messages';
@@ -76,6 +78,7 @@ export default function DiagnosticIntro({ locale, invitations, ready, busy, erro
       <Image src="/ielts-lab-mark.svg" alt="" width={38} height={38} /> IELTS Lab
     </div></header>
     <main className={`${styles.container} ${styles.intro}`}>
+      <div className={styles.actions}><Link className={styles.secondary} href={`/${locale}/diagnostic/readiness`}>{readinessMessages[locale].title} · 42 min · Academic / General Training</Link></div>
       <p className={styles.eyebrow}>{m.eyebrow}</p>
       <h1 className={styles.heroTitle}>{m.title}</h1>
       <p>{m.intro}</p><p className={styles.meta}>{m.conditions}</p>

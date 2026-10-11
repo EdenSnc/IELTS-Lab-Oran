@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import type {Prisma} from '@prisma/client';
 import{diagnosticFixture,diagnosticTestPrisma}from'../helpers/diagnostic-fixture';
 test('diagnostic writing AI is default-off, adult opt-in scoped, and withdrawal fences an in-flight result',{
  skip:process.env.TEST_DATABASE_URL?false:'Isolated TEST_DATABASE_URL required',
@@ -33,7 +34,25 @@ test('diagnostic writing AI is default-off, adult opt-in scoped, and withdrawal 
  await db.diagnosticWritingRun.update({where:{id:staleRun.id},data:{createdAt:new Date(Date.now()-30*86400000)}});
  let staleCalls=0;assert.deepEqual(await writing.processDiagnosticWriting(staleRun.id,async()=>{staleCalls++;throw new Error('Expired data must never reach a provider');}),{state:'CANCELLED'});
  assert.equal(staleCalls,0);assert.equal((await db.diagnosticWritingRun.findUniqueOrThrow({where:{id:staleRun.id}})).errorCode,'RETENTION_EXPIRED');
- const run=await writing.queueDiagnosticWriting(staff);let began!:()=>void,resume!:()=>void;
+ const run=await writing.queueDiagnosticWriting(staff);
+ // Inject only a transient database-read failure; the transaction, rollback and
+ // durable run remain real PostgreSQL, not a replacement business service.
+ const originalTransaction=db.$transaction;
+ db.$transaction=function(...args:unknown[]){
+  const operation=args[0];
+  if(typeof operation==='function')args[0]=(tx:Prisma.TransactionClient)=>{
+   const find=tx.diagnosticSession.findUnique;
+   tx.diagnosticSession.findUnique=((query:Prisma.DiagnosticSessionFindUniqueArgs)=>{
+    if(query.select?.writingAiAdultAttested)throw new Error('synthetic transient consent lookup failure');
+    return find.call(tx.diagnosticSession,query);
+   }) as unknown as typeof find;
+   return operation(tx);
+  };
+  return Reflect.apply(originalTransaction,db,args);
+ } as typeof db.$transaction;
+ try{await assert.rejects(writing.processDiagnosticWriting(run.id),/synthetic transient consent lookup failure/u);}finally{db.$transaction=originalTransaction;}
+ assert.equal((await db.diagnosticWritingRun.findUniqueOrThrow({where:{id:run.id}})).state,'QUEUED');
+ let began!:()=>void,resume!:()=>void;
  const started=new Promise<void>(resolve=>{began=resolve;}),wait=new Promise<void>(resolve=>{resume=resolve;});
  const processing=writing.processDiagnosticWriting(run.id,async()=>{began();await wait;return{
   feedback:{criteria:['TASK_RESPONSE','COHERENCE_COHESION','LEXICAL_RESOURCE','GRAMMAR'].map(criterion=>({criterion,observation:'Synthetic draft',evidence:[]})),nextSteps:[],limitations:['Controlled fixture']},

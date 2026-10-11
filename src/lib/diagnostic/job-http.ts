@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { AuthError } from '@/lib/auth/request-user';
 import { qstashEndpoint, verifyQStashRequest } from '@/lib/qstash/verification';
 
-export async function readDiagnosticJob<T>(request: Request, path: '/api/internal/diagnostic/writing' | '/api/internal/diagnostic/recover', schema: z.ZodType<T>): Promise<T> {
+export async function readDiagnosticJob<T>(request: Request, path: '/api/internal/diagnostic/writing' | '/api/internal/diagnostic/recover' | '/api/internal/diagnostic/speaking', schema: z.ZodType<T>): Promise<T> {
   if (!request.body) throw new AuthError('INVALID_REQUEST',400);
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = []; let size = 0;

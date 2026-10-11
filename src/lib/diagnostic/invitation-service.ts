@@ -63,7 +63,7 @@ export async function revokeDiagnosticInvitation(input: {
 export async function listDiagnosticInvitations(userId:string): Promise<DiagnosticInvitationDto[]> {
   const user=await prisma.user.findUnique({where:{id:userId},select:{status:true}});
   if(!user || user.status!=='ACTIVE') throw new DiagnosticError('ACCOUNT_UNAVAILABLE',403);
-  const invitations=await prisma.diagnosticInvitation.findMany({where:{recipientId:userId},include:{session:{select:{id:true}}},orderBy:{createdAt:'desc'}});
+  const invitations=await prisma.diagnosticInvitation.findMany({where:{recipientId:userId,blueprint:{NOT:{code:{startsWith:'IELTSLAB_READINESS_V2_'}}}},include:{session:{select:{id:true}}},orderBy:{createdAt:'desc'}});
   // Listing cannot mutate state; time is still sampled from the database.
   const [{now}]=await prisma.$queryRaw<Array<{now:Date}>>`SELECT date_trunc('milliseconds',clock_timestamp()) AT TIME ZONE 'UTC' AS now`;
   return invitations.map(i=>invitationDto(i,now));

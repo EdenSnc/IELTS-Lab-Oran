@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {createHash,createHmac,randomUUID} from 'node:crypto';
+import test from 'node:test';
+import {diagnosticFixture,diagnosticTestPrisma} from '../helpers/diagnostic-fixture';
+test('Speaking analysis HTTP denies owner/AAL1/cross-origin and signs IDs-only jobs with exact raw bytes',{
+ skip:process.env.TEST_DATABASE_URL?false:'Isolated TEST_DATABASE_URL required',
+},async t=>{
+ process.env.DATABASE_URL=process.env.TEST_DATABASE_URL;process.env.NEXT_PUBLIC_SUPABASE_URL='http://127.0.0.1:55621';
+ process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='diagnostic-local-test-key-only';process.env.ENCRYPTION_KEY='11'.repeat(32);
+ process.env.QSTASH_CALLBACK_BASE_URL='https://diagnostic.synthetic.invalid';process.env.QSTASH_CURRENT_SIGNING_KEY='diagnostic-signature-test-only';process.env.QSTASH_NEXT_SIGNING_KEY='diagnostic-next-test-only';
+ t.after(()=>{delete process.env.SPEAKING_DEV_AUTH_USER_ID;delete process.env.STAFF_MFA_DEV_AAL2;});
+ const db=diagnosticTestPrisma();t.after(()=>db.$disconnect());const f=await diagnosticFixture({scoringKeys:true});
+ const{issueDiagnosticInvitation}=await import('../../src/lib/diagnostic/invitation-service');const{createDiagnosticSession}=await import('../../src/lib/diagnostic/session-service');
+ const invitation=await issueDiagnosticInvitation({recipientId:f.owner,blueprintId:f.blueprint,actorUserId:f.staff});
+ const session=await createDiagnosticSession({invitationId:invitation.id,userId:f.owner});
+ await db.diagnosticResponse.updateMany({where:{sessionId:session.id},data:{finalizedAt:new Date()}});
+ await db.diagnosticSession.update({where:{id:session.id},data:{state:'SUBMITTED',submittedAt:new Date()}});
+ const route=await import('../../src/app/api/diagnostic/sessions/[sessionId]/speaking/analysis/route');
+ const jobs=await import('../../src/app/api/internal/diagnostic/speaking/route');
+ const origin='https://diagnostic.synthetic.invalid',url=`${origin}/api/diagnostic/sessions/${session.id}/speaking/analysis`,context={params:Promise.resolve({sessionId:session.id})};
+ const req=(method='GET',body?:unknown,source=origin)=>new Request(url,{method,headers:{origin:source,'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+ process.env.SPEAKING_DEV_AUTH_USER_ID=f.owner;assert.equal((await route.GET(req(),context)).status,403);
+ process.env.SPEAKING_DEV_AUTH_USER_ID=f.staff;assert.equal((await route.GET(req(),context)).status,403);
+ process.env.STAFF_MFA_DEV_AAL2='true';const view=await route.GET(req(),context);assert.equal(view.status,200);assert.deepEqual(await view.json(),{available:false,recordingId:null,run:null});
+ assert.equal((await route.POST(req('POST',{action:'queue'},'https://evil.invalid'),context)).status,403);
+ assert.equal((await route.POST(req('POST',{action:'queue',audio:'client-forged'}),context)).status,400);
+ assert.equal((await route.POST(req('POST',{action:'queue'}),context)).status,503);
+ const jobUrl=`${origin}/api/internal/diagnostic/speaking`;
+ const sign=(raw:string,destination=jobUrl)=>{const header=Buffer.from('{"alg":"HS256","typ":"JWT"}').toString('base64url'),now=Math.floor(Date.now()/1000);
+  const payload=Buffer.from(JSON.stringify({iss:'Upstash',sub:destination,body:createHash('sha256').update(raw).digest('base64url'),nbf:now-1,exp:now+60})).toString('base64url');
+  return`${header}.${payload}.${createHmac('sha256','diagnostic-signature-test-only').update(`${header}.${payload}`).digest('base64url')}`;};
+ const body=`{ "version": 1, "type": "DIAGNOSTIC_SPEAKING", "runId": "${randomUUID()}" }`;
+ const job=(raw:string,signature=sign(raw))=>new Request(jobUrl,{method:'POST',headers:{'content-type':'application/json','upstash-signature':signature},body:raw});
+ assert.equal((await jobs.POST(job(body))).status,200);
+ assert.equal((await jobs.POST(job(body+' ',sign(body)))).status,403);
+ assert.equal((await jobs.POST(job(body,sign(body,jobUrl+'/wrong')))).status,403);
+ const privateBody=JSON.stringify({version:1,type:'DIAGNOSTIC_SPEAKING',runId:randomUUID(),transcript:'private'});
+ assert.equal((await jobs.POST(job(privateBody))).status,400);
+ assert.equal((await jobs.POST(job('x'.repeat(4097),sign(body)))).status,400);
+});

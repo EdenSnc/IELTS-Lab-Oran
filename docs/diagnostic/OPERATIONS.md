@@ -25,6 +25,13 @@ erasure. Physical iOS/Android microphone and interruption checks remain required
 
 ## Optional AI
 
+Readiness profile 2 uses the same writing queue and consent controls, with a
+separate 16-minute rubric/prompt version. Staff request suggestions at
+`/[locale]/diagnostic/staff/readiness/[sessionId]`, check status, explicitly apply
+the editable draft, then modify/save ratings and release. The participant grants
+Writing consent on their submitted readiness page. Only teacher-approved internal
+ratings are released; the AI run ID and private analysis are not learner data.
+
 `DIAGNOSTIC_AI_ENABLED=false` and `DIAGNOSTIC_AI_DATA_USE_APPROVED=false` are the
 defaults. Both must be true; participant adult consent is separately enforced.
 The owner requires no paid API: do not enable billing, change an API project tier
@@ -35,6 +42,31 @@ Do not treat real voices as anonymous merely because account names are omitted.
 Use an examiner-checked de-identified transcript where appropriate; pronunciation
 cannot be assessed from text alone. Human feedback always remains available.
 Application deletion does not erase Google safety logs, training use or backups.
+
+The selected implementation is direct **post-session Gemini 3.5 Flash-Lite**:
+one audio request produces a private transcript and advisory observations. No
+Live API, separate transcription account or paid fallback is needed. Official
+model documentation confirms audio input and structured output; Live is not
+supported by this model. `DIAGNOSTIC_SPEAKING_MODEL` and
+`DIAGNOSTIC_WRITING_MODEL` default to `gemini-3.5-flash-lite` and are isolated
+from the ordinary mock's `GEMINI_WRITING_MODELS`. They use the existing
+server-only `GEMINI_API_KEY`; do not create a second key or enable billing.
+The owner's latest Flash-Lite screenshot shows approximately 15 RPM,
+250k input TPM and 500 RPD. Both diagnostic queues share a conservative
+10-request/minute delivery flow. Other project activity, token limits and
+retries still reduce capacity; 500 RPD is not a guaranteed participant count.
+Reference: https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite .
+
+Recording preflight does not start the interview or upload audio. After Start,
+only acknowledged immutable PCM chunks count as saved. Closing/reloading loses
+unsent in-memory audio; a contiguous acknowledged prefix can be finalized, but
+capture is never restarted into the same recording. Partial audio must be
+reviewed as partial evidence. Every transcript speaker assignment requires an
+examiner's audio review before applying suggestions. Correcting evidence to
+EXAMINER/UNCERTAIN invalidates that feedback; use human-only feedback instead.
+Applying suggestions does not save or publish an assessment. Private AI output
+and speaker review expire with the recording's 30-day window; released human
+feedback retains its separate 90-day access window.
 
 Checked official docs on 2026-10-07: Gemini 3.5 Transcribe (recorded files), Gemini
 3.5 Transcribe Live and Gemini Live voice currently list free input/output tiers.
@@ -78,7 +110,7 @@ is required; no automatic publication or official/full-mock band conversion.
 After content/privacy approval, configure QStash to POST every four hours to
 `https://www.ieltslab.org/api/internal/diagnostic/recover` with JSON
 `{"version":1,"type":"RECOVER_DIAGNOSTIC_WRITING"}`. This existing signed wake-up
-contract now also performs diagnostic retention; it contains no participant data.
+contract now also performs diagnostic retention and Speaking recovery; it contains no participant data.
 Use the existing QSTASH callback/signing variables and exact destination. The
 application verifies the bounded exact raw body and signature before doing work.
 Do not enable capture without a successful scheduled invocation and storage retry

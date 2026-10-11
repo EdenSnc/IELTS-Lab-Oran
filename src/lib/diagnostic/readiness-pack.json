@@ -1,0 +1,1873 @@
+{
+  "code": "IELTSLAB_READINESS",
+  "version": 3,
+  "authorship": "Official IELTS sample passages, questions and recordings from the owner-supplied IDP/IELTS corpus; short IELTSLab administration and teacher rubrics. Not an official full IELTS test.",
+  "parts": [
+    {
+      "id": "listening-social",
+      "title": "Phone call about second-hand furniture",
+      "skill": "LISTENING",
+      "phase": "CORE",
+      "pathway": "BOTH",
+      "instructions": "Complete each group using its stated instructions. Use only the accompanying passage or recording.",
+      "items": [
+        {
+          "id": "L1",
+          "number": 1,
+          "type": "TEXT",
+          "prompt": "Dining table — ____ shape",
+          "instructions": "Complete the gaps. One word and/or a number.",
+          "maxWords": 1,
+          "answers": [
+            "round"
+          ],
+          "evidence": ". F: Oh good. Can you tell me a bit about it? M: Well, it’s round. I’m not sure of the exact measurements, but it’s medium sized. It seats about six. F: And how old ",
+          "rationale": "The official key identifies round. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "009050e6a0",
+            "dataHash": "9dcbc2af37c8c22ef7bf40ed9646d725792f0ce4d19228507348fff87131f9ac",
+            "answerKeyFile": "ielts-listening-computer-delivered-note-completion-transcript___Answer_Key.pdf",
+            "answerKeyHash": "82d31e264fd76133b6a11c320ea7bb4c97e21776f8ef06c2cfca7aa8b53b4a81",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-2",
+            "contentRevisionId": 184163670,
+            "keyAnswers": [
+              "round"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "L2",
+          "number": 2,
+          "type": "TEXT",
+          "prompt": "Dining table — ____ old",
+          "instructions": "Complete the gaps. One word and/or a number.",
+          "maxWords": 1,
+          "answers": [
+            "12 years",
+            "twelve years"
+          ],
+          "evidence": "old is it? M: Mmmm. Mm let’s see...ten years? No it must be twelve by now. F: And the advertisement said you were asking £25 for that? M: That’s right. F: And do you ",
+          "rationale": "The official key identifies 12 years. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "009050e6a0",
+            "dataHash": "9dcbc2af37c8c22ef7bf40ed9646d725792f0ce4d19228507348fff87131f9ac",
+            "answerKeyFile": "ielts-listening-computer-delivered-note-completion-transcript___Answer_Key.pdf",
+            "answerKeyHash": "82d31e264fd76133b6a11c320ea7bb4c97e21776f8ef06c2cfca7aa8b53b4a81",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-3",
+            "contentRevisionId": 184163670,
+            "keyAnswers": [
+              "12 years",
+              "twelve years"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "L3",
+          "number": 3,
+          "type": "TEXT",
+          "prompt": "Dining chairs — set of ____ chairs",
+          "instructions": "Complete the gaps. One word and/or a number.",
+          "maxWords": 1,
+          "answers": [
+            "4",
+            "four"
+          ],
+          "evidence": "M: 348831 F: Oh hello... I’m calling about your advertisement in the local paper. M: Oh well, there were ",
+          "rationale": "The official key identifies 4. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "009050e6a0",
+            "dataHash": "9dcbc2af37c8c22ef7bf40ed9646d725792f0ce4d19228507348fff87131f9ac",
+            "answerKeyFile": "ielts-listening-computer-delivered-note-completion-transcript___Answer_Key.pdf",
+            "answerKeyHash": "82d31e264fd76133b6a11c320ea7bb4c97e21776f8ef06c2cfca7aa8b53b4a81",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-4",
+            "contentRevisionId": 184163670,
+            "keyAnswers": [
+              "4",
+              "four"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "L4",
+          "number": 4,
+          "type": "TEXT",
+          "prompt": "Dining chairs — seats covered in ____ material",
+          "instructions": "Complete the gaps. One word and/or a number.",
+          "maxWords": 1,
+          "answers": [
+            "green"
+          ],
+          "evidence": "in material to make them more comfortable to sit on. That’s green – but you could change it of course, if you wanted something different. F: What sort of condition a",
+          "rationale": "The official key identifies green. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "009050e6a0",
+            "dataHash": "9dcbc2af37c8c22ef7bf40ed9646d725792f0ce4d19228507348fff87131f9ac",
+            "answerKeyFile": "ielts-listening-computer-delivered-note-completion-transcript___Answer_Key.pdf",
+            "answerKeyHash": "82d31e264fd76133b6a11c320ea7bb4c97e21776f8ef06c2cfca7aa8b53b4a81",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-5",
+            "contentRevisionId": 184163670,
+            "keyAnswers": [
+              "green"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "L5",
+          "number": 5,
+          "type": "TEXT",
+          "prompt": "Dining chairs — in ____ condition",
+          "instructions": "Complete the gaps. One word and/or a number.",
+          "maxWords": 1,
+          "answers": [
+            "reasonable"
+          ],
+          "evidence": "ifferent. F: What sort of condition are they in? M: I’d say reasonable – they’ve had a bit of wear. And we’re asking £20 for those. F: Right. And the other thing I wanted",
+          "rationale": "The official key identifies reasonable. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "009050e6a0",
+            "dataHash": "9dcbc2af37c8c22ef7bf40ed9646d725792f0ce4d19228507348fff87131f9ac",
+            "answerKeyFile": "ielts-listening-computer-delivered-note-completion-transcript___Answer_Key.pdf",
+            "answerKeyHash": "82d31e264fd76133b6a11c320ea7bb4c97e21776f8ef06c2cfca7aa8b53b4a81",
+            "sourceNumber": 5,
+            "responseIdentifier": "RESPONSE-6",
+            "contentRevisionId": 184163670,
+            "keyAnswers": [
+              "reasonable"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "L6",
+          "number": 6,
+          "type": "TEXT",
+          "prompt": "Desk — length: ____",
+          "instructions": "Complete the gaps. One word and/or a number.",
+          "maxWords": 1,
+          "answers": [
+            "1.20 metres",
+            "1.2 metres",
+            "1.20 meters",
+            "1.2 meters",
+            "1 metre 20",
+            "1 meter 20"
+          ],
+          "evidence": "M: Let’s see...It’s 75 cm high I know, and the length’s err 1 metre 20. And it’s 40 cm deep. It’s got 3 drawers – the top one’s got a lock so you can keep your valuables ",
+          "rationale": "The official key identifies 1.20 metres. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "009050e6a0",
+            "dataHash": "9dcbc2af37c8c22ef7bf40ed9646d725792f0ce4d19228507348fff87131f9ac",
+            "answerKeyFile": "ielts-listening-computer-delivered-note-completion-transcript___Answer_Key.pdf",
+            "answerKeyHash": "82d31e264fd76133b6a11c320ea7bb4c97e21776f8ef06c2cfca7aa8b53b4a81",
+            "sourceNumber": 6,
+            "responseIdentifier": "RESPONSE-7",
+            "contentRevisionId": 184163670,
+            "keyAnswers": [
+              "1.20 metres",
+              "1.2 metres",
+              "1.20 meters",
+              "1.2 meters",
+              "1 metre 20",
+              "1 meter 20"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "L7",
+          "number": 7,
+          "type": "TEXT",
+          "prompt": "Top drawer has a ____",
+          "instructions": "Complete the gaps. One word and/or a number.",
+          "maxWords": 1,
+          "answers": [
+            "lock"
+          ],
+          "evidence": "d it’s 40 cm deep. It’s got 3 drawers – the top one’s got a lock so you can keep your valuables there. F: And you were asking £50.00 for that? M: Yes, it’s a bit mo",
+          "rationale": "The official key identifies lock. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "009050e6a0",
+            "dataHash": "9dcbc2af37c8c22ef7bf40ed9646d725792f0ce4d19228507348fff87131f9ac",
+            "answerKeyFile": "ielts-listening-computer-delivered-note-completion-transcript___Answer_Key.pdf",
+            "answerKeyHash": "82d31e264fd76133b6a11c320ea7bb4c97e21776f8ef06c2cfca7aa8b53b4a81",
+            "sourceNumber": 7,
+            "responseIdentifier": "RESPONSE-8",
+            "contentRevisionId": 184163670,
+            "keyAnswers": [
+              "lock"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        }
+      ],
+      "text": "Phone call about second-hand furniture\n\n\nQuestions 1–7\nPhone call about second-hand furniture\nItems\nDining table\n[1]\n\nshape\nmedium size\n[2]\n\nold\n£25.00\nDining chairs\nset of [3]\n\nchairs\nseats covered in [4]\n\nmaterial\nin [5]\n\ncondition\n£20.00\nDesk\nlength: [6]\n\n3 drawers. Top drawer has a [7]\n\n£50.00",
+      "script": "M: 348831 F: Oh hello... I’m calling about your advertisement in the local paper. M: Oh well, there were two ads actually. Was it the one for second-hand furniture? F: That’s right, yes. Last Thursday... M: Oh yes... Some of it’s already gone I’m afraid, but... what exactly were you interested in? F: Mainly the dining room furniture, specially the table. Has that gone yet? M: Not yet. F: Oh good. Can you tell me a bit about it? M: Well, it’s round. I’m not sure of the exact measurements, but it’s medium sized. It seats about six. F: And how old is it? M: Mmmm. Mm let’s see...ten years? No it must be twelve by now. F: And the advertisement said you were asking £25 for that? M: That’s right. F: And do you still have the dining chairs? M: Yes. It’s a set of four chairs – there were two more but over the years a couple have disappeared. F: What are they like? M: Quite nice – they’ve got upholstered seats – you know they’re covered in material to make them more comfortable to sit on. That’s green – but you could change it of course, if you wanted something different. F: What sort of condition are they in? M: I’d say reasonable – they’ve had a bit of wear. And we’re asking £20 for those. F: Right. And the other thing I wanted to ask about was the desk. Can you tell me roughly how long the top is, so I know if it’ll fit in my room? M: Let’s see...It’s 75 cm high I know, and the length’s err 1 metre 20. And it’s 40 cm deep. It’s got 3 drawers – the top one’s got a lock so you can keep your valuables there. F: And you were asking £50.00 for that? M: Yes, it’s a bit more because it’s in good condition. But if you want to take the other things too, I could let you have it for forty.",
+      "audio": "readiness/authentic-v3/listening-social.mp3",
+      "audioSeconds": 127.373083,
+      "audioSource": {
+        "filename": "00c61ff8-ec81-42e7-88db-9de2b41a5e4a.mp3",
+        "sha256": "2ef773b4b99d768d7855ee07d54721f08088728892b666312268e3b112982d01",
+        "deliveredSha256": "fdddd44fb7a75790da087f6c1c85aa16812f16f60718cdaf8b9ee30d7c82203b",
+        "conversion": "Full recording; mono 24 kHz MP3 at 64 kbps, no time edits"
+      }
+    },
+    {
+      "id": "listening-research",
+      "title": "Research findings: learner persistence",
+      "skill": "LISTENING",
+      "phase": "CORE",
+      "pathway": "BOTH",
+      "instructions": "Complete each group using its stated instructions. Use only the accompanying passage or recording.",
+      "items": [
+        {
+          "id": "L8",
+          "number": 8,
+          "type": "TEXT",
+          "prompt": "First level of importance — Personal Characteristics: Enjoyment of a ____",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "challenge"
+          ],
+          "evidence": "stics, many respondents reported that they took pleasure in challenge and that this was regarded as very significant. At the second level of importance, in the first cat",
+          "rationale": "The official key identifies challenge. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "e0e6587c6e",
+            "dataHash": "7e36a21dd4ba45bc3ead467cdedf3a1d2c9ab4b01982fd22972fa79a62d34b72",
+            "answerKeyFile": "ielts-listening-computer-delivered-table-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "30a308ed01c84dc81b6c872cf54c6995d81ca8e8e03936e2c46c6cba7976d533",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-6",
+            "contentRevisionId": 181038772,
+            "keyAnswers": [
+              "challenge"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        },
+        {
+          "id": "L9",
+          "number": 9,
+          "type": "TEXT",
+          "prompt": "Second level of importance — Social and Environmental Factors: Positive experiences at ____",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "school"
+          ],
+          "evidence": "e talked about the fact that they had enjoyed themselves in school as an important social factor. In the second column, other factors, a number of people said that wh",
+          "rationale": "The official key identifies school. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "e0e6587c6e",
+            "dataHash": "7e36a21dd4ba45bc3ead467cdedf3a1d2c9ab4b01982fd22972fa79a62d34b72",
+            "answerKeyFile": "ielts-listening-computer-delivered-table-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "30a308ed01c84dc81b6c872cf54c6995d81ca8e8e03936e2c46c6cba7976d533",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-7",
+            "contentRevisionId": 181038772,
+            "keyAnswers": [
+              "school"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        },
+        {
+          "id": "L10",
+          "number": 10,
+          "type": "TEXT",
+          "prompt": "Second level of importance — Other Factors: Good ____",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "health"
+          ],
+          "evidence": " of people said that what was of most importance was decent health – this had a fairly strong influence on their persistence in their studies. And then under the head",
+          "rationale": "The official key identifies health. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "e0e6587c6e",
+            "dataHash": "7e36a21dd4ba45bc3ead467cdedf3a1d2c9ab4b01982fd22972fa79a62d34b72",
+            "answerKeyFile": "ielts-listening-computer-delivered-table-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "30a308ed01c84dc81b6c872cf54c6995d81ca8e8e03936e2c46c6cba7976d533",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-8",
+            "contentRevisionId": 181038772,
+            "keyAnswers": [
+              "health"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        },
+        {
+          "id": "L11",
+          "number": 11,
+          "type": "TEXT",
+          "prompt": "Second level of importance — Personal Characteristics: Many ____ in daily life",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "interests"
+          ],
+          "evidence": "ts who mentioned they felt it was important to have lots of interests in their everyday lives. This gave them a depth and sense of perspective which less persistent lear",
+          "rationale": "The official key identifies interests. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "e0e6587c6e",
+            "dataHash": "7e36a21dd4ba45bc3ead467cdedf3a1d2c9ab4b01982fd22972fa79a62d34b72",
+            "answerKeyFile": "ielts-listening-computer-delivered-table-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "30a308ed01c84dc81b6c872cf54c6995d81ca8e8e03936e2c46c6cba7976d533",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-9",
+            "contentRevisionId": 181038772,
+            "keyAnswers": [
+              "interests"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        },
+        {
+          "id": "L12",
+          "number": 12,
+          "type": "TEXT",
+          "prompt": "Third level of importance — Social and Environmental Factors: Good interaction with the ____",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "tutor",
+            "tutors"
+          ],
+          "evidence": "eral respondents talked about good relationships with their tutors. For other factors, they mentioned lack or absence of any problems in their families. And finally ",
+          "rationale": "The official key identifies tutor. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "e0e6587c6e",
+            "dataHash": "7e36a21dd4ba45bc3ead467cdedf3a1d2c9ab4b01982fd22972fa79a62d34b72",
+            "answerKeyFile": "ielts-listening-computer-delivered-table-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "30a308ed01c84dc81b6c872cf54c6995d81ca8e8e03936e2c46c6cba7976d533",
+            "sourceNumber": 5,
+            "responseIdentifier": "RESPONSE-10",
+            "contentRevisionId": 181038772,
+            "keyAnswers": [
+              "tutor",
+              "tutors"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        }
+      ],
+      "text": "Research findings: learner persistence\n\n\nQuestions 8–12\nResearch Findings\n\n| Social and Environmental Factors | Other Factors | Personal Characteristics\nFirst level of importance | Effective support | Perceived success in study | Enjoyment of a [8]\nSecond level of importance | Positive experiences at [9] | Good [10] | Many [11] in daily life\nThird level of importance | Good interaction with the [12] | No family problems | Capacity for multi-tasking",
+      "script": "You will hear part of a talk about research into ‘learner persistence’ given by a university lecturer to her colleagues. The second section of my questionnaire looked at learner persistence under three main headings: social and environmental factors, other factors, and intrinsic or personal characteristics. I identified three levels of importance for each of these. At the first level – those points identified by participants as most important in learner persistence – for social factors, many respondents said how crucial it had been to have good support, though there was no one specific source; it could be family or friends. As regards other factors, students are heartened not so much by high grades but by what they regard as success in study. And for personal characteristics, many respondents reported that they took pleasure in challenge and that this was regarded as very significant. At the second level of importance, in the first category, a sizeable percentage talked about the fact that they had enjoyed themselves in school as an important social factor. In the second column, other factors, a number of people said that what was of most importance was decent health – this had a fairly strong influence on their persistence in their studies. And then under the heading of personal characteristics, there were quite a large percentage of respondents who mentioned they felt it was important to have lots of interests in their everyday lives. This gave them a depth and sense of perspective which less persistent learners might lack. And then onto the third level. Under social factors, several respondents talked about good relationships with their tutors. For other factors, they mentioned lack or absence of any problems in their families. And finally under column three, they identified an ability to juggle several roles – what we might call their capacity for multi-tasking.",
+      "audio": "readiness/authentic-v3/listening-research.mp3",
+      "audioSeconds": 136.097958,
+      "audioSource": {
+        "filename": "c1fd3f0a-fc37-4758-95ab-e20ab348369b.mp3",
+        "sha256": "5ea2b3be9df3f5a15415e166b1ed04db801e3949fafbf752233fa341d5a51047",
+        "deliveredSha256": "4dd91820a66b9fa5e231c19263e8b8f4176a415adf2a5a8778a74b4e806792e3",
+        "conversion": "Full recording; mono 24 kHz MP3 at 64 kbps, no time edits"
+      }
+    },
+    {
+      "id": "reading-academic",
+      "title": "IELTS Academic Reading",
+      "skill": "READING",
+      "phase": "CORE",
+      "pathway": "ACADEMIC",
+      "instructions": "Complete each group using its stated instructions. Use only the accompanying passage or recording.",
+      "items": [
+        {
+          "id": "RA1",
+          "number": 1,
+          "type": "CHOICE",
+          "prompt": "Text A: The life and work of Marie Curie — Marie Curie’s husband was a joint winner of both Marie’s Nobel Prizes.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "B"
+          ],
+          "evidence": " was awarded the 1903 Nobel Prize for Physics, and was then sole winner of the 1911 Nobel Prize for Chemistry. She was the first woman to win a Nobel Prize. From childhood, Marie was remarkable for her prodigi",
+          "rationale": "The official key identifies FALSE. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "36c8c428b5",
+            "dataHash": "0c149b0b5fb99efc8256c5f0b66c35beecd4acfcdb82d8f6de8fd2afee186d9b",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-identifying-information-true-flase-not-given-answer-key.pdf",
+            "answerKeyHash": "8b6d70fdc1c939b0190351824f461143225fb40a21f0c401e2a765565c191613",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-3",
+            "contentRevisionId": 145431062,
+            "keyAnswers": [
+              "B"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RA2",
+          "number": 2,
+          "type": "CHOICE",
+          "prompt": "Text A: The life and work of Marie Curie — Marie became interested in science when she was a child.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "C"
+          ],
+          "evidence": "or Chemistry. She was the first woman to win a Nobel Prize. From childhood, Marie was remarkable for her prodigious memory, and at the age of 16 won a gold medal on completion of her secondary education. Because her father",
+          "rationale": "The passage does not establish the claim or its opposite. Do not use outside knowledge.",
+          "sourceRef": {
+            "assessmentId": "36c8c428b5",
+            "dataHash": "0c149b0b5fb99efc8256c5f0b66c35beecd4acfcdb82d8f6de8fd2afee186d9b",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-identifying-information-true-flase-not-given-answer-key.pdf",
+            "answerKeyHash": "8b6d70fdc1c939b0190351824f461143225fb40a21f0c401e2a765565c191613",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-4",
+            "contentRevisionId": 145431062,
+            "keyAnswers": [
+              "C"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RA3",
+          "number": 3,
+          "type": "CHOICE",
+          "prompt": "Text A: The life and work of Marie Curie — Marie was able to attend the Sorbonne because of her sister’s financial contribution.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "A"
+          ],
+          "evidence": " Bronia would, in turn, later help her to get an education. In 1891 this promise was fulfilled and Marie went to Paris and began to study at the Sorbonne (the University of Paris). She often wor",
+          "rationale": "The official key identifies TRUE. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "36c8c428b5",
+            "dataHash": "0c149b0b5fb99efc8256c5f0b66c35beecd4acfcdb82d8f6de8fd2afee186d9b",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-identifying-information-true-flase-not-given-answer-key.pdf",
+            "answerKeyHash": "8b6d70fdc1c939b0190351824f461143225fb40a21f0c401e2a765565c191613",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-5",
+            "contentRevisionId": 145431062,
+            "keyAnswers": [
+              "A"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RA4",
+          "number": 4,
+          "type": "CHOICE",
+          "prompt": "Text B: Older workers — In paragraph one, the writer suggests that companies could consider",
+          "instructions": "Choose ONE answer.",
+          "options": {
+            "A": "abolishing pay schemes that are based on age.",
+            "B": "avoiding pay that is based on piece-rates.",
+            "C": "increasing pay for older workers.",
+            "D": "equipping older workers with new skills."
+          },
+          "answers": [
+            "A"
+          ],
+          "evidence": "osts, they persuade a 55-year old to take early retirement. Take away seniority-based pay scales, and older workers may become a much more attractive employment proposition. But most employers and",
+          "rationale": "The official key identifies abolishing pay schemes that are based on age.. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "25d2fce4d5",
+            "dataHash": "6a6ecd9eb679484c0cc17b7838d5b192f2c2ba9770fa5332907033ed7525a2ed",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-multiple-choice-one-answer-answer-key.pdf",
+            "answerKeyHash": "897bb6f9eeecbb12978389f2248f5d6371ffc376d9c8a251f4ee95f33adc9ba2",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-2",
+            "contentRevisionId": 167045955,
+            "keyAnswers": [
+              "A"
+            ],
+            "sourceGroupType": "MC Questions"
+          }
+        },
+        {
+          "id": "RA5",
+          "number": 5,
+          "type": "CHOICE",
+          "prompt": "Text B: Older workers — Skill Team is an example of a company which",
+          "instructions": "Choose ONE answer.",
+          "options": {
+            "A": "offers older workers increases in salary.",
+            "B": "allows people to continue working for as long as they want.",
+            "C": "allows the expertise of older workers to be put to use.",
+            "D": "treats older and younger workers equally."
+          },
+          "answers": [
+            "C"
+          ],
+          "evidence": "y. The company offered services to IBM, thus allowing it to retain access to some of the intellectual capital it would otherwise have lost. The best way to tempt the old to go on working may be to build on suc",
+          "rationale": "The official key identifies allows the expertise of older workers to be put to use.. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "25d2fce4d5",
+            "dataHash": "6a6ecd9eb679484c0cc17b7838d5b192f2c2ba9770fa5332907033ed7525a2ed",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-multiple-choice-one-answer-answer-key.pdf",
+            "answerKeyHash": "897bb6f9eeecbb12978389f2248f5d6371ffc376d9c8a251f4ee95f33adc9ba2",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-3",
+            "contentRevisionId": 167045955,
+            "keyAnswers": [
+              "C"
+            ],
+            "sourceGroupType": "MC Questions"
+          }
+        },
+        {
+          "id": "RA6",
+          "number": 6,
+          "type": "CHOICE",
+          "prompt": "Text B: Older workers — According to the writer, ‘bridge’ jobs",
+          "instructions": "Choose ONE answer.",
+          "options": {
+            "A": "tend to attract people in middle-salary ranges.",
+            "B": "are better paid than some full-time jobs.",
+            "C": "originated in the United States.",
+            "D": "appeal to distinct groups of older workers."
+          },
+          "answers": [
+            "D"
+          ],
+          "evidence": "ent types of bridge job-holder – those who continue working because they have to and those who continue working because they want to, even though they could afford to retire. If the job market grows more flexible, the old may find m",
+          "rationale": "The official key identifies appeal to distinct groups of older workers.. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "25d2fce4d5",
+            "dataHash": "6a6ecd9eb679484c0cc17b7838d5b192f2c2ba9770fa5332907033ed7525a2ed",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-multiple-choice-one-answer-answer-key.pdf",
+            "answerKeyHash": "897bb6f9eeecbb12978389f2248f5d6371ffc376d9c8a251f4ee95f33adc9ba2",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-4",
+            "contentRevisionId": 167045955,
+            "keyAnswers": [
+              "D"
+            ],
+            "sourceGroupType": "MC Questions"
+          }
+        },
+        {
+          "id": "RA7",
+          "number": 7,
+          "type": "CHOICE",
+          "prompt": "Text B: Older workers — David Storey’s study found that",
+          "instructions": "Choose ONE answer.",
+          "options": {
+            "A": "people demand more from their work as they get older.",
+            "B": "older people are good at running their own businesses.",
+            "C": "an increasing number of old people are self-employed.",
+            "D": "few young people have their own businesses."
+          },
+          "answers": [
+            "B"
+          ],
+          "evidence": "by David Storey of Warwick University found that in Britain 70% of businesses started by people over 55 survived, compared with an overall national average of only 19%. But whatever pattern of employment they cho",
+          "rationale": "The official key identifies older people are good at running their own businesses.. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "25d2fce4d5",
+            "dataHash": "6a6ecd9eb679484c0cc17b7838d5b192f2c2ba9770fa5332907033ed7525a2ed",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-multiple-choice-one-answer-answer-key.pdf",
+            "answerKeyHash": "897bb6f9eeecbb12978389f2248f5d6371ffc376d9c8a251f4ee95f33adc9ba2",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-5",
+            "contentRevisionId": 167045955,
+            "keyAnswers": [
+              "B"
+            ],
+            "sourceGroupType": "MC Questions"
+          }
+        },
+        {
+          "id": "RA8",
+          "number": 8,
+          "type": "TEXT",
+          "prompt": "Text C: Plain English — Consumers often complain that they experience a feeling of ____ when trying to put together do-it-yourself products which have not been tested by companies on a [9] .",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "frustration"
+          ],
+          "evidence": "s are regularly cited as a source of unnecessary expense or frustration. Few companies seem to test their instructions by having them followed by a first-time user. Often,",
+          "rationale": "The official key identifies frustration. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0f21f52c89",
+            "dataHash": "dfe79820ffe6e0aa32d895bd58d9e9481bf7249acf1d9ae3355d1bf336260d43",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-summary-completion-selecting-words-from-text-answer-key.pdf",
+            "answerKeyHash": "9a3f5a0ed57690b4e972bf1730fd74a3276eda3cab9f5398103e5a66a5101707",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-1",
+            "contentRevisionId": 188837195,
+            "keyAnswers": [
+              "frustration"
+            ],
+            "sourceGroupType": "Summary Completion Productive"
+          }
+        },
+        {
+          "id": "RA9",
+          "number": 9,
+          "type": "TEXT",
+          "prompt": "Text C: Plain English — Consumers often complain that they experience a feeling of [8] when trying to put together do-it-yourself products which have not been tested by companies on a ____ .",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "first-time user"
+          ],
+          "evidence": "eem to test their instructions by having them followed by a first-time user. Often, essential information is omitted, steps in the construction process are taken for granted, ",
+          "rationale": "The official key identifies first-time user. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0f21f52c89",
+            "dataHash": "dfe79820ffe6e0aa32d895bd58d9e9481bf7249acf1d9ae3355d1bf336260d43",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-summary-completion-selecting-words-from-text-answer-key.pdf",
+            "answerKeyHash": "9a3f5a0ed57690b4e972bf1730fd74a3276eda3cab9f5398103e5a66a5101707",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-2",
+            "contentRevisionId": 188837195,
+            "keyAnswers": [
+              "first-time user"
+            ],
+            "sourceGroupType": "Summary Completion Productive"
+          }
+        },
+        {
+          "id": "RA10",
+          "number": 10,
+          "type": "TEXT",
+          "prompt": "Text C: Plain English — In situations where not keeping to the correct procedures could affect safety issues, it is especially important that ____ information is not left out and no assumptions are made about a stage being self-evident or the consumer having a certain amount of [11] .",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "essential"
+          ],
+          "evidence": "ctions by having them followed by a first-time user. Often, essential information is omitted, steps in the construction process are taken for granted, and some degree of",
+          "rationale": "The official key identifies essential. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0f21f52c89",
+            "dataHash": "dfe79820ffe6e0aa32d895bd58d9e9481bf7249acf1d9ae3355d1bf336260d43",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-summary-completion-selecting-words-from-text-answer-key.pdf",
+            "answerKeyHash": "9a3f5a0ed57690b4e972bf1730fd74a3276eda3cab9f5398103e5a66a5101707",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-6",
+            "contentRevisionId": 188837195,
+            "keyAnswers": [
+              "essential"
+            ],
+            "sourceGroupType": "Summary Completion Productive"
+          }
+        },
+        {
+          "id": "RA11",
+          "number": 11,
+          "type": "TEXT",
+          "prompt": "Text C: Plain English — In situations where not keeping to the correct procedures could affect safety issues, it is especially important that [10] information is not left out and no assumptions are made about a stage being self-evident or the consumer having a certain amount of ____ .",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "special knowledge"
+          ],
+          "evidence": "struction process are taken for granted, and some degree of special knowledge is assumed. This is especially worrying in any fields where failure to follow correct procedures ca",
+          "rationale": "The official key identifies special knowledge. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0f21f52c89",
+            "dataHash": "dfe79820ffe6e0aa32d895bd58d9e9481bf7249acf1d9ae3355d1bf336260d43",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-summary-completion-selecting-words-from-text-answer-key.pdf",
+            "answerKeyHash": "9a3f5a0ed57690b4e972bf1730fd74a3276eda3cab9f5398103e5a66a5101707",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-3",
+            "contentRevisionId": 188837195,
+            "keyAnswers": [
+              "special knowledge"
+            ],
+            "sourceGroupType": "Summary Completion Productive"
+          }
+        },
+        {
+          "id": "RA12",
+          "number": 12,
+          "type": "TEXT",
+          "prompt": "Text C: Plain English — They feel that it would result in ambiguity in documents and cause people to lose faith in ____ , as it would mean departing from language that has been used in the courts for a very long time.",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "legal formulations"
+          ],
+          "evidence": "documents, and draw attention to the need for confidence in legal formulations, which can come only from using language that has been tested in courts over the course of centurie",
+          "rationale": "The official key identifies legal formulations. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0f21f52c89",
+            "dataHash": "dfe79820ffe6e0aa32d895bd58d9e9481bf7249acf1d9ae3355d1bf336260d43",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-summary-completion-selecting-words-from-text-answer-key.pdf",
+            "answerKeyHash": "9a3f5a0ed57690b4e972bf1730fd74a3276eda3cab9f5398103e5a66a5101707",
+            "sourceNumber": 5,
+            "responseIdentifier": "RESPONSE-7",
+            "contentRevisionId": 188837195,
+            "keyAnswers": [
+              "legal formulations"
+            ],
+            "sourceGroupType": "Summary Completion Productive"
+          }
+        }
+      ],
+      "text": "Text A: The life and work of Marie Curie\nThe life and work of Marie Curie\nMarie Curie is probably the most famous woman scientist who has ever lived. Born Maria Sklodowska in Poland in 1867, she is famous for her work on radioactivity, and was twice a winner of the Nobel Prize. With her husband, Pierre Curie, and Henri Becquerel, she was awarded the 1903 Nobel Prize for Physics, and was then sole winner of the 1911 Nobel Prize for Chemistry. She was the first woman to win a Nobel Prize.\nFrom childhood, Marie was remarkable for her prodigious memory, and at the age of 16 won a gold medal on completion of her secondary education. Because her father lost his savings through bad investment, she then had to take work as a teacher. From her earnings she was able to finance her sister Bronia’s medical studies in Paris, on the understanding that Bronia would, in turn, later help her to get an education.\nIn 1891 this promise was fulfilled and Marie went to Paris and began to study at the Sorbonne (the University of Paris). She often worked far into the night and lived on little more than bread and butter and tea. She came first in the examination in the physical sciences in 1893, and in 1894 was placed second in the examination in mathematical sciences. It was not until the spring of that year that she was introduced to Pierre Curie.\n\nText B: Older workers\nThe general assumption is that older workers are paid more in spite of, rather than because of, their productivity. That might partly explain why, when employers are under pressure to cut costs, they persuade a 55-year old to take early retirement. Take away seniority-based pay scales, and older workers may become a much more attractive employment proposition. But most employers and many workers are uncomfortable with the idea of reducing someone’s pay in later life – although manual workers on piece-rates often earn less as they get older. So retaining the services of older workers may mean employing them in different ways.\nOne innovation was devised by IBM Belgium. Faced with the need to cut staff costs, and having decided to concentrate cuts on 55 to 60-year olds, IBM set up a separate company called Skill Team, which re-employed any of the early retired who wanted to go on working up to the age of 60. An employee who joined Skill Team at the age of 55 on a five-year contract would work for 58% of his time, over the full period, for 88% of his last IBM salary. The company offered services to IBM, thus allowing it to retain access to some of the intellectual capital it would otherwise have lost.\nThe best way to tempt the old to go on working may be to build on such ‘bridge’ jobs: part-time or temporary employment that creates a more gradual transition from full-time work to retirement. Studies have found that, in the United States, nearly half of all men and women who had been in full-time jobs in middle age moved into such ‘bridge’ jobs at the end of their working lives. In general, it is the best-paid and worst-paid who carry on working. There seem to be two very different types of bridge job-holder – those who continue working because they have to and those who continue working because they want to, even though they could afford to retire.\nIf the job market grows more flexible, the old may find more jobs that suit them. Often, they will be self-employed. Sometimes, they may start their own businesses: a study by David Storey of Warwick University found that in Britain 70% of businesses started by people over 55 survived, compared with an overall national average of only 19%. But whatever pattern of employment they choose, in the coming years the skills of these ‘grey workers’ will have to be increasingly acknowledged and rewarded.\n\nText C: Plain English\nThe instructions accompanying do-it-yourself products are regularly cited as a source of unnecessary expense or frustration. Few companies seem to test their instructions by having them followed by a first-time user. Often, essential information is omitted, steps in the construction process are taken for granted, and some degree of special knowledge is assumed. This is especially worrying in any fields where failure to follow correct procedures can be dangerous.\nObjections to material in plain English have come mainly from the legal profession. Lawyers point to the risk of ambiguity inherent in the use of everyday language for legal or official documents, and draw attention to the need for confidence in legal formulations, which can come only from using language that has been tested in courts over the course of centuries. The campaigners point out that there has been no sudden increase in litigation as a consequence of the increase in plain English materials.\nSimilarly, professionals in several different fields have defended their use of technical and complex language as being the most precise means of expressing technical or complex ideas. This is undoubtedly true: scientists, doctors, bankers and others need their jargon in order to communicate with each other succinctly and unambiguously. But when it comes to addressing the non-specialist consumer, the campaigners argue, different criteria must apply.\n\nQuestions 8–12\nConsumers often complain that they experience a feeling of [8]\n\nwhen trying to put together do-it-yourself products which have not been tested by companies on a [9]\n\n. In situations where not keeping to the correct procedures could affect safety issues, it is especially important that [10]\n\ninformation is not left out and no assumptions are made about a stage being self-evident or the consumer having a certain amount of [11]\n\n.\nLawyers, however, have raised objections to the use of plain English. They feel that it would result in ambiguity in documents and cause people to lose faith in [12]\n\n, as it would mean departing from language that has been used in the courts for a very long time."
+    },
+    {
+      "id": "reading-general",
+      "title": "IELTS General Training Reading",
+      "skill": "READING",
+      "phase": "CORE",
+      "pathway": "GENERAL_TRAINING",
+      "instructions": "Complete each group using its stated instructions. Use only the accompanying passage or recording.",
+      "items": [
+        {
+          "id": "RG1",
+          "number": 1,
+          "type": "CHOICE",
+          "prompt": "Text A: Railway Season Tickets — You are allowed to stop off at an intermediate station when making a journey using a standard season ticket.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "A"
+          ],
+          "evidence": "hown on the ticket for the full duration of their validity. You can break your journey at any train station between the origin and destination station on your season ticket. Combined rail-and-bus season tick",
+          "rationale": "The official key identifies TRUE. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "2d1f40c85e",
+            "dataHash": "a505677b712a561e15396053285cc8327cbe498e8b37621735d7a863261851d9",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-identifying-information-true-false-not-given-answer-key.pdf",
+            "answerKeyHash": "41af234816bf03624438f80dc71161db42d84f21cae2bc8315fd9df5d8e1e0c1",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-3",
+            "contentRevisionId": 145436122,
+            "keyAnswers": [
+              "A"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RG2",
+          "number": 2,
+          "type": "CHOICE",
+          "prompt": "Text A: Railway Season Tickets — When using a combined rail-and-bus season ticket, the major part of your journey must be by train.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "A"
+          ],
+          "evidence": "re available from some rail stations. This means if you can make your main journey by rail, you can then complete it by bus. Two separate season tickets may be required for some destinations",
+          "rationale": "The official key identifies TRUE. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "2d1f40c85e",
+            "dataHash": "a505677b712a561e15396053285cc8327cbe498e8b37621735d7a863261851d9",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-identifying-information-true-false-not-given-answer-key.pdf",
+            "answerKeyHash": "41af234816bf03624438f80dc71161db42d84f21cae2bc8315fd9df5d8e1e0c1",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-4",
+            "contentRevisionId": 145436122,
+            "keyAnswers": [
+              "A"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RG3",
+          "number": 3,
+          "type": "CHOICE",
+          "prompt": "Text A: Railway Season Tickets — It is more expensive to buy four 7-day tickets than a monthly season ticket for the same journey.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "A"
+          ],
+          "evidence": " train ticket. Monthly Monthly season tickets are priced at less than four times the cost of 7-day train tickets and are valid for a full calendar month from the date of commencement. Annual Card This gives you a",
+          "rationale": "The official key identifies TRUE. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "2d1f40c85e",
+            "dataHash": "a505677b712a561e15396053285cc8327cbe498e8b37621735d7a863261851d9",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-identifying-information-true-false-not-given-answer-key.pdf",
+            "answerKeyHash": "41af234816bf03624438f80dc71161db42d84f21cae2bc8315fd9df5d8e1e0c1",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-5",
+            "contentRevisionId": 145436122,
+            "keyAnswers": [
+              "A"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RG4",
+          "number": 4,
+          "type": "CHOICE",
+          "prompt": "Text A: Railway Season Tickets — Annual Card season tickets entitle you to savings on other rail journeys outside of the working week.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "A"
+          ],
+          "evidence": " the price of most Standard Class train fares in the region at weekends and on Bank Holidays. You can also take up to three adults with you at the same discount, while up to four children (age",
+          "rationale": "The official key identifies TRUE. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "2d1f40c85e",
+            "dataHash": "a505677b712a561e15396053285cc8327cbe498e8b37621735d7a863261851d9",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-identifying-information-true-false-not-given-answer-key.pdf",
+            "answerKeyHash": "41af234816bf03624438f80dc71161db42d84f21cae2bc8315fd9df5d8e1e0c1",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-6",
+            "contentRevisionId": 145436122,
+            "keyAnswers": [
+              "A"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RG5",
+          "number": 5,
+          "type": "CHOICE",
+          "prompt": "Text A: Railway Season Tickets — Children under the age of five are charged one third of the full ticket price when accompanying you on an Annual Card journey.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "C"
+          ],
+          "evidence": "hree adults with you at the same discount, while up to four children (aged 5–15) may accompany you for a minimum of £1 each. How do I buy my first season ticket? Your season ticket",
+          "rationale": "The passage does not establish the claim or its opposite. Do not use outside knowledge.",
+          "sourceRef": {
+            "assessmentId": "2d1f40c85e",
+            "dataHash": "a505677b712a561e15396053285cc8327cbe498e8b37621735d7a863261851d9",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-identifying-information-true-false-not-given-answer-key.pdf",
+            "answerKeyHash": "41af234816bf03624438f80dc71161db42d84f21cae2bc8315fd9df5d8e1e0c1",
+            "sourceNumber": 5,
+            "responseIdentifier": "RESPONSE-7",
+            "contentRevisionId": 145436122,
+            "keyAnswers": [
+              "C"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RG6",
+          "number": 6,
+          "type": "CHOICE",
+          "prompt": "Text A: Railway Season Tickets — The photo you supply at the time of application is displayed on your season ticket.",
+          "instructions": "Write TRUE / FALSE / NOT GIVEN; use only this text.",
+          "options": {
+            "A": "TRUE",
+            "B": "FALSE",
+            "C": "NOT GIVEN"
+          },
+          "answers": [
+            "B"
+          ],
+          "evidence": "buy my first season ticket? Your season ticket is not valid without a photocard, and both must always be carried together. A photocard will be issued to you free of charge when you first purchase a season ticket. You just",
+          "rationale": "The official key identifies FALSE. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "2d1f40c85e",
+            "dataHash": "a505677b712a561e15396053285cc8327cbe498e8b37621735d7a863261851d9",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-identifying-information-true-false-not-given-answer-key.pdf",
+            "answerKeyHash": "41af234816bf03624438f80dc71161db42d84f21cae2bc8315fd9df5d8e1e0c1",
+            "sourceNumber": 6,
+            "responseIdentifier": "RESPONSE-8",
+            "contentRevisionId": 145436122,
+            "keyAnswers": [
+              "B"
+            ],
+            "sourceGroupType": "T-F-NG"
+          }
+        },
+        {
+          "id": "RG7",
+          "number": 7,
+          "type": "TEXT",
+          "prompt": "Text B: City Media Internships — CITY MEDIA INTERNSHIPS — Internships: — allow minorities to gain ____ and show their talents",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "experience"
+          ],
+          "evidence": "iduals to demonstrate the talent they have and get hands-on experience in broadcasting. We hope that our commitment to these groups becomes an industry-wide model of acce",
+          "rationale": "The official key identifies experience. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "57340e03fc",
+            "dataHash": "a3544c49038b771d5c3bd03cd7e669ae756688ec087d452e8b4d29b26e4b4eb8",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-sentence-completion-answer-key.pdf",
+            "answerKeyHash": "baa0b68ef5504026536f98bd3a10a9040c93d55971c75a3d48d59de7afb5f98a",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-4",
+            "contentRevisionId": 188165446,
+            "keyAnswers": [
+              "experience"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "RG8",
+          "number": 8,
+          "type": "TEXT",
+          "prompt": "Text B: City Media Internships — CITY MEDIA INTERNSHIPS — Internships: — further City Media’s aim to reflect the ____ of people in Canada",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "diversity"
+          ],
+          "evidence": "tance. Our goal is to have the City Media family mirror the diversity that makes our nation strong. The internship winners will work at one of our two speciality TV stat",
+          "rationale": "The official key identifies diversity. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "57340e03fc",
+            "dataHash": "a3544c49038b771d5c3bd03cd7e669ae756688ec087d452e8b4d29b26e4b4eb8",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-sentence-completion-answer-key.pdf",
+            "answerKeyHash": "baa0b68ef5504026536f98bd3a10a9040c93d55971c75a3d48d59de7afb5f98a",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-5",
+            "contentRevisionId": 188165446,
+            "keyAnswers": [
+              "diversity"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "RG9",
+          "number": 9,
+          "type": "TEXT",
+          "prompt": "Text B: City Media Internships — CITY MEDIA INTERNSHIPS — An additional amount of money is given if ____ is required.",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "relocation"
+          ],
+          "evidence": "t by the company for that position. If the assignment makes relocation necessary, a maximum $1,500 grant is provided to assist with these expenses. Interested broadcastin",
+          "rationale": "The official key identifies relocation. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "57340e03fc",
+            "dataHash": "a3544c49038b771d5c3bd03cd7e669ae756688ec087d452e8b4d29b26e4b4eb8",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-sentence-completion-answer-key.pdf",
+            "answerKeyHash": "baa0b68ef5504026536f98bd3a10a9040c93d55971c75a3d48d59de7afb5f98a",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-6",
+            "contentRevisionId": 188165446,
+            "keyAnswers": [
+              "relocation"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "RG10",
+          "number": 10,
+          "type": "TEXT",
+          "prompt": "Text B: City Media Internships — CITY MEDIA INTERNSHIPS — Support application with: — proof of present ____ in broadcasting studies",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "enrolment",
+            "enrollment"
+          ],
+          "evidence": "roadcasting applicants should provide evidence of full-time enrolment in the field of broadcasting at an accredited post-secondary institution. An official transcript fr",
+          "rationale": "The official key identifies enrolment. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "57340e03fc",
+            "dataHash": "a3544c49038b771d5c3bd03cd7e669ae756688ec087d452e8b4d29b26e4b4eb8",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-sentence-completion-answer-key.pdf",
+            "answerKeyHash": "baa0b68ef5504026536f98bd3a10a9040c93d55971c75a3d48d59de7afb5f98a",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-7",
+            "contentRevisionId": 188165446,
+            "keyAnswers": [
+              "enrolment",
+              "enrollment"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "RG11",
+          "number": 11,
+          "type": "TEXT",
+          "prompt": "Text B: City Media Internships — CITY MEDIA INTERNSHIPS — Support application with: — a ____ issued by your school",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "transcript"
+          ],
+          "evidence": "ng at an accredited post-secondary institution. An official transcript from the educational institution is also required. Mature students may replace this transcript with",
+          "rationale": "The official key identifies transcript. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "57340e03fc",
+            "dataHash": "a3544c49038b771d5c3bd03cd7e669ae756688ec087d452e8b4d29b26e4b4eb8",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-sentence-completion-answer-key.pdf",
+            "answerKeyHash": "baa0b68ef5504026536f98bd3a10a9040c93d55971c75a3d48d59de7afb5f98a",
+            "sourceNumber": 5,
+            "responseIdentifier": "RESPONSE-8",
+            "contentRevisionId": 188165446,
+            "keyAnswers": [
+              "transcript"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        },
+        {
+          "id": "RG12",
+          "number": 12,
+          "type": "TEXT",
+          "prompt": "Text B: City Media Internships — CITY MEDIA INTERNSHIPS — Interview method depends on ____ .",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "distance"
+          ],
+          "evidence": "lephone interview. The type of interview will vary with the distance of each candidate. The hiring decisions of the panel are final. If a candidate is not eligible, the",
+          "rationale": "The official key identifies distance. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "57340e03fc",
+            "dataHash": "a3544c49038b771d5c3bd03cd7e669ae756688ec087d452e8b4d29b26e4b4eb8",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-sentence-completion-answer-key.pdf",
+            "answerKeyHash": "baa0b68ef5504026536f98bd3a10a9040c93d55971c75a3d48d59de7afb5f98a",
+            "sourceNumber": 6,
+            "responseIdentifier": "RESPONSE-9",
+            "contentRevisionId": 188165446,
+            "keyAnswers": [
+              "distance"
+            ],
+            "sourceGroupType": "Note Completion"
+          }
+        }
+      ],
+      "text": "Text A: Railway Season Tickets\nRailway Season Tickets\nTypes of Season Tickets\nStandard season tickets allow unlimited travel between the two train stations shown on the ticket for the full duration of their validity. You can break your journey at any train station between the origin and destination station on your season ticket.\nCombined rail-and-bus season tickets are available from some rail stations. This means if you can make your main journey by rail, you can then complete it by bus. Two separate season tickets may be required for some destinations.\nTicket Duration\n7-day\nThese normally cost less than five standard day-returns. They are valid for a full seven days’ rail travel between the points shown on the train ticket.\nMonthly\nMonthly season tickets are priced at less than four times the cost of 7-day train tickets and are valid for a full calendar month from the date of commencement.\nAnnual Card\nThis gives you a full calendar year's weekday travel for the price of only 40 weekly tickets. Annual Card holders can also save a third on the price of most Standard Class train fares in the region at weekends and on Bank Holidays. You can also take up to three adults with you at the same discount, while up to four children (aged 5–15) may accompany you for a minimum of £1 each.\nHow do I buy my first season ticket?\nYour season ticket is not valid without a photocard, and both must always be carried together. A photocard will be issued to you free of charge when you first purchase a season ticket. You just need to take a passport-sized photograph to a ticket office and we'll do the rest. As long as your photo remains a good likeness, you can continue to use the photocard with any subsequent season tickets that you buy.\n\nText B: City Media Internships\nCITY MEDIA INTERNSHIPS\nWe are a proudly Canadian organization offering six annual internships, valued at $10,000 each, to deserving persons from minority groups. We offer career assistance, and an opportunity for these individuals to demonstrate the talent they have and get hands-on experience in broadcasting. We hope that our commitment to these groups becomes an industry-wide model of acceptance. Our goal is to have the City Media family mirror the diversity that makes our nation strong.\nThe internship winners will work at one of our two speciality TV stations. The Connect station provides programming on regional events, while the emphasis at Transview is on instructional shows. Each intern will work in an entry-level position within an area that meets the requirements of the company and be paid at the opening rate set by the company for that position. If the assignment makes relocation necessary, a maximum $1,500 grant is provided to assist with these expenses.\nInterested broadcasting applicants should provide evidence of full-time enrolment in the field of broadcasting at an accredited post-secondary institution. An official transcript from the educational institution is also required. Mature students may replace this transcript with a one-page typewritten statement of their goals. References from three teachers or employers will be necessary if the application proceeds.\nOnce your application is accepted, you will receive a confirmation letter by mail from Personnel. The application is then referred to a Canada-wide panel of City Media employees. These individuals are familiar with the positions that would be considered a complementary fit with your stated career path. They will put together a shortlist of promising candidates and conduct an in-person or telephone interview. The type of interview will vary with the distance of each candidate. The hiring decisions of the panel are final.\nIf a candidate is not eligible, the application will be removed from the competition, as will those whose applications and accompanying documents are received later than the deadline for submission. No exceptions can be made for delayed, lost or misdirected mail.\n\nQuestions 7–12\nCITY MEDIA INTERNSHIPS\nInternships:\n\nallow minorities to gain [7]\n\nand show their talents\n\nfurther City Media’s aim to reflect the [8]\n\nof people in Canada\n\nInternship at Transview focuses on educational broadcasting.\n\nAn additional amount of money is given if [9]\n\nis required.\n\nSupport application with:\n\nproof of present [10]\n\nin broadcasting studies\n\na [11]\n\nissued by your school\n\nA panel decides which jobs are a good fit for each intern.\n\nInterview method depends on [12]\n\n.\n\nCompany strict about the deadline stated for applications."
+    },
+    {
+      "id": "extension-listening",
+      "title": "Judy’s dissertation",
+      "skill": "LISTENING",
+      "phase": "EXTENSION",
+      "pathway": "BOTH",
+      "instructions": "Complete each group using its stated instructions. Use only the accompanying passage or recording.",
+      "items": [
+        {
+          "id": "EL1",
+          "number": 13,
+          "type": "CHOICE",
+          "prompt": "Why did Judy choose to study the East End of London?",
+          "instructions": "Choose ONE answer.",
+          "options": {
+            "A": "She wanted to understand her own background.",
+            "B": "She was interested in place names.",
+            "C": "She had read several books about it."
+          },
+          "answers": [
+            "A"
+          ],
+          "evidence": "ou might think it’s an obvious subject to pick. But in fact I was brought up there, and I’ve always been interested in finding out how the area shaped my upbringing. F2: What materia",
+          "rationale": "The official key identifies She wanted to understand her own background.. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "9807aa112c",
+            "dataHash": "a08174cb944728545d8c30e87472eb0cfcf69012f1d46155460217541079688a",
+            "answerKeyFile": "ielts-listening-computer-delivered-multiple-choice-one-answer-Transcript_-_Answer_Key.pdf",
+            "answerKeyHash": "1281afe6f562ce7efbb7289cf8187533992d68f82c01f927442f060a2d56b39a",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-1",
+            "contentRevisionId": 145591537,
+            "keyAnswers": [
+              "A"
+            ],
+            "sourceGroupType": "MC Questions"
+          }
+        },
+        {
+          "id": "EL2",
+          "number": 14,
+          "type": "CHOICE",
+          "prompt": "What was Judy’s main source of materials?",
+          "instructions": "Choose ONE answer.",
+          "options": {
+            "A": "books",
+            "B": "newspapers",
+            "C": "interviews"
+          },
+          "answers": [
+            "C"
+          ],
+          "evidence": "area who I managed to contact and arrange to meet, and then recorded as they talked to me. And when they referred to any specific events, I looked them up in local newspapers from the time.",
+          "rationale": "The official key identifies interviews. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "9807aa112c",
+            "dataHash": "a08174cb944728545d8c30e87472eb0cfcf69012f1d46155460217541079688a",
+            "answerKeyFile": "ielts-listening-computer-delivered-multiple-choice-one-answer-Transcript_-_Answer_Key.pdf",
+            "answerKeyHash": "1281afe6f562ce7efbb7289cf8187533992d68f82c01f927442f060a2d56b39a",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-2",
+            "contentRevisionId": 145591537,
+            "keyAnswers": [
+              "C"
+            ],
+            "sourceGroupType": "MC Questions"
+          }
+        },
+        {
+          "id": "EL3",
+          "number": 15,
+          "type": "CHOICE",
+          "prompt": "What difficulty did Judy have with her dissertation?",
+          "instructions": "Choose ONE answer.",
+          "options": {
+            "A": "writing the first draft",
+            "B": "organising what she had collected",
+            "C": "finding enough relevant sources"
+          },
+          "answers": [
+            "B"
+          ],
+          "evidence": "ht I had enough material, and sat down to devise a workable filing system. It took ages, but I was really glad of it when I came to writing the draft; otherwise it would hav",
+          "rationale": "The official key identifies organising what she had collected. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "9807aa112c",
+            "dataHash": "a08174cb944728545d8c30e87472eb0cfcf69012f1d46155460217541079688a",
+            "answerKeyFile": "ielts-listening-computer-delivered-multiple-choice-one-answer-Transcript_-_Answer_Key.pdf",
+            "answerKeyHash": "1281afe6f562ce7efbb7289cf8187533992d68f82c01f927442f060a2d56b39a",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-3",
+            "contentRevisionId": 145591537,
+            "keyAnswers": [
+              "B"
+            ],
+            "sourceGroupType": "MC Questions"
+          }
+        }
+      ],
+      "text": "Judy’s dissertation\n",
+      "script": "M1: Right, Judy, this week it’s your turn to bring us up to date on your dissertation. So? F1: I’ve finished the basic research and planning, and the first draft, and hopefully I can start writing the final version now. M1: Good. Not everyone knows your subject, so you’d better introduce it. F1: Oh, I’ve chosen to study everyday life in the East End of London in the early twentieth century. Lots of books have been published about the East End, covering everything from health to how roads and districts got their names, so you might think it’s an obvious subject to pick. But in fact I was brought up there, and I’ve always been interested in finding out how the area shaped my upbringing. F2: What materials did you use in your research? F1: As I said, a lot’s been written about the area, and I used some of it to get an idea of what to cover. But the bulk of my work is based on the elderly people from the area who I managed to contact and arrange to meet, and then recorded as they talked to me. And when they referred to any specific events, I looked them up in local newspapers from the time. M2: Was it difficult to get enough source material? F1: Not a bit. The problems started when I thought I had enough material, and sat down to devise a workable filing system. It took ages, but I was really glad of it when I came to writing the draft; otherwise it would have been impossible.",
+      "audio": "readiness/authentic-v3/extension-listening.mp3",
+      "audioSeconds": 78.23675,
+      "audioSource": {
+        "filename": "b9380f3a-a3d9-4c3e-b297-155b473c99e1.mp3",
+        "sha256": "62658ec8130081078effc43fc42b31a1b67f1388abef42cb41e192b53d83b13f",
+        "deliveredSha256": "f5524ccde6285f3c0c1deab73484c89106e5ad179c28188d22a178821282fc73",
+        "conversion": "Full recording; mono 24 kHz MP3 at 64 kbps, no time edits"
+      }
+    },
+    {
+      "id": "extension-listening-sentences",
+      "title": "Studying with the Open University",
+      "skill": "LISTENING",
+      "phase": "EXTENSION",
+      "pathway": "BOTH",
+      "instructions": "Complete each group using its stated instructions. Use only the accompanying passage or recording.",
+      "items": [
+        {
+          "id": "EL4",
+          "number": 16,
+          "type": "TEXT",
+          "prompt": "Studying with the Open University demanded a great deal of ____ .",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "motivation"
+          ],
+          "evidence": "et used to it. I found I needed to maintain a high level of motivation because it’s so different from school. There’s no-one saying, ‘Why haven’t you written your assignm",
+          "rationale": "The official key identifies motivation. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "1276ea7c8d",
+            "dataHash": "990f3f059001ba17e88d096fb32292ae7aa115aa5ed5c9b7832363efaaf751ce",
+            "answerKeyFile": "ielts-listening-computer-delivered-sentence-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "eac48d5c0b08296f9a79cb751fdf234ec7d27e1ffb80524c50da9e85b3fd7fe2",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-1",
+            "contentRevisionId": 171795621,
+            "keyAnswers": [
+              "motivation"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        },
+        {
+          "id": "EL5",
+          "number": 17,
+          "type": "TEXT",
+          "prompt": "Studying and working at the same time improved Rachel’s ____ skills.",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "time-management",
+            "time management"
+          ],
+          "evidence": "l learn it, Paul. Another thing was that I got very good at time-management because I had to fit time for studying round a full-time job. Paul: Well, I’m hoping to change to w",
+          "rationale": "The official key identifies time-management. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "1276ea7c8d",
+            "dataHash": "990f3f059001ba17e88d096fb32292ae7aa115aa5ed5c9b7832363efaaf751ce",
+            "answerKeyFile": "ielts-listening-computer-delivered-sentence-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "eac48d5c0b08296f9a79cb751fdf234ec7d27e1ffb80524c50da9e85b3fd7fe2",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-2",
+            "contentRevisionId": 171795621,
+            "keyAnswers": [
+              "time-management",
+              "time management"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        },
+        {
+          "id": "EL6",
+          "number": 18,
+          "type": "TEXT",
+          "prompt": "It is helpful that the course was structured in ____ .",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "modules"
+          ],
+          "evidence": "chel: What makes it easier is that the degree is made up of modules, so you can take time off between them if you need to. It isn’t like a traditional three- or four-y",
+          "rationale": "The official key identifies modules. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "1276ea7c8d",
+            "dataHash": "990f3f059001ba17e88d096fb32292ae7aa115aa5ed5c9b7832363efaaf751ce",
+            "answerKeyFile": "ielts-listening-computer-delivered-sentence-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "eac48d5c0b08296f9a79cb751fdf234ec7d27e1ffb80524c50da9e85b3fd7fe2",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-3",
+            "contentRevisionId": 171795621,
+            "keyAnswers": [
+              "modules"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        },
+        {
+          "id": "EL7",
+          "number": 19,
+          "type": "TEXT",
+          "prompt": "She enjoyed meeting other students at ____ .",
+          "instructions": "Complete the gaps. No more than two words.",
+          "maxWords": 2,
+          "answers": [
+            "summer school",
+            "summer schools"
+          ],
+          "evidence": "’ve got tutors to help you, and from time to time there are summer schools. They usually last a week. They’re great because you meet all the other people struggling with the",
+          "rationale": "The official key identifies summer school. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "1276ea7c8d",
+            "dataHash": "990f3f059001ba17e88d096fb32292ae7aa115aa5ed5c9b7832363efaaf751ce",
+            "answerKeyFile": "ielts-listening-computer-delivered-sentence-completion-transcript___Answer_key.pdf",
+            "answerKeyHash": "eac48d5c0b08296f9a79cb751fdf234ec7d27e1ffb80524c50da9e85b3fd7fe2",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-4",
+            "contentRevisionId": 171795621,
+            "keyAnswers": [
+              "summer school",
+              "summer schools"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        }
+      ],
+      "text": "Studying with the Open University\n\n\nQuestions 16–19\nStudying with the Open University demanded a great deal of [16]\n\n.\nStudying and working at the same time improved Rachel’s [17]\n\nskills.\nIt is helpful that the course was structured in [18]\n\n.\nShe enjoyed meeting other students at [19]\n\n.",
+      "script": "Paul: The other thing I wanted to ask you was, did you find it hard, studying with the Open University? Rachel: You mean, because you’re studying on your own, most of the time? Paul: Mm. Rachel: Well, it took me a while to get used to it. I found I needed to maintain a high level of motivation because it’s so different from school. There’s no-one saying, ‘Why haven’t you written your assignment yet?’ and that sort of thing. Paul: Oh dear. Rachel: You’ll learn it, Paul. Another thing was that I got very good at time-management because I had to fit time for studying round a full-time job. Paul: Well, I’m hoping to change to working part-time, so that’ll help. Rachel: What makes it easier is that the degree is made up of modules, so you can take time off between them if you need to. It isn’t like a traditional three- or four-year course, where you’ve got to do the whole thing of it in one go. Paul: That’s good, because I’d like to spend six months travelling next year. Rachel: Huh, it’s all right for some. Then even though you’re mostly studying at home, remember you’ve got tutors to help you, and from time to time there are summer schools. They usually last a week. They’re great because you meet all the other people struggling with the same things as you. I’ve made some really good friends that way. Paul: Sounds good. So how do I apply?",
+      "audio": "readiness/authentic-v3/extension-listening-sentences.mp3",
+      "audioSeconds": 84.42,
+      "audioSource": {
+        "filename": "b3047e6b-4821-4416-98c0-eb58d344d75e.mp3",
+        "sha256": "abd4864991208616adc351f1334ef49bd62c7dbe9931f43a251443ac1444eb95",
+        "deliveredSha256": "dfa95bb301f7f889cb3617d639aa0cd4cb77b54b68c50bc64a85e153475d6738",
+        "conversion": "Full recording; mono 24 kHz MP3 at 64 kbps, no time edits"
+      }
+    },
+    {
+      "id": "extension-academic",
+      "title": "Dung beetles",
+      "skill": "READING",
+      "phase": "EXTENSION",
+      "pathway": "ACADEMIC",
+      "instructions": "Complete each group using its stated instructions. Use only the accompanying passage or recording.",
+      "items": [
+        {
+          "id": "EA1",
+          "number": 13,
+          "type": "TEXT",
+          "prompt": "Preferred climate — Spanish: ____",
+          "instructions": "Complete the gaps. No more than three words.",
+          "maxWords": 3,
+          "answers": [
+            "temperate"
+          ],
+          "evidence": "s (2.5 cms long), is matched with smaller (half this size), temperate-climate Spanish species. The former are slow to recover from the winter cold and produce only one o",
+          "rationale": "The official key identifies temperate. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0d12f61f99",
+            "dataHash": "c4d69110c45cd85c394a88649b7b891043a0d40bff279b8af108738baa919390",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-table-completion-answer-key.pdf",
+            "answerKeyHash": "117bf361f022c5a8a894a1d23683e3ebe3587e5888aaf263888bd605d6678ecb",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-6",
+            "contentRevisionId": 171765058,
+            "keyAnswers": [
+              "temperate"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        },
+        {
+          "id": "EA2",
+          "number": 14,
+          "type": "TEXT",
+          "prompt": "Preferred climate — South African ball roller: ____",
+          "instructions": "Complete the gaps. No more than three words.",
+          "maxWords": 3,
+          "answers": [
+            "sub-tropical",
+            "subtropical"
+          ],
+          "evidence": "s annually. The South African ball-rolling species, being a sub-tropical beetle, prefers the climate of northern and coastal New South Wales where it commonly works with th",
+          "rationale": "The official key identifies sub-tropical. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0d12f61f99",
+            "dataHash": "c4d69110c45cd85c394a88649b7b891043a0d40bff279b8af108738baa919390",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-table-completion-answer-key.pdf",
+            "answerKeyHash": "117bf361f022c5a8a894a1d23683e3ebe3587e5888aaf263888bd605d6678ecb",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-7",
+            "contentRevisionId": 171765058,
+            "keyAnswers": [
+              "sub-tropical",
+              "subtropical"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        },
+        {
+          "id": "EA3",
+          "number": 15,
+          "type": "TEXT",
+          "prompt": "Complementary species — South African ball roller: ____",
+          "instructions": "Complete the gaps. No more than three words.",
+          "maxWords": 3,
+          "answers": [
+            "South African tunneling",
+            "South African tunnelling"
+          ],
+          "evidence": "nd coastal New South Wales where it commonly works with the South African tunneling species. In warmer climates, many species are active for longer periods of the year. * dung: the dr",
+          "rationale": "The official key identifies South African tunneling. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0d12f61f99",
+            "dataHash": "c4d69110c45cd85c394a88649b7b891043a0d40bff279b8af108738baa919390",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-table-completion-answer-key.pdf",
+            "answerKeyHash": "117bf361f022c5a8a894a1d23683e3ebe3587e5888aaf263888bd605d6678ecb",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-8",
+            "contentRevisionId": 171765058,
+            "keyAnswers": [
+              "South African tunneling",
+              "South African tunnelling"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        },
+        {
+          "id": "EA4",
+          "number": 16,
+          "type": "TEXT",
+          "prompt": "Start of active period — Spanish: ____",
+          "instructions": "Complete the gaps. No more than three words.",
+          "maxWords": 3,
+          "answers": [
+            "early spring"
+          ],
+          "evidence": " spring until autumn. The latter, which multiply rapidly in early spring, produce two to five generations annually. The South African ball-rolling species, being a sub-trop",
+          "rationale": "The official key identifies early spring. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0d12f61f99",
+            "dataHash": "c4d69110c45cd85c394a88649b7b891043a0d40bff279b8af108738baa919390",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-table-completion-answer-key.pdf",
+            "answerKeyHash": "117bf361f022c5a8a894a1d23683e3ebe3587e5888aaf263888bd605d6678ecb",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-9",
+            "contentRevisionId": 171765058,
+            "keyAnswers": [
+              "early spring"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        },
+        {
+          "id": "EA5",
+          "number": 17,
+          "type": "TEXT",
+          "prompt": "Number of generations per year — Spanish: ____",
+          "instructions": "Complete the gaps. No more than three words.",
+          "maxWords": 3,
+          "answers": [
+            "two to five",
+            "2 to 5",
+            "two to 5",
+            "2 to five",
+            "two-five",
+            "2-5",
+            "two-5",
+            "2-five"
+          ],
+          "evidence": "The latter, which multiply rapidly in early spring, produce two to five generations annually. The South African ball-rolling species, being a sub-tropical beetle, prefers ",
+          "rationale": "The official key identifies two to five. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0d12f61f99",
+            "dataHash": "c4d69110c45cd85c394a88649b7b891043a0d40bff279b8af108738baa919390",
+            "answerKeyFile": "ielts-academic-reading-computer-delivered-table-completion-answer-key.pdf",
+            "answerKeyHash": "117bf361f022c5a8a894a1d23683e3ebe3587e5888aaf263888bd605d6678ecb",
+            "sourceNumber": 5,
+            "responseIdentifier": "RESPONSE-10",
+            "contentRevisionId": 171765058,
+            "keyAnswers": [
+              "two to five",
+              "2 to 5",
+              "two to 5",
+              "2 to five",
+              "two-five",
+              "2-5",
+              "two-5",
+              "2-five"
+            ],
+            "sourceGroupType": "Table Completion"
+          }
+        }
+      ],
+      "text": "Dung beetles\nIntroducing dung* beetles into a pasture is a simple process: approximately 1,500 beetles are released, a handful at a time, into fresh cow pats** in the cow pasture. The beetles immediately disappear beneath the pats digging and tunnelling and, if they successfully adapt to their new environment, soon become a permanent, self-sustaining part of the local ecology. In time they multiply and within three or four years the benefits to the pasture are obvious.\nDung beetles work from the inside of the pat so they are sheltered from predators such as birds and foxes. Most species burrow into the soil and bury dung in tunnels directly underneath the pats, which are hollowed out from within. Some large species originating from France excavate tunnels to a depth of approximately 30 cm below the dung pat. These beetles make sausage-shaped brood chambers along the tunnels. The shallowest tunnels belong to a much smaller Spanish species that buries dung in chambers that hang like fruit from the branches of a pear tree. South African beetles dig narrow tunnels of approximately 20 cm below the surface of the pat. Some surface-dwelling beetles, including a South African species, cut perfectly-shaped balls from the pat, which are rolled away and attached to the bases of plants.\nFor maximum dung burial in spring, summer and autumn, farmers require a variety of species with overlapping periods of activity. In the cooler environments of the state of Victoria, the large French species (2.5 cms long), is matched with smaller (half this size), temperate-climate Spanish species. The former are slow to recover from the winter cold and produce only one or two generations of offspring from late spring until autumn. The latter, which multiply rapidly in early spring, produce two to five generations annually. The South African ball-rolling species, being a sub-tropical beetle, prefers the climate of northern and coastal New South Wales where it commonly works with the South African tunneling species. In warmer climates, many species are active for longer periods of the year.\n\n* dung: the droppings or excreta of animals\n** cow pats: droppings of cows\n\nQuestions 13–17\nSpecies | French | Spanish | South African ball roller\nPreferred climate | cool | [13] | [14]\nComplementary species | Spanish | | [15]\nStart of active period | late spring | [16] | \nNumber of generations per year | 1 - 2 | [17] |"
+    },
+    {
+      "id": "extension-general",
+      "title": "Accident insurance for City Media employees",
+      "skill": "READING",
+      "phase": "EXTENSION",
+      "pathway": "GENERAL_TRAINING",
+      "instructions": "Complete each group using its stated instructions. Use only the accompanying passage or recording.",
+      "items": [
+        {
+          "id": "EG1",
+          "number": 13,
+          "type": "TEXT",
+          "prompt": "The accident protection at City Media is ____ amongst similar companies.",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "unique"
+          ],
+          "evidence": "o offer its employees accident insurance benefits which are unique in the industry. Our insurance package not only insures employees against accidents occurring on th",
+          "rationale": "The official key identifies unique. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0b87a234a7",
+            "dataHash": "2863e34ed6ce4c9e1911523f04750ecf2bd088fed4de4215b2f17fc96d7677cf",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-note-completion-answer-key.pdf",
+            "answerKeyHash": "c33ce191158826875dcb4d37cdabb23f0990082ece112f12b462574527ef8f6d",
+            "sourceNumber": 1,
+            "responseIdentifier": "RESPONSE-1",
+            "contentRevisionId": 174562392,
+            "keyAnswers": [
+              "unique"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        },
+        {
+          "id": "EG2",
+          "number": 14,
+          "type": "TEXT",
+          "prompt": "The insurance programme excludes ____ employees.",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "temporary"
+          ],
+          "evidence": " At this time, City Media does not extend this insurance to temporary staff, whether they are under contract for their services or not. Further, employees can usually pu",
+          "rationale": "The official key identifies temporary. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0b87a234a7",
+            "dataHash": "2863e34ed6ce4c9e1911523f04750ecf2bd088fed4de4215b2f17fc96d7677cf",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-note-completion-answer-key.pdf",
+            "answerKeyHash": "c33ce191158826875dcb4d37cdabb23f0990082ece112f12b462574527ef8f6d",
+            "sourceNumber": 2,
+            "responseIdentifier": "RESPONSE-2",
+            "contentRevisionId": 174562392,
+            "keyAnswers": [
+              "temporary"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        },
+        {
+          "id": "EG3",
+          "number": 15,
+          "type": "TEXT",
+          "prompt": "An employee’s partner is not automatically ____ for the insurance.",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "eligible"
+          ],
+          "evidence": "s. It also provides 24-hour protection to dependants and to eligible partners. A general description of the accident insurance package is shown below. Any questions reg",
+          "rationale": "The official key identifies eligible. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0b87a234a7",
+            "dataHash": "2863e34ed6ce4c9e1911523f04750ecf2bd088fed4de4215b2f17fc96d7677cf",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-note-completion-answer-key.pdf",
+            "answerKeyHash": "c33ce191158826875dcb4d37cdabb23f0990082ece112f12b462574527ef8f6d",
+            "sourceNumber": 3,
+            "responseIdentifier": "RESPONSE-3",
+            "contentRevisionId": 174562392,
+            "keyAnswers": [
+              "eligible"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        },
+        {
+          "id": "EG4",
+          "number": 16,
+          "type": "TEXT",
+          "prompt": "The insurance coverage for part-timers is related to their usual number of ____ .",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "hours",
+            "hr",
+            "hrs",
+            "h",
+            "hs"
+          ],
+          "evidence": "st accidents occurring on the job, but extends to their off-hours. It also provides 24-hour protection to dependants and to eligible partners. A general description ",
+          "rationale": "The official key identifies hours. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0b87a234a7",
+            "dataHash": "2863e34ed6ce4c9e1911523f04750ecf2bd088fed4de4215b2f17fc96d7677cf",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-note-completion-answer-key.pdf",
+            "answerKeyHash": "c33ce191158826875dcb4d37cdabb23f0990082ece112f12b462574527ef8f6d",
+            "sourceNumber": 4,
+            "responseIdentifier": "RESPONSE-4",
+            "contentRevisionId": 174562392,
+            "keyAnswers": [
+              "hours",
+              "hr",
+              "hrs",
+              "h",
+              "hs"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        },
+        {
+          "id": "EG5",
+          "number": 17,
+          "type": "TEXT",
+          "prompt": "Employees can send in a ____ for extra insurance.",
+          "instructions": "Complete the gaps. One word only.",
+          "maxWords": 1,
+          "answers": [
+            "request"
+          ],
+          "evidence": "d capped at $100,000. Anyone who is interested can submit a request to purchase it and will be responsible for the premium as well as the fees to administer it. If emp",
+          "rationale": "The official key identifies request. The quoted source evidence determines this answer; nearby figures or details are not interchangeable.",
+          "sourceRef": {
+            "assessmentId": "0b87a234a7",
+            "dataHash": "2863e34ed6ce4c9e1911523f04750ecf2bd088fed4de4215b2f17fc96d7677cf",
+            "answerKeyFile": "ielts-general-training-reading-computer-delivered-note-completion-answer-key.pdf",
+            "answerKeyHash": "c33ce191158826875dcb4d37cdabb23f0990082ece112f12b462574527ef8f6d",
+            "sourceNumber": 5,
+            "responseIdentifier": "RESPONSE-5",
+            "contentRevisionId": 174562392,
+            "keyAnswers": [
+              "request"
+            ],
+            "sourceGroupType": "Sentence Completion"
+          }
+        }
+      ],
+      "text": "Accident insurance for City Media employees\nACCIDENT INSURANCE FOR CITY MEDIA EMPLOYEES\nCity Media is pleased to offer its employees accident insurance benefits which are unique in the industry. Our insurance package not only insures employees against accidents occurring on the job, but extends to their off-hours. It also provides 24-hour protection to dependants and to eligible partners. A general description of the accident insurance package is shown below. Any questions regarding it may be referred to our Human Resources Department.\nOur basic insurance is the same for all employees, and City Media makes enrolling in this program a condition of employment. We make an exception for those who have the same or greater coverage in an alternate plan. However, employees with other plans are still able to have adult dependants enrolled in ours. At this time, City Media does not extend this insurance to temporary staff, whether they are under contract for their services or not.\nFurther, employees can usually purchase accident insurance for their partners. However, submission and review of an application to the insurance company will determine whether the partner is eligible to participate.The terms in these policies bought for spouses are identical to those in the employees’ policy. This is, of course, provided that he/she has no accident insurance under another plan.\nAccident benefits take effect after completing three months of employment. Full-time employees will then automatically receive the minimum $80,000 worth of protection. Part-time employees, defined as those scheduled to work less than forty hours per week, will also be offered accident protection, but the amount of this coverage depends on the hours they typically work. Additional insurance is optional and is sold in amounts of $25,000 and capped at $100,000. Anyone who is interested can submit a request to purchase it and will be responsible for the premium as well as the fees to administer it.\nIf employees take an extended time off work on leave, they can either decide not to carry accident insurance or they can decide to keep it and pay 100% of the expense. Basic insurance protection resumes on the first day of the return to work; however, the optional coverages that are discontinued during this time are not automatically restored. These coverages will resume after a medical, a letter from the doctor, and an assurance that the insurance carrier is satisfied.\n\nQuestions 13–17\nThe accident protection at City Media is [13]\n\namongst similar companies.\nThe insurance programme excludes [14]\n\nemployees.\nAn employee’s partner is not automatically [15]\n\nfor the insurance.\nThe insurance coverage for part-timers is related to their usual number of [16]\n\n.\nEmployees can send in a [17]\n\nfor extra insurance."
+    }
+  ],
+  "writing": {
+    "id": "W1",
+    "minutes": 16,
+    "minWords": 160,
+    "targetWords": 200,
+    "prompt": "Write about the following topic:\nThe average standard of people's health is likely to be lower in the future than it is now.\nTo what extent do you agree or disagree with this statement?\nGive reasons for your answer and include any relevant examples from your own knowledge or experience.",
+    "instructions": "Write about 160–200 words in 16 minutes. This official sample prompt is being used for a shortened IELTSLab readiness response, not the full 40-minute, 250-word IELTS Writing Task 2. Explain your position, organise your ideas, support them with reasons and examples, and leave time to check. A teacher reviews your response; no automatic IELTS band is awarded.",
+    "rubric": [
+      {
+        "id": "taskResponse",
+        "label": "Task response",
+        "foundation": "The position is unclear, the statement is not addressed, or ideas remain disconnected assertions.",
+        "conditional": "A relevant position is present, but explanation or examples are thin.",
+        "ready": "A clear position addresses the statement, with relevant reasoning and a developed example."
+      },
+      {
+        "id": "coherence",
+        "label": "Organisation and connection",
+        "foundation": "The reader struggles to follow the sequence; sentence links frequently obscure meaning.",
+        "conditional": "The main sequence is understandable; paragraphing or links sometimes feel mechanical or unclear.",
+        "ready": "Ideas progress logically through focused paragraphs and clear links, without excessive signposting."
+      },
+      {
+        "id": "lexis",
+        "label": "Vocabulary",
+        "foundation": "A narrow range or frequent word-choice errors repeatedly limits the message.",
+        "conditional": "Everyday vocabulary communicates the main ideas, with repetition or occasional imprecision.",
+        "ready": "A sufficient range conveys distinctions and examples accurately; occasional slips do not obscure meaning."
+      },
+      {
+        "id": "grammar",
+        "label": "Sentence control",
+        "foundation": "Frequent basic errors or fragments make several sentences difficult to understand.",
+        "conditional": "Simple sentences are generally clear; attempts at more complex structures are uneven.",
+        "ready": "Simple and more complex sentences are controlled well enough to express reasoning clearly."
+      }
+    ]
+  },
+  "speaking": {
+    "minutes": 7,
+    "examinerInstructions": "Conduct this check in person. Confirm identity and explain that this is internal readiness screening, not an official IELTS band assessment. Do not teach, correct language, suggest vocabulary or score from accent alone. Allow a brief repeat of a question without simplifying it. Keep the fixed timings. Record specific observed strengths and difficulties. If access needs, illness, noise or interruption limit the evidence, mark insufficient evidence and arrange another check rather than assigning a low language rating.",
+    "familiarMinutes": 2,
+    "familiarQuestions": [
+      "Do you currently work, study, or do something else? What does a typical day involve?",
+      "What is one skill you would like to learn? Why?",
+      "When you learn something new, do you prefer working with other people or on your own?",
+      "Tell me about a place where you can concentrate well."
+    ],
+    "longTurn": {
+      "preparationSeconds": 60,
+      "speakingSeconds": 90,
+      "prompt": "Describe a time when you learnt something useful outside a formal class.",
+      "bullets": [
+        "what you learnt",
+        "how and where you learnt it",
+        "what was difficult at first",
+        "and explain why learning it was useful to you."
+      ],
+      "instruction": "Give the candidate the cue card, paper and a pencil. Allow one minute for notes, then say: Please begin. I will stop you after about a minute and a half. Do not interrupt except at the time limit."
+    },
+    "followUpSeconds": 150,
+    "followUp": [
+      "Why do some people find it difficult to keep learning after leaving school?",
+      "How can workplaces help employees learn without disrupting their work?",
+      "Can online resources replace a skilled teacher? Why or why not?",
+      "Is making mistakes an important part of learning? When might mistakes be less acceptable?"
+    ],
+    "rubric": [
+      {
+        "id": "fluency",
+        "label": "Fluency and coherence",
+        "foundation": "Long breakdowns prevent sustained answers or a connected account.",
+        "conditional": "The candidate develops short answers but needs noticeable planning pauses or loses the thread.",
+        "ready": "The candidate sustains a connected account and explains views despite some natural hesitation."
+      },
+      {
+        "id": "lexis",
+        "label": "Vocabulary",
+        "foundation": "Limited words or failed paraphrases repeatedly prevent communication.",
+        "conditional": "Familiar topics are communicated adequately; abstract discussion exposes repetition or gaps.",
+        "ready": "The candidate explains and paraphrases sufficiently across familiar and more general questions."
+      },
+      {
+        "id": "grammar",
+        "label": "Sentence control",
+        "foundation": "Frequent basic errors repeatedly make intended relationships unclear.",
+        "conditional": "Simple structures communicate meaning; more complex attempts are inconsistent.",
+        "ready": "A usable mix of structures expresses relationships clearly; errors seldom disrupt understanding."
+      },
+      {
+        "id": "pronunciation",
+        "label": "Intelligibility",
+        "foundation": "The listener repeatedly cannot recover words or phrases without substantial effort.",
+        "conditional": "Most speech is understandable, but individual sounds, stress or phrasing sometimes require effort.",
+        "ready": "Speech is consistently intelligible with helpful phrasing; a regional accent is not a weakness by itself."
+      }
+    ]
+  },
+  "scoringNotes": "One mark per objective item, exact explicit alternatives after case/whitespace normalisation. Core Listening 12 and Reading 12 items. The optional extension preserves two complete Listening groups (7 items) and one Reading group (5 items); its raw totals differ and must never be compared without denominators. Initial extension/placement rules are uncalibrated screening heuristics, not official IELTS-band conversions. Writing and Speaking require teacher review; productive weakness cannot be hidden by strong objective scores.",
+  "provenance": {
+    "permission": "Owner confirmed possession of permissions in this conversation; user-attested, not independently verified written licence.",
+    "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+    "sources": [
+      {
+        "assessmentId": "009050e6a0",
+        "title": "Sample - L - Note completion",
+        "dataFile": "009050e6a0.json",
+        "dataHash": "9dcbc2af37c8c22ef7bf40ed9646d725792f0ce4d19228507348fff87131f9ac",
+        "answerKeyFile": "ielts-listening-computer-delivered-note-completion-transcript___Answer_Key.pdf",
+        "answerKeyHash": "82d31e264fd76133b6a11c320ea7bb4c97e21776f8ef06c2cfca7aa8b53b4a81",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "audio": {
+          "filename": "00c61ff8-ec81-42e7-88db-9de2b41a5e4a.mp3",
+          "sha256": "2ef773b4b99d768d7855ee07d54721f08088728892b666312268e3b112982d01",
+          "deliveredSha256": "fdddd44fb7a75790da087f6c1c85aa16812f16f60718cdaf8b9ee30d7c82203b",
+          "conversion": "Full recording; mono 24 kHz MP3 at 64 kbps, no time edits"
+        },
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "e0e6587c6e",
+        "title": "Sample - L - Table completion",
+        "dataFile": "e0e6587c6e.json",
+        "dataHash": "7e36a21dd4ba45bc3ead467cdedf3a1d2c9ab4b01982fd22972fa79a62d34b72",
+        "answerKeyFile": "ielts-listening-computer-delivered-table-completion-transcript___Answer_key.pdf",
+        "answerKeyHash": "30a308ed01c84dc81b6c872cf54c6995d81ca8e8e03936e2c46c6cba7976d533",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "audio": {
+          "filename": "c1fd3f0a-fc37-4758-95ab-e20ab348369b.mp3",
+          "sha256": "5ea2b3be9df3f5a15415e166b1ed04db801e3949fafbf752233fa341d5a51047",
+          "deliveredSha256": "4dd91820a66b9fa5e231c19263e8b8f4176a415adf2a5a8778a74b4e806792e3",
+          "conversion": "Full recording; mono 24 kHz MP3 at 64 kbps, no time edits"
+        },
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "36c8c428b5",
+        "title": "Sample - ACR - T/F/NG",
+        "dataFile": "36c8c428b5.json",
+        "dataHash": "0c149b0b5fb99efc8256c5f0b66c35beecd4acfcdb82d8f6de8fd2afee186d9b",
+        "answerKeyFile": "ielts-academic-reading-computer-delivered-identifying-information-true-flase-not-given-answer-key.pdf",
+        "answerKeyHash": "8b6d70fdc1c939b0190351824f461143225fb40a21f0c401e2a765565c191613",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "25d2fce4d5",
+        "title": "Sample - ACR - 4-opt MC",
+        "dataFile": "25d2fce4d5.json",
+        "dataHash": "6a6ecd9eb679484c0cc17b7838d5b192f2c2ba9770fa5332907033ed7525a2ed",
+        "answerKeyFile": "ielts-academic-reading-computer-delivered-multiple-choice-one-answer-answer-key.pdf",
+        "answerKeyHash": "897bb6f9eeecbb12978389f2248f5d6371ffc376d9c8a251f4ee95f33adc9ba2",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "0f21f52c89",
+        "title": "Sample - ACR - Summary (prod.)",
+        "dataFile": "0f21f52c89.json",
+        "dataHash": "dfe79820ffe6e0aa32d895bd58d9e9481bf7249acf1d9ae3355d1bf336260d43",
+        "answerKeyFile": "ielts-academic-reading-computer-delivered-summary-completion-selecting-words-from-text-answer-key.pdf",
+        "answerKeyHash": "9a3f5a0ed57690b4e972bf1730fd74a3276eda3cab9f5398103e5a66a5101707",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "2d1f40c85e",
+        "title": "Sample - GTR - T/F/NG",
+        "dataFile": "2d1f40c85e.json",
+        "dataHash": "a505677b712a561e15396053285cc8327cbe498e8b37621735d7a863261851d9",
+        "answerKeyFile": "ielts-general-training-reading-computer-delivered-identifying-information-true-false-not-given-answer-key.pdf",
+        "answerKeyHash": "41af234816bf03624438f80dc71161db42d84f21cae2bc8315fd9df5d8e1e0c1",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "57340e03fc",
+        "title": "Sample - GTR - Note completion",
+        "dataFile": "57340e03fc.json",
+        "dataHash": "a3544c49038b771d5c3bd03cd7e669ae756688ec087d452e8b4d29b26e4b4eb8",
+        "answerKeyFile": "ielts-general-training-reading-computer-delivered-sentence-completion-answer-key.pdf",
+        "answerKeyHash": "baa0b68ef5504026536f98bd3a10a9040c93d55971c75a3d48d59de7afb5f98a",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "association": "Key PDF matched by content; source filenames are swapped"
+      },
+      {
+        "assessmentId": "9807aa112c",
+        "title": "Sample - L - 3-opt MC",
+        "dataFile": "9807aa112c.json",
+        "dataHash": "a08174cb944728545d8c30e87472eb0cfcf69012f1d46155460217541079688a",
+        "answerKeyFile": "ielts-listening-computer-delivered-multiple-choice-one-answer-Transcript_-_Answer_Key.pdf",
+        "answerKeyHash": "1281afe6f562ce7efbb7289cf8187533992d68f82c01f927442f060a2d56b39a",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "audio": {
+          "filename": "b9380f3a-a3d9-4c3e-b297-155b473c99e1.mp3",
+          "sha256": "62658ec8130081078effc43fc42b31a1b67f1388abef42cb41e192b53d83b13f",
+          "deliveredSha256": "f5524ccde6285f3c0c1deab73484c89106e5ad179c28188d22a178821282fc73",
+          "conversion": "Full recording; mono 24 kHz MP3 at 64 kbps, no time edits"
+        },
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "1276ea7c8d",
+        "title": "Sample - L - Sentence Completion",
+        "dataFile": "1276ea7c8d.json",
+        "dataHash": "990f3f059001ba17e88d096fb32292ae7aa115aa5ed5c9b7832363efaaf751ce",
+        "answerKeyFile": "ielts-listening-computer-delivered-sentence-completion-transcript___Answer_key.pdf",
+        "answerKeyHash": "eac48d5c0b08296f9a79cb751fdf234ec7d27e1ffb80524c50da9e85b3fd7fe2",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "audio": {
+          "filename": "b3047e6b-4821-4416-98c0-eb58d344d75e.mp3",
+          "sha256": "abd4864991208616adc351f1334ef49bd62c7dbe9931f43a251443ac1444eb95",
+          "deliveredSha256": "dfa95bb301f7f889cb3617d639aa0cd4cb77b54b68c50bc64a85e153475d6738",
+          "conversion": "Full recording; mono 24 kHz MP3 at 64 kbps, no time edits"
+        },
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "0d12f61f99",
+        "title": "Sample - ACR - Table completion",
+        "dataFile": "0d12f61f99.json",
+        "dataHash": "c4d69110c45cd85c394a88649b7b891043a0d40bff279b8af108738baa919390",
+        "answerKeyFile": "ielts-academic-reading-computer-delivered-table-completion-answer-key.pdf",
+        "answerKeyHash": "117bf361f022c5a8a894a1d23683e3ebe3587e5888aaf263888bd605d6678ecb",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "association": "Matched source title, complete question count, stems and answer content"
+      },
+      {
+        "assessmentId": "0b87a234a7",
+        "title": "Sample - GTR - Sentence completion",
+        "dataFile": "0b87a234a7.json",
+        "dataHash": "2863e34ed6ce4c9e1911523f04750ecf2bd088fed4de4215b2f17fc96d7677cf",
+        "answerKeyFile": "ielts-general-training-reading-computer-delivered-note-completion-answer-key.pdf",
+        "answerKeyHash": "c33ce191158826875dcb4d37cdabb23f0990082ece112f12b462574527ef8f6d",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "association": "Key PDF matched by content; source filenames are swapped"
+      },
+      {
+        "assessmentId": "655aa690bb",
+        "title": "Sample - ACW - P2",
+        "dataFile": "655aa690bb.json",
+        "dataHash": "a4ce329ac5f2816529f5579c1258bbf8e1dd4e6886b6df9e8d44b7804739d98b",
+        "sourcePage": "https://ielts.org/take-a-test/preparation-resources/sample-test-questions",
+        "association": "Unchanged official prompt; deliberately shortened readiness timing and target length, with IELTSLab teacher rubric"
+      }
+    ],
+    "adaptation": "Complete source question groups retained. Native numbering and accessible table row/column labels only. Full original recordings transcoded for delivery, without cuts or replacement voices. Writing uses an official prompt with an explicitly shortened readiness response; Speaking and placement rubrics are IELTSLab-authored."
+  }
+}

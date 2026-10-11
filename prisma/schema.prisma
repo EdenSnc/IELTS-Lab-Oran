@@ -275,6 +275,8 @@ model User {
   diagnosticSessions DiagnosticSession[]
   diagnosticAssessmentsReviewed DiagnosticAssessment[]
   diagnosticSpeakingSessionsExamined DiagnosticSpeakingSession[]
+  diagnosticSpeakingRuns DiagnosticSpeakingRun[] @relation("DiagnosticSpeakingRunCreator")
+  diagnosticSpeakingRunsReviewed DiagnosticSpeakingRun[] @relation("DiagnosticSpeakingRunReviewer")
 
   @@index([status, role])
   @@schema("app_private")
@@ -950,6 +952,7 @@ model DiagnosticInvitation {
   expiresAt DateTime
   revokedAt DateTime?
   revocationReason String? @db.Text
+  cohort String?
   recipient User @relation("DiagnosticRecipient", fields: [recipientId], references: [id], onDelete: Restrict, onUpdate: NoAction)
   issuedBy User @relation("DiagnosticIssuer", fields: [issuedById], references: [id], onDelete: Restrict, onUpdate: NoAction)
   blueprint TestBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -990,6 +993,7 @@ model DiagnosticSession {
   blueprintId String @db.Uuid
   manifest Json
   manifestHash String @db.Char(64)
+  readiness Json?
   state String @default("ACTIVE")
   startedAt DateTime
   deadline DateTime
@@ -1054,6 +1058,7 @@ model DiagnosticRecording {
   deletedAt DateTime?
   speaking DiagnosticSpeakingSession @relation(fields:[speakingId],references:[id],onDelete:Restrict,onUpdate:NoAction)
   chunks DiagnosticRecordingChunk[]
+  runs DiagnosticSpeakingRun[]
   @@index([state,expiresAt])
   @@schema("app_private")
 }
@@ -1079,12 +1084,14 @@ model DiagnosticAssessment {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sessionId String @unique @db.Uuid
   manifestHash String @db.Char(64)
+  readiness Json?
   state String @default("DRAFT")
   rawScores Json
   writing Json?
   speaking Json?
   nextSteps Json @default("[]")
   writingRunId String? @db.Uuid
+  speakingRunId String? @db.Uuid
   reviewedById String? @db.Uuid
   releasedAt DateTime?
   expiresAt DateTime?
@@ -1094,8 +1101,10 @@ model DiagnosticAssessment {
   session DiagnosticSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   reviewedBy User? @relation(fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: NoAction)
   writingRun DiagnosticWritingRun? @relation(fields: [writingRunId, sessionId], references: [id, sessionId], onDelete: Restrict, onUpdate: NoAction)
+  speakingRun DiagnosticSpeakingRun? @relation(fields:[speakingRunId],references:[id],onDelete:Restrict,onUpdate:NoAction)
   @@index([reviewedById])
   @@index([writingRunId, sessionId])
+  @@index([speakingRunId])
   @@index([state, expiresAt])
   @@schema("app_private")
 }
@@ -1123,6 +1132,39 @@ model DiagnosticWritingRun {
   @@unique([id, sessionId])
   @@unique([sessionId, inputHash, promptVersion])
   @@index([state, leaseExpiresAt, lastEnqueuedAt])
+  @@schema("app_private")
+}
+
+model DiagnosticSpeakingRun {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recordingId String @db.Uuid
+  createdById String @db.Uuid
+  consentVersion Int
+  inputHash String @db.Char(64)
+  promptVersion String
+  state String @default("QUEUED")
+  output Json?
+  model String?
+  usage Json?
+  errorCode String?
+  attempts Int @default(0)
+  leaseOwner String? @db.Uuid
+  leaseExpiresAt DateTime?
+  lastEnqueuedAt DateTime?
+  version Int @default(0)
+  review Json?
+  reviewedById String? @db.Uuid
+  reviewedAt DateTime?
+  createdAt DateTime @default(now())
+  completedAt DateTime?
+  recording DiagnosticRecording @relation(fields:[recordingId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  createdBy User @relation("DiagnosticSpeakingRunCreator",fields:[createdById],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  reviewedBy User? @relation("DiagnosticSpeakingRunReviewer",fields:[reviewedById],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  assessments DiagnosticAssessment[]
+  @@unique([recordingId,inputHash,promptVersion])
+  @@index([createdById])
+  @@index([reviewedById])
+  @@index([state,leaseExpiresAt,lastEnqueuedAt])
   @@schema("app_private")
 }
 

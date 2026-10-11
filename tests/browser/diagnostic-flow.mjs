@@ -15,6 +15,7 @@ process.env.TEST_DATABASE_URL = db; process.env.DATABASE_URL = db;
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://127.0.0.1:55621';
 process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'diagnostic-local-test-key-only';
 process.env.ENCRYPTION_KEY = '11'.repeat(32);
+process.env.DIAGNOSTIC_RECORDING_ENABLED='true';process.env.DIAGNOSTIC_AI_ENABLED='true';process.env.DIAGNOSTIC_AI_DATA_USE_APPROVED='true';
 const prisma = diagnosticTestPrisma();
 const sql = new Client({ connectionString: db }); await sql.connect();
 const modulePath = process.argv[2];
@@ -46,6 +47,7 @@ const authUser = { id: fixture.owner, aud: 'authenticated', role: 'authenticated
 const staffJwt = [Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url'),
   Buffer.from(JSON.stringify({ sub: fixture.staff, aud: 'authenticated', role: 'authenticated', aal: 'aal2', exp: expires, iat: expires - 7200 })).toString('base64url'), Buffer.from('synthetic-staff-signature').toString('base64url')].join('.');
 const staffAuthUser = { ...authUser, id: fixture.staff, email: `${fixture.staff}@synthetic.invalid` };
+const recordings=new Map();
 const transport = createServer(async (request, response) => {
   const url = new URL(request.url, 'http://127.0.0.1:55621');
   if (url.pathname === '/auth/v1/user') {
@@ -54,6 +56,24 @@ const transport = createServer(async (request, response) => {
     else if (request.headers.authorization === `Bearer ${jwt}`) response.end(JSON.stringify(authUser));
     else { response.writeHead(401); response.end('{"message":"invalid test token"}'); }
     return;
+  }
+  // Only the external private Supabase Storage transport is doubled. WAV
+  // encoding, protected uploads, immutability, consent and DB state stay real.
+  if(url.pathname==='/storage/v1/bucket/private-diagnostic-recordings'){
+    response.setHeader('Content-Type','application/json');response.end('{"id":"private-diagnostic-recordings","name":"private-diagnostic-recordings","public":false}');return;
+  }
+  const recordingPrefix='/storage/v1/object/private-diagnostic-recordings/';
+  if(url.pathname.startsWith(recordingPrefix)){
+    const key=decodeURIComponent(url.pathname.slice(recordingPrefix.length));
+    if(request.method==='POST'){
+      const chunks=[];for await(const chunk of request)chunks.push(chunk);
+      if(recordings.has(key)){response.writeHead(409,{'Content-Type':'application/json'});response.end('{"message":"exists"}');return;}
+      recordings.set(key,Buffer.concat(chunks));response.setHeader('Content-Type','application/json');response.end(JSON.stringify({Key:key}));return;
+    }
+    if(request.method==='GET'){
+      const bytes=recordings.get(key);if(!bytes){response.writeHead(404);response.end();return;}
+      response.setHeader('Content-Type','audio/wav');response.end(bytes);return;
+    }
   }
   const prefix = '/storage/v1/object/authenticated/protected-test-assets/';
   if (url.pathname.startsWith(prefix)) {
@@ -74,8 +94,9 @@ const transport = createServer(async (request, response) => {
   response.writeHead(404); response.end();
 });
 await new Promise((resolve, reject) => { transport.once('error', reject); transport.listen(55621, '127.0.0.1', resolve); });
-const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--port', '3009'], {
-  cwd: process.cwd(), env: { ...process.env, NODE_ENV: 'production', SPEAKING_DEV_AUTH_USER_ID: undefined,
+const runtimePort=3010;
+const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--port',String(runtimePort)], {
+  cwd: process.env.DIAGNOSTIC_BUILD_SNAPSHOT??process.cwd(), env: { ...process.env, NODE_ENV: 'production', SPEAKING_DEV_AUTH_USER_ID: undefined,
     SUPABASE_SERVICE_ROLE_KEY: 'diagnostic-storage-test-key-only' }, stdio: ['ignore', 'pipe', 'pipe'],
 });
 server.stdout.on('data', data => output.push(String(data))); server.stderr.on('data', data => output.push(String(data)));
@@ -89,8 +110,8 @@ async function until(check, description, timeout = 30000) {
   throw new Error(`Timed out: ${description}`);
 }
 try {
-  await until(async () => { try { return (await fetch('http://127.0.0.1:3009/favicon.ico')).status === 200; } catch { return false; } }, 'local production server', 30000);
-  browser = await chromium.launch({ headless: true, channel: 'msedge' });
+  await until(async () => { try { return (await fetch('http://127.0.0.1:3010/favicon.ico')).status === 200; } catch { return false; } }, 'local production server', 30000);
+  browser = await chromium.launch({ headless: true, channel: 'msedge',args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream'] });
   const context = await browser.newContext({ viewport: { width: 1280, height: 850 } });
   await context.addCookies([{ name: 'sb-127-auth-token', value: 'base64-' + Buffer.from(JSON.stringify({ access_token: jwt,
     refresh_token: 'synthetic-refresh', token_type: 'bearer', expires_at: expires, expires_in: 7200, user: authUser })).toString('base64url'),
@@ -103,7 +124,7 @@ try {
       try { console.log('API failure', new URL(response.url()).pathname, response.status(), (await response.json()).error ?? 'UNKNOWN'); } catch { console.log('API failure', new URL(response.url()).pathname, response.status(), 'NON_JSON'); }
     }
   });
-  await page.goto('http://127.0.0.1:3009/en/diagnostic');
+  await page.goto('http://127.0.0.1:3010/en/diagnostic');
   await page.getByRole('button', { name: 'Play test tone', exact: true }).click();
   await page.getByRole('checkbox', { name: 'I heard the tone clearly' }).check();
   await page.getByRole('button', { name: 'Start diagnostic', exact: true }).click();
@@ -142,7 +163,7 @@ try {
   await page.getByRole('heading', { name: 'Reading', exact: true }).waitFor({ timeout: 15000 });
   pass('exact section boundary advances to Reading without a timer reset');
   await page.setViewportSize({ width: 320, height: 720 });
-  await page.goto(`http://127.0.0.1:3009/ar/diagnostic/${sessionId}`);
+  await page.goto(`http://127.0.0.1:3010/ar/diagnostic/${sessionId}`);
   const readingInput = page.locator('main input:not([type=checkbox]):not([type=radio])').first();
   await until(() => readingInput.isEnabled(), 'Arabic writer resumed');
   const sourceImage = page.locator('img[src*="/assets/"]').first();
@@ -156,7 +177,7 @@ try {
   pass('Arabic 320px reflow and persistent mobile clock');
   await sql.query(`WITH timing AS MATERIALIZED (SELECT date_trunc('milliseconds',clock_timestamp()) AS now)
     UPDATE app_private."DiagnosticSession" SET "startedAt"=timing.now-interval '2405 seconds',deadline=timing.now+interval '1195 seconds' FROM timing WHERE id=$1`, [sessionId]);
-  await page.goto(`http://127.0.0.1:3009/fr/diagnostic/${sessionId}`);
+  await page.goto(`http://127.0.0.1:3010/fr/diagnostic/${sessionId}`);
   const essay = page.getByRole('textbox', { name: 'Votre réponse à la tâche 2' });
   await until(() => essay.isEnabled(), 'writing writer');
   await essay.fill('SYNTHETIC writing response for local browser verification.');
@@ -168,24 +189,29 @@ try {
   assert.equal(await prisma.diagnosticResponse.count({ where: { sessionId, finalizedAt: null } }), 0);
   assert.equal(await page.locator('audio').count(), 0);
   pass('French Task2 saves and irreversible submission finalizes all response slots');
-  await page.goto(`http://127.0.0.1:3009/fr/diagnostic/${sessionId}/report`);
+  await page.goto(`http://127.0.0.1:3010/fr/diagnostic/${sessionId}/report`);
   await page.getByRole('heading', { name: 'En attente de validation', exact: true }).waitFor();
   pass('participant sees pending state, not private examiner draft');
-  const staffContext = await browser.newContext({ viewport: { width: 1280, height: 850 } });
+  const staffContext = await browser.newContext({ viewport: { width: 1280, height: 850 },permissions:['microphone'] });
+  await staffContext.addInitScript(()=>{
+    const getUserMedia=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    window.__diagnosticTestTracks=[];
+    navigator.mediaDevices.getUserMedia=async constraints=>{const stream=await getUserMedia(constraints);window.__diagnosticTestTracks.push(...stream.getTracks());return stream;};
+  });
   await staffContext.addCookies([{ name: 'sb-127-auth-token', value: 'base64-' + Buffer.from(JSON.stringify({ access_token: staffJwt,
     refresh_token: 'synthetic-staff-refresh', token_type: 'bearer', expires_at: expires, expires_in: 7200, user: staffAuthUser })).toString('base64url'),
     domain: '127.0.0.1', path: '/', sameSite: 'Lax' }]);
   const examiner = await staffContext.newPage(); examiner.on('pageerror', error => errors.push(error.message));
-  await page.goto(`http://127.0.0.1:3009/en/diagnostic/${sessionId}/speaking`);
+  await page.goto(`http://127.0.0.1:3010/en/diagnostic/${sessionId}/speaking`);
   await page.getByRole('heading',{name:'Recording preferences',exact:true}).waitFor({timeout:4000});
   assert.equal(await page.getByLabel('I agree to audio recording for this diagnostic.',{exact:true}).isChecked(),false);
   assert.equal(await page.getByLabel('I agree to audio recording for this diagnostic.',{exact:true}).isDisabled(),true);
   await page.getByLabel('I am 18 or older.',{exact:true}).check();
   await page.getByRole('button',{name:'Save preferences',exact:true}).click();
   await page.getByText('Preferences saved.',{exact:true}).waitFor();
-  assert.equal(await page.getByLabel('I agree to Google Gemini analysis of my submitted diagnostic essay.',{exact:true}).isDisabled(),true);
-  pass('participant controls optional adult/privacy preferences; unavailable recording and AI stay disabled');
-  await examiner.goto(`http://127.0.0.1:3009/en/diagnostic/examiner/${sessionId}`);
+  assert.equal(await page.getByLabel('I agree to Google Gemini analysis of my submitted diagnostic essay.',{exact:true}).isChecked(),false);
+  pass('participant controls optional adult/privacy preferences; capture and AI never auto-enrol');
+  await examiner.goto(`http://127.0.0.1:3010/en/diagnostic/examiner/${sessionId}`);
   await examiner.getByRole('button',{name:'Start Speaking',exact:true}).click();
   await examiner.getByLabel('Private examiner notes',{exact:true}).fill('Private synthetic observation, never participant-visible.');
   await examiner.getByRole('button',{name:'Save notes',exact:true}).click();
@@ -193,7 +219,7 @@ try {
   const speakingBefore=await prisma.diagnosticSpeakingSession.findUnique({where:{sessionId}});
   await examiner.reload();
   assert.equal((await prisma.diagnosticSpeakingSession.findUnique({where:{sessionId}})).startedAt.toISOString(),speakingBefore.startedAt.toISOString());
-  const speakingOwner=await page.request.get(`http://127.0.0.1:3009/api/diagnostic/sessions/${sessionId}/speaking`);
+  const speakingOwner=await page.request.get(`http://127.0.0.1:3010/api/diagnostic/sessions/${sessionId}/speaking`);
   assert.ok(!JSON.stringify(await speakingOwner.json()).includes('Private synthetic observation'));
   await sql.query(`WITH clock AS MATERIALIZED(SELECT date_trunc('milliseconds',clock_timestamp()) AT TIME ZONE 'UTC' AS now)
     UPDATE app_private."DiagnosticSpeakingSession" SET "startedAt"=clock.now-interval '7 minutes',deadline=clock.now FROM clock WHERE "sessionId"=$1`,[sessionId]);
@@ -201,7 +227,7 @@ try {
   await examiner.getByRole('button',{name:'Complete Speaking',exact:true}).click();
   await examiner.getByText('Completed',{exact:true}).waitFor();
   pass('human-only Speaking uses fixed server clock, private notes and explicit completion');
-  await examiner.goto(`http://127.0.0.1:3009/en/diagnostic/staff/${sessionId}`);
+  await examiner.goto(`http://127.0.0.1:3010/en/diagnostic/staff/${sessionId}`);
   for (const criterion of ['Task response','Coherence and cohesion','Lexical resource','Grammatical range and accuracy']) {
     await examiner.getByLabel(criterion, { exact: true }).fill('Examiner-reviewed observation from this synthetic response.');
   }
@@ -210,20 +236,107 @@ try {
   await examiner.getByLabel('Priority next steps', { exact: true }).fill('Develop one specific example.');
   await examiner.getByRole('button', { name: 'Save examiner feedback', exact: true }).click();
   await examiner.getByText('Feedback saved.', { exact: true }).waitFor();
-  const candidatePending = await page.request.get(`http://127.0.0.1:3009/api/diagnostic/sessions/${sessionId}/report`);
+  const candidatePending = await page.request.get(`http://127.0.0.1:3010/api/diagnostic/sessions/${sessionId}/report`);
   assert.deepEqual(await candidatePending.json(), { state: 'PENDING' });
   await examiner.getByRole('checkbox', { name: 'I conducted the in-person Speaking diagnostic and reviewed all feedback.', exact: true }).check();
   await examiner.getByRole('button', { name: 'Release participant report', exact: true }).click();
   await examiner.getByText('Released', { exact: true }).waitFor();
   assert.equal((await prisma.diagnosticAssessment.findUnique({ where: { sessionId } })).state, 'RELEASED');
   pass('staff AAL2 review saves real draft and explicitly releases report');
-  await page.goto(`http://127.0.0.1:3009/ar/diagnostic/${sessionId}/report`);
+  await page.goto(`http://127.0.0.1:3010/ar/diagnostic/${sessionId}/report`);
   await page.getByRole('heading', { name: 'تقرير الاختبار التشخيصي', exact: true }).waitFor();
   assert.ok((await page.locator('main').innerText()).includes('Develop one specific example.'));
   await page.setViewportSize({ width: 320, height: 800 });
   const reportWidth = await page.locator('main').evaluate(element => ({ scroll: element.scrollWidth, width: element.clientWidth }));
   assert.ok(reportWidth.scroll <= reportWidth.width+1);
   pass('released Arabic report is owner scoped and reflows at 320px');
+  // Separate invite verifies capture without changing the existing human-only
+  // session. Browser microphone source is Chromium's synthetic fake device.
+  const capturedInvite=await issueDiagnosticInvitation({recipientId:fixture.owner,blueprintId:fixture.blueprint,actorUserId:fixture.staff});
+  const {createDiagnosticSession}=await import('../../src/lib/diagnostic/session-service.ts');
+  const capturedSession=await createDiagnosticSession({invitationId:capturedInvite.id,userId:fixture.owner});
+  await prisma.diagnosticResponse.updateMany({where:{sessionId:capturedSession.id},data:{finalizedAt:new Date()}});
+  await prisma.diagnosticSession.update({where:{id:capturedSession.id},data:{state:'SUBMITTED',submittedAt:new Date()}});
+  const capturedId=capturedSession.id;
+  await page.goto(`http://127.0.0.1:3010/en/diagnostic/${capturedId}/speaking`);
+  await page.getByLabel('I am 18 or older.',{exact:true}).check();
+  await page.getByLabel('I agree to audio recording for this diagnostic.',{exact:true}).check();
+  await page.getByLabel('I agree to post-session AI analysis of the recording.',{exact:true}).check();
+  await page.getByRole('button',{name:'Save preferences',exact:true}).click();await page.getByText('Preferences saved.',{exact:true}).waitFor();
+  await examiner.goto(`http://127.0.0.1:3010/en/diagnostic/examiner/${capturedId}`);
+  await examiner.getByLabel('I have checked the participant’s identity, that they are 18 or older, and their recording consent.',{exact:true}).check();
+  await examiner.getByRole('button',{name:'Prepare microphone',exact:true}).click();
+  await examiner.getByText('Microphone ready. The Speaking clock has not started.',{exact:true}).waitFor({timeout:12000});
+  assert.equal((await prisma.diagnosticSpeakingSession.findUnique({where:{sessionId:capturedId}})).startedAt,null);
+  assert.equal(recordings.size,0);pass('real static AudioWorklet passes production CSP; microphone preflight neither uploads nor starts clock');
+  await examiner.getByRole('button',{name:'Start Speaking and record',exact:true}).click();
+  await until(async()=>await prisma.diagnosticRecordingChunk.count({where:{recording:{speaking:{sessionId:capturedId}},state:'STORED'}})>=1,'real PCM upload',15000);
+  await examiner.getByRole('button',{name:'Stop microphone',exact:true}).click();
+  await examiner.getByRole('button',{name:'Finish and save recording',exact:true}).click();
+  await examiner.getByText('Recording saved and acknowledged by the server.',{exact:true}).waitFor();
+  const recorded=await prisma.diagnosticRecording.findFirst({where:{speaking:{sessionId:capturedId}}});
+  assert.equal(recorded.state,'READY');assert.ok(recorded.durationMs>0&&recorded.durationMs<=420000);
+  const firstAudio=[...recordings.values()][0];assert.equal(firstAudio.toString('ascii',0,4),'RIFF');assert.equal(firstAudio.readUInt32LE(24),16000);
+  const replay=await examiner.request.get(`http://127.0.0.1:3010/api/diagnostic/sessions/${capturedId}/speaking/recordings/${recorded.id}`,{headers:{Range:'bytes=0-43'}});
+  assert.equal(replay.status(),206);assert.equal((await replay.body()).length,44);
+  await examiner.reload();await examiner.getByText('Recording saved and acknowledged by the server.',{exact:true}).waitFor();
+  assert.equal(await examiner.getByRole('button',{name:'Prepare microphone',exact:true}).count(),0);
+  assert.equal(await prisma.diagnosticRecording.count({where:{speaking:{sessionId:capturedId}}}),1);
+  assert.equal((await prisma.diagnosticRecording.findFirst({where:{speaking:{sessionId:capturedId}}})).id,recorded.id);
+  pass('actual microphone PCM is acknowledged, privately range-streamed and never recaptured on reload');
+  await sql.query(`WITH clock AS MATERIALIZED(SELECT date_trunc('milliseconds',clock_timestamp()) AT TIME ZONE 'UTC' AS now)
+    UPDATE app_private."DiagnosticSpeakingSession" SET "startedAt"=clock.now-interval '7 minutes',deadline=clock.now FROM clock WHERE "sessionId"=$1`,[capturedId]);
+  await examiner.getByRole('button',{name:'Check status',exact:true}).click();await examiner.getByRole('button',{name:'Complete Speaking',exact:true}).click();
+  await examiner.goto(`http://127.0.0.1:3010/en/diagnostic/staff/${capturedId}`);
+  const queuedResponse=examiner.waitForResponse(r=>r.url().endsWith(`/api/diagnostic/sessions/${capturedId}/speaking/analysis`)&&r.request().method()==='POST');
+  await examiner.getByRole('button',{name:'Request Speaking feedback',exact:true}).click();
+  assert.equal((await queuedResponse).status(),202);
+  const run=await prisma.diagnosticSpeakingRun.findFirstOrThrow({where:{recordingId:recorded.id}});assert.equal(run.state,'QUEUED');
+  const {processDiagnosticSpeakingAnalysis}=await import('../../src/lib/diagnostic/analysis-service.ts');
+  await processDiagnosticSpeakingAnalysis(run.id,{storage:{assertPrivate:async()=>{},put:async()=>{},get:async key=>recordings.get(key),remove:async()=>{}},
+    generate:async()=>({model:'synthetic-browser-transport',usage:{inputTokens:1,outputTokens:1},output:{
+      segments:[{speaker:'CANDIDATE',startMs:0,endMs:1000,text:'Synthetic speaking evidence.',confidence:0.5}],
+      criteria:['FLUENCY_COHERENCE','LEXICAL_RESOURCE','GRAMMAR','PRONUNCIATION'].map(criterion=>({criterion,observation:'Examiner must review this synthetic fixture.',insufficientEvidence:false,
+        evidence:[{segmentIndex:0,startMs:0,endMs:1000,quotation:'Synthetic speaking evidence.',basis:criterion==='PRONUNCIATION'?'AUDIO':'TRANSCRIPT'}]})),
+      priorities:['Develop an example.'],limitations:['Synthetic source, not a real diagnosis.'],audioQuality:{speechPresent:true,discontinuity:false,unreliableAttribution:false}}})});
+  await examiner.getByRole('button',{name:'Refresh Speaking feedback',exact:true}).click();
+  assert.equal(await examiner.getByRole('button',{name:'Apply Speaking suggestions',exact:true}).isDisabled(),true);
+  await examiner.getByLabel('I checked the audio and every speaker assignment.',{exact:true}).check();
+  await examiner.getByRole('button',{name:'Confirm speaker review',exact:true}).click();
+  await examiner.getByRole('button',{name:'Apply Speaking suggestions',exact:true}).click();
+  assert.ok((await examiner.getByLabel('Speaking observations',{exact:true}).inputValue()).includes('Examiner must review'));
+  assert.equal((await prisma.diagnosticAssessment.findUnique({where:{sessionId:capturedId}})).speaking,null);
+  pass('Speaking suggestions require actual speaker review and never save/release human feedback automatically');
+  await page.goto(`http://127.0.0.1:3010/en/diagnostic/${capturedId}/speaking`);
+  await page.getByLabel('I agree to audio recording for this diagnostic.',{exact:true}).uncheck();
+  await page.getByRole('button',{name:'Save preferences',exact:true}).click();await page.getByText('Preferences saved.',{exact:true}).waitFor();
+  assert.equal((await examiner.request.get(`http://127.0.0.1:3010/api/diagnostic/sessions/${capturedId}/speaking/recordings/${recorded.id}`)).status(),409);
+  assert.equal((await prisma.diagnosticSpeakingRun.findUnique({where:{id:run.id}})).output,null);
+  pass('owner withdrawal immediately blocks replay and erases private AI output');
+  const liveInvite=await issueDiagnosticInvitation({recipientId:fixture.owner,blueprintId:fixture.blueprint,actorUserId:fixture.staff});
+  const liveSession=await createDiagnosticSession({invitationId:liveInvite.id,userId:fixture.owner});
+  await prisma.diagnosticResponse.updateMany({where:{sessionId:liveSession.id},data:{finalizedAt:new Date()}});
+  await prisma.diagnosticSession.update({where:{id:liveSession.id},data:{state:'SUBMITTED',submittedAt:new Date()}});
+  await page.goto(`http://127.0.0.1:3010/en/diagnostic/${liveSession.id}/speaking`);
+  await page.getByLabel('I am 18 or older.',{exact:true}).check();await page.getByLabel('I agree to audio recording for this diagnostic.',{exact:true}).check();
+  await page.getByRole('button',{name:'Save preferences',exact:true}).click();await page.getByText('Preferences saved.',{exact:true}).waitFor();
+  await examiner.goto(`http://127.0.0.1:3010/en/diagnostic/examiner/${liveSession.id}`);
+  await examiner.getByLabel('I have checked the participant’s identity, that they are 18 or older, and their recording consent.',{exact:true}).check();
+  await examiner.getByRole('button',{name:'Prepare microphone',exact:true}).click();await examiner.getByText('Microphone ready. The Speaking clock has not started.',{exact:true}).waitFor();
+  await examiner.getByRole('button',{name:'Start Speaking and record',exact:true}).click();
+  await until(async()=>await prisma.diagnosticRecordingChunk.count({where:{recording:{speaking:{sessionId:liveSession.id}},state:'STORED'}})>=1,'live capture acknowledgement',15000);
+  const liveBefore=await prisma.diagnosticSpeakingSession.findUnique({where:{sessionId:liveSession.id}});
+  await examiner.getByLabel('Private examiner notes',{exact:true}).fill('Unsaved examiner notes must survive an unrelated consent-version update.');
+  await page.getByLabel('I agree to audio recording for this diagnostic.',{exact:true}).uncheck();
+  await page.getByRole('button',{name:'Save preferences',exact:true}).click();await page.getByText('Preferences saved.',{exact:true}).waitFor();
+  await until(()=>examiner.evaluate(()=>window.__diagnosticTestTracks.length>0&&window.__diagnosticTestTracks.every(track=>track.readyState==='ended')),'microphone tracks close on live consent withdrawal',10000);
+  assert.equal((await prisma.diagnosticSpeakingSession.findUnique({where:{sessionId:liveSession.id}})).startedAt.toISOString(),liveBefore.startedAt.toISOString());
+  assert.equal(await examiner.getByRole('button',{name:'Finish and save recording',exact:true}).count(),0);
+  assert.equal(await examiner.getByLabel('Private examiner notes',{exact:true}).inputValue(),'Unsaved examiner notes must survive an unrelated consent-version update.');
+  await examiner.getByRole('button',{name:'Save notes',exact:true}).click();await examiner.getByText('Notes saved.',{exact:true}).waitFor();
+  await examiner.setViewportSize({width:320,height:720});assert.equal(await examiner.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await examiner.screenshot({path:path.join(artifacts,'recording-withdrawal-mobile.png'),fullPage:true});
+  pass('live withdrawal closes actual media tracks, discards local bytes and preserves the Speaking deadline at 320px');
   assert.deepEqual(errors, []); pass('no uncaught browser application errors');
 } catch (error) {
   console.error('Flow failure:', error);

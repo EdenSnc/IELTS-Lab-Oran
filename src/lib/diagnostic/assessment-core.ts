@@ -9,6 +9,7 @@ export const diagnosticAssessmentEditSchema = z.object({
   expectedVersion: z.number().int().nonnegative(), writing: diagnosticWritingFeedbackSchema,
   speaking: diagnosticSpeakingFeedbackSchema.nullable(), nextSteps: z.array(note).max(3),
   writingRunId: z.uuid().nullable().optional(),
+  speakingRunId: z.uuid().nullable().optional(),
 }).strict();
 export type DiagnosticAssessmentEdit = z.infer<typeof diagnosticAssessmentEditSchema>;
 export type DiagnosticSpeakingFeedback = z.infer<typeof diagnosticSpeakingFeedbackSchema>;

@@ -22,7 +22,7 @@ export default function DiagnosticPrivacy({locale,sessionId,initialSpeaking,init
   }catch{setError(true);}finally{setBusy(false);}
  }
  return<>
-  <form noValidate onSubmit={event=>{event.preventDefault();void save('speaking');}}><section className={styles.panel}><h2>{m.consentTitle}</h2><p className={styles.meta}>{m.policy}</p>
+  <form noValidate onSubmit={event=>{event.preventDefault();void save('speaking');}}><section className={styles.panel}><h2>{m.consentTitle}</h2><p className={styles.meta}>{m.policy}</p><p className={styles.meta}>{p.provider}</p>
    <label className={styles.option}><input type="checkbox" checked={speaking.adultAttested} disabled={busy||!!speaking.privacyRevokedAt}
     onChange={event=>{setSaved(undefined);setSpeaking(value=>({...value,adultAttested:event.target.checked,...(!event.target.checked?{recordingConsented:false,aiConsented:false}:{})}));}}/><span>{m.adult}</span></label>
    <label className={styles.option}><input type="checkbox" checked={speaking.recordingConsented} disabled={busy||!!speaking.privacyRevokedAt||(!speaking.captureAvailable&&!speaking.recordingConsented)||!speaking.adultAttested}

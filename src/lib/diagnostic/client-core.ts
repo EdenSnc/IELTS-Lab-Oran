@@ -46,6 +46,17 @@ export class DiagnosticAutosave {
     }
     this.changed();
   }
+  /** New readiness caller only: preserve expired drafts, never pretend they were saved. */
+  preserveClosedDrafts(activeQuestionIds: ReadonlySet<string>): DiagnosticResponseDto[] {
+    const copies: DiagnosticResponseDto[]=[];
+    for(const [id,draft] of this.pending){
+      if(activeQuestionIds.has(id))continue;
+      copies.push({...this.acknowledged.get(id)!,answer:draft.answer,markedForReview:draft.markedForReview,savedAt:null});
+      this.pending.delete(id);
+    }
+    if(copies.length)this.changed();
+    return copies;
+  }
   flush(save: (input: DiagnosticSaveInput) => Promise<DiagnosticResponseDto>): Promise<void> {
     if (this.flushing) return this.flushing;
     this.flushing = this.drain(save).finally(() => { this.flushing = null; });

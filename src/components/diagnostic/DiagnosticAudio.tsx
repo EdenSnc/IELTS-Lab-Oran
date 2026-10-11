@@ -18,6 +18,7 @@ export default function DiagnosticAudio({ tracks, elapsedSeconds, locale, enable
     elapsed -= candidate.durationSeconds;
   }
   const offset = elapsed;
+  const sourceUrl=track?.url;
   async function play() {
     const audio = player.current;
     if (!audio || !enabled || !track) return;
@@ -29,10 +30,13 @@ export default function DiagnosticAudio({ tracks, elapsedSeconds, locale, enable
   useEffect(() => {
     const audio = player.current;
     if (!audio) return;
+    // Strict Mode replays cleanup/setup on the same element in development.
+    // Restore its source after cleanup; production track changes still use the clock.
+    if(sourceUrl&&audio.getAttribute('src')!==sourceUrl){audio.src=sourceUrl;audio.load();}
     if (!enabled) { audio.pause(); return; }
     if (audio.readyState >= 1 && Math.abs(audio.currentTime - offset) > 3) audio.currentTime = offset;
     if (audio.paused && !audio.ended) void audio.play().catch(() => setFailed(true));
-  }, [enabled, offset, track?.id]);
+  }, [enabled, offset, track?.id,sourceUrl]);
   useEffect(() => {
     const audio = player.current;
     return () => {

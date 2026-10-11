@@ -1,5 +1,5 @@
 import 'server-only';
-import type { DiagnosticSpeakingSession } from '@prisma/client';
+import {Prisma,type DiagnosticSpeakingSession} from '@prisma/client';
 import { z } from 'zod';
 import { diagnosticNow,diagnosticTransaction,type DiagnosticTransaction } from './content-service';
 import { assertDiagnosticExaminer } from './assessment-service';
@@ -43,7 +43,11 @@ export async function saveDiagnosticSpeakingConsent(input:{sessionId:string;user
     if(['COMPLETED','CANCELLED'].includes(previous.state)&&decisions.recordingConsented&&!previous.recordingConsented)throw new DiagnosticError('RECORDING_NOT_ELIGIBLE',409);
     const revoked=(previous.recordingConsented&&!decisions.recordingConsented)||(previous.aiConsented&&!decisions.aiConsented);
     const saved=await tx.diagnosticSpeakingSession.update({where:{id:previous.id},data:{...decisions,consentVersion:{increment:1},version:{increment:1},updatedAt:now,...(revoked?{privacyRevokedAt:now}:{})}});
-    if(revoked)await tx.diagnosticRecording.updateMany({where:{speakingId:previous.id,state:{in:['UPLOADING','READY']}},data:{state:'DELETE_PENDING'}});
+    if(revoked){
+      await tx.diagnosticRecording.updateMany({where:{speakingId:previous.id,state:{in:['UPLOADING','READY']}},data:{state:'DELETE_PENDING'}});
+      await tx.diagnosticSpeakingRun.updateMany({where:{recording:{speakingId:previous.id}},data:{state:'CANCELLED',output:Prisma.DbNull,review:Prisma.DbNull,
+        reviewedAt:null,reviewedById:null,leaseOwner:null,leaseExpiresAt:null,completedAt:now,errorCode:'CONSENT_WITHDRAWN',version:{increment:1}}});
+    }
     for(const choice of [{type:'RECORDING' as const,accepted:decisions.recordingConsented,previous:previous.recordingConsented,policyVersion:DIAGNOSTIC_RECORDING_POLICY_VERSION},
       {type:'AI_ASSISTED_GRADING' as const,accepted:decisions.aiConsented,previous:previous.aiConsented,policyVersion:DIAGNOSTIC_AI_POLICY_VERSION}]){
       if(choice.accepted!==choice.previous)await tx.consentRecord.create({data:{userId:input.userId,type:choice.type,action:choice.accepted?'ACCEPTED':'WITHDRAWN',policyVersion:choice.policyVersion,
@@ -53,8 +57,8 @@ export async function saveDiagnosticSpeakingConsent(input:{sessionId:string;user
   });
 }
 export async function loadDiagnosticSpeaking(input:{sessionId:string;actorUserId:string}){
-  return diagnosticTransaction(async tx=>{await assertDiagnosticExaminer(tx,input);const row=await tx.diagnosticSpeakingSession.findUnique({where:{sessionId:input.sessionId}});
-    const now=await diagnosticNow(tx);return row?staffView(row,now):{...status(null,now),id:null,version:0,notes:''};});
+  return diagnosticTransaction(async tx=>{const written=await assertDiagnosticExaminer(tx,input);const row=await tx.diagnosticSpeakingSession.findUnique({where:{sessionId:input.sessionId}});
+    const now=await diagnosticNow(tx);return {...(row?staffView(row,now):{...status(null,now),id:null,version:0,notes:''}),readinessProfile:written.readiness!==null};});
 }
 export async function startDiagnosticSpeaking(input:{sessionId:string;actorUserId:string}){
   return diagnosticTransaction(async tx=>{

@@ -14,13 +14,16 @@ import { DiagnosticError } from './protocol';
 import { assertDiagnosticWritingAiConsent,diagnosticAiAvailable } from './ai-consent-service';
 import { buildDiagnosticWritingPrompt, diagnosticWritingFeedbackSchema, parseDiagnosticWritingFeedback,
   diagnosticWritingInputHash, DIAGNOSTIC_WRITING_PROMPT_VERSION } from './writing-core';
+import {loadReadinessWritingInput,ensureReadinessWritingAssessment} from './readiness-service';
+import {READINESS_WRITING_PROMPT_VERSION,buildReadinessWritingPrompt,readinessWritingFeedbackSchema,parseReadinessWritingFeedback} from './readiness-writing-core';
 
 export const diagnosticWritingJobSchema = z.object({ version: z.literal(1), type: z.literal('DIAGNOSTIC_WRITING'), runId: z.uuid() }).strict();
 export const diagnosticRecoveryJobSchema = z.object({ version: z.literal(1), type: z.literal('RECOVER_DIAGNOSTIC_WRITING') }).strict();
 
 export async function loadDiagnosticWritingInput(sessionId: string) {
-  const target = await prisma.diagnosticSession.findUnique({ where: { id: sessionId }, select: { userId: true } });
+  const target = await prisma.diagnosticSession.findUnique({ where: { id: sessionId }, select: { userId: true,readiness:true } });
   if (!target) throw new DiagnosticError('NOT_FOUND',404);
+  if(target.readiness!==null){const input=await loadReadinessWritingInput(sessionId);return {...input,inputHash:diagnosticWritingInputHash(input)};}
   const source = await loadOwnedDiagnosticSource({ sessionId, userId: target.userId });
   if (source.session.state !== 'SUBMITTED' || source.session.responses.some(response => !response.finalizedAt)) throw new DiagnosticError('WRITTEN_NOT_SUBMITTED',409);
   const question = source.manifest.questions.find(item => item.skill === 'WRITING')!;
@@ -32,11 +35,12 @@ export async function loadDiagnosticWritingInput(sessionId: string) {
   const answer = source.session.responses.find(response => response.questionId === question.questionId)!.answer;
   const input = { manifestHash: source.session.manifestHash, questionId: question.questionId, prompt, answer,
     promptVersion: DIAGNOSTIC_WRITING_PROMPT_VERSION };
-  return { ...input, inputHash: diagnosticWritingInputHash(input) };
+  return { ...input, rubric:null,inputHash: diagnosticWritingInputHash(input) };
 }
 export async function queueDiagnosticWriting(input: { sessionId: string; actorUserId: string }) {
   if(!diagnosticAiAvailable())throw new DiagnosticError('AI_UNAVAILABLE',503);
-  await loadDiagnosticAssessment(input);
+  const target=await diagnosticTransaction(tx=>assertDiagnosticExaminer(tx,input));
+  if(target.readiness!==null)await ensureReadinessWritingAssessment(input);else await loadDiagnosticAssessment(input);
   const source = await loadDiagnosticWritingInput(input.sessionId);
   return diagnosticTransaction(async tx => {
     await tx.$queryRaw`SELECT id FROM app_private."DiagnosticSession" WHERE id=${input.sessionId}::uuid FOR UPDATE`;
@@ -65,7 +69,7 @@ const publishJob: JobPublisher = async body => {
   if (!process.env.QSTASH_TOKEN) throw new Error('QSTASH_NOT_CONFIGURED');
   await new Client({ token: process.env.QSTASH_TOKEN }).publishJSON({ url: qstashEndpoint('/api/internal/diagnostic/writing'),
     body, retries: 5, timeout: '60s', deduplicationId: `diagnostic-writing-${body.runId}-${Date.now()}`, label: ['diagnostic-writing'],
-    flowControl: { key: 'gemini-writing', parallelism: 2, rate: 10, period: '1m' } });
+    flowControl: { key: 'gemini-diagnostic', parallelism: 1, rate: 10, period: '1m' } });
 };
 export async function publishDiagnosticWriting(runId: string, publish: JobPublisher = publishJob) {
   const run = await prisma.diagnosticWritingRun.findUniqueOrThrow({ where: { id: runId } });
@@ -85,16 +89,17 @@ export async function publishDiagnosticWriting(runId: string, publish: JobPublis
 }
 type GenerateResult = { feedback: unknown; model: string; usage: { inputTokens: number; outputTokens: number } };
 type Generator = (input: Awaited<ReturnType<typeof loadDiagnosticWritingInput>>) => Promise<GenerateResult>;
-const generateFeedback: Generator = async input => {
+export const generateDiagnosticWritingFeedback: Generator = async input => {
   if(!diagnosticAiAvailable())throw new DiagnosticError('AI_UNAVAILABLE',503);
   if (!process.env.GEMINI_API_KEY) throw new Error('WRITING_AI_NOT_CONFIGURED');
-  // Reuse the deployed model configuration, not a second model/provider framework.
-  const model = (process.env.GEMINI_WRITING_MODELS ?? 'gemini-3.5-flash-lite').split(',')[0].trim();
+  // Diagnostic model selection must not inherit the ordinary mock's model list.
+  const model = process.env.DIAGNOSTIC_WRITING_MODEL?.trim() || 'gemini-3.5-flash-lite';
   if (!model) throw new Error('WRITING_AI_NOT_CONFIGURED');
-  const prompt = buildDiagnosticWritingPrompt(input);
+  const readiness=input.promptVersion===READINESS_WRITING_PROMPT_VERSION;
+  const prompt = readiness?buildReadinessWritingPrompt({...input,rubric:input.rubric!}):buildDiagnosticWritingPrompt(input);
   const result = await new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, httpOptions: { timeout: 45_000 } }).models.generateContent({
     model, contents: [{ role: 'user', parts: [{ text: prompt.data }] }], config: {
-      systemInstruction: prompt.system, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(diagnosticWritingFeedbackSchema),
+      systemInstruction: prompt.system, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(readiness?readinessWritingFeedbackSchema:diagnosticWritingFeedbackSchema),
       maxOutputTokens: 3000,
     },
   });
@@ -103,12 +108,12 @@ const generateFeedback: Generator = async input => {
   return { feedback, model: result.modelVersion ?? model,
     usage: { inputTokens: result.usageMetadata?.promptTokenCount ?? 0, outputTokens: result.usageMetadata?.candidatesTokenCount ?? 0 } };
 };
-function blankFeedback() {
+function blankFeedback(readiness=false) {
   return { criteria: ['TASK_RESPONSE','COHERENCE_COHESION','LEXICAL_RESOURCE','GRAMMAR'].map(criterion => ({
-    criterion, observation: 'No response was submitted; there is insufficient evidence to assess this criterion.', evidence: [],
-  })), nextSteps: ['Complete a timed Task 2 response before requesting writing feedback.'], limitations: ['No submitted text.', 'Shortened 20-minute Task 2 diagnostic.'] };
+    criterion,...(readiness?{rating:0}:{}),observation: 'No response was submitted; there is insufficient evidence to assess this criterion.', evidence: [],
+  })), nextSteps: ['Complete a timed Task 2 response before requesting writing feedback.'], limitations: ['No submitted text.', `Shortened ${readiness?16:20}-minute Task 2 diagnostic.`] };
 }
-export async function processDiagnosticWriting(runId: string, generate: Generator = generateFeedback) {
+export async function processDiagnosticWriting(runId: string, generate: Generator = generateDiagnosticWritingFeedback) {
   const leaseOwner = randomUUID();
   const claim = await diagnosticTransaction(async tx => {
     await tx.$queryRaw`SELECT id FROM app_private."DiagnosticWritingRun" WHERE id=${runId}::uuid FOR UPDATE`;
@@ -121,7 +126,8 @@ export async function processDiagnosticWriting(runId: string, generate: Generato
       return{run:expired,claimed:false};
     }
     if(!diagnosticAiAvailable())return{run,claimed:false};
-    try{await assertDiagnosticWritingAiConsent(tx,run.sessionId,run.consentVersion);}catch{
+    try{await assertDiagnosticWritingAiConsent(tx,run.sessionId,run.consentVersion);}catch(error){
+      if(!(error instanceof DiagnosticError)||error.code!=='AI_CONSENT_REQUIRED')throw error;
       const cancelled=await tx.diagnosticWritingRun.update({where:{id:runId},data:{state:'CANCELLED',feedback:Prisma.DbNull,leaseOwner:null,leaseExpiresAt:null,completedAt:now,errorCode:'CONSENT_REQUIRED'}});
       return{run:cancelled,claimed:false};
     }
@@ -145,9 +151,10 @@ export async function processDiagnosticWriting(runId: string, generate: Generato
     const input = await loadDiagnosticWritingInput(claim.run.sessionId);
     if (input.inputHash !== claim.run.inputHash || input.manifestHash !== claim.run.manifestHash || input.promptVersion !== claim.run.promptVersion) throw new Error('DIAGNOSTIC_WRITING_INPUT_INVALID');
     // This external call is deliberately outside every PostgreSQL transaction.
-    const result = input.answer.trim() ? await generate(input) : { feedback: blankFeedback(), model: 'no-response', usage: { inputTokens: 0, outputTokens: 0 } };
+    const readiness=input.promptVersion===READINESS_WRITING_PROMPT_VERSION;
+    const result = input.answer.trim() ? await generate(input) : { feedback: blankFeedback(readiness), model: 'no-response', usage: { inputTokens: 0, outputTokens: 0 } };
     let feedback;
-    try { feedback = parseDiagnosticWritingFeedback(result.feedback,input.answer); }
+    try { feedback = readiness?parseReadinessWritingFeedback(result.feedback,input.answer):parseDiagnosticWritingFeedback(result.feedback,input.answer); }
     catch { throw new Error('DIAGNOSTIC_WRITING_OUTPUT_INVALID'); }
     const metadata = z.object({ model: z.string().min(1).max(120), usage: z.object({ inputTokens: z.number().int().nonnegative().max(10000000),
       outputTokens: z.number().int().nonnegative().max(10000000) }).strict() }).parse({ model: result.model, usage: result.usage });

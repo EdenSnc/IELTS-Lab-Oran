@@ -22,7 +22,7 @@ export async function loadDiagnosticStaffOverview(actorUserId: string, email = '
     }
     const recipients = email ? await tx.user.findMany({ where: { email: email.trim().toLowerCase(), role: 'STUDENT', status: 'ACTIVE' },
       select: { id: true, name: true, email: true }, take: 1 }) : [];
-    const invitations = await tx.diagnosticInvitation.findMany({ where: actor.role === 'ADMIN' ? {} : { issuedById: actorUserId },
+    const invitations = await tx.diagnosticInvitation.findMany({ where: {blueprint:{NOT:{code:{startsWith:'IELTSLAB_READINESS_V2_'}}},...(actor.role === 'ADMIN' ? {} : { issuedById: actorUserId })},
       select: { id: true, expiresAt: true, revokedAt: true, recipient: { select: { name: true, email: true } },
         session: { select: { id: true, state: true, startedAt: true, submittedAt: true } } }, orderBy: { createdAt: 'desc' }, take: 60 });
     return { blueprints, recipients, invitations: invitations.map(invitation => ({ ...invitation,

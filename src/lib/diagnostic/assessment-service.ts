@@ -7,6 +7,7 @@ import { DiagnosticError } from './protocol';
 import { diagnosticAssessmentEditSchema, diagnosticSpeakingFeedbackSchema, type DiagnosticAssessmentEdit, type DiagnosticSpeakingFeedback } from './assessment-core';
 import { parseDiagnosticWritingFeedback, type DiagnosticWritingFeedback } from './writing-core';
 import { loadOwnedDiagnosticSource } from './session-service';
+import {validateDiagnosticSpeakingAnalysis,reviewDiagnosticSpeakerTurns,type DiagnosticSpeakerAssignment} from './analysis-core';
 
 export async function assertDiagnosticExaminer(tx: DiagnosticTransaction, input: { sessionId: string; actorUserId: string }) {
   const actor = await tx.user.findUnique({ where: { id: input.actorUserId }, select: { role: true, status: true } });
@@ -20,13 +21,13 @@ export async function assertDiagnosticExaminer(tx: DiagnosticTransaction, input:
 export type DiagnosticAssessmentDto = {
   state: 'DRAFT' | 'RELEASED' | 'EXPIRED'; version: number; rawScores: DiagnosticRawScore[];
   writing: DiagnosticWritingFeedback | null; speaking: DiagnosticSpeakingFeedback | null;
-  nextSteps: string[]; writingRunId: string | null; releasedAt: string | null; expiresAt: string | null;
+  nextSteps: string[]; writingRunId: string | null; speakingRunId:string|null; releasedAt: string | null; expiresAt: string | null;
 };
 function dto(row: DiagnosticAssessment): DiagnosticAssessmentDto {
   return { state: row.state as DiagnosticAssessmentDto['state'], version: row.version,
     rawScores: row.rawScores as DiagnosticRawScore[], writing: row.writing as DiagnosticWritingFeedback | null,
     speaking: row.speaking as DiagnosticSpeakingFeedback | null, nextSteps: row.nextSteps as string[],
-    writingRunId: row.writingRunId, releasedAt: row.releasedAt?.toISOString() ?? null, expiresAt: row.expiresAt?.toISOString() ?? null };
+    writingRunId: row.writingRunId,speakingRunId:row.speakingRunId, releasedAt: row.releasedAt?.toISOString() ?? null, expiresAt: row.expiresAt?.toISOString() ?? null };
 }
 async function lockAssessment(tx: DiagnosticTransaction, input: { sessionId: string; actorUserId: string }) {
   await tx.$queryRaw`SELECT id FROM app_private."DiagnosticSession" WHERE id=${input.sessionId}::uuid FOR UPDATE`;
@@ -50,7 +51,7 @@ export async function loadDiagnosticAssessment(input: { sessionId: string; actor
 }
 export async function saveDiagnosticAssessment(input: { sessionId: string; actorUserId: string } & DiagnosticAssessmentEdit): Promise<DiagnosticAssessmentDto> {
   const edit = diagnosticAssessmentEditSchema.parse({ expectedVersion: input.expectedVersion, writing: input.writing,
-    speaking: input.speaking, nextSteps: input.nextSteps, writingRunId: input.writingRunId });
+    speaking: input.speaking, nextSteps: input.nextSteps, writingRunId: input.writingRunId,speakingRunId:input.speakingRunId });
   const target = await diagnosticTransaction(tx => assertDiagnosticExaminer(tx,input));
   const source = await loadOwnedDiagnosticSource({ sessionId: input.sessionId, userId: target.userId });
   const writingQuestion = source.manifest.questions.find(q => q.skill === 'WRITING')!;
@@ -63,9 +64,17 @@ export async function saveDiagnosticAssessment(input: { sessionId: string; actor
     if (row.state !== 'DRAFT') throw new DiagnosticError('ASSESSMENT_RELEASED',409);
     if (row.version !== edit.expectedVersion) throw new DiagnosticError('ASSESSMENT_CONFLICT',409);
     if (edit.writingRunId && !await tx.diagnosticWritingRun.findFirst({ where: { id: edit.writingRunId, sessionId: input.sessionId, state: 'SUCCEEDED' } })) throw new DiagnosticError('INVALID_RESPONSE',400);
+    if(edit.speakingRunId){
+      const run=await tx.diagnosticSpeakingRun.findFirst({where:{id:edit.speakingRunId,state:'SUCCEEDED',reviewedAt:{not:null},
+        reviewedById:input.actorUserId,recording:{state:'READY',expiresAt:{gt:await diagnosticNow(tx)},speaking:{sessionId:input.sessionId,examinerId:input.actorUserId,
+          adultAttested:true,aiConsented:true,recordingConsented:true,privacyRevokedAt:null,session:{user:{status:'ACTIVE'}}}}},include:{recording:{include:{speaking:true}}}});
+      if(!run||!edit.speaking||run.consentVersion!==run.recording.speaking.consentVersion)throw new DiagnosticError('INVALID_RESPONSE',400);
+      try{reviewDiagnosticSpeakerTurns(validateDiagnosticSpeakingAnalysis(run.output,{durationMs:run.recording.durationMs!,hasAudio:true}),run.review as DiagnosticSpeakerAssignment[]);}
+      catch{throw new DiagnosticError('INVALID_RESPONSE',400);}
+    }
     const saved = await tx.diagnosticAssessment.update({ where: { id: row.id }, data: {
       writing, speaking: edit.speaking ?? Prisma.DbNull, nextSteps: edit.nextSteps,
-      writingRunId: edit.writingRunId ?? null, reviewedById: input.actorUserId, version: { increment: 1 }, updatedAt: await diagnosticNow(tx),
+      writingRunId: edit.writingRunId ?? null,speakingRunId:edit.speakingRunId??null, reviewedById: input.actorUserId, version: { increment: 1 }, updatedAt: await diagnosticNow(tx),
     } });
     await tx.staffActionAudit.create({ data: { actorUserId: input.actorUserId, action: 'DIAGNOSTIC_ASSESSMENT_EDITED',
       targetType: 'DiagnosticSession', targetId: input.sessionId, reason: 'Examiner feedback saved', metadata: { version: saved.version } } });
@@ -89,6 +98,8 @@ export async function releaseDiagnosticAssessment(input: { sessionId: string; ac
     } });
     await tx.diagnosticWritingRun.updateMany({ where: { sessionId: input.sessionId, state: { in: ['QUEUED','RUNNING'] } },
       data: { state: 'CANCELLED', leaseOwner: null, leaseExpiresAt: null, completedAt: now, errorCode: 'REPORT_RELEASED' } });
+    await tx.diagnosticSpeakingRun.updateMany({where:{recording:{speaking:{sessionId:input.sessionId}},state:{in:['QUEUED','RUNNING']}},
+      data:{state:'CANCELLED',leaseOwner:null,leaseExpiresAt:null,completedAt:now,errorCode:'REPORT_RELEASED'}});
     await tx.staffActionAudit.create({ data: { actorUserId: input.actorUserId, action: 'DIAGNOSTIC_REPORT_RELEASED',
       targetType: 'DiagnosticSession', targetId: input.sessionId, reason: 'Examiner explicitly approved diagnostic feedback', metadata: { version: saved.version } } });
     return dto(saved);
