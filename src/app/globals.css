@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* CSS cursors keep native hit-testing. No hidden cursor or animated overlay. */
+:root {
+  --cursor-default: default;
+  --cursor-pointer: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
+  :root {
+    --cursor-default: url('/cursors/brand-arrow.svg') 4 4, default;
+    --cursor-pointer: url('/cursors/brand-arrow.svg') 4 4, pointer;
+  }
+}
+
+@layer base {
+  html { cursor: var(--cursor-default); }
+  :where(a[href], button, summary, select, label[for], [role='button'], [role='link'], input:is([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'])) {
+    cursor: var(--cursor-pointer);
+  }
+  :where(input:not([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='range'], [type='color'], [type='file'], [type='hidden']), textarea, [contenteditable='true'], [role='textbox']) {
+    cursor: text;
+  }
+  :where(button, input, select, textarea):disabled { cursor: not-allowed; }
+}
+
+@utility cursor-default { cursor: var(--cursor-default); }
+@utility cursor-pointer { cursor: var(--cursor-pointer); }
+
 @theme inline {
   --color-crimson: #D91E36;
   --color-charcoal: #0a0a0a;
@@ -378,7 +405,7 @@ body {
   padding: 3px 12px;
   color: #1b4d6b;
   font: inherit;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 
 .mock-ielts-dnd-help-button:hover,
@@ -502,7 +529,7 @@ body {
   line-height: 1;
   text-align: center;
   vertical-align: middle;
-  cursor: pointer;
+  cursor: var(--cursor-pointer, pointer);
 }
 
 .mock-ielts-gap:hover,
