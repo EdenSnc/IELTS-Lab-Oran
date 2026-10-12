@@ -332,7 +332,7 @@ export default function FloatingWidget() {
                 background: 'rgba(255,255,255,0.09)',
                 color: 'rgba(160,160,170,1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
+                cursor: 'var(--cursor-pointer, pointer)',
                 opacity: expanded ? 1 : 0,
                 transform: expanded ? 'scale(1)' : 'scale(0.4)',
                 pointerEvents: expanded ? 'auto' : 'none',

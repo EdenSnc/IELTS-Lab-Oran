@@ -4,12 +4,14 @@
 :root {
   --cursor-default: default;
   --cursor-pointer: pointer;
+  --cursor-readable: text;
 }
 
 @media (hover: hover) and (pointer: fine) and (forced-colors: none) {
   :root {
     --cursor-default: url('/cursors/brand-arrow.svg') 4 4, default;
     --cursor-pointer: url('/cursors/brand-arrow.svg') 4 4, pointer;
+    --cursor-readable: url('/cursors/brand-arrow.svg') 4 4, default;
   }
 }
 
@@ -18,14 +20,24 @@
   :where(a[href], button, summary, select, label[for], [role='button'], [role='link'], input:is([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'])) {
     cursor: var(--cursor-pointer);
   }
-  :where(input:not([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='range'], [type='color'], [type='file'], [type='hidden']), textarea, [contenteditable='true'], [role='textbox']) {
+  :where(input:not([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='range'], [type='color'], [type='file'], [type='hidden']), textarea, [contenteditable='true'], [contenteditable=''], [contenteditable='plaintext-only'], [role='textbox']) {
     cursor: text;
   }
-  :where(button, input, select, textarea):disabled { cursor: not-allowed; }
+  :where([contenteditable='false']) { cursor: var(--cursor-readable); }
+  :where(button, input, select, textarea):disabled,
+  :where([aria-disabled='true']) { cursor: not-allowed; }
 }
 
 @utility cursor-default { cursor: var(--cursor-default); }
 @utility cursor-pointer { cursor: var(--cursor-pointer); }
+/* Selectable prose is not an editor. Keep native I-beams for real editors,
+   including inherited contenteditable descendants and readonly form fields. */
+@utility cursor-text { cursor: var(--cursor-readable); }
+@layer utilities {
+  .cursor-text:where(input, textarea, :read-write, [role='textbox']) { cursor: text; }
+  :where(.cursor-pointer, .cursor-text):is(:disabled, [aria-disabled='true']) { cursor: not-allowed; }
+  :where(:disabled, [aria-disabled='true']) :is(.cursor-pointer, .cursor-text) { cursor: not-allowed; }
+}
 
 @theme inline {
   --color-crimson: #D91E36;
