@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
 import type { EnabledAuthProviders } from '@/lib/supabase/auth-providers';
 import { normalizeE164Phone } from '@/lib/phone';
+import { authCopyForLocale, authErrorMessage } from './auth-copy';
 
 export type AuthMode = 'sign-in' | 'sign-up' | 'forgot-password' | 'update-password';
 
@@ -21,62 +22,37 @@ export const wilayas = [
   '53 In Salah', '54 In Guezzam', '55 Touggourt', '56 Djanet', '57 El M’Ghair', '58 El Meniaa', 'Outside Algeria',
 ] as const;
 
-const content = {
-  'sign-in': {
-    eyebrow: 'Welcome back',
-    title: 'Sign in to IELTS Lab',
-    description: 'Continue your preparation, tests and speaking appointments.',
-    submit: 'Sign in',
-  },
-  'sign-up': {
-    eyebrow: 'Your preparation starts here',
-    title: 'Create your account',
-    description: 'One secure account for your tests, results and appointments.',
-    submit: 'Create account',
-  },
-  'forgot-password': {
-    eyebrow: 'Account recovery',
-    title: 'Reset your password',
-    description: 'We will send a secure reset link to your email address.',
-    submit: 'Send reset link',
-  },
-  'update-password': {
-    eyebrow: 'Secure your account',
-    title: 'Choose a new password',
-    description: 'Use at least ten characters with lowercase, uppercase and a number.',
-    submit: 'Update password',
-  },
-} as const;
-
 export default function AuthForm({
   locale,
   mode,
   providers,
   initialMessage,
+  diagnosticNext,
 }: {
   locale: string;
   mode: AuthMode;
   providers: EnabledAuthProviders;
   initialMessage?: string;
+  diagnosticNext?: string;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | undefined>(initialMessage);
   const [pending, setPending] = useState(false);
-  const copy = content[mode];
+  const localized = authCopyForLocale(locale);
+  const copy = localized.modes[mode];
 
   async function signInWithProvider(provider: 'google' | 'facebook') {
     setPending(true);
     setMessage(undefined);
-    const redirectTo = `${window.location.origin}/api/auth/callback?next=/${locale}/account`;
     const response = await fetch('/api/auth/oauth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, redirectTo, intent: mode === 'sign-up' ? 'sign-up' : 'sign-in' }),
+      body: JSON.stringify({ provider, locale, intent: mode === 'sign-up' ? 'sign-up' : 'sign-in', ...(diagnosticNext ? { next: diagnosticNext } : {}) }),
     });
     const payload = await response.json() as { url?: string; error?: string };
     if (!response.ok || !payload.url) {
       setPending(false);
-      setMessage(payload.error ?? 'Unable to start social sign-in.');
+      setMessage(authErrorMessage(locale, payload.error ?? 'OAUTH_START_FAILED'));
       return;
     }
     window.location.assign(payload.url);
@@ -101,17 +77,17 @@ export default function AuthForm({
 
     if ((mode === 'sign-up' || mode === 'update-password') && password !== confirmPassword) {
       setPending(false);
-      setMessage('Passwords do not match.');
+      setMessage(localized.passwordsMismatch);
       return;
     }
     if (mode === 'sign-up' && !whatsapp) {
       setPending(false);
-      setMessage('Enter a valid WhatsApp number with its country code.');
+      setMessage(localized.invalidWhatsapp);
       return;
     }
     if (mode === 'sign-up' && (!termsAccepted || !privacyAccepted)) {
       setPending(false);
-      setMessage('Accept the current Terms and Privacy Policy to create an account.');
+      setMessage(localized.acceptPolicies);
       return;
     }
 
@@ -119,7 +95,6 @@ export default function AuthForm({
     let error: { message: string } | null = null;
 
     if (mode === 'sign-in' || mode === 'sign-up') {
-      const emailRedirectTo = `${window.location.origin}/api/auth/callback?next=/${locale}/account`;
       const response = await fetch('/api/auth/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -127,16 +102,23 @@ export default function AuthForm({
           ? { action: 'sign-in', email, password }
           : {
             action: 'sign-up', email, password, fullName, whatsapp, wilaya, preferredLocale,
-            termsAccepted, privacyAccepted, marketingAccepted, emailRedirectTo,
+            termsAccepted, privacyAccepted, marketingAccepted, locale, ...(diagnosticNext ? { next: diagnosticNext } : {}),
           }),
       });
-      const payload = await response.json() as { error?: string };
-      if (!response.ok) error = { message: payload.error ?? 'Authentication failed.' };
-      if (mode === 'sign-up' && response.ok) setMessage('Check your email to verify your account.');
+      const payload = await response.json() as { error?: string; emailConfirmationRequired?: boolean };
+      if (!response.ok) error = { message: authErrorMessage(locale, payload.error ?? 'AUTH_REQUEST_FAILED') };
+      if (mode === 'sign-up' && response.ok) {
+        if (payload.emailConfirmationRequired === false) {
+          router.replace(`/${locale}/account/onboarding${diagnosticNext ? `?next=${encodeURIComponent(diagnosticNext)}` : ''}`);
+          router.refresh();
+          return;
+        }
+        setMessage(localized.checkEmail);
+      }
     } else if (mode === 'forgot-password') {
       const redirectTo = `${window.location.origin}/api/auth/callback?next=/${locale}/auth/update-password`;
       ({ error } = await client.auth.resetPasswordForEmail(email, { redirectTo }));
-      if (!error) setMessage('Check your email for the password-reset link.');
+      if (!error) setMessage(localized.checkResetEmail);
     } else {
       ({ error } = await client.auth.updateUser({ password }));
     }
@@ -147,7 +129,7 @@ export default function AuthForm({
       return;
     }
     if (mode === 'sign-in' || mode === 'update-password') {
-      router.replace(`/${locale}/account`);
+      router.replace(mode === 'sign-in' && diagnosticNext ? diagnosticNext : `/${locale}/account`);
       router.refresh();
     }
   }
@@ -181,18 +163,18 @@ export default function AuthForm({
             <div className="grid gap-3 sm:grid-cols-2">
               {providers.google && (
                 <button type="button" disabled={pending} onClick={() => void signInWithProvider('google')} className="h-12 rounded-full border border-black/10 bg-white px-4 text-sm font-semibold text-charcoal transition hover:border-black/20 hover:bg-black/[0.02] disabled:opacity-50">
-                  Continue with Google
+                  {localized.continueGoogle}
                 </button>
               )}
               {providers.facebook && (
                 <button type="button" disabled={pending} onClick={() => void signInWithProvider('facebook')} className="h-12 rounded-full border border-black/10 bg-white px-4 text-sm font-semibold text-charcoal transition hover:border-black/20 hover:bg-black/[0.02] disabled:opacity-50">
-                  Continue with Facebook
+                  {localized.continueFacebook}
                 </button>
               )}
             </div>
             <div className="flex items-center gap-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-black/35">
               <span className="h-px flex-1 bg-black/[0.08]" />
-              Or use email
+              {localized.orEmail}
               <span className="h-px flex-1 bg-black/[0.08]" />
             </div>
           </>
@@ -200,26 +182,26 @@ export default function AuthForm({
         {mode === 'sign-up' && (
           <>
             <label className="grid gap-2 text-sm font-semibold text-black/75">
-              Full name
-              <input name="fullName" type="text" autoComplete="name" minLength={2} maxLength={120} required className={inputClassName} placeholder="Your full name" />
+              {localized.fullName}
+              <input name="fullName" type="text" autoComplete="name" minLength={2} maxLength={120} required className={inputClassName} placeholder={localized.fullNamePlaceholder} />
             </label>
             <label className="grid gap-2 text-sm font-semibold text-black/75">
-              WhatsApp number
+              {localized.whatsapp}
               <input name="whatsapp" type="tel" inputMode="tel" autoComplete="tel" minLength={8} maxLength={24} required className={inputClassName} placeholder="+213 555 00 00 00" />
-              <span className="text-xs font-normal leading-5 text-black/45">Used only for essential test and appointment communication.</span>
+              <span className="text-xs font-normal leading-5 text-black/45">{localized.whatsappHelp}</span>
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-semibold text-black/75 sm:col-span-2">
-                Wilaya
+                {localized.wilaya}
                 <select name="wilaya" defaultValue="" required className={inputClassName}>
-                  <option value="" disabled>Select</option>
+                  <option value="" disabled>{localized.select}</option>
                   {wilayas.map((wilaya) => <option key={wilaya} value={wilaya}>{wilaya}</option>)}
                 </select>
-                <span className="text-xs font-normal leading-5 text-black/45">Used for local and in-centre service planning.</span>
+                <span className="text-xs font-normal leading-5 text-black/45">{localized.wilayaHelp}</span>
               </label>
             </div>
             <label className="grid gap-2 text-sm font-semibold text-black/75">
-              Preferred account language
+              {localized.preferredLanguage}
               <select name="preferredLocale" defaultValue={locale} required className={inputClassName}>
                 <option value="en">English</option>
                 <option value="fr">Français</option>
@@ -231,35 +213,35 @@ export default function AuthForm({
 
         {needsEmail && (
           <label className="grid gap-2 text-sm font-semibold text-black/75">
-            Email address
+            {localized.email}
             <input name="email" type="email" autoComplete="email" required className={inputClassName} placeholder="you@example.com" />
           </label>
         )}
 
         {needsPassword && (
           <label className="grid gap-2 text-sm font-semibold text-black/75">
-            Password
-            <input name="password" type="password" minLength={mode === 'sign-in' ? 1 : 10} pattern={mode === 'sign-in' ? undefined : '(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{10,}'} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} required className={inputClassName} placeholder={mode === 'sign-in' ? 'Your password' : 'At least 10 characters'} />
+            {localized.password}
+            <input name="password" type="password" minLength={mode === 'sign-in' ? 1 : 10} pattern={mode === 'sign-in' ? undefined : '(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{10,}'} autoComplete={mode === 'sign-in' ? 'current-password' : 'new-password'} required className={inputClassName} placeholder={mode === 'sign-in' ? localized.currentPassword : localized.newPassword} />
           </label>
         )}
 
         {needsConfirmation && (
           <label className="grid gap-2 text-sm font-semibold text-black/75">
-            Confirm password
-            <input name="confirmPassword" type="password" minLength={10} pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{10,}" autoComplete="new-password" required className={inputClassName} placeholder="Repeat your password" />
+            {localized.confirmPassword}
+            <input name="confirmPassword" type="password" minLength={10} pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{10,}" autoComplete="new-password" required className={inputClassName} placeholder={localized.repeatPassword} />
           </label>
         )}
 
         {mode === 'sign-up' && (
           <div className="grid gap-3 rounded-2xl bg-black/[0.025] p-4 text-sm text-black/65">
-            <label className="flex items-start gap-3"><input name="termsAccepted" type="checkbox" required className="mt-1 accent-crimson" /><span>I accept the current Terms.</span></label>
-            <label className="flex items-start gap-3"><input name="privacyAccepted" type="checkbox" required className="mt-1 accent-crimson" /><span>I accept the current Privacy Policy.</span></label>
-            <label className="flex items-start gap-3"><input name="marketingAccepted" type="checkbox" className="mt-1 accent-crimson" /><span>Send me optional IELTS Lab news and offers.</span></label>
+            <label className="flex items-start gap-3"><input name="termsAccepted" type="checkbox" required className="mt-1 accent-crimson" /><span>{localized.acceptTerms}</span></label>
+            <label className="flex items-start gap-3"><input name="privacyAccepted" type="checkbox" required className="mt-1 accent-crimson" /><span>{localized.acceptPrivacy}</span></label>
+            <label className="flex items-start gap-3"><input name="marketingAccepted" type="checkbox" className="mt-1 accent-crimson" /><span>{localized.marketing}</span></label>
           </div>
         )}
 
         <button disabled={pending} className="mt-2 h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-crimson focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-crimson/20 disabled:cursor-wait disabled:opacity-50">
-          {pending ? 'Please wait…' : copy.submit}
+          {pending ? localized.wait : copy.submit}
         </button>
 
         {message && (
@@ -272,12 +254,12 @@ export default function AuthForm({
       <div className="mt-7 border-t border-black/[0.07] pt-6 text-center text-sm text-black/55">
         {mode === 'sign-in' && (
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
-            <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-up`}>Create an account</Link>
-            <Link className="hover:text-charcoal" href={`/${locale}/auth/forgot-password`}>Forgot password?</Link>
+            <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-up${diagnosticNext ? `?next=${encodeURIComponent(diagnosticNext)}` : ''}`}>{localized.createAccount}</Link>
+            <Link className="hover:text-charcoal" href={`/${locale}/auth/forgot-password`}>{localized.forgotPassword}</Link>
           </div>
         )}
-        {mode === 'sign-up' && <p>Already registered? <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-in`}>Sign in</Link></p>}
-        {mode === 'forgot-password' && <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-in`}>Back to sign in</Link>}
+        {mode === 'sign-up' && <p>{localized.alreadyRegistered} <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-in${diagnosticNext ? `?next=${encodeURIComponent(diagnosticNext)}` : ''}`}>{localized.signIn}</Link></p>}
+        {mode === 'forgot-password' && <Link className="font-semibold text-charcoal hover:text-crimson" href={`/${locale}/auth/sign-in`}>{localized.backToSignIn}</Link>}
       </div>
     </section>
   );

@@ -269,6 +269,14 @@ model User {
   accessCodesCreated  AccessCode[]                   @relation("AccessCodeCreator")
   accessCodesRedeemed AccessCode[]                   @relation("AccessCodeRedeemer")
   funnelEvents        FunnelEvent[]
+  diagnosticInvitations DiagnosticInvitation[] @relation("DiagnosticRecipient")
+  diagnosticInvitationsIssued DiagnosticInvitation[] @relation("DiagnosticIssuer")
+  diagnosticReviews DiagnosticContentReview[]
+  diagnosticSessions DiagnosticSession[]
+  diagnosticAssessmentsReviewed DiagnosticAssessment[]
+  diagnosticSpeakingSessionsExamined DiagnosticSpeakingSession[]
+  diagnosticSpeakingRuns DiagnosticSpeakingRun[] @relation("DiagnosticSpeakingRunCreator")
+  diagnosticSpeakingRunsReviewed DiagnosticSpeakingRun[] @relation("DiagnosticSpeakingRunReviewer")
 
   @@index([status, role])
   @@schema("app_private")
@@ -697,6 +705,8 @@ model TestPart {
   questionGroups  QuestionGroup[]
   assetReferences ContentAssetReference[]
 
+  diagnosticReviews DiagnosticContentReview[]
+
   @@unique([testSectionId, sourceKey])
   @@unique([testSectionId, slot])
   @@index([slot, reviewStatus])
@@ -753,6 +763,7 @@ model ContentAsset {
   stimuli        Stimulus[]
   questionLinks  QuestionAsset[]
   references     ContentAssetReference[]
+  diagnosticReviews DiagnosticContentReview[]
 
   @@index([sourceArtifactId])
   @@index([type, reviewStatus])
@@ -812,6 +823,7 @@ model Question {
   questionGroup    QuestionGroup           @relation(fields: [questionGroupId], references: [id], onDelete: Cascade)
   attemptQuestions AttemptQuestion[]
   assetReferences  ContentAssetReference[]
+  diagnosticResponses DiagnosticResponse[]
 
   @@unique([questionGroupId, stableKey])
   @@unique([questionGroupId, displayOrder])
@@ -921,10 +933,254 @@ model TestBlueprint {
   slots            BlueprintSlot[]
   attempts         AssessmentAttempt[]
   products         ProductBlueprint[]
+  diagnosticInvitations DiagnosticInvitation[]
+  diagnosticSessions DiagnosticSession[]
 
   @@unique([code, version])
   @@index([status, variant])
   @@index([fixedTestVersionId])
+  @@schema("app_private")
+}
+
+// Standalone diagnostic storage does not enter the ordinary attempt/entitlement chain.
+model DiagnosticInvitation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientId String @db.Uuid
+  issuedById String @db.Uuid
+  blueprintId String @db.Uuid
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  revokedAt DateTime?
+  revocationReason String? @db.Text
+  cohort String?
+  recipient User @relation("DiagnosticRecipient", fields: [recipientId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  issuedBy User @relation("DiagnosticIssuer", fields: [issuedById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  blueprint TestBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  session DiagnosticSession?
+  @@unique([id, recipientId, blueprintId])
+  @@index([recipientId, createdAt])
+  @@index([issuedById])
+  @@index([blueprintId])
+  @@schema("app_private")
+}
+
+model DiagnosticContentReview {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  testPartId String @db.Uuid
+  contentHash String @db.Char(64)
+  reviewerId String @db.Uuid
+  reviewedAt DateTime
+  reviewDueAt DateTime
+  suitability String
+  audioAssetId String? @db.Uuid
+  audioHash String? @db.Char(64)
+  audioDurationSeconds Float? @db.DoublePrecision
+  audioBoundariesVerified Boolean @default(false)
+  createdAt DateTime @default(now())
+  part TestPart @relation(fields: [testPartId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  reviewer User @relation(fields: [reviewerId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  audio ContentAsset? @relation(fields: [audioAssetId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@index([testPartId, createdAt])
+  @@index([reviewerId])
+  @@index([audioAssetId])
+  @@schema("app_private")
+}
+
+model DiagnosticSession {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  invitationId String @unique @db.Uuid
+  userId String @db.Uuid
+  blueprintId String @db.Uuid
+  manifest Json
+  manifestHash String @db.Char(64)
+  readiness Json?
+  state String @default("ACTIVE")
+  startedAt DateTime
+  deadline DateTime
+  submittedAt DateTime?
+  writerTokenHash String? @db.Char(64)
+  writerExpiresAt DateTime?
+  version Int @default(0)
+  writingAiAdultAttested Boolean @default(false)
+  writingAiConsented Boolean @default(false)
+  writingConsentVersion Int @default(0)
+  writingAiRevokedAt DateTime?
+  invitation DiagnosticInvitation @relation(fields: [invitationId, userId, blueprintId], references: [id, recipientId, blueprintId], onDelete: Restrict, onUpdate: NoAction)
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  blueprint TestBlueprint @relation(fields: [blueprintId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  responses DiagnosticResponse[]
+  assessment DiagnosticAssessment?
+  writingRuns DiagnosticWritingRun[]
+  speaking DiagnosticSpeakingSession?
+  @@unique([invitationId, userId, blueprintId])
+  @@index([userId, startedAt])
+  @@index([blueprintId])
+  @@index([state, deadline])
+  @@schema("app_private")
+}
+
+model DiagnosticSpeakingSession {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String @unique @db.Uuid
+  examinerId String? @db.Uuid
+  state String @default("NOT_STARTED")
+  startedAt DateTime?
+  deadline DateTime?
+  completedAt DateTime?
+  notes String @default("") @db.Text
+  version Int @default(0)
+  adultAttested Boolean @default(false)
+  recordingConsented Boolean @default(false)
+  aiConsented Boolean @default(false)
+  consentVersion Int @default(0)
+  privacyRevokedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  session DiagnosticSession @relation(fields:[sessionId],references:[id],onDelete:Cascade,onUpdate:NoAction)
+  examiner User? @relation(fields:[examinerId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  recording DiagnosticRecording?
+  @@index([examinerId,state])
+  @@schema("app_private")
+}
+
+model DiagnosticRecording {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  speakingId String @unique @db.Uuid
+  consentVersion Int
+  state String @default("UPLOADING")
+  chunkCount Int?
+  sampleCount Int?
+  durationMs Float? @db.DoublePrecision
+  checksum String? @db.Char(64)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  finalizedAt DateTime?
+  deletedAt DateTime?
+  speaking DiagnosticSpeakingSession @relation(fields:[speakingId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  chunks DiagnosticRecordingChunk[]
+  runs DiagnosticSpeakingRun[]
+  @@index([state,expiresAt])
+  @@schema("app_private")
+}
+
+model DiagnosticRecordingChunk {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recordingId String @db.Uuid
+  sequence Int
+  state String @default("PENDING")
+  storageKey String @unique
+  checksum String @db.Char(64)
+  byteSize Int
+  sampleCount Int
+  createdAt DateTime @default(now())
+  lastDeletionCheckAt DateTime?
+  recording DiagnosticRecording @relation(fields:[recordingId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  @@unique([recordingId,sequence])
+  @@index([state,lastDeletionCheckAt])
+  @@schema("app_private")
+}
+
+model DiagnosticAssessment {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String @unique @db.Uuid
+  manifestHash String @db.Char(64)
+  readiness Json?
+  state String @default("DRAFT")
+  rawScores Json
+  writing Json?
+  speaking Json?
+  nextSteps Json @default("[]")
+  writingRunId String? @db.Uuid
+  speakingRunId String? @db.Uuid
+  reviewedById String? @db.Uuid
+  releasedAt DateTime?
+  expiresAt DateTime?
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  session DiagnosticSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reviewedBy User? @relation(fields: [reviewedById], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  writingRun DiagnosticWritingRun? @relation(fields: [writingRunId, sessionId], references: [id, sessionId], onDelete: Restrict, onUpdate: NoAction)
+  speakingRun DiagnosticSpeakingRun? @relation(fields:[speakingRunId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  @@index([reviewedById])
+  @@index([writingRunId, sessionId])
+  @@index([speakingRunId])
+  @@index([state, expiresAt])
+  @@schema("app_private")
+}
+
+model DiagnosticWritingRun {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String @db.Uuid
+  manifestHash String @db.Char(64)
+  inputHash String @db.Char(64)
+  promptVersion String
+  consentVersion Int @default(0)
+  state String @default("QUEUED")
+  feedback Json?
+  model String?
+  usage Json?
+  errorCode String?
+  attempts Int @default(0)
+  leaseOwner String? @db.Uuid
+  leaseExpiresAt DateTime?
+  lastEnqueuedAt DateTime?
+  createdAt DateTime @default(now())
+  completedAt DateTime?
+  session DiagnosticSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  assessments DiagnosticAssessment[]
+  @@unique([id, sessionId])
+  @@unique([sessionId, inputHash, promptVersion])
+  @@index([state, leaseExpiresAt, lastEnqueuedAt])
+  @@schema("app_private")
+}
+
+model DiagnosticSpeakingRun {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recordingId String @db.Uuid
+  createdById String @db.Uuid
+  consentVersion Int
+  inputHash String @db.Char(64)
+  promptVersion String
+  state String @default("QUEUED")
+  output Json?
+  model String?
+  usage Json?
+  errorCode String?
+  attempts Int @default(0)
+  leaseOwner String? @db.Uuid
+  leaseExpiresAt DateTime?
+  lastEnqueuedAt DateTime?
+  version Int @default(0)
+  review Json?
+  reviewedById String? @db.Uuid
+  reviewedAt DateTime?
+  createdAt DateTime @default(now())
+  completedAt DateTime?
+  recording DiagnosticRecording @relation(fields:[recordingId],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  createdBy User @relation("DiagnosticSpeakingRunCreator",fields:[createdById],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  reviewedBy User? @relation("DiagnosticSpeakingRunReviewer",fields:[reviewedById],references:[id],onDelete:Restrict,onUpdate:NoAction)
+  assessments DiagnosticAssessment[]
+  @@unique([recordingId,inputHash,promptVersion])
+  @@index([createdById])
+  @@index([reviewedById])
+  @@index([state,leaseExpiresAt,lastEnqueuedAt])
+  @@schema("app_private")
+}
+
+model DiagnosticResponse {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String @db.Uuid
+  questionId String @db.Uuid
+  answer String @default("") @db.Text
+  markedForReview Boolean @default(false)
+  savedAt DateTime?
+  finalizedAt DateTime?
+  version Int @default(0)
+  session DiagnosticSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  @@unique([sessionId, questionId])
+  @@index([questionId])
   @@schema("app_private")
 }
 

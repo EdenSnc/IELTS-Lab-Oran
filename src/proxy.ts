@@ -8,6 +8,7 @@ import { shouldRefreshSupabaseSession, type ProxyResponseKind } from './lib/supa
 
 const handleI18nRouting = createMiddleware(routing);
 const environment = parsePublicEnvironment(process.env);
+const applicationRootSegments = new Set(['api', 'sample', 'sim', 'speaking', 'staff']);
 
 function rtcConnectSources() {
   if (!process.env.LIVEKIT_URL) return [];
@@ -88,10 +89,10 @@ export default async function proxy(request: NextRequest) {
     response = NextResponse.redirect(destination, 308);
   } else if (isLocalizedRoute) {
     response = alignXDefaultWithEnglish(handleI18nRouting(request));
-  } else if (['api', 'sim', 'speaking'].includes(firstSegment)) {
+  } else if (applicationRootSegments.has(firstSegment)) {
     response = NextResponse.next();
   } else {
-    response = NextResponse.rewrite(new URL('/_not-found', request.url));
+    response = NextResponse.rewrite(new URL('/_not-found', request.url), { status: 404 });
   }
 
   const kind = responseKind(response);

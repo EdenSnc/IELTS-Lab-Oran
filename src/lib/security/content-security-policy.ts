@@ -21,6 +21,6 @@ export function buildContentSecurityPolicy(input: {
     `connect-src 'self' ${input.supabaseOrigin} https://vitals.vercel-insights.com https://*.vercel-insights.com ${input.rtcSources.join(' ')}`.trim(),
     "worker-src 'self' blob:",
     "manifest-src 'self'",
-    'upgrade-insecure-requests',
-  ].join('; ');
+    input.development ? null : 'upgrade-insecure-requests',
+  ].filter((directive): directive is string => Boolean(directive)).join('; ');
 }
