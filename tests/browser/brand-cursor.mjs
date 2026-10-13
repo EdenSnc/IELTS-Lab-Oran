@@ -46,13 +46,20 @@ try {
   const sourceSvg = await readFile('public/cursors/brand-arrow.svg', 'utf8');
   const pixels = await sharp(Buffer.from(sourceSvg)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const pixel = (x, y) => [...pixels.data.subarray((y * pixels.info.width + x) * 4, (y * pixels.info.width + x) * 4 + 4)];
+  const blackPixels = [];
+  for (let y = 0; y < pixels.info.height; y++) for (let x = 0; x < pixels.info.width; x++) {
+    const [r, g, b, alpha] = pixel(x, y);
+    if (r < 40 && g < 40 && b < 40 && alpha > 180) blackPixels.push({ x, y });
+  }
+  assert.ok(Math.max(...blackPixels.map(p => p.x)) - Math.min(...blackPixels.map(p => p.x)) + 1 <= 14, 'the pointer silhouette stays slender rather than widening into a broad triangle');
+  assert.ok(Math.max(...blackPixels.map(p => p.y)) - Math.min(...blackPixels.map(p => p.y)) + 1 >= 15, 'narrowing preserves pointer height and legibility');
   assert.equal(pixel(4, 17)[3], 0, 'the tilted silhouette has no stock vertical shaft');
   assert.equal(pixel(14, 24)[3], 0, 'the browser-use pointer has no stock arrow stem');
   assert.ok(pixel(15, 10)[0] < 32 && pixel(15, 10)[3] > 180, 'the broad upper wedge is black');
   // Isolate the actual black fill: a white round stroke must not hide sharp joins.
   const fill = await sharp(Buffer.from(sourceSvg.replace(/stroke="#fff"/u, 'stroke="none"'))).resize(280,280).ensureAlpha().raw().toBuffer();
   const fillAlpha = (x,y) => fill[(Math.floor(y*10)*280+Math.floor(x*10))*4+3];
-  assert.ok(fillAlpha(13.2,14) > 220, 'the inner notch must have a curved black silhouette');
+  assert.ok(fillAlpha(11.6,14) > 220, 'the inner notch must have a curved black silhouette');
   assert.ok(fillAlpha(3.9,4.2) < 64, 'the black tip must be softly rounded, not acute');
   const page = await browser.newPage(); const errors = [];
   page.on('pageerror', error => errors.push(error.message));
