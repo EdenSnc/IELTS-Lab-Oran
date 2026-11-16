@@ -17,10 +17,10 @@
   },
   "Hero": {
     "badge": "Oran • 8-Seat Physical Lab",
-    "title": "نشخّص لغتك الإنجليزية.",
-    "subtitle": "ثم نهندس <red>نتيجتك.</red>",
-    "description": "<highlight>دورة IELTS مكثفة تنطلق في وهران</highlight>، مصممة خصيصاً للاختبار على الكمبيوتر، وليس للممارسات الورقية القديمة.",
-    "reserve": "احجز مقعدك",
+    "title": "التحضير لاختبار IELTS في وهران",
+    "subtitle": "<red>تدرّب ليوم الاختبار.</red>",
+    "description": "تدرّب على مهارات IELTS الأربع على الكمبيوتر واحصل على ملاحظات فردية ضمن <highlight>مجموعة حضورية صغيرة</highlight>.",
+    "reserve": "قدّم طلبك للدورة",
     "details": "تفاصيل البرنامج",
     "noPayment": "لا يلزم الدفع المسبق للتقديم.",
     "programBadge": "نظام «IELTS SUCCESS»"

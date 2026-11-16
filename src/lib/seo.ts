@@ -102,7 +102,7 @@ const ARTICLE_DESCRIPTIONS = {
   },
   'how-to-register-algeria': {
     en: 'Verified 2026 guide to booking IELTS in Algeria: the 40,000 DA standard fee, accepted ID, payment methods, and 72-hour deadline.',
-    fr: 'Guide 2026 vérifié pour réserver l’IELTS en Algérie : frais de 40 000 DA, identité, moyens de paiement et délai de 72 heures.',
+    fr: 'Où payer l’IELTS en Algérie ? Consultez le tarif de 40 000 DA, les modes de paiement du British Council, les justificatifs et le délai.',
     ar: 'دليل موثق لعام 2026 لحجز IELTS في الجزائر: رسوم 40,000 دج والهوية وطرق الدفع ومهلة 72 ساعة.',
   },
   'ielts-vs-toefl-canada': {

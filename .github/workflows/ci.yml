@@ -37,6 +37,7 @@ jobs:
       - run: npm run commerce:assert-catalog
       - run: node scripts/run-tests.mjs tests/database
       - run: npm test
+      - run: node --import tsx --test tests/integration/proxy-localization.test.ts
       - run: npm run db:validate
       - run: npm run lint
       - run: npm run typecheck

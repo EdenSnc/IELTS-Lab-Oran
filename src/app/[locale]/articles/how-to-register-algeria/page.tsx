@@ -13,6 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: A
     slug: 'how-to-register-algeria',
     title: articleSeoTitle(locale, 'how-to-register-algeria'),
     description: articleDescription(locale, 'how-to-register-algeria'),
+    modifiedTime: '2026-11-16',
   });
 }
 
@@ -20,17 +21,45 @@ export default async function ArticlePage() {
   const locale = (await getLocale()) as ArticleLocale;
   const c = getHowToRegisterContent(locale);
   const isRtl = locale === 'ar';
+  const officialPaymentUrl = {
+    en: 'https://www.britishcouncil.dz/en/exam/ielts/book-test',
+    fr: 'https://www.britishcouncil.dz/fr/examen/ielts/reserver-examen',
+    ar: 'https://www.britishcouncil.dz/exam/ielts/book-test',
+  }[locale];
+  const whereToPay = {
+    en: {
+      title: 'Where to pay for IELTS in Algeria',
+      body: 'Book through British Council Algeria, then follow your booking confirmation. The listed routes include online payment by bank card, digital banking or bank transfer, and cash deposit. The British Council lists HSBC for cash deposits and a 1% cash stamp duty. Confirm the branch and deadline before travelling.',
+      official: 'British Council payment instructions',
+      centre: 'Taking the test in Oran? The IELTS directory lists Imtiyaz El Djazair, 76 Bis Avenue Sidi Chahmi, Hai Ibn Sina. Verify the venue in your booking confirmation.',
+      centreLink: 'Official IELTS test centre listing for Oran',
+    },
+    fr: {
+      title: 'Où payer l’IELTS en Algérie ?',
+      body: 'Réservez auprès du British Council Algérie, puis suivez les instructions de votre confirmation. Les options indiquées sont la carte bancaire en ligne, la banque numérique, le virement ou le dépôt en espèces. Le British Council indique HSBC pour les dépôts en espèces et un droit de timbre de 1 %. Vérifiez l’agence et le délai avant de vous déplacer.',
+      official: 'Modes de paiement sur le site du British Council',
+      centre: 'À Oran, l’annuaire officiel IELTS indique le centre Imtiyaz El Djazair, 76 bis avenue Sidi Chahmi, Hai Ibn Sina. Vérifiez le lieu du test dans votre confirmation.',
+      centreLink: 'Fiche officielle du centre de test IELTS à Oran',
+    },
+    ar: {
+      title: 'أين تدفع رسوم اختبار IELTS في الجزائر؟',
+      body: 'احجز لدى المجلس الثقافي البريطاني في الجزائر، ثم اتبع تعليمات رسالة تأكيد الحجز. تشمل الخيارات المعلنة الدفع بالبطاقة البنكية عبر الإنترنت، أو الصيرفة الرقمية، أو التحويل البنكي، أو الإيداع نقدًا. يذكر المجلس بنك HSBC للإيداع النقدي ورسم طابع قدره 1٪. تحقق من الوكالة والمهلة قبل التنقل.',
+      official: 'تعليمات الدفع لدى المجلس الثقافي البريطاني',
+      centre: 'في وهران يذكر دليل IELTS الرسمي مركز امتياز الجزائر، 76 مكرر شارع سيدي الشحمي، حي ابن سينا. تحقق من مكان الاختبار في تأكيد الحجز.',
+      centreLink: 'صفحة مركز اختبار IELTS الرسمي في وهران',
+    },
+  }[locale];
   const paymentNote = {
     en: {
-      title: 'Can IELTS Lab pay for a candidate?',
+      title: 'Can someone else pay for the candidate?',
       body: 'Yes, the official payment-proof instructions allow the payer name to differ from the candidate name. The candidate must still register with their own details and bring the same original identity document used during registration. For cash or bank-deposit instructions, confirm the current route in the booking email or directly with British Council before travelling, because branch availability can change.',
     },
     fr: {
-      title: 'IELTS Lab peut-il payer pour un candidat ?',
+      title: 'Quelqu’un d’autre peut-il payer pour le candidat ?',
       body: 'Oui. Les instructions officielles relatives à la preuve de paiement prévoient que le nom du payeur puisse être différent de celui du candidat. Le candidat doit toutefois s’inscrire avec ses propres informations et présenter le même document d’identité original le jour du test. Pour un paiement en espèces ou un dépôt bancaire, confirmez le circuit actuel dans l’e-mail de réservation ou auprès du British Council avant de vous déplacer, car la disponibilité des agences peut changer.',
     },
     ar: {
-      title: 'هل يمكن لمختبر IELTS Lab الدفع نيابة عن المترشح؟',
+      title: 'هل يمكن لشخص آخر الدفع نيابة عن المترشح؟',
       body: 'نعم. تسمح تعليمات إثبات الدفع الرسمية بأن يختلف اسم الدافع عن اسم المترشح. لكن يجب أن يسجل المترشح ببياناته الشخصية وأن يحضر يوم الاختبار نفس وثيقة الهوية الأصلية المستخدمة في التسجيل. بالنسبة للدفع النقدي أو الإيداع البنكي، تحقق من الطريقة الحالية في رسالة تأكيد الحجز أو مباشرة مع المجلس الثقافي البريطاني قبل التنقل، لأن توفر الفروع قد يتغير.',
     },
   }[locale];
@@ -44,6 +73,14 @@ export default async function ArticlePage() {
               <p className="text-charcoal font-bold text-lg mb-2">{c.summaryTitle}</p>
               <p className="text-gray-600 m-0" dangerouslySetInnerHTML={{ __html: c.summaryText }} />
           </div>
+
+          <section aria-labelledby="pay-ielts" className="mb-10 rounded-2xl border border-gray-200 bg-white p-6">
+            <h2 id="pay-ielts" className="text-2xl font-extrabold text-charcoal">{whereToPay.title}</h2>
+            <p className="mt-3 leading-relaxed text-gray-700">{whereToPay.body}</p>
+            <a href={officialPaymentUrl} className="mt-2 inline-block font-semibold text-crimson underline">{whereToPay.official}</a>
+            <p className="mt-4 leading-relaxed text-gray-700">{whereToPay.centre}</p>
+            <a href="https://ielts.org/test-centres/british-council-imtiyaz-el-djazair" className="mt-2 inline-block font-semibold text-crimson underline">{whereToPay.centreLink}</a>
+          </section>
 
           <div className="prose prose-lg prose-gray max-w-none text-gray-700 leading-relaxed">
               <p>{c.intro}</p>
@@ -105,8 +142,8 @@ export default async function ArticlePage() {
               description={articleDescription(locale, 'how-to-register-algeria')}
               sources={[
                 {
-                  label: 'British Council Algeria: book IELTS, fees, ID, and payment',
-                  href: 'https://www.britishcouncil.dz/en/exam/ielts/book-test',
+                  label: whereToPay.official,
+                  href: officialPaymentUrl,
                 },
               ]}
             />

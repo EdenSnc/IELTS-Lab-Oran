@@ -233,7 +233,7 @@ export function getHowToRegisterContent(locale: ArticleLocale) {
       ctaBtn: 'Book a Seat',
     },
     fr: {
-      title: 'Comment s\'inscrire à l\'IELTS du British Council en Algérie',
+      title: 'IELTS en Algérie — Où payer et comment s’inscrire',
       summaryTitle: 'Résumé :',
       summaryText: 'Les frais actuels pour Academic ou General Training sont de <strong>40 000 DA</strong>. Réservez sur le <strong>portail officiel du British Council Algérie</strong> et payez sous <strong>72 heures</strong>. La page officielle indique le paiement par carte bancaire en ligne, banque numérique, virement ou espèces.',
       intro: 'S\'inscrire à l\'IELTS en Algérie peut sembler intimidant, mais le British Council a simplifié le processus ces dernières années. Voici exactement ce que vous devez savoir.',

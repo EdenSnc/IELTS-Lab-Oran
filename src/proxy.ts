@@ -40,7 +40,15 @@ function applyRequestSecurityHeaders(
   const headerName = process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV !== 'preview'
     ? 'Content-Security-Policy'
     : 'Content-Security-Policy-Report-Only';
-  const requestHeaders = new Headers(request.headers);
+  // Preserve next-intl's locale and any earlier request header overrides.
+  const overriddenNames = response.headers.get('x-middleware-override-headers');
+  const requestHeaders = overriddenNames === null ? new Headers(request.headers) : new Headers();
+  if (overriddenNames !== null) {
+    for (const name of overriddenNames.split(',').map((value) => value.trim()).filter(Boolean)) {
+      const value = response.headers.get(`x-middleware-request-${name}`);
+      if (value !== null) requestHeaders.set(name, value);
+    }
+  }
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', csp);
 

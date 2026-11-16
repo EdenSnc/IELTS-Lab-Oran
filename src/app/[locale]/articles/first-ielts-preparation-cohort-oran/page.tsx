@@ -6,16 +6,18 @@ import {
   COHORT_FORM_URL,
   cohortLaunch,
 } from '@/lib/cohort-launch';
-import { buildAlternates, type Locale } from '@/lib/seo';
+import { buildArticleMetadata, type Locale } from '@/lib/seo';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const copy = cohortLaunch[locale];
-  return {
-    title: `${copy.title} | IELTS Lab Oran`,
+  return buildArticleMetadata({
+    locale,
+    slug: COHORT_ARTICLE_PATH.slice('/articles/'.length),
+    title: copy.title,
     description: copy.desc,
-    alternates: buildAlternates(locale, COHORT_ARTICLE_PATH.slice(1)),
-  };
+    modifiedTime: '2026-11-16',
+  });
 }
 
 export default async function FirstCohortArticle() {

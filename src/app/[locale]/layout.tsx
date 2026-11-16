@@ -27,14 +27,20 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Navbar' });
   const descriptions = {
-    en: 'Computer-based IELTS preparation in Bir El Djir, Oran: 32 hours, eight seats, diagnostic testing, Academic and General Training, and criteria-based feedback.',
-    fr: 'Préparation IELTS sur ordinateur à Bir El Djir, Oran : 32 heures, huit places, diagnostic, Academic et General Training, et retour fondé sur les critères.',
-    ar: 'تحضير IELTS على الكمبيوتر في بئر الجير، وهران: 32 ساعة وثمانية مقاعد وتشخيص وAcademic وGeneral Training وملاحظات مبنية على المعايير.',
+    en: 'Prepare for IELTS in Oran with computer-based practice in all four skills and individual Writing and Speaking feedback in a small group.',
+    fr: 'Préparez l’IELTS à Oran en petit groupe, avec des exercices sur ordinateur et des retours personnalisés en Writing et Speaking.',
+    ar: 'حضّر لاختبار IELTS في وهران ضمن مجموعة صغيرة مع تمارين على الكمبيوتر وملاحظات فردية في الكتابة والمحادثة.',
+  } as const;
+  const titles = {
+    en: 'IELTS Preparation in Oran',
+    fr: 'Préparation IELTS à Oran',
+    ar: 'التحضير لاختبار IELTS في وهران',
   } as const;
   const description = descriptions[locale as Locale] ?? descriptions.en;
+  const title = `${titles[locale as Locale] ?? titles.en} | ${t('title')}`;
   return {
     metadataBase: new URL(CANONICAL_ORIGIN),
-    title: `${t('title')} | IELTS Preparation Oran`,
+    title,
     description,
     alternates: buildAlternates(locale as Locale),
     openGraph: {
@@ -42,12 +48,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       locale,
       siteName: t('title'),
       url: `${CANONICAL_ORIGIN}/${locale}`,
-      title: `${t('title')} | IELTS Preparation Oran`,
+      title,
       description,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${t('title')} | IELTS Preparation Oran`,
+      title,
       description,
     },
   };
