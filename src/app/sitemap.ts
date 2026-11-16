@@ -1,9 +1,11 @@
+import { COHORT_ARTICLE_PATH } from '@/lib/cohort-launch';
 import type { MetadataRoute } from 'next';
 import { CANONICAL_ORIGIN, LOCALES } from '@/lib/seo';
 
 const indexablePaths = [
   '',
   'articles',
+  COHORT_ARTICLE_PATH.slice(1),
   'articles/academic-vs-general',
   'articles/computer-vs-paper-ielts',
   'articles/free-ielts-resources-algeria',

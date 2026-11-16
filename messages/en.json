@@ -94,8 +94,8 @@
     "a4": "Strictly 8 seats per cohort. The small group allows line-by-line essay correction and personalized speaking feedback from a certified instructor.",
     "q5": "Can I join if I am facing an imminent Capago or TLScontact deadline?",
     "a5": "Yes, if the schedule fits, but no course can guarantee a score by a visa deadline. We first compare your current level, target score, test type, and available preparation time.",
-    "q6": "What resources are included in the 29,500 DA tuition fee?",
-    "a6": "Covers 32 hours of dedicated PC time, diagnostic simulations, writing templates, and line-by-line feedback.",
+    "q6": "What does the 5,000 DA first-cohort price cover?",
+    "a6": "Approximately one month of small-group IELTS preparation in Oran, with computer-based practice and individual feedback. We’ll confirm the timetable before enrolment.",
     "q7": "When does the Lab open, and how do I know if I got a seat?",
     "a7": "We launch soon. If a seat opens, you'll receive a WhatsApp message with dates and payment details. We process applications in order of receipt."
   },
@@ -120,10 +120,11 @@
   "Intake": {
     "title": "Reserve Your Seat",
     "badge": "Groups of 8 | Limited Seats",
-    "feeTitle": "Fees & Seats",
-    "fee": "29,500 DA",
-    "feeDesc": "Invest once. Protect your 40K DA test fee.",
-    "feature1": "32 hours intensive PC training",
+    "feeTitle": "Special first-cohort price",
+    "previousFee": "29,500 DA",
+    "fee": "5,000 DA",
+    "feeDesc": "In-person preparation in Oran · approximately one month",
+    "feature1": "Approximately one month of preparation",
     "feature2": "Personalized writing & speaking feedback",
     "feature3": "Your own dedicated PC",
     "footerText": "Fill out the application. If a seat is available, we will contact you via WhatsApp."

@@ -94,8 +94,8 @@
     "a4": "Strictement 8 places par cohorte. Ce petit groupe permet une correction ligne par ligne et un retour personnalisé à l'oral.",
     "q5": "Puis-je rejoindre ce programme si je fais face à une échéance imminente pour un visa Capago ou TLScontact ?",
     "a5": "Oui, si le calendrier le permet, mais aucune formation ne peut garantir un score avant une échéance de visa. Nous comparons d'abord votre niveau, le score cible, le type de test et le temps disponible.",
-    "q6": "Qu'est-ce qui est inclus dans les frais de scolarité de 29 500 DA ?",
-    "a6": "Couvre 32 heures d'entraînement sur PC, des simulations diagnostiques, des modèles de rédaction, et un retour détaillé.",
+    "q6": "Que comprend le tarif de lancement de 5 000 DA ?",
+    "a6": "Environ un mois de préparation à l’IELTS à Oran, en petit groupe, avec des exercices sur ordinateur et un suivi individuel. Les horaires seront confirmés avant l’inscription.",
     "q7": "Quand le Lab ouvre-t-il, et comment saurai-je si j'ai obtenu une place fondatrice ?",
     "a7": "Nous lançons bientôt. Si une place se libère, vous recevrez un WhatsApp avec les dates et détails de paiement. Nous traitons par ordre de réception."
   },
@@ -120,10 +120,11 @@
   "Intake": {
     "title": "Réservez Votre Place",
     "badge": "Groupes de 8 | Places Limitées",
-    "feeTitle": "Frais & Places",
-    "fee": "29 500 DA",
-    "feeDesc": "Investissez une fois. Protégez vos frais de test de 40K DA.",
-    "feature1": "32 heures d'entraînement intensif sur PC",
+    "feeTitle": "Tarif exceptionnel du premier groupe",
+    "previousFee": "29 500 DA",
+    "fee": "5 000 DA",
+    "feeDesc": "Préparation en présentiel à Oran · environ un mois",
+    "feature1": "Environ un mois de préparation",
     "feature2": "Suivi personnalisé (Writing & Speaking)",
     "feature3": "Votre propre PC dédié",
     "footerText": "Remplissez le formulaire ci-dessous. Si une place se libère, nous vous contacterons via WhatsApp."

@@ -1,6 +1,9 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '@/i18n/routing';
+import { COHORT_APPLICATION_DEADLINE, COHORT_ARTICLE_PATH, COHORT_FORM_URL, cohortLaunch } from '@/lib/cohort-launch';
+import type { Locale } from '@/lib/seo';
 import ApplicationForm from './ApplicationForm';
 import TrustBadges from './TrustBadges';
 import { useState, useEffect } from 'react';
@@ -14,6 +17,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
   const t = useTranslations('Intake');
   const ct = useTranslations('Cohort');
   const bt = useTranslations('Bypass');
+  const launch = cohortLaunch[useLocale() as Locale];
 
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '213780343103';
 
@@ -59,8 +63,14 @@ export default function Intake({ cohortStatus }: IntakeProps) {
 
             <div className="mb-10">
               <h3 className="font-bold text-gray-400 uppercase tracking-widest text-xs mb-3">{t('feeTitle')}</h3>
-              <div className="text-4xl font-extrabold text-crimson drop-shadow-sm mb-3">{t('fee')}</div>
-              <p className="text-gray-300 font-medium text-lg leading-relaxed">{t('feeDesc')}</p>
+              <del className="block text-sm text-gray-300" aria-label={`${launch.pastPriceLabel}: ${t('previousFee')}`}>{t('previousFee')}</del>
+              <p className="mb-2 text-4xl font-extrabold text-white">{t('fee')}</p>
+              <p className="text-gray-300 font-medium leading-relaxed">{t('feeDesc')}</p>
+              <p className="mt-3 text-sm font-semibold">
+                {launch.deadlineLabel} · <time dateTime={COHORT_APPLICATION_DEADLINE}>{launch.deadline}</time>
+              </p>
+              <a href={COHORT_FORM_URL} className="mt-4 inline-flex rounded-full bg-crimson px-5 py-2.5 text-sm font-bold text-white hover:bg-red-800">{launch.apply}</a>
+              <Link href={COHORT_ARTICLE_PATH} className="mt-3 block text-sm text-white underline underline-offset-4">{launch.title}</Link>
             </div>
 
             <ul className="flex flex-col gap-5 font-medium mb-12">

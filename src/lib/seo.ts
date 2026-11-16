@@ -16,8 +16,8 @@ export const CANONICAL_ORIGIN = 'https://www.ieltslab.org' as const;
 export const SITE_URL = CANONICAL_ORIGIN;
 
 export const SITE_NAME = 'IELTS Lab Oran';
-export const COURSE_PRICE_DZD = 29_500;
-export const COURSE_PRICE_LABEL = '29,500 DA';
+export const COURSE_PRICE_DZD = 5_000;
+export const COURSE_PRICE_LABEL = '5,000 DA · first cohort';
 export const CONTENT_REVIEW_DATE = '2026-07-29';
 export const LOCALES = ['en', 'fr', 'ar'] as const;
 export type Locale = (typeof LOCALES)[number];
