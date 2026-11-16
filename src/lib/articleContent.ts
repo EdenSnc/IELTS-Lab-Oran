@@ -1,4 +1,5 @@
 import { COHORT_ARTICLE_PATH, cohortLaunch } from './cohort-launch';
+import { OSR_PATH, osrCopy } from './one-skill-retake';
 
 // Shared translated article content for all locales.
 // Each article exports a function that takes a locale and returns the content object.
@@ -408,6 +409,7 @@ export function getArticlesListContent(locale: ArticleLocale) {
       pageSubtitle: 'Fact-checked IELTS registration, test-choice, visa, immigration, and preparation guides for candidates in Oran and across Algeria.',
       articles: [
         { href: COHORT_ARTICLE_PATH, ...cohortLaunch.en },
+        { href: OSR_PATH, category: osrCopy.en.category, title: osrCopy.en.title, desc: osrCopy.en.desc },
         { href: '/articles/italy-student-visa-english-tests-algeria', category: 'Student Visas', title: 'Italy Study Visa 2026: IELTS, Duolingo and EnglishScore', desc: 'What Algerian applicants need to know about B2 evidence, the visa/admission distinction, extra IELTS sessions and the new promotional offer.' },
         { href: '/articles/tlscontact-capago', category: 'Student Visas', title: 'UK & France Student Visas: When Do You Need IELTS for UKVI?', desc: 'A verified decision guide to UK English evidence and France application processing from Algeria.' },
         { href: '/articles/ielts-vs-toefl-canada', category: 'Immigration', title: 'IELTS for Canada Express Entry: Tests and CLB', desc: 'Check IRCC-accepted tests, understand the less familiar alternatives, and convert IELTS General scores to CLB.' },
@@ -424,6 +426,7 @@ export function getArticlesListContent(locale: ArticleLocale) {
       pageSubtitle: 'Guides vérifiés sur l’inscription, le choix du test, les visas, l’immigration et la préparation à Oran et en Algérie.',
       articles: [
         { href: COHORT_ARTICLE_PATH, ...cohortLaunch.fr },
+        { href: OSR_PATH, category: osrCopy.fr.category, title: osrCopy.fr.title, desc: osrCopy.fr.desc },
         { href: '/articles/italy-student-visa-english-tests-algeria', category: 'Visas Étudiants', title: 'Visa d’études Italie 2026 : IELTS, Duolingo et EnglishScore', desc: 'Ce que les candidats algériens doivent savoir sur le niveau B2, la différence visa/admission, les sessions IELTS et la nouvelle offre promotionnelle.' },
         { href: '/articles/tlscontact-capago', category: 'Visas Étudiants', title: 'Visas UK & France : Quand Faut-il IELTS for UKVI ?', desc: 'Guide vérifié sur la preuve d’anglais au Royaume-Uni et le traitement des demandes France depuis l’Algérie.' },
         { href: '/articles/ielts-vs-toefl-canada', category: 'Immigration', title: 'IELTS pour Entrée express Canada : tests et CLB', desc: 'Vérifiez les tests acceptés par IRCC, découvrez les alternatives et convertissez IELTS General en CLB.' },
@@ -440,6 +443,7 @@ export function getArticlesListContent(locale: ArticleLocale) {
       pageSubtitle: 'أدلة موثقة للتسجيل واختيار الاختبار والتأشيرات والهجرة والتحضير في وهران والجزائر.',
       articles: [
         { href: COHORT_ARTICLE_PATH, ...cohortLaunch.ar },
+        { href: OSR_PATH, category: osrCopy.ar.category, title: osrCopy.ar.title, desc: osrCopy.ar.desc },
         { href: '/articles/italy-student-visa-english-tests-algeria', category: 'تأشيرات الطلاب', title: 'تأشيرة الدراسة لإيطاليا 2026: IELTS وDuolingo وEnglishScore', desc: 'ما يحتاجه الطالب الجزائري حول إثبات B2 والفرق بين القبول والتأشيرة والجلسات الإضافية والعرض الترويجي الجديد.' },
         { href: '/articles/tlscontact-capago', category: 'تأشيرات الطلاب', title: 'تأشيرات بريطانيا وفرنسا: متى تحتاج IELTS for UKVI؟', desc: 'دليل موثق لإثبات الإنجليزية في بريطانيا وإجراءات طلب فرنسا من الجزائر.' },
         { href: '/articles/ielts-vs-toefl-canada', category: 'الهجرة', title: 'IELTS للهجرة إلى كندا: الاختبارات وCLB', desc: 'تحقق من اختبارات IRCC المقبولة وتعرّف على البدائل وحوّل درجات IELTS General إلى CLB.' },

@@ -5,6 +5,7 @@ import { getHowToRegisterContent, ArticleLocale } from '@/lib/articleContent';
 import ArticleMobileCta from '@/components/ArticleMobileCta';
 import ArticleTrust from '@/components/ArticleTrust';
 import { articleDescription, articleSeoTitle, buildArticleMetadata } from '@/lib/seo';
+import { OSR_PATH, osrCopy } from '@/lib/one-skill-retake';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: ArticleLocale }> }) {
   const { locale } = await params;
@@ -114,6 +115,7 @@ export default async function ArticlePage() {
 
               <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">{c.h2_2}</h2>
               <p dangerouslySetInnerHTML={{ __html: c.compIntro }} />
+              <Link href={OSR_PATH} className="mt-3 inline-block font-semibold text-crimson underline">{osrCopy[locale].title}</Link>
 
               <ul className="list-disc pl-5 my-4 space-y-2">
                   {c.compBullets.map((b, i) => (
