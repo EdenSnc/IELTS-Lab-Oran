@@ -43,3 +43,20 @@ export function assertSameOrigin(request: Request) {
     throw new AuthError('CROSS_SITE_REQUEST_REJECTED', 403);
   }
 }
+
+export function verifiedRequestOrigin(request: Request) {
+  assertSameOrigin(request);
+  const browserOrigin = request.headers.get('origin');
+  if (browserOrigin) return new URL(browserOrigin).origin;
+
+  const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
+  const host = forwardedHost || request.headers.get('host');
+  if (!host) return new URL(request.url).origin;
+
+  const forwardedProtocol = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const protocol = forwardedProtocol || new URL(request.url).protocol.slice(0, -1);
+  if (protocol !== 'http' && protocol !== 'https') {
+    throw new AuthError('INVALID_REQUEST_ORIGIN', 400);
+  }
+  return new URL(`${protocol}://${host}`).origin;
+}

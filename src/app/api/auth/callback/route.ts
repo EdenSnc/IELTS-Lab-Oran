@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { syncApplicationUser } from '@/lib/auth/request-user';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { diagnosticAuthReturn } from '@/lib/diagnostic/auth-return';
 
 const SAFE_NEXT_PATH = /^\/(en|fr|ar)(?:\/|$)/;
 
@@ -26,7 +27,8 @@ export async function GET(request: Request) {
       const user = await syncApplicationUser(data.user, { syncWhatsapp: false });
       if (!user.onboardingCompletedAt) {
         const locale = next.split('/')[1] || 'en';
-        return NextResponse.redirect(new URL(`/${locale}/account/onboarding`, url.origin));
+        const diagnosticNext = diagnosticAuthReturn(next, locale);
+        return NextResponse.redirect(new URL(`/${locale}/account/onboarding${diagnosticNext ? `?next=${encodeURIComponent(diagnosticNext)}` : ''}`, url.origin));
       }
     }
   }

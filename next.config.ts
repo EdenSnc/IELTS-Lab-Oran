@@ -21,6 +21,9 @@ rtcConnectSources();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+      '/api/diagnostic/readiness/staff': ['./public/readiness/authentic-v3/*.mp3'],
+  },
   experimental: {
     globalNotFound: true,
   },

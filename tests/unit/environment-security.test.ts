@@ -60,6 +60,17 @@ test('nonce CSP preserves Supabase and LiveKit while removing unsafe inline scri
   assert.match(csp, /connect-src[^;]*https:\/\/project-ref\.supabase\.co/u);
   assert.match(csp, /connect-src[^;]*wss:\/\/rtc\.example/u);
   assert.doesNotMatch(csp, /tally\.so/u);
+  assert.match(csp, /upgrade-insecure-requests/u);
+});
+
+test('development report-only CSP omits the ineffective upgrade directive', () => {
+  const csp = buildContentSecurityPolicy({
+    nonce: 'unit-test-nonce',
+    development: true,
+    supabaseOrigin: 'http://127.0.0.1:54321',
+    rtcSources: [],
+  });
+  assert.doesNotMatch(csp, /upgrade-insecure-requests/u);
 });
 
 test('session refresh runs only for ordinary page continuations', () => {

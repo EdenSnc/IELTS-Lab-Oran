@@ -7,6 +7,6 @@ const FloatingWidget = dynamic(() => import('./FloatingWidget'), { ssr: false })
 
 export default function FloatingWidgetClient() {
   const pathname = usePathname();
-  if (/\/(?:auth|account)(?:\/|$)/u.test(pathname)) return null;
+  if (/\/(?:auth|account|diagnostic)(?:\/|$)/u.test(pathname)) return null;
   return <FloatingWidget />;
 }

@@ -1,0 +1,137 @@
+/* Readiness only. Shared diagnostic v1 and printable booklets keep their styles. */
+.shell {
+  --readiness-ink: #17181b;
+  --readiness-muted: #565960;
+  --readiness-line: #dfe1e5;
+  --readiness-accent: var(--color-crimson, #d91e36);
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background: #f6f7f8;
+  color: var(--readiness-ink);
+  padding-bottom: max(2.5rem, env(safe-area-inset-bottom));
+  font-family: var(--font-inter), Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+.shell[dir='rtl'] { font-family: var(--font-cairo), Arial, sans-serif; }
+.shell *, .shell *::before, .shell *::after { box-sizing: border-box; }
+.shell :is(p, h1, h2, h3, label, summary, a) { overflow-wrap: anywhere; }
+.shell p { margin-block: .65rem 1rem; }
+.shell :is(button, input, select, textarea, a, summary) { scroll-margin-block: 10rem 2rem; }
+.shell :is(button, input, select, textarea, a, summary):focus-visible {
+  outline: 3px solid var(--readiness-accent);
+  outline-offset: 4px;
+}
+.shell :is(button, input, select, textarea):disabled { cursor: not-allowed; opacity: .55; }
+.shell a { color: #35373d; text-decoration: underline; text-underline-offset: .22em; }
+.shell a:hover { color: var(--readiness-accent); }
+.shell a:not(.primary):not(.secondary) { display: inline-flex; align-items: center; min-height: 44px; }
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .75rem 2rem;
+  padding: .9rem max(1.25rem, env(safe-area-inset-left));
+  border-bottom: 1px solid var(--readiness-line);
+  background: #fff;
+}
+.brand { display: flex; align-items: center; gap: .75rem; font-family: var(--font-inter), Arial, sans-serif; font-weight: 750; letter-spacing: -.03em; white-space: nowrap; }
+.brand img { flex: none; background: transparent; }
+.statusBar { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem 1.5rem; min-width: 0; }
+.statusBar p { margin: 0; }
+.clock { font-variant-numeric: tabular-nums; font-weight: 650; }
+.saveStatus { color: var(--readiness-muted); font-size: .875rem; max-width: 34rem; }
+.saveStatus[data-pending='true'] { color: #8d1025; font-weight: 650; }
+.container { width: min(100%, 76rem); margin-inline: auto; padding: clamp(1.25rem, 4vw, 3.5rem); }
+.intro { max-width: 56rem; padding-block: clamp(2rem, 5vw, 4rem); }
+.heroTitle { max-width: 22ch; font-size: clamp(2rem, 4.5vw, 3.35rem); font-weight: 700; letter-spacing: -.04em; line-height: 1.16; margin-block: 0 1.25rem; }
+.phaseIntro { margin-block: .5rem 2rem; max-width: 58rem; }
+.phaseIntro > p:first-of-type { font-size: 1.1rem; }
+.meta { color: var(--readiness-muted); font-size: .9rem; }
+.panel { margin-block: 2rem; padding: clamp(1.25rem, 3vw, 2.25rem); border: 1px solid var(--readiness-line); border-radius: 1.5rem; background: #fff; min-width: 0; }
+.panel h2 { font-size: 1.25rem; font-weight: 650; line-height: 1.4; margin-block: 0 1rem; }
+.panel :is(ul, ol) { padding-inline-start: 1.5rem; }
+.panel ul { list-style: disc; }
+.panel ol { list-style: decimal; }
+.panel > summary { min-height: 44px; cursor: pointer; font-weight: 650; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1.5rem; }
+.resources { display: flex; flex-wrap: wrap; gap: .25rem 1.5rem; padding-block: 1rem; margin-block: 1.5rem 2rem; border-block: 1px solid var(--readiness-line); font-size: .9rem; }
+.actionBar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1.5rem; padding: 1rem; border: 1px solid var(--readiness-line); border-radius: 1.25rem; background: #fff; }
+.primary, .secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  max-width: 100%;
+  border: 1px solid #bfc1c7;
+  border-radius: 1rem;
+  padding: .75rem 1.2rem;
+  font: inherit;
+  line-height: 1.4;
+  text-align: center;
+  white-space: normal;
+  cursor: pointer;
+}
+.shell .primary { background: var(--readiness-accent); border-color: var(--readiness-accent); color: #fff; font-weight: 650; text-decoration: none; }
+.shell .primary:hover:not(:disabled) { background: #941226; color: #fff; }
+.shell .secondary { background: #ffffffc9; color: #33363c; text-decoration: none; }
+.shell .secondary:hover:not(:disabled) { border-color: #73767e; color: #17181b; }
+.notice { border: 1px solid #ddc5ca; border-inline-start: 3px solid #8d1025; border-radius: 1rem; padding: 1rem 1.25rem; background: #fff; color: #641323; margin-block: 1.5rem; }
+.split { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: start; }
+.split > * { min-width: 0; }
+.label { display: block; font-weight: 600; margin-block: 0 1.25rem; }
+.label > :is(input, select, textarea) { display: block; margin-top: .5rem; font-weight: 400; }
+.input, .essay { width: 100%; min-width: 0; min-height: 48px; border: 1px solid #92959d; border-radius: .9rem; padding: .8rem .9rem; background: #fff; color: #17181b; font: inherit; }
+.essay { min-height: 24rem; resize: vertical; line-height: 1.8; }
+.check, .option { display: flex; align-items: flex-start; gap: .8rem; min-height: 44px; padding-block: .7rem; font-weight: 400; }
+.check input, .option input { flex: none; width: 1.2rem; height: 1.2rem; margin-top: .25rem; accent-color: var(--readiness-accent); }
+.option span { min-width: 0; }
+.passage { background: #fff; line-height: 1.85; min-width: 0; overflow-wrap: anywhere; border-inline-end: 1px solid var(--readiness-line); padding-inline-end: clamp(1rem, 3vw, 2rem); }
+.plainSource { white-space: pre-wrap; overflow-wrap: anywhere; }
+.questions { display: grid; gap: 1.75rem; min-width: 0; }
+.question { min-width: 0; margin: 0; padding: 0 0 1.5rem; border: 0; border-bottom: 1px solid var(--readiness-line); }
+.question:last-child { border-bottom: 0; padding-bottom: .25rem; }
+.question legend { margin-bottom: .5rem; padding: 0; font-weight: 600; }
+.question > .input { margin-top: .5rem; }
+/* Only embedded readiness instances inherit these refinements. Consent controls are unchanged. */
+.embedded > section, .embedded > form > section { border-radius: 1.5rem; border-color: var(--readiness-line); background: #fff; padding: clamp(1.25rem, 3vw, 2.25rem); }
+.embedded :is(input:not([type='checkbox']):not([type='radio']), select, textarea) { min-height: 48px; border-radius: .9rem; font-size: 1rem; }
+.embedded :is(button, summary) { min-height: 48px; border-radius: 1rem; }
+.embedded label:has(> input:is([type='checkbox'], [type='radio'])) { min-height: 44px; }
+.embedded audio { max-width: 100%; }
+
+@supports (backdrop-filter: blur(16px)) {
+  .header, .actionBar { background: #ffffffdb; backdrop-filter: blur(16px) saturate(115%); }
+}
+@media (max-width: 800px) {
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .passage { border-inline-end: 0; border-bottom: 1px solid var(--readiness-line); padding-inline-end: 0; padding-bottom: 1.5rem; }
+}
+@media (max-width: 480px) {
+  .header { gap: .75rem; padding: .9rem 1.25rem; }
+  .statusBar { width: 100%; gap: .2rem; align-items: flex-start; flex-direction: column; }
+  .container { padding: 1.25rem; }
+  .intro { padding-block: 2rem; }
+  .panel { margin-block: 1.5rem; }
+  .actions > :is(button, .primary, .secondary), .actionBar > :is(button, .primary, .secondary) { width: 100%; }
+  .resources { flex-direction: column; }
+  .essay { min-height: 20rem; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .header, .actionBar, .shell .secondary { background: #fff; backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell *, .shell *::before, .shell *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  .shell, .header, .panel, .actionBar, .notice, .shell .primary, .shell .secondary, .input, .essay, .embedded > section, .embedded > form > section { background: Canvas; color: CanvasText; border-color: CanvasText; backdrop-filter: none; }
+  .shell .primary { border: 2px solid Highlight; }
+  .shell :is(a, .meta, .saveStatus) { color: CanvasText; }
+  .shell :is(button, input, select, textarea, a, summary):focus-visible { outline-color: Highlight; }
+}

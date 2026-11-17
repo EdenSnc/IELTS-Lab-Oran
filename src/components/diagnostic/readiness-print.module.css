@@ -1,0 +1,17 @@
+.booklet { background: #fff; color: #111; font: 11pt/1.4 Arial, sans-serif; margin: auto; max-width: 190mm; }
+.page { padding: 12mm 0; min-height: 265mm; position: relative; break-after: page; }
+.page:last-child { break-after: auto; }
+.page h1 { font-size: 24pt; font-weight: 700; margin: 0 0 8mm; }
+.page h2 { font-size: 16pt; font-weight: 700; margin: 0 0 5mm; }
+.page h3 { font-size: 12pt; font-weight: 700; margin: 4mm 0 2mm; }
+.page p { margin: 0 0 4mm; }
+.text { white-space: pre-wrap; line-height: 1.45; }
+.item { break-inside: avoid; padding-block: 1mm; }
+.item p { margin-bottom: 2mm; }
+.lines div { height: 8mm; border-bottom: 1px solid #888; }
+.page footer { margin-top: 5mm; font-size: 9pt; border-top: 1px solid #888; padding-top: 2mm; break-inside: avoid; }
+.page ol, .page ul { padding-inline-start: 7mm; margin-bottom: 4mm; list-style-position: outside; }
+.page ol { list-style-type: decimal; }
+.page ul { list-style-type: disc; }
+@page { size: A4; margin: 12mm; }
+@media print { :global(html), :global(body) { height: auto !important; overflow: visible !important; background: #fff !important; color: #111 !important; } .booklet, .booklet * { visibility: visible !important; } .booklet { max-width: none; } .page { padding: 0; min-height: 0; } }
