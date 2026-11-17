@@ -4,6 +4,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
+import { isCohortDeadlinePassed } from '@/lib/cohort-launch';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const GAP     = 20;   // px from screen edge when snapped
@@ -27,10 +28,12 @@ function clampY(y: number): number {
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function FloatingWidget() {
   const t = useTranslations('EventWidget');
+  const deadlinePassed = isCohortDeadlinePassed();
 
   const [expanded, setExpanded] = useState(false);
   const [side, setSide]         = useState<Side>('left');
   const [pillW, setPillW]       = useState(320);
+  const [hasDragged, setHasDragged] = useState(false);
   
   // Base Y position (X is strictly handled by side = left/right)
   const [top, setTop] = useState(0);
@@ -53,22 +56,23 @@ export default function FloatingWidget() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPillW(getPillW());
-    const initY = window.innerHeight * 0.82 - SZ / 2;
-    setTop(initY);
-    topRef.current = initY;
   }, []);
 
   useEffect(() => {
     const onResize = () => {
       setPillW(getPillW());
-      setTop(cy => { const ny = clampY(cy); topRef.current = ny; return ny; });
+      if (hasDragged) {
+        setTop(cy => { const ny = clampY(cy); topRef.current = ny; return ny; });
+      }
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, []);
+  }, [hasDragged]);
 
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button,a')) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    topRef.current = rect.top;
     setIsDragging(true);
     setIsSnapAnim(false); // Disable transitions while dragging
     moved.current     = false;
@@ -125,6 +129,7 @@ export default function FloatingWidget() {
 
     // 4. instantly move the base to the new edge, but apply the invert transform
     // so it visually stays EXACTLY under the user's cursor (no flickering)
+    setHasDragged(true);
     sideRef.current = newSide; setSide(newSide);
     topRef.current = newTop;   setTop(newTop);
     setTx(invertX);
@@ -149,7 +154,8 @@ export default function FloatingWidget() {
         position: 'fixed',
         left: side === 'left' ? GAP : 'auto',
         right: side === 'right' ? GAP : 'auto',
-        top: Math.round(top),
+        top: hasDragged ? Math.round(top) : 'auto',
+        bottom: hasDragged ? 'auto' : GAP,
         zIndex: 100,
         // GPU transform for dragging and snapping
         transform: `translate(${Math.round(tx)}px, ${Math.round(ty)}px)`,
@@ -212,7 +218,8 @@ export default function FloatingWidget() {
       <div
         style={{
           position: 'absolute',
-          top: 0,
+          top: hasDragged ? 0 : 'auto',
+          bottom: hasDragged ? 'auto' : 0,
           left: side === 'left' ? 0 : 'auto',
           right: side === 'right' ? 0 : 'auto',
           width: expanded ? pillW : SZ,
@@ -232,14 +239,14 @@ export default function FloatingWidget() {
       >
         {/* ── Link overlay ── */}
         <Link
-        href="/articles/simulation-platform"
+        href="/articles/first-ielts-preparation-cohort-oran"
         style={{
           position: 'absolute', inset: 0, zIndex: 10,
           borderRadius: 'inherit',
           opacity: expanded ? 1 : 0,
           pointerEvents: expanded ? 'auto' : 'none',
         }}
-        aria-label="AIESEC Workshop"
+        aria-label={t('linkAriaLabel')}
         tabIndex={expanded ? 0 : -1}
       />
 
@@ -306,7 +313,7 @@ export default function FloatingWidget() {
                 overflow: 'hidden', textOverflow: 'ellipsis',
                 maxWidth: pillW - SZ - 44,
               }}>
-                {t('title')}
+                {deadlinePassed ? t('closedTitle') : t('title')}
               </span>
             </div>
 
@@ -319,7 +326,7 @@ export default function FloatingWidget() {
                 setExpanded(false);
                 expandedRef.current = false;
               }}
-              aria-label="Minimize"
+              aria-label={t('minimizeLabel')}
               style={{
                 position: 'absolute',
                 top: '50%',

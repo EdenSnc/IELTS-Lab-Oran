@@ -36,7 +36,7 @@ export default function StopTraining() {
       </div>
       <div className="md:w-1/2 bg-white/5 rounded-3xl p-6 md:p-8 border border-white/10 flex flex-col gap-6 shadow-2xl">
         <div className="flex flex-col gap-2">
-          <div className="inline-flex items-center gap-2 bg-crimson/20 text-crimson px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase w-fit">
+          <div className="inline-flex items-center gap-2 bg-crimson/20 text-red-200 px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase w-fit">
             <span className="w-2 h-2 rounded-full bg-crimson animate-pulse"></span>
             {t('proofBadge')}
           </div>
@@ -45,7 +45,7 @@ export default function StopTraining() {
           </h3>
         </div>
         <div className="w-full bg-white rounded-2xl p-2 shadow-soft overflow-hidden group border border-white/10">
-          <Image src="/ielts_cropped.png" alt="Official IELTS Test Report Form Band 8.0" width={800} height={600} className="w-full h-auto object-contain rounded-xl shadow-sm" style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }} sizes="(max-width: 768px) 100vw, 50vw" />
+          <Image src="/ielts_cropped.png" alt={t('trfAlt')} width={800} height={600} className="w-full h-auto object-contain rounded-xl shadow-sm" style={{ filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }} sizes="(max-width: 768px) 100vw, 50vw" />
         </div>
       </div>
     </section>

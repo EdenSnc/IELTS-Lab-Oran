@@ -2,13 +2,15 @@
 
 import { useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { readActiveUtms } from '@/lib/acquisition/utm-client';
 
 // Algerian mobile number: 05x, 06x, 07x - with or without +213 prefix
 const phoneRegex = /^(?:\+213|0)[567]\d{8}$/;
 
 export default function LeadMagnet() {
   const t = useTranslations('LeadMagnet');
+  const locale = useLocale();
   const searchParams = useSearchParams();
 
   const [phone, setPhone] = useState('');
@@ -40,9 +42,11 @@ export default function LeadMagnet() {
     setStatus('submitting');
 
     try {
-      const utmSource = searchParams.get('utm_source');
-      const utmMedium = searchParams.get('utm_medium');
-      const utmCampaign = searchParams.get('utm_campaign');
+      const utms = readActiveUtms();
+      const utmSource = searchParams.get('utm_source') ?? utms.utm_source;
+      const utmMedium = searchParams.get('utm_medium') ?? utms.utm_medium;
+      const utmCampaign = searchParams.get('utm_campaign') ?? utms.utm_campaign;
+      const utmContent = searchParams.get('utm_content') ?? utms.utm_content;
 
       const response = await fetch('/api/leads', {
         method: 'POST',
@@ -52,6 +56,7 @@ export default function LeadMagnet() {
           utmSource,
           utmMedium,
           utmCampaign,
+          utmContent,
           formName: 'Lead Magnet (Computer vs Paper)',
           source: 'lead_magnet_pdf',
         }),
@@ -59,19 +64,24 @@ export default function LeadMagnet() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit form');
+        throw new Error(errorData.error || t('errorUnexpected'));
       }
 
       setStatus('success');
 
       // Continue in WhatsApp, where the current guide is delivered.
       const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '213780343103';
-      const message = 'Hi Mr. Senouci, I requested the IELTS on Computer vs. Paper guide.';
+      const message =
+        locale === 'fr'
+          ? 'Bonjour Mr. Senouci, j’ai demandé le guide IELTS sur ordinateur vs papier.'
+          : locale === 'ar'
+            ? 'مرحباً أستاذ سنوسي، لقد طلبت دليل IELTS على الكمبيوتر مقابل الورقي.'
+            : 'Hi Mr. Senouci, I requested the IELTS on Computer vs. Paper guide.';
       const waUrl = `https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`;
       setTimeout(() => { window.location.href = waUrl; }, 1000);
 
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.';
+      const msg = error instanceof Error ? error.message : t('errorUnexpected');
       console.error('Lead submission failed:', error);
       setStatus('error');
       setErrorMessage(msg);

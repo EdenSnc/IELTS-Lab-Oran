@@ -5,7 +5,7 @@ const isoDate = z.string().date();
 
 export const applicationSchema = z.object({
   schemaVersion: z.literal(2),
-  discoverySource: z.enum(['social_media', 'workshop', 'friend', 'other']),
+  discoverySource: z.enum(['google_search', 'google_maps', 'poster', 'social_media', 'workshop', 'friend', 'other']),
   bookedExam: z.boolean(),
   bookedExamDate: isoDate.nullish(),
   targetExamDate: isoDate.nullish(),

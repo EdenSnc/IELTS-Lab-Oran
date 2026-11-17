@@ -1,0 +1,100 @@
+batch_id,geo,time,term,mean_score,peak_score,peak_period,nonzero_points,total_points
+macro_5y_dz,DZ,today 5-y,IELTS,27.55,100,"Aug 30, 2026",262,262
+macro_5y_dz,DZ,today 5-y,ielts algérie,0.04,6,"Dec 14, 2025",3,262
+macro_5y_dz,DZ,today 5-y,TOEFL,3.13,12,"Oct 8, 2023",144,262
+macro_5y_dz,DZ,today 5-y,TCF Canada,19.53,50,"Nov 14, 2021",261,262
+macro_5y_dz,DZ,today 5-y,Duolingo English Test,0.37,8,"Jun 15, 2025",21,262
+cities_12m_dz,DZ,today 12-m,ielts algérie,1.98,56,"Dec 14, 2025",4,53
+cities_12m_dz,DZ,today 12-m,ielts oran,1.09,46,"Jun 21, 2026",3,53
+cities_12m_dz,DZ,today 12-m,ielts alger,0.55,11,"Nov 8, 2026",3,53
+cities_12m_dz,DZ,today 12-m,ielts constantine,1.96,100,"Oct 25, 2026",2,53
+cities_12m_dz,DZ,today 12-m,ielts setif,0.17,5,"Nov 8, 2026",2,53
+oran_province_12m,DZ-31,today 12-m,IELTS,21.6,100,"Aug 30, 2026",19,53
+oran_province_12m,DZ-31,today 12-m,ielts oran,1.02,50,"Nov 1, 2026",2,53
+oran_province_12m,DZ-31,today 12-m,british council oran,0.0,0,,0,53
+oran_province_12m,DZ-31,today 12-m,préparation ielts,0.75,40,"Jun 21, 2026",1,53
+oran_province_12m,DZ-31,today 12-m,test ielts,0.58,15,"Nov 8, 2026",3,53
+reg_fees_fr_12m,DZ,today 12-m,ielts algérie,2.34,66,"Dec 14, 2025",4,53
+reg_fees_fr_12m,DZ,today 12-m,prix ielts algerie,0.0,0,,0,53
+reg_fees_fr_12m,DZ,today 12-m,inscription ielts algerie,1.89,100,"Mar 15, 2026",1,53
+reg_fees_fr_12m,DZ,today 12-m,tarif ielts algerie,0.0,0,,0,53
+reg_fees_fr_12m,DZ,today 12-m,ielts algerie prix,0.0,0,,0,53
+booking_dates_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+booking_dates_12m,DZ,today 12-m,ielts booking algeria,0.38,10,"Nov 1, 2026",2,53
+booking_dates_12m,DZ,today 12-m,ielts registration algeria,0.0,0,,0,53
+booking_dates_12m,DZ,today 12-m,rendez vous ielts,0.94,19,"Nov 1, 2026",3,53
+booking_dates_12m,DZ,today 12-m,ielts dates algeria,0.0,0,,0,53
+bc_centres_12m,DZ,today 12-m,ielts algérie,1.62,46,"Dec 14, 2025",4,53
+bc_centres_12m,DZ,today 12-m,british council algeria,5.3,51,"Sep 27, 2026",8,53
+bc_centres_12m,DZ,today 12-m,british council algerie,0.0,0,,0,53
+bc_centres_12m,DZ,today 12-m,british council ielts,15.77,100,"Oct 25, 2026",16,53
+bc_centres_12m,DZ,today 12-m,centre ielts algerie,0.0,0,,0,53
+price_en_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+price_en_12m,DZ,today 12-m,ielts price algeria,0.0,0,,0,53
+price_en_12m,DZ,today 12-m,ielts test algeria price,0.0,0,,0,53
+price_en_12m,DZ,today 12-m,ielts fee algeria,0.0,0,,0,53
+price_en_12m,DZ,today 12-m,ielts payment algeria,0.0,0,,0,53
+prep_fr_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+prep_fr_12m,DZ,today 12-m,préparation ielts,0.0,0,,0,53
+prep_fr_12m,DZ,today 12-m,formation ielts,0.0,0,,0,53
+prep_fr_12m,DZ,today 12-m,cours ielts,0.0,0,,0,53
+prep_fr_12m,DZ,today 12-m,préparation ielts alger,0.0,0,,0,53
+prep_en_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+prep_en_12m,DZ,today 12-m,ielts preparation algeria,0.0,0,,0,53
+prep_en_12m,DZ,today 12-m,ielts course algeria,0.0,0,,0,53
+prep_en_12m,DZ,today 12-m,ielts training algeria,0.0,0,,0,53
+prep_en_12m,DZ,today 12-m,ielts practice test,1.94,75,"Dec 14, 2025",3,53
+reg_price_ar_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+reg_price_ar_12m,DZ,today 12-m,اختبار ايلتس,0.0,0,,0,53
+reg_price_ar_12m,DZ,today 12-m,سعر اختبار الايلتس,0.0,0,,0,53
+reg_price_ar_12m,DZ,today 12-m,التسجيل في ايلتس,0.0,0,,0,53
+reg_price_ar_12m,DZ,today 12-m,الايلتس في الجزائر,0.0,0,,0,53
+prep_ar_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+prep_ar_12m,DZ,today 12-m,دورة ايلتس,1.64,87,"Mar 22, 2026",1,53
+prep_ar_12m,DZ,today 12-m,تحضير ايلتس,0.0,0,,0,53
+prep_ar_12m,DZ,today 12-m,امتحان ايلتس,0.0,0,,0,53
+prep_ar_12m,DZ,today 12-m,ايلتس وهران,0.0,0,,0,53
+format_retake_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+format_retake_12m,DZ,today 12-m,computer based ielts,0.0,0,,0,53
+format_retake_12m,DZ,today 12-m,ielts sur ordinateur,0.0,0,,0,53
+format_retake_12m,DZ,today 12-m,ielts one skill retake,1.36,72,"Jun 28, 2026",1,53
+format_retake_12m,DZ,today 12-m,academic vs general ielts,1.4,74,"Jan 4, 2026",1,53
+mock_free_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+mock_free_12m,DZ,today 12-m,ielts mock test,0.64,22,"Nov 8, 2026",2,53
+mock_free_12m,DZ,today 12-m,test blanc ielts,0.0,0,,0,53
+mock_free_12m,DZ,today 12-m,ielts ready premium,1.66,88,"Sep 27, 2026",1,53
+mock_free_12m,DZ,today 12-m,ielts sample test,1.57,83,"Dec 28, 2025",1,53
+canada_12m,DZ,today 12-m,ielts algérie,0.6,17,"Dec 14, 2025",4,53
+canada_12m,DZ,today 12-m,ielts canada,0.06,2,"Nov 8, 2026",2,53
+canada_12m,DZ,today 12-m,ielts general training,0.04,1,"Nov 1, 2026",2,53
+canada_12m,DZ,today 12-m,tcf canada,56.94,100,"Sep 20, 2026",52,53
+canada_12m,DZ,today 12-m,entrée express ielts,0.0,0,,0,53
+visas_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+visas_12m,DZ,today 12-m,ielts ukvi,0.0,0,,0,53
+visas_12m,DZ,today 12-m,ielts etude italie,1.74,92,"Jul 26, 2026",1,53
+visas_12m,DZ,today 12-m,duolingo test italie,0.0,0,,0,53
+visas_12m,DZ,today 12-m,british council englishscore,0.0,0,,0,53
+skills_12m,DZ,today 12-m,ielts algérie,2.91,82,"Dec 14, 2025",4,53
+skills_12m,DZ,today 12-m,ielts writing task 2,0.43,14,"Nov 8, 2026",2,53
+skills_12m,DZ,today 12-m,ielts speaking,3.08,79,"Jun 28, 2026",4,53
+skills_12m,DZ,today 12-m,ielts listening,2.08,42,"Nov 15, 2026",3,53
+skills_12m,DZ,today 12-m,ielts reading,7.77,100,"Mar 29, 2026",7,53
+alternatives_12m,DZ,today 12-m,ielts algérie,3.57,100,"Dec 14, 2025",4,53
+alternatives_12m,DZ,today 12-m,ielts vs toefl,0.0,0,,0,53
+alternatives_12m,DZ,today 12-m,ielts clb,0.0,0,,0,53
+alternatives_12m,DZ,today 12-m,ielts band score,0.0,0,,0,53
+alternatives_12m,DZ,today 12-m,pte core algeria,1.51,80,"Jun 7, 2026",1,53
+surge_90d_dz,DZ,today 3-m,IELTS,60.58,100,Oct 28,90,93
+surge_90d_dz,DZ,today 3-m,ielts algérie,0.0,0,,0,93
+surge_90d_dz,DZ,today 3-m,ielts oran,0.05,2,Nov 5,3,93
+surge_90d_dz,DZ,today 3-m,prix ielts,0.55,51,Sep 22,1,93
+surge_90d_dz,DZ,today 3-m,ielts one skill retake,0.0,0,,0,93
+surge_visas_90d,DZ,today 3-m,IELTS,60.58,100,Oct 28,90,93
+surge_visas_90d,DZ,today 3-m,ielts italie,0.37,32,Aug 18,2,93
+surge_visas_90d,DZ,today 3-m,ielts canada,0.03,3,Nov 9,1,93
+surge_visas_90d,DZ,today 3-m,british council algeria,0.26,3,Nov 4,9,93
+surge_visas_90d,DZ,today 3-m,ielts sur ordinateur,0.62,29,Aug 30,2,93
+oran_5y,DZ-31,today 5-y,IELTS,2.56,40,"Aug 30, 2026",29,262
+oran_5y,DZ-31,today 5-y,ielts oran,0.21,20,"Nov 1, 2026",4,262
+oran_5y,DZ-31,today 5-y,TOEFL,0.16,22,"Sep 6, 2026",2,262
+oran_5y,DZ-31,today 5-y,TCF,20.09,100,"Sep 29, 2024",157,262

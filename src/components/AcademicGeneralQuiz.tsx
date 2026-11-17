@@ -40,7 +40,11 @@ export default function AcademicGeneralQuiz({ locale }: { locale: Locale }) {
   return (
     <section className="not-prose my-12 rounded-[2rem] border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
       <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-crimson">
-        Interactive check
+        {locale === 'fr'
+          ? 'Vérification interactive'
+          : locale === 'ar'
+            ? 'فحص تفاعلي'
+            : 'Interactive check'}
       </p>
       <h2 className="mt-2 text-2xl font-extrabold text-charcoal">{t.title}</h2>
       <p className="mt-2 text-sm text-gray-600">{t.prompt}</p>

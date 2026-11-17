@@ -1,12 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   CANONICAL_ORIGIN,
   SITE_URL,
   LOCALES,
+  INDEXNOW_KEY,
+  OG_LOCALE_MAP,
   buildAlternates,
   localizedUrl,
   buildArticleMetadata,
+  buildWebsitePageMetadata,
+  defaultOgImageUrl,
 } from '@/lib/seo';
 import sitemap from '@/app/sitemap';
 import robots from '@/app/robots';
@@ -102,9 +108,60 @@ test('SEO: Sitemap entries all use CANONICAL_ORIGIN and have no legacy domains',
   }
 });
 
-test('SEO: Robots configuration references canonical sitemap and avoids Host directive', () => {
+test('SEO: Robots configuration references canonical sitemap and allows AI search bots', () => {
   const robotsConfig = robots();
   assert.equal(robotsConfig.sitemap, 'https://www.ieltslab.org/sitemap.xml');
   assert.ok(robotsConfig.rules, 'Robots must define crawl rules');
   assert.equal(robotsConfig.host, undefined, 'Robots should not define obsolete Host directive');
+
+  const rules = Array.isArray(robotsConfig.rules) ? robotsConfig.rules : [robotsConfig.rules];
+  const oaiRule = rules.find((r) => {
+    const agents = Array.isArray(r.userAgent) ? r.userAgent : [r.userAgent];
+    return agents.includes('OAI-SearchBot');
+  });
+  assert.ok(oaiRule, 'OAI-SearchBot must have an explicit rule in robots.ts');
+  assert.equal(oaiRule.allow, '/');
+});
+
+test('SEO: Branded 1200x630 OG image, OG locales, and IndexNow key file exist', () => {
+  assert.equal(defaultOgImageUrl(), 'https://www.ieltslab.org/og-default.png');
+  assert.equal(OG_LOCALE_MAP.en, 'en_US');
+  assert.equal(OG_LOCALE_MAP.fr, 'fr_FR');
+  assert.equal(OG_LOCALE_MAP.ar, 'ar_DZ');
+
+  const pageMeta = buildWebsitePageMetadata({
+    locale: 'fr',
+    path: 'articles',
+    title: 'Guides IELTS',
+    description: 'Guides IELTS en Algérie',
+  });
+  assert.equal(pageMeta.openGraph?.url, 'https://www.ieltslab.org/fr/articles');
+  assert.equal((pageMeta.openGraph as { locale?: string })?.locale, 'fr_FR');
+  const ogImages = pageMeta.openGraph?.images as Array<{ url: string; width: number; height: number }>;
+  assert.equal(ogImages?.[0]?.url, 'https://www.ieltslab.org/og-default.png');
+  assert.equal(ogImages?.[0]?.width, 1200);
+  assert.equal(ogImages?.[0]?.height, 630);
+
+  const ogPng = fs.readFileSync(path.join(process.cwd(), 'public', 'og-default.png'));
+  assert.equal(ogPng.readUInt32BE(16), 1200);
+  assert.equal(ogPng.readUInt32BE(20), 630);
+
+  const indexNowPath = path.join(process.cwd(), 'public', `${INDEXNOW_KEY}.txt`);
+  assert.equal(fs.readFileSync(indexNowPath, 'utf8').trim(), INDEXNOW_KEY);
+});
+
+test('Localization: FR and AR dictionaries have translated testimonials and UI chrome', () => {
+  const fr = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'messages', 'fr.json'), 'utf8'));
+  const ar = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'messages', 'ar.json'), 'utf8'));
+
+  assert.equal(fr.Hero.badge.includes('Oran'), true);
+  assert.notEqual(fr.Hero.reserve, 'APPLY FOR THE CAMP');
+  assert.notEqual(ar.Hero.reserve, 'APPLY FOR THE CAMP');
+  assert.equal(Array.isArray(fr.Testimonials.items) && fr.Testimonials.items.length === 3, true);
+  assert.equal(Array.isArray(ar.Testimonials.items) && ar.Testimonials.items.length === 3, true);
+  assert.equal(fr.Testimonials.items[0].quote.includes('I was terrified'), false);
+  assert.equal(ar.Testimonials.items[0].quote.includes('I was terrified'), false);
+  assert.notEqual(fr.Intake.statusLabReady, 'Lab Ready');
+  assert.notEqual(ar.Intake.statusLabReady, 'Lab Ready');
+  assert.notEqual(fr.Facility.disclaimer, 'IELTS Lab Oran is an independent preparation provider and is not affiliated with IELTS, the British Council, IDP, or Cambridge University Press & Assessment.');
 });

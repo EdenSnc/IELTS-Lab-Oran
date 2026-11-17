@@ -60,8 +60,12 @@ export default function ClbCalculator({ locale }: { locale: Locale }) {
 
   return (
     <section className="not-prose my-12 rounded-[2rem] bg-charcoal p-6 text-white md:p-8">
-      <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-crimson">
-        Interactive calculator
+      <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-red-300">
+        {locale === 'fr'
+          ? 'Calculateur interactif'
+          : locale === 'ar'
+            ? 'حاسبة تفاعلية'
+            : 'Interactive calculator'}
       </p>
       <h2 className="mt-2 text-2xl font-extrabold">{t.title}</h2>
       <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-300">{t.subtitle}</p>

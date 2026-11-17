@@ -35,7 +35,7 @@ export default function Facility() {
         {/* Placeholder for real facility image */}
         <Image
           src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2070&auto=format&fit=crop"
-          alt="Illustration of a computer learning space"
+          alt={t('imageAlt')}
           fill
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1152px"
           className="object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
@@ -49,19 +49,15 @@ export default function Facility() {
            </div>
         </div>
       </div>
-      <p className="mt-3 text-xs text-gray-400">
-        {locale === 'fr'
-          ? 'Image illustrative. Des photos du laboratoire seront publiées après l’installation.'
-          : locale === 'ar'
-            ? 'صورة توضيحية. ستُنشر صور المختبر بعد اكتمال التجهيز.'
-            : 'Illustrative image. Real lab photos will be published after setup.'}
+      <p className="mt-3 text-xs text-gray-600">
+        {t('illustrativeNote')}
       </p>
       
       {/* Mega Footer Section */}
-      <div className="mt-16 pt-12 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center md:items-start gap-8 text-left">
+      <footer className="mt-16 pt-12 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center md:items-start gap-8 text-start" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
         <div className="flex flex-col sm:flex-row gap-12 md:gap-24 w-full md:w-auto">
           <div>
-            <h3 className="font-bold text-lg mb-4 text-charcoal">{t('contact')}</h3>
+            <h2 className="font-bold text-lg mb-4 text-charcoal">{t('contact')}</h2>
             <div className="space-y-3">
               <a href="mailto:ieltslab.oran@gmail.com" className="flex items-center gap-3 text-gray-600 hover:text-crimson transition-colors font-medium">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
@@ -73,10 +69,10 @@ export default function Facility() {
               </a>
             </div>
           </div>
-          <nav aria-label="IELTS resources">
-            <h3 className="font-bold text-lg mb-4 text-charcoal">
-              {locale === 'fr' ? 'Guides' : locale === 'ar' ? 'أدلة' : 'Guides'}
-            </h3>
+          <nav aria-label={t('navAriaLabel')}>
+            <h2 className="font-bold text-lg mb-4 text-charcoal">
+              {t('guidesTitle')}
+            </h2>
             <ul className="space-y-3">
               {resources.map(([label, href]) => (
                 <li key={href}>
@@ -91,7 +87,7 @@ export default function Facility() {
             </ul>
           </nav>
           <div>
-            <h3 className="font-bold text-lg mb-4 text-charcoal">{t('social')}</h3>
+            <h2 className="font-bold text-lg mb-4 text-charcoal">{t('social')}</h2>
             <div className="flex gap-4">
               <a href="https://www.facebook.com/profile.php?id=61591282143384" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-blue-600 hover:text-white transition-all">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22.675 0h-21.35C.597 0 0 .597 0 1.325v21.351C0 23.403.597 24 1.325 24H12.82v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.323-.597 1.323-1.325V1.325C24 .597 23.403 0 22.675 0z"/></svg>
@@ -105,14 +101,13 @@ export default function Facility() {
             </div>
           </div>
         </div>
-        <div className="w-full md:w-auto text-sm text-gray-400 font-medium md:text-right mt-8 md:mt-0">
+        <div className="w-full md:w-auto text-sm text-gray-600 font-medium md:text-end mt-8 md:mt-0">
           {t('copyright', { year: new Date().getFullYear() })}
           <p className="mt-2 max-w-sm text-xs leading-relaxed">
-            IELTS Lab Oran is an independent preparation provider and is not affiliated with
-            IELTS, the British Council, IDP, or Cambridge University Press &amp; Assessment.
+            {t('disclaimer')}
           </p>
         </div>
-      </div>
+      </footer>
     </section>
   );
 }

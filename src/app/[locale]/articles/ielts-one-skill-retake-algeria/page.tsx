@@ -1,5 +1,7 @@
 import { getLocale } from 'next-intl/server';
 import Navbar from '@/components/Navbar';
+import ArticleMobileCta from '@/components/ArticleMobileCta';
+import ArticleTrust from '@/components/ArticleTrust';
 import { Link } from '@/i18n/routing';
 import { buildArticleMetadata, type Locale } from '@/lib/seo';
 import {
@@ -35,6 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
 export default async function OneSkillRetakePage() {
   const locale = (await getLocale()) as Locale;
   const t = osrCopy[locale];
+  const isRtl = locale === 'ar';
   const facts = [
     { value: t.price, label: t.priceLabel },
     { value: t.time, label: t.timeLabel },
@@ -44,7 +47,7 @@ export default async function OneSkillRetakePage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto max-w-4xl px-5 pb-20 pt-28 sm:px-8 sm:pt-32" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+      <main className={`mx-auto max-w-4xl px-5 pb-32 pt-28 sm:px-8 sm:pt-32 ${isRtl ? 'font-cairo' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
         <article>
           <header className="rounded-3xl border border-red-100 bg-gradient-to-br from-red-50 via-white to-white p-6 sm:p-9">
             <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-charcoal sm:text-5xl">{t.title}</h1>
@@ -112,9 +115,24 @@ export default async function OneSkillRetakePage() {
               <Link className="font-semibold text-crimson underline" href="/articles/how-to-register-algeria">{t.related}</Link>
             </div>
           </section>
-          <footer className="mt-6 text-sm text-gray-600"><time dateTime={OSR_REVIEW_DATE}>{t.checked}</time></footer>
+          <div className="mt-16">
+            <ArticleTrust
+              locale={locale}
+              slug={OSR_SLUG}
+              title={t.title}
+              description={t.desc}
+              publishedAt={OSR_REVIEW_DATE}
+              reviewedAt={OSR_REVIEW_DATE}
+              sources={[
+                { label: t.feeLink, href: OSR_FEE_SOURCE },
+                { label: t.centreLink, href: OSR_CENTRE_SOURCE },
+                { label: t.resultsLink, href: OSR_RESULTS_SOURCE },
+              ]}
+            />
+          </div>
         </article>
       </main>
+      <ArticleMobileCta />
     </>
   );
 }

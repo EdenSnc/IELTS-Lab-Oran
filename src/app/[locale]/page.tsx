@@ -10,13 +10,19 @@ import FAQ from '@/components/FAQ';
 import Intake from '@/components/Intake';
 import LeadMagnet from '@/components/LeadMagnet';
 import MockTestOffer from '@/components/MockTestOffer';
+import FeaturedGuides from '@/components/FeaturedGuides';
+import LocalSchema from '@/components/LocalSchema';
 import { getFoundingCohortStatus } from '@/lib/cohort';
+import { Locale } from '@/lib/seo';
 
-export default function Home() {
+export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const safeLocale: Locale = locale === 'fr' || locale === 'ar' ? locale : 'en';
   const cohortStatus = getFoundingCohortStatus();
 
   return (
     <>
+      <LocalSchema locale={safeLocale} />
       <Navbar />
       <main className="flex flex-col">
         <Hero cohortStatus={cohortStatus} />
@@ -28,6 +34,7 @@ export default function Home() {
         <Intake cohortStatus={cohortStatus} />
         <About />
         <FAQ />
+        <FeaturedGuides locale={safeLocale} />
         <LeadMagnet />
         <Facility />
       </main>

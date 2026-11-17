@@ -2,7 +2,13 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { COHORT_APPLICATION_DEADLINE, COHORT_ARTICLE_PATH, COHORT_FORM_URL, cohortLaunch } from '@/lib/cohort-launch';
+import {
+  COHORT_APPLICATION_DEADLINE,
+  COHORT_ARTICLE_PATH,
+  COHORT_FORM_URL,
+  cohortLaunch,
+  isCohortDeadlinePassed,
+} from '@/lib/cohort-launch';
 import type { Locale } from '@/lib/seo';
 import ApplicationForm from './ApplicationForm';
 import TrustBadges from './TrustBadges';
@@ -36,6 +42,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
     }
   }, [cohortStatus.claimed, cohortStatus.total]);
 
+  const deadlinePassed = isCohortDeadlinePassed();
   const fillPct = cohortStatus.total > 0
     ? Math.round((localClaimed / cohortStatus.total) * 100)
     : 0;
@@ -62,14 +69,23 @@ export default function Intake({ cohortStatus }: IntakeProps) {
             <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-8 leading-tight">{t('title')}</h2>
 
             <div className="mb-10">
-              <h3 className="font-bold text-gray-400 uppercase tracking-widest text-xs mb-3">{t('feeTitle')}</h3>
-              <del className="block text-sm text-gray-300" aria-label={`${launch.pastPriceLabel}: ${t('previousFee')}`}>{t('previousFee')}</del>
+              <p className="font-bold text-gray-300 uppercase tracking-widest text-xs mb-3">{t('feeTitle')}</p>
+              <p className="text-sm font-medium text-gray-300 mb-1">{t('previousFee')}</p>
               <p className="mb-2 text-4xl font-extrabold text-white">{t('fee')}</p>
               <p className="text-gray-300 font-medium leading-relaxed">{t('feeDesc')}</p>
-              <p className="mt-3 text-sm font-semibold">
-                {launch.deadlineLabel} · <time dateTime={COHORT_APPLICATION_DEADLINE}>{launch.deadline}</time>
-              </p>
-              <a href={COHORT_FORM_URL} className="mt-4 inline-flex rounded-full bg-crimson px-5 py-2.5 text-sm font-bold text-white hover:bg-red-800">{launch.apply}</a>
+              {deadlinePassed ? (
+                <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+                  <p className="font-bold">{t('closedBadge')}</p>
+                  <p className="mt-1 text-amber-100/90 leading-relaxed">{t('closedNote')}</p>
+                </div>
+              ) : (
+                <p className="mt-3 text-sm font-semibold">
+                  {launch.deadlineLabel} · <time dateTime={COHORT_APPLICATION_DEADLINE}>{launch.deadline}</time>
+                </p>
+              )}
+              <a href={COHORT_FORM_URL} className="mt-4 inline-flex rounded-full bg-crimson px-5 py-2.5 text-sm font-bold text-white hover:bg-red-800">
+                {deadlinePassed ? launch.closedCta : launch.apply}
+              </a>
               <Link href={COHORT_ARTICLE_PATH} className="mt-3 block text-sm text-white underline underline-offset-4">{launch.title}</Link>
             </div>
 
@@ -93,42 +109,49 @@ export default function Intake({ cohortStatus }: IntakeProps) {
               <TrustBadges variant="light" />
             </div>
 
-            {/* Founding Cohort Counter */}
-            <div className="w-full max-w-sm bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2rem] px-8 py-6 flex flex-col items-center gap-3 mb-8">
-              <div className="flex justify-between w-full text-xs font-medium">
-                <span className="text-white/70">
-                  {cohortStatus.isFull
-                    ? ct('full')
-                    : ct('claimedText', { claimed: localClaimed, total: cohortStatus.total })}
-                </span>
-                <span className="text-white font-bold">
-                  {localClaimed}/{cohortStatus.total}
-                </span>
+            {/* Founding Cohort Counter / Capacity summary */}
+            {localClaimed === 0 && !cohortStatus.isFull ? (
+              <div className="w-full max-w-sm bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2rem] px-6 py-4 flex flex-col items-start gap-1.5 mb-8">
+                <p className="text-sm font-bold text-white">{t('capacitySummary')}</p>
+                <p className="text-xs text-white/70">{ct('discountNote')}</p>
               </div>
-              <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all shadow-[0_0_10px_rgba(250,204,21,0.5)] ${cohortStatus.isFull ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-yellow-400'}`}
-                  style={{ width: `${fillPct}%` }}
-                />
+            ) : (
+              <div className="w-full max-w-sm bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2rem] px-8 py-6 flex flex-col items-center gap-3 mb-8">
+                <div className="flex justify-between w-full text-xs font-medium">
+                  <span className="text-white/70">
+                    {cohortStatus.isFull
+                      ? ct('full')
+                      : ct('claimedText', { claimed: localClaimed, total: cohortStatus.total })}
+                  </span>
+                  <span className="text-white font-bold">
+                    {localClaimed}/{cohortStatus.total}
+                  </span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all shadow-[0_0_10px_rgba(250,204,21,0.5)] ${cohortStatus.isFull ? 'bg-gradient-to-r from-yellow-400 to-orange-500' : 'bg-yellow-400'}`}
+                    style={{ width: `${fillPct}%` }}
+                  />
+                </div>
+                {!cohortStatus.isFull && (
+                  <p className="text-xs text-white/70 text-center">{ct('discountNote')}</p>
+                )}
               </div>
-              {!cohortStatus.isFull && (
-                <p className="text-xs text-white/50 text-center">{ct('discountNote')}</p>
-              )}
-            </div>
+            )}
 
             {/* Status sub-tags */}
             <div className="flex gap-3 flex-wrap justify-start mb-8">
               <div className="bg-white/5 border border-white/10 text-white/90 text-xs font-bold px-4 py-2 rounded-full shadow-sm backdrop-blur-md flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
-                Lab Ready
+                {t('statusLabReady')}
               </div>
               <div className="bg-white/5 border border-white/10 text-white/90 text-xs font-bold px-4 py-2 rounded-full shadow-sm backdrop-blur-md flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
-                Curriculum Set
+                {t('statusCurriculumSet')}
               </div>
               <div className="bg-crimson text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-crimson/30 flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clipRule="evenodd" /></svg>
-                Scheduling...
+                {t('statusScheduling')}
               </div>
             </div>
 

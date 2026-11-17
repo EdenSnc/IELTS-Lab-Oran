@@ -23,3 +23,12 @@ test('Proxy forwards the URL locale alongside the CSP nonce', async () => {
     assert.match(response.headers.get('link') ?? '', /hreflang="fr"/);
   }
 });
+
+test('Proxy passes through /r/, /sample, and /staff routes without rewriting to /_not-found', async () => {
+  const { default: proxy } = await import('../../src/proxy');
+
+  for (const path of ['/r/abcDEF1234', '/sample?locale=en', '/staff/operations']) {
+    const response = await proxy(new NextRequest(`https://www.ieltslab.org${path}`));
+    assert.equal(response.headers.get('x-middleware-rewrite'), null, `${path} should not rewrite to /_not-found`);
+  }
+});

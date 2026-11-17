@@ -14,7 +14,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: A
     slug: 'how-to-register-algeria',
     title: articleSeoTitle(locale, 'how-to-register-algeria'),
     description: articleDescription(locale, 'how-to-register-algeria'),
-    modifiedTime: '2026-11-16',
+    publishedTime: '2026-07-29',
+    modifiedTime: '2026-11-17',
   });
 }
 
@@ -65,15 +66,117 @@ export default async function ArticlePage() {
     },
   }[locale];
 
+  const keyFacts = {
+    en: {
+      heading: '2026 Quick Facts — IELTS Algeria',
+      rows: [
+        ['Academic & General Training fee', '40,000 DA'],
+        ['One Skill Retake fee', '25,000 DA (within 60 days)'],
+        ['Payment window after booking', 'Within 72 hours (1% HSBC cash stamp duty)'],
+        ['Test centres', 'Algiers & Oran (Imtiyaz El Djazair, Hai Ibn Sina)'],
+        ['Required ID on test day', 'Valid passport used at registration'],
+      ],
+    },
+    fr: {
+      heading: 'Repères rapides 2026 — IELTS Algérie',
+      rows: [
+        ['Tarif Academic & General Training', '40 000 DA'],
+        ['Tarif One Skill Retake', '25 000 DA (sous 60 jours)'],
+        ['Délai de paiement après réservation', 'Sous 72 heures (timbre fiscal 1 % en espèces HSBC)'],
+        ['Centres de passage', 'Alger et Oran (Imtiyaz El Djazair, Hai Ibn Sina)'],
+        ['Pièce d’identité le jour J', 'Passeport valide utilisé lors de l’inscription'],
+      ],
+    },
+    ar: {
+      heading: 'أهم الأرقام والشروط (الجزائر 2026)',
+      rows: [
+        ['رسوم Academic و General Training', '40,000 دج'],
+        ['رسوم إعادة مهارة واحدة (One Skill Retake)', '25,000 دج (خلال 60 يوماً)'],
+        ['مهلة الدفع بعد الحجز الإلكتروني', 'خلال 72 ساعة (مع رسم طابع 1% للدفع نقداً في HSBC)'],
+        ['مدن ومراكز الاختبار', 'الجزائر العاصمة ووهران (مركز امتياز الجزائر، حي ابن سينا)'],
+        ['وثيقة الهوية المطلوبة يوم الاختبار', 'نفس جواز السفر الساري المفعول المسجل به'],
+      ],
+    },
+  }[locale];
+
+  const faqs = {
+    en: [
+      {
+        q: 'How much does the IELTS test cost in Algeria in 2026?',
+        a: 'British Council Algeria lists 40,000 DA for standard IELTS Academic and General Training tests, and 25,000 DA for One Skill Retake within 60 days of your original computer-delivered test.',
+      },
+      {
+        q: 'Where can I take IELTS in Oran?',
+        a: 'Oran candidates sit the computer-delivered exam at British Council — Imtiyaz El Djazair (76 Bis Avenue Sidi Chahmi, Hai Ibn Sina), subject to the exact venue on your booking confirmation.',
+      },
+      {
+        q: 'Can I pay with Baridimob, CIB, Edahabia, or cash in Algeria?',
+        a: 'British Council Algeria supports online bank-card payment, digital banking/transfer, and HSBC cash deposit (subject to 1% cash stamp duty). Payment must be finalized within 72 hours of booking.',
+      },
+      {
+        q: 'Can I register with a national ID card instead of a passport?',
+        a: 'You should register with a valid passport (at least 6 months validity recommended) and bring that exact same original passport on exam day.',
+      },
+    ],
+    fr: [
+      {
+        q: 'Quel est le prix officiel de l’IELTS en Algérie en 2026 ?',
+        a: 'Le tarif affiché par le British Council Algérie est de 40 000 DA pour Academic et General Training, et de 25 000 DA pour le One Skill Retake dans les 60 jours suivant l’examen sur ordinateur.',
+      },
+      {
+        q: 'Où passer l’IELTS à Oran ?',
+        a: 'À Oran, les sessions sur ordinateur se déroulent au centre partenaire Imtiyaz El Djazair (76 bis avenue Sidi Chahmi, Hai Ibn Sina). Vérifiez toujours l’adresse exacte sur votre convocation.',
+      },
+      {
+        q: 'Comment payer : carte bancaire, virement ou espèces HSBC ?',
+        a: 'Le British Council Algérie propose le paiement en ligne par carte, la banque numérique / virement ou le dépôt en espèces auprès d’HSBC (+ 1 % de droit de timbre). Le règlement doit être finalisé sous 72 heures.',
+      },
+      {
+        q: 'Passeport ou carte d’identité pour l’inscription IELTS ?',
+        a: 'Utilisez un passeport en cours de validité lors de l’inscription et présentez exactement le même passeport original le jour du test.',
+      },
+    ],
+    ar: [
+      {
+        q: 'كم يبلغ سعر اختبار IELTS في الجزائر سنة 2026؟',
+        a: 'الرسوم المعلنة لدى المجلس الثقافي البريطاني هي 40,000 دج لاختبار IELTS Academic وGeneral Training، و25,000 دج لإعادة مهارة واحدة (One Skill Retake) خلال 60 يوماً من الاختبار على الكمبيوتر.',
+      },
+      {
+        q: 'أين يُجرى اختبار IELTS في مدينة وهران؟',
+        a: 'يُجرى الاختبار على الكمبيوتر في وهران بمركز امتياز الجزائر (76 مكرر شارع سيدي الشحمي، حي ابن سينا)، مع ضرورة التأكد من العنوان النهائي في رسالة تأكيد الحجز.',
+      },
+      {
+        q: 'ما طرق الدفع المتاحة وهل يقبل الدفع عبر HSBC أو البطاقة؟',
+        a: 'تشمل الطرق المعلنة الدفع بالبطاقة البنكية عبر الإنترنت، أو التحويل/الصيرفة الرقمية، أو الإيداع نقداً في بنك HSBC (مع رسم طابع نقدي 1%). يجب إتمام الدفع خلال 72 ساعة من الحجز.',
+      },
+      {
+        q: 'هل يجب التسجيل بجواز السفر أم يكفي بطاقة التعريف الوطنية؟',
+        a: 'يجب التسجيل بجواز سفر ساري المفعول وإحضار نفس جواز السفر الأصلي يوم الامتحان دون أي اختلاف في البيانات.',
+      },
+    ],
+  }[locale];
+
   return (
     <>
       <Navbar />
       <article className={`pt-32 pb-32 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-8 leading-tight">{c.title}</h1>
-          <div className="bg-white border-l-4 border-crimson p-6 rounded-r-2xl shadow-sm mb-10">
+          <div className="bg-white border-l-4 border-crimson p-6 rounded-r-2xl shadow-sm mb-8">
               <p className="text-charcoal font-bold text-lg mb-2">{c.summaryTitle}</p>
               <p className="text-gray-600 m-0" dangerouslySetInnerHTML={{ __html: c.summaryText }} />
           </div>
+
+          <section aria-labelledby="key-facts-heading" className="mb-10 rounded-2xl border border-gray-200 bg-[#faf9f6] p-6">
+            <h2 id="key-facts-heading" className="text-xl font-extrabold text-charcoal mb-4">{keyFacts.heading}</h2>
+            <dl className="divide-y divide-gray-200 text-sm">
+              {keyFacts.rows.map(([label, value]) => (
+                <div key={label} className="py-2.5 flex flex-col sm:flex-row sm:justify-between gap-1">
+                  <dt className="font-semibold text-gray-600">{label}</dt>
+                  <dd className="font-bold text-charcoal">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
 
           <section aria-labelledby="pay-ielts" className="mb-10 rounded-2xl border border-gray-200 bg-white p-6">
             <h2 id="pay-ielts" className="text-2xl font-extrabold text-charcoal">{whereToPay.title}</h2>
@@ -100,7 +203,7 @@ export default async function ArticlePage() {
                             {i + 1}
                           </div>
                           <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-sm flex-1 group-hover:shadow-md transition-shadow">
-                              <h4 className="font-bold text-charcoal text-xl mb-2">{step.title}</h4>
+                              <h3 className="font-bold text-charcoal text-xl mb-2">{step.title}</h3>
                               <p className="text-gray-600 leading-relaxed text-sm" dangerouslySetInnerHTML={{ __html: step.desc }} />
                           </div>
                       </div>
@@ -123,6 +226,18 @@ export default async function ArticlePage() {
                   ))}
               </ul>
 
+              <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">
+                {locale === 'fr' ? 'Questions fréquentes (IELTS Algérie 2026)' : locale === 'ar' ? 'الأسئلة الشائعة حول التسجيل في الجزائر' : 'Frequently Asked Questions (IELTS Algeria 2026)'}
+              </h2>
+              <div className="not-prose my-6 space-y-4">
+                {faqs.map((item) => (
+                  <section key={item.q} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <h3 className="text-base font-bold text-charcoal mb-2">{item.q}</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed m-0">{item.a}</p>
+                  </section>
+                ))}
+              </div>
+
               <div className="bg-white p-8 md:p-10 rounded-[2.5rem] mt-16 border border-gray-200 shadow-xl shadow-gray-200/50 flex flex-col md:flex-row items-center gap-8 justify-between relative overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-crimson/5 rounded-full blur-3xl -mr-10 -mt-10 transition-all duration-500 group-hover:bg-crimson/10 pointer-events-none"></div>
                   <div className="relative z-10 md:w-2/3">
@@ -136,16 +251,47 @@ export default async function ArticlePage() {
                   </div>
               </div>
           </div>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                mainEntity: faqs.map((item) => ({
+                  '@type': 'Question',
+                  name: item.q,
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: item.a,
+                  },
+                })),
+              }).replace(/</g, '\\u003c'),
+            }}
+          />
           <div className="mt-16">
             <ArticleTrust
               locale={locale}
               slug="how-to-register-algeria"
               title={c.title}
               description={articleDescription(locale, 'how-to-register-algeria')}
+              publishedAt="2026-07-29"
+              reviewedAt="2026-11-17"
               sources={[
                 {
                   label: whereToPay.official,
                   href: officialPaymentUrl,
+                },
+                {
+                  label: whereToPay.centreLink,
+                  href: 'https://ielts.org/test-centres/british-council-imtiyaz-el-djazair',
+                },
+                {
+                  label: locale === 'fr'
+                    ? 'IELTS.org : règles One Skill Retake'
+                    : locale === 'ar'
+                      ? 'IELTS.org: شروط إعادة مهارة واحدة One Skill Retake'
+                      : 'IELTS.org: One Skill Retake rules',
+                  href: 'https://ielts.org/take-a-test/booking-your-test/one-skill-retake',
                 },
               ]}
             />

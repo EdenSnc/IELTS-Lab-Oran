@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import StaffOperationsDashboard from '@/components/account/StaffOperationsDashboard';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import { loadStaffPaymentOperations } from '@/lib/payments/staff-operations';
 import { listAccessCodes } from '@/lib/access-codes/access-code-service';

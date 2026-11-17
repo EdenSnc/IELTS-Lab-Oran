@@ -1,13 +1,13 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getTranslations } from 'next-intl/server';
+import { getMessages } from 'next-intl/server';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
 import { Inter, Cairo } from 'next/font/google';
-import LocalSchema from '@/components/LocalSchema';
 import FloatingWidgetClient from '@/components/FloatingWidgetClient';
-import { Locale, CANONICAL_ORIGIN, buildAlternates } from '@/lib/seo';
+import AcquisitionUtmCapture from '@/components/AcquisitionUtmCapture';
+import { Locale, buildWebsitePageMetadata } from '@/lib/seo';
 import '../globals.css';
 
 
@@ -25,38 +25,23 @@ const cairo = Cairo({
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'Navbar' });
-  const descriptions = {
-    en: 'Prepare for IELTS in Oran with computer-based practice in all four skills and individual Writing and Speaking feedback in a small group.',
-    fr: 'Préparez l’IELTS à Oran en petit groupe, avec des exercices sur ordinateur et des retours personnalisés en Writing et Speaking.',
-    ar: 'حضّر لاختبار IELTS في وهران ضمن مجموعة صغيرة مع تمارين على الكمبيوتر وملاحظات فردية في الكتابة والمحادثة.',
-  } as const;
-  const titles = {
-    en: 'IELTS Preparation in Oran',
-    fr: 'Préparation IELTS à Oran',
-    ar: 'التحضير لاختبار IELTS في وهران',
-  } as const;
-  const description = descriptions[locale as Locale] ?? descriptions.en;
-  const title = `${titles[locale as Locale] ?? titles.en} | ${t('title')}`;
-  return {
-    metadataBase: new URL(CANONICAL_ORIGIN),
-    title,
-    description,
-    alternates: buildAlternates(locale as Locale),
-    openGraph: {
-      type: 'website',
-      locale,
-      siteName: t('title'),
-      url: `${CANONICAL_ORIGIN}/${locale}`,
-      title,
-      description,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-    },
+  const safeLocale: Locale = locale === 'fr' || locale === 'ar' ? locale : 'en';
+  const descriptions: Record<Locale, string> = {
+    en: 'In-person computer-based IELTS preparation in Bir El Djir, Oran. Practise Listening, Reading, Writing, and Speaking in an 8-seat PC lab with individual feedback.',
+    fr: 'Préparation IELTS sur ordinateur en petit groupe (8 places) à Bir El Djir, Oran. Entraînez-vous aux 4 épreuves sur PC avec correction individuelle.',
+    ar: 'تحضير حضوري لاختبار IELTS على الكمبيوتر في بئر الجير، وهران. تدرّب على المهارات الأربع في قاعة من 8 مقاعد مع تصحيح وملاحظات فردية.',
   };
+  const titles: Record<Locale, string> = {
+    en: 'IELTS Preparation in Oran (Computer-Based) | IELTS Lab Oran',
+    fr: 'Préparation IELTS sur ordinateur à Oran | IELTS Lab Oran',
+    ar: 'التحضير لاختبار IELTS على الكمبيوتر في وهران | IELTS Lab Oran',
+  };
+  return buildWebsitePageMetadata({
+    locale: safeLocale,
+    path: '',
+    title: titles[safeLocale],
+    description: descriptions[safeLocale],
+  });
 }
 
 export default async function LocaleLayout({
@@ -83,12 +68,9 @@ export default async function LocaleLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <head>
-
-        <LocalSchema />
-      </head>
       <body suppressHydrationWarning className="bg-surface text-charcoal selection:bg-crimson selection:text-white antialiased">
         <NextIntlClientProvider messages={messages}>
+          <AcquisitionUtmCapture />
           {children}
           <FloatingWidgetClient />
         </NextIntlClientProvider>

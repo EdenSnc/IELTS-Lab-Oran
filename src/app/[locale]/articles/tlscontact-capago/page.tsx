@@ -170,15 +170,27 @@ export default async function ArticlePage() {
             description={description}
             sources={[
               {
-                label: 'GOV.UK: Student visa knowledge of English',
+                label: locale === 'fr'
+                  ? 'GOV.UK : niveau d’anglais pour le Student visa'
+                  : locale === 'ar'
+                    ? 'GOV.UK: متطلبات اللغة الإنجليزية لتأشيرة الدراسة البريطانية'
+                    : 'GOV.UK: Student visa knowledge of English',
                 href: 'https://www.gov.uk/student-visa/knowledge-of-english',
               },
               {
-                label: 'GOV.UK: approved secure English language tests',
+                label: locale === 'fr'
+                  ? 'GOV.UK : tests SELT officiellement approuvés'
+                  : locale === 'ar'
+                    ? 'GOV.UK: اختبارات اللغة الإنجليزية المعتمدة (SELT)'
+                    : 'GOV.UK: approved secure English language tests',
                 href: 'https://www.gov.uk/guidance/prove-your-english-language-abilities-with-a-secure-english-language-test-selt',
               },
               {
-                label: 'France-Visas: Algeria application process',
+                label: locale === 'fr'
+                  ? 'France-Visas : procédure de demande en Algérie'
+                  : locale === 'ar'
+                    ? 'France-Visas: إجراءات التقديم من الجزائر'
+                    : 'France-Visas: Algeria application process',
                 href: 'https://www.france-visas.gouv.fr/en/algerie',
               },
             ]}

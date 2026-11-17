@@ -408,31 +408,59 @@ export default async function ArticlePage() {
             description={description}
             sources={[
               {
-                label: 'IRCC: language tests and score conversion for Express Entry',
+                label: locale === 'fr'
+                  ? 'IRCC Canada : tests linguistiques et conversion Entrée express'
+                  : locale === 'ar'
+                    ? 'IRCC كندا: اختبارات اللغة ومعادلة الدرجات لـ Express Entry'
+                    : 'IRCC: language tests and score conversion for Express Entry',
                 href: 'https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html',
               },
               {
-                label: 'IRCC: Comprehensive Ranking System criteria',
+                label: locale === 'fr'
+                  ? 'IRCC Canada : grille de points du Système de classement global (CRS)'
+                  : locale === 'ar'
+                    ? 'IRCC كندا: معايير نظام التصنيف الشامل CRS'
+                    : 'IRCC: Comprehensive Ranking System criteria',
                 href: 'https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/check-score/crs-criteria.html',
               },
               {
-                label: 'IRCC: current category-based selection',
+                label: locale === 'fr'
+                  ? 'IRCC Canada : sélections par catégories prioritaires'
+                  : locale === 'ar'
+                    ? 'IRCC كندا: الجولات حسب الفئات الحالية'
+                    : 'IRCC: current category-based selection',
                 href: 'https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/rounds-invitations/category-based-selection.html',
               },
               {
-                label: 'British Council Algeria: IELTS booking and fees',
+                label: locale === 'fr'
+                  ? 'British Council Algérie : réservation et tarifs IELTS'
+                  : locale === 'ar'
+                    ? 'المجلس الثقافي البريطاني الجزائر: الحجز ورسوم IELTS'
+                    : 'British Council Algeria: IELTS booking and fees',
                 href: 'https://www.britishcouncil.dz/en/exam/ielts/book-test',
               },
               {
-                label: 'Institut français d’Algérie: TCF registration',
+                label: locale === 'fr'
+                  ? 'Institut français d’Algérie : inscription au TCF Canada'
+                  : locale === 'ar'
+                    ? 'المعهد الفرنسي بالجزائر: التسجيل لاختبار TCF'
+                    : 'Institut français d’Algérie: TCF registration',
                 href: 'https://www.algerie.campusfrance.org/faq-concernant-le-tcf-mise-en-place-par-l-ifa',
               },
               {
-                label: 'CELPIP: current test locations',
+                label: locale === 'fr'
+                  ? 'CELPIP : centres d’examen disponibles dans le monde'
+                  : locale === 'ar'
+                    ? 'CELPIP: مراكز الاختبار المعتمدة حالياً'
+                    : 'CELPIP: current test locations',
                 href: 'https://www.celpip.ca/take-celpip/where-do-we-test/',
               },
               {
-                label: 'Pearson PTE: test centres and live availability',
+                label: locale === 'fr'
+                  ? 'Pearson PTE : centres et disponibilités en direct'
+                  : locale === 'ar'
+                    ? 'Pearson PTE: مراكز الاختبار والمواعيد المتاحة'
+                    : 'Pearson PTE: test centres and live availability',
                 href: 'https://www.pearsonpte.com/test-centers-and-fees/',
               },
             ]}

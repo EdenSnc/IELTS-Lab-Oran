@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 import SignOutButton from '@/components/auth/SignOutButton';
 import TestBrand from '@/components/brand/TestBrand';
 import prisma from '@/lib/prisma';

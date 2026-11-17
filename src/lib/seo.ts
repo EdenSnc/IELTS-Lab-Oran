@@ -22,6 +22,37 @@ export const CONTENT_REVIEW_DATE = '2026-07-29';
 export const LOCALES = ['en', 'fr', 'ar'] as const;
 export type Locale = (typeof LOCALES)[number];
 
+/** Search discovery vs model-training bot separation. */
+export const ALLOW_MODEL_TRAINING_BOTS = true as const;
+
+/** IndexNow verification key matching public/<INDEXNOW_KEY>.txt */
+export const INDEXNOW_KEY = 'e4b8c2d91f0a47e69c3b58a12d7f60e3' as const;
+
+export const OG_LOCALE_MAP: Record<Locale, string> = {
+  en: 'en_US',
+  fr: 'fr_FR',
+  ar: 'ar_DZ',
+};
+
+export function defaultOgImageUrl() {
+  return `${CANONICAL_ORIGIN}/og-default.png`;
+}
+
+export function defaultOgImages(alt: string) {
+  return [
+    {
+      url: defaultOgImageUrl(),
+      width: 1200,
+      height: 630,
+      alt,
+    },
+  ];
+}
+
+export function alternateOgLocales(locale: Locale) {
+  return LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE_MAP[l]);
+}
+
 /**
  * Generates the full hreflang alternates map for a given path.
  * Pass `path` without a leading slash (e.g. '' for homepage, 'articles/tlscontact-capago' for articles).
@@ -30,8 +61,8 @@ export function buildAlternates(locale: Locale, path: string = '') {
   const normalize = (p: string) => (p ? `/${p}` : '');
   const languages: Record<string, string> = {};
 
-  for (const locale of LOCALES) {
-    languages[locale] = `${SITE_URL}/${locale}${normalize(path)}`;
+  for (const l of LOCALES) {
+    languages[l] = `${SITE_URL}/${l}${normalize(path)}`;
   }
 
   // x-default points to the English version (canonical default for undetermined locales)
@@ -48,17 +79,55 @@ export function localizedUrl(locale: Locale, path: string = '') {
   return `${SITE_URL}/${locale}${normalizedPath}`;
 }
 
+export function buildWebsitePageMetadata({
+  locale,
+  path = '',
+  title,
+  description,
+}: {
+  locale: Locale;
+  path?: string;
+  title: string;
+  description: string;
+}): Metadata {
+  const url = localizedUrl(locale, path);
+  return {
+    metadataBase: new URL(SITE_URL),
+    title,
+    description,
+    alternates: buildAlternates(locale, path),
+    openGraph: {
+      type: 'website',
+      url,
+      title,
+      description,
+      siteName: SITE_NAME,
+      locale: OG_LOCALE_MAP[locale],
+      alternateLocale: alternateOgLocales(locale),
+      images: defaultOgImages(title),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [defaultOgImageUrl()],
+    },
+  };
+}
+
 export function buildArticleMetadata({
   locale,
   slug,
   title,
   description,
+  publishedTime = CONTENT_REVIEW_DATE,
   modifiedTime = CONTENT_REVIEW_DATE,
 }: {
   locale: Locale;
   slug: string;
   title: string;
   description: string;
+  publishedTime?: string;
   modifiedTime?: string;
 }): Metadata {
   const url = localizedUrl(locale, `articles/${slug}`);
@@ -73,13 +142,17 @@ export function buildArticleMetadata({
       title,
       description,
       siteName: SITE_NAME,
-      locale,
+      locale: OG_LOCALE_MAP[locale],
+      alternateLocale: alternateOgLocales(locale),
+      publishedTime,
       modifiedTime,
+      images: defaultOgImages(title),
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [defaultOgImageUrl()],
     },
   };
 }
@@ -91,19 +164,19 @@ const ARTICLE_DESCRIPTIONS = {
     ar: 'قارن Reading وWriting في IELTS Academic وGeneral Training واختر الاختبار المناسب للدراسة أوالعمل أوالهجرة.',
   },
   'computer-vs-paper-ielts': {
-    en: 'What Algeria’s 30 April 2026 move to computer-delivered IELTS changes: format, results, One Skill Retake, and preparation.',
-    fr: 'Ce que le passage de l’Algérie à l’IELTS sur ordinateur le 30 avril 2026 change : format, résultats, One Skill Retake et préparation.',
-    ar: 'ما الذي يغيّره انتقال الجزائر إلى IELTS على الكمبيوتر في 30 أبريل 2026: التنسيق والنتائج وOne Skill Retake والتحضير.',
+    en: 'British Council Algeria delivers IELTS on computer from 30 April 2026. Learn format rules, 1–2 day results, One Skill Retake, and screen prep.',
+    fr: 'Le British Council Algérie passe à l’IELTS sur ordinateur dès le 30 avril 2026 : format, résultats en 1–2 jours, One Skill Retake et préparation sur PC.',
+    ar: 'انتقال IELTS في الجزائر إلى الكمبيوتر منذ 30 أبريل 2026: الصيغة، النتائج خلال يومين، One Skill Retake، وكيفية التدرب على الشاشة.',
   },
   'free-ielts-resources-algeria': {
-    en: 'A verified list of official free IELTS practice resources for candidates in Algeria, with a practical computer-test study plan.',
-    fr: 'Une liste vérifiée de ressources IELTS officielles et gratuites pour l’Algérie, avec un plan pratique pour le test sur ordinateur.',
-    ar: 'قائمة موثقة بموارد IELTS الرسمية المجانية للمرشحين في الجزائر مع خطة عملية للاختبار على الكمبيوتر.',
+    en: 'Verified free IELTS computer practice in Algeria: IELTS Ready, IELTS.org samples, IDP familiarisation, plus our free Reading sample.',
+    fr: 'Ressources IELTS gratuites et officielles en Algérie : IELTS Ready, exemples IELTS.org, simulateur IDP et notre échantillon Reading sur ordinateur.',
+    ar: 'موارد IELTS مجانية وموثقة في الجزائر: IELTS Ready ونماذج IELTS.org وتدريب IDP وعينتنا المجانية للقراءة على الكمبيوتر.',
   },
   'how-to-register-algeria': {
-    en: 'Verified 2026 guide to booking IELTS in Algeria: the 40,000 DA standard fee, accepted ID, payment methods, and 72-hour deadline.',
-    fr: 'Où payer l’IELTS en Algérie ? Consultez le tarif de 40 000 DA, les modes de paiement du British Council, les justificatifs et le délai.',
-    ar: 'دليل موثق لعام 2026 لحجز IELTS في الجزائر: رسوم 40,000 دج والهوية وطرق الدفع ومهلة 72 ساعة.',
+    en: 'IELTS Algeria 2026 guide: 40,000 DA fee, online card/bank/HSBC cash payment within 72h, Oran & DZ test centres, and ID rules.',
+    fr: 'Prix IELTS Algérie 2026 (40 000 DA), où payer (carte, virement, HSBC), inscription sous 72 h, centre d’Oran et pièces d’identité acceptées.',
+    ar: 'سعر IELTS الجزائر 2026 (40,000 دج)، طرق الدفع (بطاقة بنكية، تحويل، HSBC) خلال 72 ساعة، مركز وهران ووثائق الهوية المطلوبة.',
   },
   'ielts-vs-toefl-canada': {
     en: 'Express Entry language tests for Algerians: IELTS General Training, TCF Canada, French-English CRS points, CLB conversion, and why Academic is not accepted.',
@@ -145,19 +218,19 @@ const ARTICLE_SEO_TITLES: Record<ArticleSlug, Record<Locale, string>> = {
     ar: 'IELTS Academic أم General Training | وهران',
   },
   'computer-vs-paper-ielts': {
-    en: 'Computer IELTS in Algeria: 2026 Changes',
-    fr: 'IELTS sur ordinateur en Algérie : changements 2026',
-    ar: 'IELTS على الكمبيوتر في الجزائر: تغييرات 2026',
+    en: 'Computer IELTS in Algeria: 2026 Changes & Prep',
+    fr: 'IELTS sur ordinateur en Algérie : règles et préparation 2026',
+    ar: 'اختبار IELTS على الكمبيوتر في الجزائر: تغييرات 2026',
   },
   'free-ielts-resources-algeria': {
-    en: 'Free IELTS Practice Resources in Algeria',
-    fr: 'Ressources gratuites IELTS en Algérie',
-    ar: 'موارد IELTS المجانية في الجزائر',
+    en: 'Free IELTS Practice & Mock Tests in Algeria',
+    fr: 'Ressources et tests blancs IELTS gratuits en Algérie',
+    ar: 'موارد ونماذج اختبار IELTS مجانية في الجزائر',
   },
   'how-to-register-algeria': {
-    en: 'IELTS Registration Algeria 2026: Fee & Payment',
-    fr: 'Inscription IELTS Algérie 2026 : prix et paiement',
-    ar: 'التسجيل في IELTS الجزائر 2026: السعر والدفع',
+    en: 'IELTS Price & Registration Algeria 2026 (40,000 DA)',
+    fr: 'Prix & Inscription IELTS Algérie 2026 : 40 000 DA et paiement',
+    ar: 'سعر والتسجيل في اختبار IELTS الجزائر 2026 (40,000 دج)',
   },
   'ielts-vs-toefl-canada': {
     en: 'IELTS for Canada Express Entry: Tests & CLB',

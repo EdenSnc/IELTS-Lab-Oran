@@ -142,7 +142,11 @@ export default async function ArticlePage() {
             description={description}
             sources={[
               {
-                label: 'IELTS.org: Academic Writing format and Task 2 weighting',
+                label: locale === 'fr'
+                  ? 'IELTS.org : format Academic Writing et poids de la Task 2'
+                  : locale === 'ar'
+                    ? 'IELTS.org: صيغة الكتابة الأكاديمية وأهمية Task 2'
+                    : 'IELTS.org: Academic Writing format and Task 2 weighting',
                 href: 'https://ielts.org/take-a-test/test-types/ielts-academic-test/ielts-academic-format-writing',
               },
             ]}

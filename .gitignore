@@ -47,12 +47,14 @@ next-env.d.ts
 /IELTS-Lab-Oran-HTML
 
 *.txt
+!public/*.txt
 
 test-db.ts
 
 *.md
 !docs/SPEAKING_SETUP.md
 !docs/runbooks/PRODUCTION_LAUNCH.md
+!docs/seo/**
 
 # Private/generated content and local transfer files
 /content-packages/

@@ -1,12 +1,16 @@
 {
   "Navbar": {
     "title": "IELTS Lab Oran",
+    "logoAlt": "Logo IELTS Lab Oran",
     "methodology": "Méthodologie",
     "articles": "Articles",
     "mockTest": "Test blanc",
     "faq": "FAQ",
     "applyNow": "POSTULER",
-    "account": "Votre compte"
+    "account": "Votre compte",
+    "signedInSuffix": " · connecté",
+    "signedInTitle": "Connecté",
+    "toggleMenu": "Ouvrir le menu de navigation"
   },
   "Cohort": {
     "remaining": "{remaining} sur {total} places fondatrices disponibles",
@@ -16,10 +20,10 @@
     "fullCta": "Rejoindre la liste d'attente générale"
   },
   "Hero": {
-    "badge": "Oran • 8-Seat Physical Lab",
+    "badge": "Oran • Laboratoire physique de 8 places",
     "title": "Préparation IELTS à Oran",
-    "subtitle": "<red>Entraînez-vous pour le jour du test.</red>",
-    "description": "Travaillez les quatre compétences de l’IELTS sur ordinateur et bénéficiez de retours personnalisés en <highlight>petit groupe, en présentiel</highlight>.",
+    "subtitle": "Entraînez-vous sur ordinateur pour le jour du test.",
+    "description": "Cours et formation IELTS en présentiel à Bir El Djir, Oran. Entraînez-vous sur PC aux quatre compétences dans un <highlight>petit groupe de 8 places</highlight> avec suivi individuel.",
     "reserve": "CANDIDATER AU CAMP",
     "details": "DÉTAILS DU PROGRAMME",
     "noPayment": "Aucun paiement initial requis pour postuler.",
@@ -34,7 +38,9 @@
     "bullet2Desc": "Nous ciblons vos lacunes linguistiques au lieu de cours génériques.",
     "bullet3Title": "Maîtrise des Critères :",
     "bullet3Desc": "Votre plan d'étude est exclusivement conçu autour des grilles d'évaluation officielles.",
-    "notForBeginners": "Strictement réservé aux non-débutants"
+    "notForBeginners": "Strictement réservé aux non-débutants",
+    "videoAriaLabel": "Voir la présentation de la méthodologie IELTS Lab Oran sur YouTube",
+    "videoAlt": "Aperçu vidéo de la méthodologie IELTS Lab Oran"
   },
   "MockTest": {
     "eyebrow": "Test blanc en ligne",
@@ -49,12 +55,13 @@
   },
   "StopTraining": {
     "title": "ARRÊTEZ DE VOUS <mark>ENTRAÎNER SUR PAPIER.</mark>",
-    "subtitle": "Le test officiel du British Council est numérique. <mark>Si vous vous entraînez avec des documents papier, vous vous désavantagez.</mark> Ce laboratoire est conçu exclusivement pour:",
+    "subtitle": "En Algérie, les tests IELTS du British Council se passent sur ordinateur depuis le 30 avril 2026. <mark>Si vous vous entraînez avec des documents papier, vous vous désavantagez.</mark> Ce laboratoire est conçu exclusivement pour :",
     "bullet1": "<strong>Les candidats à l'université</strong> visant des admissions à l'étranger",
     "bullet2": "<strong>Les candidats aux études à l'étranger</strong> confrontés à des délais stricts",
     "bullet3": "<strong>Les candidats à l'Entrée express</strong> nécessitant un score précis",
-    "proofBadge": "Résultats Prouvés",
-    "proofTitle": "Le Cadre Exact Utilisé Pour Obtenir 8.0"
+    "proofBadge": "Score Vérifié",
+    "proofTitle": "La méthode derrière un Band 8.0 officiel",
+    "trfAlt": "Relevé officiel IELTS Test Report Form montrant Band 8.0 global et 9.0 en Listening"
   },
   "Compare": {
     "title": "Pourquoi Nous Sommes Différents",
@@ -70,39 +77,64 @@
     "lab3": "Retours exploitables (Writing & Speaking)."
   },
   "Testimonials": {
-    "title": "Résultats des Étudiants",
-    "subtitle": "Résultats et retours d'anciens élèves particuliers (1-à-1) de Mr.Senouci. La cohorte physique de 8 places sera lancée prochainement."
+    "title": "Retours d'Élèves et de Collègues",
+    "subtitle": "Retours d'anciens élèves en cours particuliers (1-à-1) de Mr. Senouci et d'un collègue enseignant. Le groupe physique de 8 places à Oran démarre bientôt.",
+    "items": [
+      {
+        "quote": "J'avais peur de passer l'IELTS sur ordinateur parce que lire sur écran me semblait impossible. Mr. Senouci m'a installée devant un PC et montré exactement comment fonctionne le logiciel. Ses astuces pour surligner et gagner du temps m'ont vraiment aidée à obtenir 7.5.",
+        "initials": "RM",
+        "name": "Rania M.",
+        "profile": "Ancienne élève 1-à-1 · Score obtenu : Band 7.5"
+      },
+      {
+        "quote": "J'avais toujours du mal avec la grammaire anglaise, ce qui rendait l'épreuve d'écriture très difficile. Il explique avec calme et patience. Les cours sont tellement bien structurés qu'on comprend enfin comment construire des phrases complexes pour viser Band 7.0.",
+        "initials": "AB",
+        "name": "Amine B.",
+        "profile": "Ancien élève 1-à-1 · Objectif Entrée express : Band 7.0"
+      },
+      {
+        "quote": "J'enseigne dans le même établissement. Grâce à sa formation en informatique, ses cours IELTS sont extrêmement structurés et il suit la progression de chaque élève avec rigueur. Il ne perd pas de temps et ses apprenants savent toujours quoi corriger.",
+        "initials": "F",
+        "name": "Farid",
+        "profile": "Recommandation collègue · Professeur d'anglais"
+      }
+    ]
   },
   "Facility": {
     "title": "L'Établissement",
-    "subtitle": "Situé à Bir El Djir. Un environnement calme et sécurisé conçu pour une concentration profonde.",
+    "subtitle": "Situé à Bir El Djir, Oran. Un espace informatique calme et dédié pour la préparation diagnostique à l'IELTS.",
     "location": "Bir El Djir, Oran",
+    "imageAlt": "Illustration d'une salle d'étude équipée d'ordinateurs",
+    "illustrativeNote": "Image illustrative. Des photos réelles du laboratoire seront publiées après l'installation.",
     "mapBtn": "Charger la Carte Interactive",
     "contact": "Contactez-nous",
+    "guidesTitle": "Guides",
+    "navAriaLabel": "Guides IELTS Algérie",
     "social": "Suivez-nous",
-    "copyright": "© {year} IELTS Lab Oran. Tous droits réservés."
+    "copyright": "© {year} IELTS Lab Oran. Tous droits réservés.",
+    "disclaimer": "IELTS Lab Oran est un organisme indépendant de préparation et n'est affilié ni à IELTS, ni au British Council, ni à IDP, ni à Cambridge University Press & Assessment."
   },
   "FAQ": {
     "title": "Questions Fréquemment Posées",
     "q1": "Quelle est la différence entre l'IELTS sur papier et sur ordinateur ?",
     "a1": "Le contenu et la notation ne changent pas, mais le mode de passage modifie la navigation et la rédaction. Notre pratique sur PC suit le format sur ordinateur pour développer les bons réflexes.",
-    "q2": "Comment puis-je payer mes frais d'inscription au test officiel en Algérie ?",
-    "a2": "Les frais actuels pour Academic ou General Training sont de 40 000 DZD. Le British Council Algérie indique la carte bancaire en ligne, la banque numérique, le virement et les espèces. Payez sous 72 heures en suivant votre confirmation.",
-    "q3": "Ce cours convient-il aux débutants complets en anglais ?",
-    "a3": "Non. Ce sprint intensif est strictement pour ceux ayant un niveau intermédiaire. Nous nous concentrons purement sur la stratégie d'examen.",
+    "q2": "Quel est le prix de l'IELTS et comment payer en Algérie ?",
+    "a2": "Le tarif standard Academic ou General Training est de 40 000 DA (25 000 DA pour One Skill Retake). Le British Council Algérie indique la carte bancaire en ligne, la banque numérique, le virement et le dépôt en espèces HSBC (droit de timbre de 1 %). Payez sous 72 heures.",
+    "q3": "Cette formation convient-elle aux débutants complets en anglais ?",
+    "a3": "Non. Ce programme intensif s'adresse aux candidats ayant au moins un niveau intermédiaire (B1/B2). Nous travaillons la stratégie d'examen et les critères officiels, pas la grammaire de base.",
     "q4": "Comment protégez-vous la progression d'apprentissage de chaque élève ?",
-    "a4": "Strictement 8 places par cohorte. Ce petit groupe permet une correction ligne par ligne et un retour personnalisé à l'oral.",
+    "a4": "Strictement 8 places par cohorte. Ce petit groupe permet une correction ligne par ligne et un retour personnalisé à l'oral avec Amine Senouci.",
     "q5": "Puis-je rejoindre ce programme si je fais face à une échéance imminente pour un visa Capago ou TLScontact ?",
     "a5": "Oui, si le calendrier le permet, mais aucune formation ne peut garantir un score avant une échéance de visa. Nous comparons d'abord votre niveau, le score cible, le type de test et le temps disponible.",
     "q6": "Que comprend le tarif de lancement de 5 000 DA ?",
-    "a6": "Environ un mois de préparation à l’IELTS à Oran, en petit groupe, avec des exercices sur ordinateur et un suivi individuel. Les horaires seront confirmés avant l’inscription.",
-    "q7": "Quand le Lab ouvre-t-il, et comment saurai-je si j'ai obtenu une place fondatrice ?",
-    "a7": "Nous lançons bientôt. Si une place se libère, vous recevrez un WhatsApp avec les dates et détails de paiement. Nous traitons par ordre de réception."
+    "a6": "Environ un mois de préparation à l'IELTS à Bir El Djir, Oran, en groupe de 8 sur ordinateurs dédiés, couvrant les quatre compétences avec suivi individuel en Writing et Speaking. Les horaires sont confirmés avant l'inscription.",
+    "q7": "Quand le Lab ouvre-t-il, et la candidature réserve-t-elle une place ?",
+    "a7": "Les candidatures du premier groupe se clôturent le 20 novembre 2026. Postuler est gratuit et ne réserve pas de place ; nous contactons les candidats sélectionnés avec l'emploi du temps confirmé."
   },
   "LeadMagnet": {
     "title": "Pas prêt à vous inscrire ?",
     "subtitle": "Obtenez notre guide gratuit : IELTS sur Ordinateur vs Papier (PDF).",
-    "description": "Découvrez les différences exactes, quel format est le plus facile, et comment choisir le bon test.",
+    "description": "Découvrez les différences exactes, les raccourcis à l'écran et comment choisir le bon test.",
     "phoneLabel": "Votre numéro WhatsApp",
     "placeholder": "Num WhatsApp (ex: +213 555 555 555)",
     "submit": "ENVOYER MON GUIDE",
@@ -110,7 +142,8 @@
     "successTitle": "Demande Reçue !",
     "successDesc": "Vous allez être redirigé vers WhatsApp.",
     "invalidPhone": "Veuillez saisir un numéro WhatsApp algérien valide (ex: 0555123456)",
-    "errorRequired": "Veuillez saisir votre numéro WhatsApp pour continuer."
+    "errorRequired": "Veuillez saisir votre numéro WhatsApp pour continuer.",
+    "errorUnexpected": "Impossible d'envoyer votre demande. Veuillez réessayer."
   },
   "TrustBadges": {
     "cash": "Espèces",
@@ -118,39 +151,53 @@
     "certified": "Instructeur Certifié"
   },
   "Intake": {
-    "title": "Réservez Votre Place",
+    "title": "Candidater au Premier Groupe",
     "badge": "Groupes de 8 | Places Limitées",
-    "feeTitle": "Tarif exceptionnel du premier groupe",
-    "previousFee": "29 500 DA",
+    "feeTitle": "Tarif de lancement du premier groupe",
+    "previousFee": "Tarif standard dès la prochaine cohorte : 29 500 DA",
     "fee": "5 000 DA",
-    "feeDesc": "Préparation en présentiel à Oran · environ un mois",
-    "feature1": "Environ un mois de préparation",
-    "feature2": "Suivi personnalisé (Writing & Speaking)",
-    "feature3": "Votre propre PC dédié",
-    "footerText": "Remplissez le formulaire ci-dessous. Si une place se libère, nous vous contacterons via WhatsApp."
+    "feeDesc": "Préparation en présentiel à Bir El Djir, Oran · environ un mois",
+    "feature1": "Environ un mois (4 compétences sur PC)",
+    "feature2": "Retours personnalisés en Writing et Speaking",
+    "feature3": "Votre propre poste PC dédié",
+    "capacitySummary": "8 places au total · candidature gratuite · ne réserve pas de place",
+    "closedBadge": "Candidatures du 1er groupe clôturées",
+    "closedNote": "La session du 20 novembre est clôturée. Envoyez votre profil ci-dessous pour être contacté en priorité dès l'ouverture de la prochaine cohorte à Oran.",
+    "statusLabReady": "Laboratoire prêt",
+    "statusCurriculumSet": "Programme prêt",
+    "statusScheduling": "Horaires via formulaire de disponibilités",
+    "footerText": "Remplissez le formulaire ci-dessous ou celui des disponibilités. Nous contacterons les candidats sélectionnés via WhatsApp avec l'emploi du temps confirmé."
   },
   "Bypass": {
     "label": "Vous ne pouvez pas attendre la cohorte ?",
     "text": "Si votre examen approche, contactez directement pour une session privée 1-à-1.",
     "cta": "Écrire sur WhatsApp",
-    "waMessage": "Bonjour Mr.Senouci, j'ai trouvé IELTS Lab Oran en ligne. Ma date d'examen approche et je ne peux pas attendre la cohorte fondatrice. Je suis intéressé(e) par une session de préparation privée 1-à-1. Pouvons-nous en discuter ?"
+    "waMessage": "Bonjour Mr. Senouci, j'ai trouvé IELTS Lab Oran en ligne. Ma date d'examen approche et je ne peux pas attendre la cohorte. Je suis intéressé(e) par une session de préparation privée 1-à-1. Pouvons-nous en discuter ?"
   },
   "About": {
-    "title": "À Propos de Mr.Senouci",
+    "title": "À propos d'Amine Senouci",
+    "displayName": "Amine Senouci",
     "subtitle": "Fondateur & Instructeur Principal",
-    "hook": "Instructeur d'anglais certifié avec un score officiel de Band 8.0 et un 9.0 parfait en Compréhension Orale.",
-    "pedigree": "A tiré parti d'une formation en IA et Génie Logiciel pour créer la première plateforme de simulation IELTS sur ordinateur d'Oran.",
-    "experience": "Des années d'expérience dans l'enseignement de l'anglais, employant une gamme complète de cadres pédagogiques avancés pour favoriser une acquisition rapide de la langue.",
+    "imageAlt": "Amine Senouci (Mr. Senouci) — Fondateur et formateur principal IELTS à Oran",
+    "badgeBand8": "IELTS officiel Band 8.0 (déc. 2025)",
+    "badgeListening9": "9.0 parfait en Listening",
+    "personJobTitle": "Fondateur & Formateur IELTS Principal",
+    "hook": "Instructeur d'anglais certifié (TEFL) avec un score officiel IELTS Band 8.0 (déc. 2025) et un 9.0 en Listening.",
+    "pedigree": "Formation en IA appliquée et Génie Logiciel, concevant une plateforme de simulation IELTS sur ordinateur et de suivi diagnostique à Oran.",
+    "experience": "Trois ans d'expérience dans l'enseignement, incluant une préparation IELTS pratique centrée sur les grilles officielles des examinateurs.",
     "edge": "Strictement réaliste. Nous fixons des attentes honnêtes basées sur votre diagnostic - pas de fausses promesses.",
     "method": "Basé sur des diagnostics rigoureux et l'ingénierie inversée des critères d'évaluation officiels de l'IELTS."
   },
   "Articles": {
     "title": "Articles & Actualités",
     "article1Title": "Le passage officiel à l'IELTS sur ordinateur",
-    "article1Text": "We are pleased to announce that from 30 April 2026, all IELTS tests will be delivered exclusively on computer, providing a faster, more efficient, and streamlined testing experience. IELTS on computer offers the same test format, questions, and scoring as IELTS on paper. It also provides significant benefits at no additional cost:"
+    "article1Text": "Depuis le 30 avril 2026, les examens IELTS du British Council en Algérie se déroulent exclusivement sur ordinateur. Le contenu, les questions et la notation restent identiques, avec des résultats plus rapides (1 à 2 jours) et l'éligibilité au One Skill Retake."
   },
   "EventWidget": {
-    "badge": "Mise à jour d'état",
-    "title": "Plateforme en développement"
+    "badge": "Premier Groupe · Oran",
+    "title": "5 000 DA · Jusqu'au 20 nov.",
+    "closedTitle": "Liste d'attente prochaine cohorte",
+    "linkAriaLabel": "Voir les détails du premier groupe IELTS Lab Oran",
+    "minimizeLabel": "Réduire la notification"
   }
 }

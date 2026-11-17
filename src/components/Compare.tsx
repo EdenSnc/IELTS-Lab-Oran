@@ -11,8 +11,8 @@ export default function Compare() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-surface rounded-4xl p-10 md:p-14 flex flex-col gap-8 border border-gray-200">
           <div>
-            <h3 className="text-3xl font-bold text-gray-400 mb-2 tracking-tight">{t('traditionalTitle')}</h3>
-            <p className="text-gray-500 font-medium">{t('traditionalSubtitle')}</p>
+            <h3 className="text-3xl font-bold text-gray-600 mb-2 tracking-tight">{t('traditionalTitle')}</h3>
+            <p className="text-gray-600 font-medium">{t('traditionalSubtitle')}</p>
           </div>
           <ul className="flex flex-col gap-6 text-gray-600 text-lg">
             <li className="flex items-start gap-4">

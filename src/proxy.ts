@@ -96,7 +96,7 @@ export default async function proxy(request: NextRequest) {
     response = NextResponse.redirect(destination, 308);
   } else if (isLocalizedRoute) {
     response = alignXDefaultWithEnglish(handleI18nRouting(request));
-  } else if (['api', 'sim', 'speaking'].includes(firstSegment)) {
+  } else if (['api', 'sim', 'speaking', 'sample', 'staff', 'r'].includes(firstSegment)) {
     response = NextResponse.next();
   } else {
     response = NextResponse.rewrite(new URL('/_not-found', request.url));

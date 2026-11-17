@@ -85,7 +85,11 @@ export default async function ArticlePage() {
               description={articleDescription(locale, 'overcoming-speaking-anxiety')}
               sources={[
                 {
-                  label: 'IELTS.org: IELTS Speaking test format',
+                  label: locale === 'fr'
+                    ? 'IELTS.org : format de l’épreuve orale (Speaking)'
+                    : locale === 'ar'
+                      ? 'IELTS.org: صيغة اختبار المحادثة Speaking'
+                      : 'IELTS.org: IELTS Speaking test format',
                   href: 'https://ielts.org/take-a-test/test-types/ielts-academic-test/ielts-academic-format-speaking',
                 },
               ]}

@@ -16,25 +16,29 @@ export default function Hero({ cohortStatus }: HeroProps) {
     <header className="pt-32 pb-16 px-6 md:px-12 max-w-5xl mx-auto flex flex-col items-center text-center gap-6 min-h-[75vh] justify-center">
 
       {/* Top badges */}
-      <div className="flex flex-col md:flex-row gap-2 items-center justify-center">
-        <div className="inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-charcoal/65 sm:text-xs">
+      <div className="flex flex-col gap-2 items-center justify-center">
+        <span className="inline-flex items-center rounded-full border border-crimson/20 bg-crimson/5 px-3.5 py-1 text-xs font-bold tracking-wide text-crimson">
+          {t('badge')}
+        </span>
+        <div className="inline-flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.2em] text-charcoal/75 sm:text-xs">
           <span aria-hidden="true" className="h-px w-7 bg-crimson" />
           {t('programBadge')}
           <span aria-hidden="true" className="h-px w-7 bg-crimson" />
         </div>
       </div>
 
-
       {/* Main heading */}
-      <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-charcoal">
-        {t('title')}<br />
-        {t.rich('subtitle', {
-          red: (chunks) => <span className="text-crimson">{chunks}</span>
-        })}
-      </h1>
+      <div className="flex flex-col items-center gap-2">
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-charcoal">
+          {t('title')}
+        </h1>
+        <p className="text-3xl md:text-5xl font-extrabold tracking-tight text-crimson">
+          {t('subtitle')}
+        </p>
+      </div>
 
       {/* Sub-description */}
-      <p className="text-xl md:text-2xl text-gray-500 max-w-2xl font-light leading-snug">
+      <p className="text-xl md:text-2xl text-gray-600 max-w-2xl font-light leading-snug">
         {t.rich('description', {
           highlight: (chunks) => <span className="highlight">{chunks}</span>
         })}
@@ -62,7 +66,7 @@ export default function Hero({ cohortStatus }: HeroProps) {
             {t('details')}
           </Link>
         </div>
-        <span className="text-sm text-gray-400 mt-4 font-medium flex items-center gap-2">
+        <span className="text-sm text-gray-600 mt-4 font-medium flex items-center gap-2">
           <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
           </svg>

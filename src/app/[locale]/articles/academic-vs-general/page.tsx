@@ -79,15 +79,15 @@ export default async function ArticlePage() {
                       <td className="p-4 border-b border-gray-100 font-bold text-charcoal bg-gray-50">
                         {locale === 'ar' ? 'القراءة (Reading)' : 'Reading'}
                       </td>
-                      <td className="p-4 border-b border-gray-100 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.readingBullets[0].replace('<strong>Academic Reading:</strong>', '') }} />
-                      <td className="p-4 border-b border-gray-100 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.readingBullets[1].replace('<strong>General Training Reading:</strong>', '') }} />
+                      <td className="p-4 border-b border-gray-100 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.readingBullets[0].replace(/^<strong>[^<]*<\/strong>(?:<br\s*\/?>|\s)*/i, '') }} />
+                      <td className="p-4 border-b border-gray-100 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.readingBullets[1].replace(/^<strong>[^<]*<\/strong>(?:<br\s*\/?>|\s)*/i, '') }} />
                     </tr>
                     <tr>
                       <td className="p-4 font-bold text-charcoal bg-gray-50">
                         {locale === 'ar' ? 'الكتابة (Writing)' : 'Writing'}
                       </td>
-                      <td className="p-4 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.writingBullets[0].replace('<strong>Academic Writing:</strong><br/>', '') }} />
-                      <td className="p-4 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.writingBullets[1].replace('<strong>General Training Writing:</strong><br/>', '') }} />
+                      <td className="p-4 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.writingBullets[0].replace(/^<strong>[^<]*<\/strong>(?:<br\s*\/?>|\s)*/i, '') }} />
+                      <td className="p-4 text-gray-700 text-sm" dangerouslySetInnerHTML={{ __html: c.writingBullets[1].replace(/^<strong>[^<]*<\/strong>(?:<br\s*\/?>|\s)*/i, '') }} />
                     </tr>
                   </tbody>
                 </table>
@@ -118,11 +118,19 @@ export default async function ArticlePage() {
               description={articleDescription(locale, 'academic-vs-general')}
               sources={[
                 {
-                  label: 'IELTS.org: IELTS test types',
+                  label: locale === 'fr'
+                    ? 'IELTS.org : types de tests IELTS'
+                    : locale === 'ar'
+                      ? 'IELTS.org: أنواع اختبارات IELTS'
+                      : 'IELTS.org: IELTS test types',
                   href: 'https://ielts.org/take-a-test/test-types',
                 },
                 {
-                  label: 'IELTS.org: General Training test format',
+                  label: locale === 'fr'
+                    ? 'IELTS.org : format General Training'
+                    : locale === 'ar'
+                      ? 'IELTS.org: صيغة اختبار General Training'
+                      : 'IELTS.org: General Training test format',
                   href: 'https://ielts.org/take-a-test/test-types/ielts-general-training-test',
                 },
               ]}

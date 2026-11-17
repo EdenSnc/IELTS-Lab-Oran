@@ -1,4 +1,9 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 import AuthForm, { type AuthMode } from '@/components/auth/AuthForm';
 import { getEnabledAuthProviders } from '@/lib/supabase/auth-providers';
 

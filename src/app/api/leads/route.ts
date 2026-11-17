@@ -17,6 +17,7 @@ const directLeadSchema = z.object({
   utmSource: optionalText,
   utmMedium: optionalText,
   utmCampaign: optionalText,
+  utmContent: optionalText,
   formName: z.string().trim().min(1).max(200).default('Direct Submission'),
   source: z
     .enum([
@@ -50,6 +51,7 @@ interface LeadInput {
   utmSource: string | null;
   utmMedium: string | null;
   utmCampaign: string | null;
+  utmContent: string | null;
   externalEventId: string | null;
   application: unknown | null;
 }
@@ -106,6 +108,7 @@ function parseTallyLead(payload: unknown): LeadInput | null {
   let utmSource: string | null = null;
   let utmMedium: string | null = null;
   let utmCampaign: string | null = null;
+  let utmContent: string | null = null;
   const answers: Array<{ key: string | null; label: string | null; value: string | string[] }> = [];
 
   for (const field of parsed.data.data.fields) {
@@ -124,6 +127,7 @@ function parseTallyLead(payload: unknown): LeadInput | null {
     if (identifier.includes('utm_source')) utmSource = value || null;
     if (identifier.includes('utm_medium')) utmMedium = value || null;
     if (identifier.includes('utm_campaign')) utmCampaign = value || null;
+    if (identifier.includes('utm_content')) utmContent = value || null;
     if (identifier.includes('email')) {
       const validEmail = z.email().safeParse(value);
       if (validEmail.success) email = validEmail.data.toLowerCase();
@@ -149,6 +153,7 @@ function parseTallyLead(payload: unknown): LeadInput | null {
     utmSource,
     utmMedium,
     utmCampaign,
+    utmContent,
     externalEventId: parsed.data.eventId,
     application: {
       schemaVersion: 1,
@@ -174,6 +179,7 @@ function parseDirectLead(payload: unknown): LeadInput | null {
     utmSource: parsed.data.utmSource ?? null,
     utmMedium: parsed.data.utmMedium ?? null,
     utmCampaign: parsed.data.utmCampaign ?? null,
+    utmContent: parsed.data.utmContent ?? null,
     externalEventId: null,
     application: parsed.data.application ?? null,
   };
@@ -241,6 +247,7 @@ export async function POST(request: Request) {
           utmSource: lead.utmSource,
           utmMedium: lead.utmMedium,
           utmCampaign: lead.utmCampaign,
+          utmContent: lead.utmContent,
           externalEventId: lead.externalEventId,
         },
       });

@@ -22,6 +22,8 @@ export async function generateMetadata({
     slug: 'computer-vs-paper-ielts',
     title: articleSeoTitle(locale, 'computer-vs-paper-ielts'),
     description: articleDescription(locale, 'computer-vs-paper-ielts'),
+    publishedTime: '2026-07-29',
+    modifiedTime: '2026-11-17',
   });
 }
 
@@ -176,6 +178,34 @@ export default async function ArticlePage() {
             ))}
           </div>
 
+          <div className="not-prose my-10 rounded-3xl border border-crimson/20 bg-crimson/5 p-6">
+            <h3 className="text-xl font-extrabold text-charcoal">
+              {locale === 'fr'
+                ? 'Testez l’interface sur ordinateur gratuitement'
+                : locale === 'ar'
+                  ? 'جرّب واجهة الاختبار على الكمبيوتر مجاناً'
+                  : 'Try the computer test interface for free'}
+            </h3>
+            <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+              {locale === 'fr'
+                ? 'Essayez notre extrait officiel de compréhension écrite (Academic Reading) avec chronomètre et écran partagé avant votre inscription.'
+                : locale === 'ar'
+                  ? 'جرّب عينة القراءة الأكاديمية التفاعلية بالمؤقت والشاشة المقسمة للتعود على أداة التظليل قبل يوم الامتحان.'
+                  : 'Practise with our free Academic Reading sample to test split-screen navigation, text highlighting, and live countdown timing.'}
+            </p>
+            <a
+              href={`/sample?locale=${locale}`}
+              className="mt-4 inline-flex items-center gap-2 rounded-full bg-crimson px-6 py-3 text-sm font-bold text-white hover:bg-red-800 transition-colors"
+            >
+              {locale === 'fr'
+                ? 'Ouvrir l’échantillon Reading gratuit'
+                : locale === 'ar'
+                  ? 'افتح عينة القراءة المجانية'
+                  : 'Open free Reading sample'}
+              <span aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
+
           <div className="relative mt-16 flex flex-col items-center justify-between gap-8 overflow-hidden rounded-[2.5rem] border border-gray-200 bg-white p-8 shadow-xl shadow-gray-200/50 md:flex-row md:p-10">
             <div className="relative z-10 md:w-2/3">
               <h3 className="mb-3 text-2xl font-extrabold text-charcoal">
@@ -192,23 +222,55 @@ export default async function ArticlePage() {
           </div>
         </div>
 
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: faqs[locale].map((item) => ({
+                '@type': 'Question',
+                name: item.q,
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: item.a,
+                },
+              })),
+            }).replace(/</g, '\\u003c'),
+          }}
+        />
+
         <div className="mt-16">
           <ArticleTrust
             locale={locale}
             slug="computer-vs-paper-ielts"
             title={content.title}
             description={articleDescription(locale, 'computer-vs-paper-ielts')}
+            publishedAt="2026-07-29"
+            reviewedAt="2026-11-17"
             sources={[
               {
-                label: 'British Council Algeria: test dates, fees, and computer delivery',
+                label: locale === 'fr'
+                  ? 'British Council Algérie : dates, tarifs et passage sur ordinateur'
+                  : locale === 'ar'
+                    ? 'المجلس الثقافي البريطاني الجزائر: المواعيد والرسوم والاختبار على الكمبيوتر'
+                    : 'British Council Algeria: test dates, fees, and computer delivery',
                 href: 'https://www.britishcouncil.dz/fr/examen/ielts/dates-frais-lieux',
               },
               {
-                label: 'IELTS.org: One Skill Retake rules',
+                label: locale === 'fr'
+                  ? 'IELTS.org : règles officielles One Skill Retake'
+                  : locale === 'ar'
+                    ? 'IELTS.org: قواعد إعادة مهارة واحدة (One Skill Retake)'
+                    : 'IELTS.org: One Skill Retake rules',
                 href: 'https://ielts.org/take-a-test/booking-your-test/one-skill-retake',
               },
               {
-                label: 'IRCC: language tests accepted for Express Entry',
+                label: locale === 'fr'
+                  ? 'IRCC Canada : tests linguistiques acceptés pour Entrée express'
+                  : locale === 'ar'
+                    ? 'IRCC كندا: اختبارات اللغة المقبولة لـ Express Entry'
+                    : 'IRCC: language tests accepted for Express Entry',
                 href: 'https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry/documents/language-test.html',
               },
             ]}

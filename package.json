@@ -21,7 +21,10 @@
     "commerce:provision": "node --conditions=react-server --import tsx scripts/provision-mock-product.ts",
     "commerce:assert-catalog": "node --conditions=react-server --import tsx scripts/assert-product-catalog.ts",
     "attempts:release-stale": "node --conditions=react-server --import tsx scripts/release-stale-draft-attempts.ts",
-    "security:data-api-check": "node --experimental-strip-types scripts/check-data-api-exposure.mts"
+    "security:data-api-check": "node --experimental-strip-types scripts/check-data-api-exposure.mts",
+    "seo:indexnow": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/submit-indexnow.mjs",
+    "seo:indexnow:changed": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/submit-indexnow.mjs --changed",
+    "acquisition": "node --conditions=react-server --import tsx scripts/manage-acquisition.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.13.0",
@@ -30,6 +33,7 @@
     "@prisma/client": "^7.9.1",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.110.7",
+    "@types/qrcode": "^1.5.6",
     "@upstash/qstash": "^2.11.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
@@ -43,6 +47,7 @@
     "next-intl": "^4.13.1",
     "pdf-parse": "^1.1.1",
     "pg": "^8.22.0",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "server-only": "^0.0.1",

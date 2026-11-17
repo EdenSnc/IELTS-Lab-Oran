@@ -56,6 +56,57 @@ model Prospect {
   @@schema("app_private")
 }
 
+// Acquisition links are aggregate-only: no visitor identifiers, IPs or fingerprints.
+model AcquisitionCampaign {
+  id         String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String                 @db.VarChar(120)
+  slug       String                 @unique @db.VarChar(80)
+  createdAt  DateTime               @default(now())
+  placements AcquisitionPlacement[]
+
+  @@schema("app_private")
+}
+
+model AcquisitionPlacement {
+  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaignId  String                  @db.Uuid
+  code        String                  @unique @db.VarChar(24)
+  label       String                  @db.VarChar(120)
+  destination String                  @db.VarChar(300)
+  medium      String                  @db.VarChar(40)
+  active      Boolean                 @default(true)
+  createdAt   DateTime                @default(now())
+  campaign    AcquisitionCampaign     @relation(fields: [campaignId], references: [id], onDelete: Restrict)
+  inspections AcquisitionInspection[]
+  dailyCounts AcquisitionDailyCount[]
+
+  @@index([campaignId, createdAt])
+  @@schema("app_private")
+}
+
+model AcquisitionInspection {
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  placementId String               @db.Uuid
+  actorId     String               @db.Uuid
+  status      String               @db.VarChar(16)
+  note        String?              @db.VarChar(300)
+  checkedAt   DateTime             @default(now())
+  placement   AcquisitionPlacement @relation(fields: [placementId], references: [id], onDelete: Restrict)
+
+  @@index([placementId, checkedAt])
+  @@schema("app_private")
+}
+
+model AcquisitionDailyCount {
+  placementId String               @db.Uuid
+  day         DateTime             @db.Date
+  requests    Int                  @default(0)
+  placement   AcquisitionPlacement @relation(fields: [placementId], references: [id], onDelete: Restrict)
+
+  @@id([placementId, day])
+  @@schema("app_private")
+}
+
 model LeadMagnetDownload {
   id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   prospectId      String     @db.Uuid
@@ -64,6 +115,7 @@ model LeadMagnetDownload {
   utmSource       String?
   utmMedium       String?
   utmCampaign     String?
+  utmContent      String?
   externalEventId String?    @unique
   ipAddress       String?
   createdAt       DateTime   @default(now())
@@ -72,6 +124,7 @@ model LeadMagnetDownload {
 
   @@index([prospectId, createdAt])
   @@index([source, createdAt])
+  @@index([utmSource, utmContent])
   @@schema("app_private")
 }
 

@@ -59,12 +59,12 @@ export default function Methodology() {
         href="https://www.youtube.com/watch?v=r5eiUU3EpHE"
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Watch the methodology walkthrough on YouTube"
+        aria-label={t('videoAriaLabel')}
         className="block mt-16 max-w-3xl mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl relative aspect-video bg-charcoal group cursor-pointer border-4 border-surface"
       >
         <Image
           src="https://img.youtube.com/vi/r5eiUU3EpHE/maxresdefault.jpg"
-          alt="Methodology Walkthrough"
+          alt={t('videoAlt')}
           fill
           sizes="(max-width: 768px) 100vw, 768px"
           className="object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500"
@@ -76,6 +76,21 @@ export default function Methodology() {
           </div>
         </div>
       </a>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'VideoObject',
+            name: t('videoAlt'),
+            description: t('subtitle'),
+            thumbnailUrl: 'https://img.youtube.com/vi/r5eiUU3EpHE/maxresdefault.jpg',
+            uploadDate: '2026-04-01T00:00:00+01:00',
+            contentUrl: 'https://www.youtube.com/watch?v=r5eiUU3EpHE',
+            embedUrl: 'https://www.youtube.com/embed/r5eiUU3EpHE',
+          }).replace(/</g, '\\u003c'),
+        }}
+      />
     </section>
   );
 }

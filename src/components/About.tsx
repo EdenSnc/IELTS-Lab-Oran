@@ -11,10 +11,15 @@ export default function About() {
     "@context": "https://schema.org",
     "@type": "Person",
     "@id": `${SITE_URL}/#instructor`,
-    "name": "Mr.Senouci",
-    "jobTitle": "Lead Instructor & Founder",
+    "name": "Amine Senouci",
+    "alternateName": "Mr. Senouci",
+    "jobTitle": t('personJobTitle'),
     "description": t('hook'),
-    "knowsAbout": ["IELTS Preparation", "English Teaching", "C1/C2 Proficiency"],
+    "knowsAbout": ["IELTS Preparation", "English Teaching", "C1/C2 Proficiency", "Computer-Delivered IELTS"],
+    "sameAs": [
+      "https://www.linkedin.com/company/ielts-lab-oran",
+      "https://www.instagram.com/ieltslab.oran/"
+    ],
     "worksFor": {
       "@type": "EducationalOrganization",
       "@id": `${SITE_URL}/#organization`
@@ -38,7 +43,7 @@ export default function About() {
               <div className="absolute inset-0 bg-gradient-to-t from-charcoal/80 via-transparent to-transparent z-10" />
               <Image 
                 src="/amine.jpg" 
-                alt="Mr.Senouci - IELTS Instructor" 
+                alt={t('imageAlt')} 
                 fill 
                 className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -48,7 +53,7 @@ export default function About() {
                 <div className="inline-block bg-crimson text-white px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase mb-2 shadow-glow">
                   {t('subtitle')}
                 </div>
-                <h3 className="text-3xl font-bold text-white">Mr.Senouci</h3>
+                <p className="text-3xl font-bold text-white">{t('displayName')}</p>
               </div>
             </div>
           </div>
@@ -65,21 +70,21 @@ export default function About() {
             {/* Badges */}
             <div className="flex flex-wrap gap-4 mb-10">
               <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-5 py-3 rounded-2xl font-bold shadow-sm backdrop-blur-sm">
-                <div className="w-8 h-8 rounded-full bg-crimson/20 flex items-center justify-center text-crimson shrink-0">
+                <div className="w-8 h-8 rounded-full bg-crimson/20 flex items-center justify-center text-red-300 shrink-0">
                   8.0
                 </div>
-                Official IELTS Band 8.0
+                {t('badgeBand8')}
               </div>
               <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-5 py-3 rounded-2xl font-bold shadow-sm backdrop-blur-sm">
                 <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                   9.0
                 </div>
-                Perfect 9.0 in Listening
+                {t('badgeListening9')}
               </div>
             </div>
 
             {/* Pedigree & Experience */}
-            <div className="space-y-6 text-gray-400 leading-relaxed font-medium">
+            <div className="space-y-6 text-gray-300 leading-relaxed font-medium">
               <div className="flex gap-4">
                 <svg className="w-6 h-6 text-gray-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                 <p>{t('pedigree')}</p>

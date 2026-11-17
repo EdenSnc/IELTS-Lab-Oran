@@ -162,11 +162,46 @@ export default async function ArticlePage() {
             description={description}
             reviewedAt={reviewedAt}
             sources={[
-              { label: 'Italian Embassy in Algiers: study-visa clarification, 27 August 2026', href: 'https://ambalgeri.esteri.it/it/news/dall_ambasciata/2026/08/visti-per-studio-2026-2027-chiarimenti-sulle-procedure-e-sulle-misure-straordinarie-dellambasciata/' },
-              { label: 'Italian Embassy in Algiers: university study requirements', href: 'https://ambalgeri.esteri.it/it/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/studio/universita/' },
-              { label: 'VFS Global Algeria: student visa applicants', href: 'https://visa.vfsglobal.com/dza/en/ita/news/student-visa-applicants' },
-              { label: 'Duolingo English Test: acceptance in Italian universities', href: 'https://blog.englishtest.duolingo.com/duolingo-english-test-accepted-in-italy-2/' },
-              { label: 'British Council EnglishScore: test and certificate', href: 'https://www.englishscore.com/' },
+              {
+                label: locale === 'fr'
+                  ? 'Ambassade d’Italie à Alger : clarification visa d’études (27 août 2026)'
+                  : locale === 'ar'
+                    ? 'السفارة الإيطالية بالجزائر: توضيح حول تأشيرة الدراسة (27 أغسطس 2026)'
+                    : 'Italian Embassy in Algiers: study-visa clarification, 27 August 2026',
+                href: 'https://ambalgeri.esteri.it/it/news/dall_ambasciata/2026/08/visti-per-studio-2026-2027-chiarimenti-sulle-procedure-e-sulle-misure-straordinarie-dellambasciata/',
+              },
+              {
+                label: locale === 'fr'
+                  ? 'Ambassade d’Italie à Alger : pièces requises pour études universitaires'
+                  : locale === 'ar'
+                    ? 'السفارة الإيطالية بالجزائر: متطلبات تأشيرة الدراسة الجامعية'
+                    : 'Italian Embassy in Algiers: university study requirements',
+                href: 'https://ambalgeri.esteri.it/it/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/studio/universita/',
+              },
+              {
+                label: locale === 'fr'
+                  ? 'VFS Global Algérie : informations candidats visa d’études Italie'
+                  : locale === 'ar'
+                    ? 'VFS Global الجزائر: إرشادات طلاب تأشيرة إيطاليا'
+                    : 'VFS Global Algeria: student visa applicants',
+                href: 'https://visa.vfsglobal.com/dza/en/ita/news/student-visa-applicants',
+              },
+              {
+                label: locale === 'fr'
+                  ? 'Duolingo English Test : reconnaissance dans les universités italiennes'
+                  : locale === 'ar'
+                    ? 'اختبار Duolingo الإنجليزية: القبول في الجامعات الإيطالية'
+                    : 'Duolingo English Test: acceptance in Italian universities',
+                href: 'https://blog.englishtest.duolingo.com/duolingo-english-test-accepted-in-italy-2/',
+              },
+              {
+                label: locale === 'fr'
+                  ? 'British Council EnglishScore : fonctionnement et certificat'
+                  : locale === 'ar'
+                    ? 'British Council EnglishScore: تفاصيل الاختبار والشهادة'
+                    : 'British Council EnglishScore: test and certificate',
+                href: 'https://www.englishscore.com/',
+              },
             ]}
           />
         </div>
