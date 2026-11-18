@@ -147,18 +147,21 @@ export async function bookSpeakingAppointment(input: {
   deliveryMode: SpeakingAppointmentMode;
 }) {
   if (!speakingConfig.enabled) throw new Error('SPEAKING_NOT_CONFIGURED');
+  const now = new Date();
   const attempt = await prisma.assessmentAttempt.findFirst({
     where: {
       id: input.attemptId,
       userId: input.user.id,
       state: { notIn: ['ABANDONED'] },
-      entitlement: {
-        status: 'ACTIVE',
-        OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }],
-      },
-      blueprint: {
-        slots: { some: { partSlot: { in: ['SPEAKING_PART_1', 'SPEAKING_PART_2', 'SPEAKING_PART_3'] } } },
-      },
+      OR: [
+        { entitlementId: null },
+        {
+          entitlement: {
+            status: 'ACTIVE',
+            OR: [{ endsAt: null }, { endsAt: { gt: now } }],
+          },
+        },
+      ],
     },
     select: { id: true },
   });

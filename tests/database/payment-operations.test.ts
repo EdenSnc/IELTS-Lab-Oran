@@ -74,9 +74,11 @@ test('payment reconciliation expires stale orders and staff access extension is 
   assert.equal((await prisma.order.findUniqueOrThrow({ where: { id: order.id } })).status, 'CANCELLED');
   assert.equal((await prisma.paymentAttempt.findUniqueOrThrow({ where: { id: order.paymentAttempts[0].id } })).status, 'EXPIRED');
 
-  const entitlement = await prisma.entitlement.create({ data: { userId: learner.id, productId: product.id, status: 'ACTIVE', endsAt: new Date('2026-09-10T00:00:00Z') } });
+  const initialEndsAt = new Date(Date.now() + 10 * 86_400_000);
+  const expectedEndsAt = new Date(initialEndsAt.getTime() + 7 * 86_400_000);
+  const entitlement = await prisma.entitlement.create({ data: { userId: learner.id, productId: product.id, status: 'ACTIVE', endsAt: initialEndsAt } });
   await extendEntitlementAccess({ entitlementId: entitlement.id, days: 7, reason: 'Support correction', actorUserId: staff.id });
-  assert.equal((await prisma.entitlement.findUniqueOrThrow({ where: { id: entitlement.id } })).endsAt?.toISOString(), '2026-09-17T00:00:00.000Z');
+  assert.equal((await prisma.entitlement.findUniqueOrThrow({ where: { id: entitlement.id } })).endsAt?.toISOString(), expectedEndsAt.toISOString());
   assert.equal(await prisma.staffActionAudit.count({ where: { actorUserId: staff.id, targetId: entitlement.id, action: 'EXTEND_ACCESS' } }), 1);
 });
 
