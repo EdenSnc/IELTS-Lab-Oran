@@ -8,9 +8,9 @@ import {
 } from '@/lib/seo';
 
 const DESCRIPTIONS: Record<Locale, string> = {
-  en: 'Small-group computer-based IELTS preparation in an 8-seat physical PC lab in Bir El Djir, Oran, with individual Writing and Speaking feedback.',
-  fr: 'Préparation IELTS sur ordinateur en petit groupe (8 places) à Bir El Djir, Oran, avec retours personnalisés en Writing et Speaking.',
-  ar: 'التحضير لاختبار IELTS على الكمبيوتر ضمن مجموعة صغيرة من 8 مقاعد في بئر الجير، وهران، مع تصحيح وملاحظات فردية في الكتابة والمحادثة.',
+  en: 'Small-group in-person IELTS preparation (8 seats) in Bir El Djir, Oran, plus online mock practice, with individual Writing and Speaking feedback.',
+  fr: 'Préparation IELTS en présentiel en petit groupe (8 places) à Bir El Djir, Oran, et tests blancs en ligne, avec retours personnalisés en Writing et Speaking.',
+  ar: 'التحضير الحضوري لاختبار IELTS ضمن مجموعة صغيرة من 8 مقاعد في بئر الجير، وهران، مع اختبارات تجريبية عبر الإنترنت وملاحظات فردية في الكتابة والمحادثة.',
 };
 
 const COURSE_NAMES: Record<Locale, string> = {
@@ -20,9 +20,9 @@ const COURSE_NAMES: Record<Locale, string> = {
 };
 
 const COURSE_DESCRIPTIONS: Record<Locale, string> = {
-  en: 'Approximately one month of intensive, computer-based IELTS preparation in a dedicated 8-seat PC lab, covering all four skills with individual Writing and Speaking feedback.',
-  fr: 'Environ un mois de préparation intensive à l’IELTS sur ordinateur dans une salle dédiée de 8 postes, couvrant les 4 compétences avec suivi individuel.',
-  ar: 'حوالي شهر واحد من التحضير المكثف لاختبار IELTS على الكمبيوتر في قاعة مخصصة بـ 8 أجهزة، يشمل المهارات الأربع مع تقييم فردي للكتابة والمحادثة.',
+  en: 'Approximately one month of intensive, small-group in-person IELTS preparation (8 seats) in Bir El Djir, Oran, covering all four skills with individual Writing and Speaking feedback.',
+  fr: 'Environ un mois de préparation intensive à l’IELTS en présentiel en petit groupe de 8 places à Bir El Djir, Oran, couvrant les 4 compétences avec suivi individuel.',
+  ar: 'حوالي شهر واحد من التحضير الحضوري المكثف لاختبار IELTS ضمن مجموعة صغيرة من 8 مقاعد في بئر الجير، وهران، يشمل المهارات الأربع مع تقييم فردي للكتابة والمحادثة.',
 };
 
 export default function LocalSchema({ locale = 'en' }: { locale?: Locale }) {

@@ -27,14 +27,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const safeLocale: Locale = locale === 'fr' || locale === 'ar' ? locale : 'en';
   const descriptions: Record<Locale, string> = {
-    en: 'In-person computer-based IELTS preparation in Bir El Djir, Oran. Practise Listening, Reading, Writing, and Speaking in an 8-seat PC lab with individual feedback.',
-    fr: 'Préparation IELTS sur ordinateur en petit groupe (8 places) à Bir El Djir, Oran. Entraînez-vous aux 4 épreuves sur PC avec correction individuelle.',
-    ar: 'تحضير حضوري لاختبار IELTS على الكمبيوتر في بئر الجير، وهران. تدرّب على المهارات الأربع في قاعة من 8 مقاعد مع تصحيح وملاحظات فردية.',
+    en: 'In-person small-group IELTS preparation (8 seats) in Bir El Djir, Oran, plus online mock practice. Practise Listening, Reading, Writing, and Speaking with individual feedback.',
+    fr: 'Préparation IELTS en présentiel en petit groupe (8 places) à Bir El Djir, Oran, et tests blancs en ligne. Entraînez-vous aux 4 épreuves avec correction individuelle.',
+    ar: 'تحضير حضوري لاختبار IELTS ضمن مجموعة صغيرة من 8 مقاعد في بئر الجير، وهران، مع اختبارات تجريبية عبر الإنترنت وتصحيح فردي للمهارات الأربع.',
   };
   const titles: Record<Locale, string> = {
-    en: 'IELTS Preparation in Oran (Computer-Based) | IELTS Lab Oran',
-    fr: 'Préparation IELTS sur ordinateur à Oran | IELTS Lab Oran',
-    ar: 'التحضير لاختبار IELTS على الكمبيوتر في وهران | IELTS Lab Oran',
+    en: 'IELTS Preparation in Oran | Small-Group Course & Mock Practice | IELTS Lab Oran',
+    fr: 'Préparation IELTS à Oran | Cours en Petit Groupe & Tests Blancs | IELTS Lab Oran',
+    ar: 'التحضير لاختبار IELTS في وهران | دورة حضورية واختبارات تجريبية | IELTS Lab Oran',
   };
   return buildWebsitePageMetadata({
     locale: safeLocale,
