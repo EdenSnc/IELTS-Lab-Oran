@@ -16,11 +16,8 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       DIRECT_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
       TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      ENCRYPTION_KEY: 1111111111111111111111111111111111111111111111111111111111111111
+      ENCRYPTION_KEY: "1111111111111111111111111111111111111111111111111111111111111111"
       NEXT_PUBLIC_SITE_URL: https://www.ieltslab.org
-      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
-      SUPABASE_SERVICE_ROLE_KEY: local-ci-placeholder
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +29,12 @@ jobs:
           version: 2.115.0
       - run: npm ci
       - run: supabase start
+      - name: Export local Supabase auth keys
+        run: |
+          eval "$(supabase status -o env)"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${API_URL:-http://127.0.0.1:54321}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${PUBLISHABLE_KEY:-${ANON_KEY}}" >> "$GITHUB_ENV"
+          echo "SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY:-${SECRET_KEY}}" >> "$GITHUB_ENV"
       - run: supabase db reset --local --no-seed
       - run: supabase db lint --local --schema app_private --level warning --fail-on error
       - run: npm run commerce:assert-catalog

@@ -40,12 +40,14 @@ test('Proxy passes through /r/, /sample, /staff, and BotID Kasada routes without
   }
 });
 
-test('Proxy rewrites unmatched non-localized paths to /_not-found with 404 status and non-strict-dynamic CSP', async () => {
+test('Proxy rewrites unmatched non-localized paths to /_not-found with 404 status and CSP nonce', async () => {
   const { default: proxy } = await import('../../src/proxy');
 
   const response = await proxy(new NextRequest('https://www.ieltslab.org/zz-unmatched-route'));
   assert.equal(response.status, 404);
   assert.match(response.headers.get('x-middleware-rewrite') ?? '', /\/_not-found$/);
-  const csp = response.headers.get('content-security-policy') ?? '';
-  assert.doesNotMatch(csp, /'strict-dynamic'/, 'Static /_not-found rewrite must not emit strict-dynamic without per-request nonce hydration');
+  const nonce = response.headers.get('x-middleware-request-x-nonce');
+  assert.ok(nonce, 'Rewrite to /_not-found must forward x-nonce so dynamic GlobalNotFound stamps inline scripts');
+  const csp = response.headers.get('content-security-policy') ?? response.headers.get('content-security-policy-report-only') ?? '';
+  assert.ok(csp.includes(`'nonce-${nonce}'`), '404 CSP header must include per-request nonce');
 });

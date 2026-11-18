@@ -197,6 +197,18 @@ test('HTTP Runtime: global unmatched routes use the custom global 404 without pa
     assert.ok(!/<meta[^>]*property="og:url"/i.test(html), `${pathname} must not emit og:url`);
     assert.ok(!/<meta[^>]*property="og:locale"/i.test(html), `${pathname} must not emit og:locale`);
     assert.ok(!/<link[^>]*rel="alternate"[^>]*hreflang=/i.test(html), `${pathname} must not emit hreflang`);
+
+    const csp = res.headers.get('content-security-policy') ?? '';
+    const nonceMatch = /'nonce-([^']+)'/.exec(csp);
+    assert.ok(nonceMatch?.[1], `${pathname} must emit a per-request CSP nonce`);
+    const inlineScripts = [...html.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>/gi)];
+    assert.ok(inlineScripts.length > 0, `${pathname} should have inline RSC bootstrap scripts`);
+    for (const [tag] of inlineScripts) {
+      assert.ok(
+        tag.includes(`nonce="${nonceMatch[1]}"`),
+        `${pathname} inline script must carry matching CSP nonce, got: ${tag}`,
+      );
+    }
   }
 });
 

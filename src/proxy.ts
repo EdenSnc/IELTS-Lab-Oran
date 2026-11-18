@@ -47,7 +47,6 @@ function applyRequestSecurityHeaders(
     development: process.env.NODE_ENV !== 'production',
     supabaseOrigin: new URL(environment.NEXT_PUBLIC_SUPABASE_URL).origin,
     rtcSources: rtcConnectSources(),
-    strictDynamic: kind !== 'rewrite',
   });
   const headerName = process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV !== 'preview'
     ? 'Content-Security-Policy'

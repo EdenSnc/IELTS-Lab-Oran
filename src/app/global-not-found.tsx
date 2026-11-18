@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { CANONICAL_ORIGIN } from '@/lib/seo';
 import './globals.css';
@@ -17,7 +18,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function GlobalNotFound() {
+export default async function GlobalNotFound() {
+  // Bind to per-request headers so Next.js injects the middleware CSP nonce
+  // onto inline RSC bootstrap scripts under enforced 'strict-dynamic' CSP.
+  await headers();
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans">
