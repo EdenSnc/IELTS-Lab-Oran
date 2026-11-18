@@ -30,6 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
     slug: OSR_SLUG,
     title: t.title,
     description: t.desc,
+    publishedTime: OSR_REVIEW_DATE,
     modifiedTime: OSR_REVIEW_DATE,
   });
 }

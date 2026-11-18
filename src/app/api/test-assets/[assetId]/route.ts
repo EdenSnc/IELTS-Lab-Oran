@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { NextResponse } from 'next/server';
+import sharp from 'sharp';
 import prisma from '@/lib/prisma';
 import { isAssetLinkedToAttemptContent, isAssetLinkedToPublicDemo } from '@/lib/content/asset-authorization';
 import { fetchPrivateAsset } from '@/lib/content/private-asset-storage';
@@ -13,17 +14,38 @@ import { logSafeError } from '@/lib/observability/safe-log';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const MAX_SVG_BYTES = 2_000_000;
+const SAFE_ASSET_MIME_TYPES = new Set([
+  'audio/mpeg',
+  'audio/mp4',
+  'audio/ogg',
+  'audio/wav',
+  'audio/webm',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+]);
+
+function isSvgAsset(storageKey: string, storedMimeType: string) {
+  return storedMimeType.toLowerCase().split(';')[0].trim() === 'image/svg+xml'
+    || path.extname(storageKey).toLowerCase() === '.svg';
+}
+
 function inferMimeType(storageKey: string, storedMimeType: string) {
-  if (storedMimeType !== 'application/octet-stream') return storedMimeType;
+  const normalized = storedMimeType.toLowerCase().split(';')[0].trim();
+  if (normalized !== 'application/octet-stream') return normalized;
 
   const mimeTypes: Record<string, string> = {
     '.mp3': 'audio/mpeg',
+    '.m4a': 'audio/mp4',
+    '.ogg': 'audio/ogg',
+    '.wav': 'audio/wav',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
     '.webp': 'image/webp',
   };
-  return mimeTypes[path.extname(storageKey).toLowerCase()] ?? storedMimeType;
+  return mimeTypes[path.extname(storageKey).toLowerCase()] ?? normalized;
 }
 
 export async function GET(
@@ -75,7 +97,9 @@ export async function GET(
   if (!asset) {
     return NextResponse.json({ error: 'Asset not found.' }, { status: 404 });
   }
-  if (asset.mimeType === 'image/svg+xml' || path.extname(asset.storageKey).toLowerCase() === '.svg') {
+  const svgAsset = isSvgAsset(asset.storageKey, asset.mimeType);
+  const resolvedMimeType = svgAsset ? 'image/png' : inferMimeType(asset.storageKey, asset.mimeType);
+  if (!SAFE_ASSET_MIME_TYPES.has(resolvedMimeType)) {
     return NextResponse.json({ error: 'Asset not found.' }, { status: 404 });
   }
   const linkedToAllowedContent = attemptId
@@ -112,11 +136,32 @@ export async function GET(
   }
 
   try {
+    if (svgAsset) {
+      const upstream = await fetchPrivateAsset(asset.storageKey, null);
+      const rawSvg = Buffer.from(await upstream.arrayBuffer());
+      if (rawSvg.byteLength === 0 || rawSvg.byteLength > MAX_SVG_BYTES) {
+        return NextResponse.json({ error: 'Asset is unavailable.' }, { status: 404 });
+      }
+      const pngBuffer = await sharp(rawSvg, { density: 144, limitInputPixels: 16_777_216 })
+        .png()
+        .toBuffer();
+      return new NextResponse(new Uint8Array(pngBuffer), {
+        status: 200,
+        headers: {
+          ...listeningAssetCacheHeaders(false),
+          'Content-Type': 'image/png',
+          'Content-Length': String(pngBuffer.byteLength),
+          'Content-Disposition': 'inline',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      });
+    }
+
     const upstream = await fetchPrivateAsset(asset.storageKey, request.headers.get('range'));
     const commonHeaders = {
       'Accept-Ranges': upstream.headers.get('accept-ranges') ?? 'bytes',
       ...listeningAssetCacheHeaders(strictAudioAuthorized),
-      'Content-Type': inferMimeType(asset.storageKey, asset.mimeType),
+      'Content-Type': resolvedMimeType,
       'Content-Disposition': 'inline',
       'X-Content-Type-Options': 'nosniff',
     };

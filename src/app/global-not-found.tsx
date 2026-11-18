@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Link from 'next/link';
+import { CANONICAL_ORIGIN } from '@/lib/seo';
 import './globals.css';
 
 const inter = Inter({
@@ -10,8 +11,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(CANONICAL_ORIGIN),
   title: '404 - Page Not Found | IELTS Lab Oran',
   description: 'The page you requested could not be found.',
+  robots: { index: false, follow: false },
 };
 
 export default function GlobalNotFound() {

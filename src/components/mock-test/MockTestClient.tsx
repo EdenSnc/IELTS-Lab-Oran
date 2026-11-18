@@ -18,12 +18,14 @@ import FreeSampleResults from '@/components/mock-test/FreeSampleResults';
 export default function MockTestClient({
   test,
   onFinish,
+  finishLabel,
   resolveListeningAudio,
   sampleMode = false,
   locale = 'en',
 }: {
   test: DeliveryTest;
   onFinish?: () => void | Promise<void>;
+  finishLabel?: string;
   resolveListeningAudio?: (stimulusId: string) => Promise<ListeningAudioResolution>;
   sampleMode?: boolean;
   locale?: 'ar' | 'en' | 'fr';
@@ -88,7 +90,7 @@ export default function MockTestClient({
         className="ielts-test-shell relative flex h-[100dvh] w-screen flex-col overflow-hidden bg-white text-black"
         data-color-scheme={colorScheme}
       >
-      <TestHeader onFinish={onFinish} />
+      <TestHeader onFinish={onFinish} finishLabel={finishLabel} sampleMode={sampleMode} />
       
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <main className={`flex min-w-0 flex-1 overflow-hidden ${textSizeClass} ${colorClass}`}>

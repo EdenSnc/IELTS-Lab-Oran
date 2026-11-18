@@ -72,6 +72,7 @@ export async function loadDeliveryTest(testId: string): Promise<DeliveryTest | n
           parts: {
             include: {
               stimuli: {
+                where: { isVisibleToLearner: true },
                 orderBy: { displayOrder: 'asc' },
                 include: { asset: { select: { id: true } } },
               },

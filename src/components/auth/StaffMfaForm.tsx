@@ -5,6 +5,17 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
 
+const SAFE_STAFF_NEXT_PATH = /^\/(?:speaking|staff)(?:\/|$)/;
+
+function resolveStaffReturnPath(): string {
+  if (typeof window === 'undefined') return '/speaking/examiner';
+  const candidate = new URLSearchParams(window.location.search).get('next');
+  if (!candidate || candidate.startsWith('//') || candidate.includes('\\')) {
+    return '/speaking/examiner';
+  }
+  return SAFE_STAFF_NEXT_PATH.test(candidate) ? candidate : '/speaking/examiner';
+}
+
 export default function StaffMfaForm() {
   const router = useRouter();
   const [factorId, setFactorId] = useState<string>();
@@ -24,7 +35,7 @@ export default function StaffMfaForm() {
       if (!active) return;
       if (error) return setMessage(error.message);
       if (aal.currentLevel === 'aal2') {
-        router.replace('/speaking/examiner');
+        router.replace(resolveStaffReturnPath());
         router.refresh();
         return;
       }
@@ -32,7 +43,9 @@ export default function StaffMfaForm() {
       if (verified) {
         setFactorId(verified.id);
         setMessage('Enter the six-digit code from your authenticator app.');
-      } else setMessage('Set up an authenticator app to secure staff actions.');
+      } else {
+        setMessage('Set up an authenticator app to secure staff actions.');
+      }
     })();
     return () => { active = false; };
   }, [router]);
@@ -40,7 +53,21 @@ export default function StaffMfaForm() {
   async function enroll() {
     setPending(true);
     const client = createSupabaseBrowserClient();
-    const { data, error } = await client.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'IELTS Lab Oran staff' });
+    const existingFactors = await client.auth.mfa.listFactors();
+    if (!existingFactors.error && existingFactors.data) {
+      const staleUnverified = existingFactors.data.all.filter(
+        (factor: { id: string; factor_type: string; status: string }) => (
+          factor.factor_type === 'totp' && factor.status === 'unverified'
+        ),
+      );
+      for (const stale of staleUnverified) {
+        await client.auth.mfa.unenroll({ factorId: stale.id });
+      }
+    }
+    const { data, error } = await client.auth.mfa.enroll({
+      factorType: 'totp',
+      friendlyName: 'IELTS Lab Oran staff',
+    });
     setPending(false);
     if (error) return setMessage(error.message);
     setFactorId(data.id);
@@ -58,7 +85,7 @@ export default function StaffMfaForm() {
     const { error } = await client.auth.mfa.challengeAndVerify({ factorId, code });
     setPending(false);
     if (error) return setMessage(error.message);
-    router.replace('/speaking/examiner');
+    router.replace(resolveStaffReturnPath());
     router.refresh();
   }
 

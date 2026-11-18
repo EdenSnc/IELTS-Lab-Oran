@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError } from '@/lib/http/api';
@@ -8,6 +9,7 @@ export async function GET(request: Request, context: { params: Promise<{ recordi
   try {
     const user = await requirePrivilegedRequestUser(request, ['TEACHER', 'ADMIN']);
     const { recordingId } = await context.params;
+    if (!z.string().uuid().safeParse(recordingId).success) throw new Error('RECORDING_NOT_FOUND');
     const recording = await prisma.speakingRecording.findUnique({
       where: { id: recordingId },
       include: { session: { include: { appointment: true } } },
@@ -19,10 +21,17 @@ export async function GET(request: Request, context: { params: Promise<{ recordi
       request.headers.get('range'),
       process.env.PRIVATE_SPEAKING_RECORDING_BUCKET ?? 'private-speaking-recordings',
     );
-    const headers = new Headers(upstream.headers);
-    headers.set('Cache-Control', 'private, no-store, max-age=0');
-    headers.set('Content-Type', recording.contentType ?? headers.get('Content-Type') ?? 'audio/ogg');
-    headers.set('Content-Disposition', 'inline');
+    const headers = new Headers({
+      'Accept-Ranges': upstream.headers.get('accept-ranges') ?? 'bytes',
+      'Cache-Control': 'private, no-store, max-age=0',
+      'Content-Type': recording.contentType ?? 'audio/ogg',
+      'Content-Disposition': 'inline',
+      'X-Content-Type-Options': 'nosniff',
+    });
+    const contentLength = upstream.headers.get('content-length');
+    const contentRange = upstream.headers.get('content-range');
+    if (contentLength) headers.set('Content-Length', contentLength);
+    if (contentRange) headers.set('Content-Range', contentRange);
     return new Response(upstream.body, { status: upstream.status, headers });
   } catch (error) {
     return apiError(error, 'SPEAKING_RECORDING_FAILED');

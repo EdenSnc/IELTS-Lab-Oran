@@ -56,15 +56,14 @@ export function normalizeObjectiveAnswer(
   rules: NormalizationRules = {},
 ) {
   let normalized = rules.trimOuterWhitespace === false ? value : value.trim();
-  // Whitespace is presentation rather than answer content. Historical
-  // certified scoring always collapsed it, including legacy rows whose
-  // now-obsolete flag was false.
   normalized = normalized.replace(/\s+/gu, ' ');
   normalized = normalized.normalize(rules.unicodeForm ?? 'NFC');
   if (rules.punctuationSensitive === false) {
     normalized = normalized.replace(/[^\p{L}\p{N}\s]/gu, '');
+    normalized = normalized.replace(/\s+/gu, ' ');
+    if (rules.trimOuterWhitespace !== false) normalized = normalized.trim();
   }
-  if (rules.caseSensitive === false) normalized = normalized.toLowerCase();
+  if (rules.caseSensitive !== true) normalized = normalized.toLowerCase();
   return normalized;
 }
 

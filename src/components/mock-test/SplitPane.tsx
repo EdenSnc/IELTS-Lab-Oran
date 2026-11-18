@@ -9,6 +9,19 @@ import MatchingHeadingsPane from './MatchingHeadingsPane';
 import ReadingPassage from './ReadingPassage';
 import TestPartHeader from './TestPartHeader';
 
+function escapePlainPassageHtml(plainText: string | null | undefined) {
+  if (!plainText) return '';
+  return plainText
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+    .split(/\n{2,}/)
+    .map((paragraph) => `<p>${paragraph.replaceAll('\n', '<br />')}</p>`)
+    .join('');
+}
+
 function partRange(part: DeliverySection['parts'][number]) {
   const numbers = part.questionGroups.flatMap((group) => (
     group.questions.flatMap((question) => (
@@ -87,7 +100,7 @@ export default function SplitPane({ section }: { section: DeliverySection }) {
         ? `<p>Read the text and answer questions ${activeRange.first} to ${activeRange.last}.</p>`
         : null
     );
-  const passageHtml = passage?.bodyHtml ?? passage?.plainText ?? '';
+  const passageHtml = passage?.bodyHtml ?? escapePlainPassageHtml(passage?.plainText);
   const showPassageTitle = Boolean(passage?.title) && !/<h[1-6]\b/i.test(passageHtml);
 
   return (

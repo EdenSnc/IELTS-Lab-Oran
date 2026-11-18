@@ -1,8 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DeliveryTest, ListeningAudioResolution } from '@/lib/content/delivery-types';
+import { stopListeningAudio } from '@/lib/audio/listening-audio';
 import { type IELTSSection, type ReviewMap, type TestAnswerMap, useTestStore } from '@/lib/store/useTestStore';
+import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
 import MockTestClient from './MockTestClient';
 
 type DeliveryResponse = {
@@ -42,9 +44,17 @@ function sectionName(value: string): IELTSSection {
   throw new Error('UNSUPPORTED_ATTEMPT_SKILL');
 }
 
+function boundedSectionSeconds(sectionLimitSeconds: number | null | undefined, expiresAt: string | null) {
+  const sectionSeconds = sectionLimitSeconds && sectionLimitSeconds > 0 ? sectionLimitSeconds : 3_600;
+  if (!expiresAt) return sectionSeconds;
+  const globalSeconds = Math.max(0, (new Date(expiresAt).getTime() - Date.now()) / 1_000);
+  return Math.min(sectionSeconds, globalSeconds);
+}
+
 export default function CommercialAttemptClient({ attemptId }: { attemptId: string }) {
   const answers = useTestStore((state) => state.answers);
   const reviews = useTestStore((state) => state.markedForReview);
+  const activeSection = useTestStore((state) => state.activeSection);
   const [payload, setPayload] = useState<AttemptPayload>();
   const [result, setResult] = useState<ScorePayload>();
   const [error, setError] = useState<string>();
@@ -131,10 +141,12 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
         }
         responseByKeyRef.current = metadata;
         savedRef.current = saved;
-        const firstSection = sectionName(loaded.test.sections[0]?.skill ?? '');
-        const timeLeft = loaded.attempt.expiresAt
-          ? Math.max(0, (new Date(loaded.attempt.expiresAt).getTime() - Date.now()) / 1_000)
-          : (loaded.test.sections[0]?.timeLimitSeconds ?? 3_600);
+        const firstSectionEntry = loaded.test.sections[0];
+        const firstSection = sectionName(firstSectionEntry?.skill ?? '');
+        const timeLeft = boundedSectionSeconds(
+          firstSectionEntry?.timeLimitSeconds,
+          loaded.attempt.expiresAt,
+        );
         useTestStore.getState().hydrateCommercialAttempt({
           attemptId,
           answers: nextAnswers,
@@ -216,6 +228,27 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
     return () => window.clearInterval(heartbeat);
   }, [attemptId, leaseHeaders, payload]);
 
+  // Keep the 60-minute Supabase JWT alive across a full ~150-minute sitting.
+  useEffect(() => {
+    if (!payload || result) return;
+    const supabase = createSupabaseBrowserClient();
+    void supabase.auth.getSession();
+    const refreshInterval = window.setInterval(() => {
+      void supabase.auth.refreshSession();
+    }, 15 * 60_000);
+    return () => window.clearInterval(refreshInterval);
+  }, [payload, result]);
+
+  const orderedSections = useMemo(
+    () => (payload?.test.sections ?? []).map((section) => ({
+      section: sectionName(section.skill),
+      timeLimitSeconds: section.timeLimitSeconds,
+    })),
+    [payload],
+  );
+  const currentSectionIndex = orderedSections.findIndex((item) => item.section === activeSection);
+  const hasNextSection = currentSectionIndex >= 0 && currentSectionIndex < orderedSections.length - 1;
+
   const finish = useCallback(async () => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -244,6 +277,34 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
       setSubmitting(false);
     }
   }, [attemptId, leaseHeaders, saveKey]);
+
+  const handleSectionOrAttemptFinish = useCallback(async () => {
+    if (!payload) return;
+    const globalRemaining = payload.attempt.expiresAt
+      ? Math.max(0, (new Date(payload.attempt.expiresAt).getTime() - Date.now()) / 1_000)
+      : Number.POSITIVE_INFINITY;
+    if (hasNextSection && globalRemaining > 1) {
+      const current = orderedSections[currentSectionIndex];
+      const next = orderedSections[currentSectionIndex + 1];
+      if (current.section === 'listening') stopListeningAudio();
+      timersRef.current.forEach((timer) => window.clearTimeout(timer));
+      timersRef.current.clear();
+      for (const key of responseByKeyRef.current.keys()) {
+        const previous = saveChainsRef.current.get(key) ?? Promise.resolve();
+        const chain = previous.then(() => saveKey(key));
+        saveChainsRef.current.set(key, chain);
+        void chain.catch((cause) => setError(cause instanceof Error ? cause.message : 'Autosave failed.'));
+      }
+      const store = useTestStore.getState();
+      store.completeSection(current.section);
+      store.startSection(
+        next.section,
+        boundedSectionSeconds(next.timeLimitSeconds, payload.attempt.expiresAt),
+      );
+      return;
+    }
+    await finish();
+  }, [currentSectionIndex, finish, hasNextSection, orderedSections, payload, saveKey]);
 
   if (result) {
     const pendingWriting = result.writingStatus === 'PENDING';
@@ -288,7 +349,8 @@ export default function CommercialAttemptClient({ attemptId }: { attemptId: stri
       {submitting && <div className="fixed inset-0 z-[110] grid place-items-center bg-white/80"><p>Submitting securely…</p></div>}
       <MockTestClient
         test={payload.test}
-        onFinish={finish}
+        onFinish={handleSectionOrAttemptFinish}
+        finishLabel={hasNextSection ? 'Finish section' : 'Finish test'}
         resolveListeningAudio={resolveListeningAudio}
       />
     </>

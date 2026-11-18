@@ -77,8 +77,13 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     assertSameOrigin(request);
+    await requireHumanRequest();
     const user = await requireRequestUser(request);
     const input = replacementSchema.parse(await request.json());
+    const currentBrowserSlot = await findRequestDeviceSlot(request, user.id);
+    if (currentBrowserSlot && currentBrowserSlot.slotNumber !== input.slotNumber) {
+      throw new AuthError('CURRENT_BROWSER_ALREADY_ENROLLED', 409);
+    }
     if (input.stepUp.method === 'aal2') {
       const assured = await requireRequestUserWithAssurance(request);
       if (assured.user.id !== user.id || assured.currentLevel !== 'aal2') {

@@ -174,7 +174,7 @@ export default function TestFooterNav({ test }: { test: DeliveryTest }) {
               { length: part.end - part.start + 1 },
               (_, index) => part.start + index,
             );
-            const attempted = questionNumbers.filter((number) => Boolean(answers[number])).length;
+            const attempted = questionNumbers.filter((number) => Boolean(answers[number]?.trim())).length;
             const progressStyle = {
               '--part-progress': `${(attempted / questionNumbers.length) * 100}%`,
             } as CSSProperties;
@@ -203,7 +203,7 @@ export default function TestFooterNav({ test }: { test: DeliveryTest }) {
                   >
                     {questionNumbers.map((questionNumber) => {
                       const isCurrent = questionNumber === currentQuestionId;
-                      const isAttempted = Boolean(answers[questionNumber]);
+                      const isAttempted = Boolean(answers[questionNumber]?.trim());
                       const isMarked = Boolean(reviewMap[questionNumber]);
                       return (
                         <button
@@ -248,7 +248,7 @@ export default function TestFooterNav({ test }: { test: DeliveryTest }) {
             (_, index) => activePart.start + index,
           ).map((questionNumber) => {
             const isCurrent = questionNumber === currentQuestionId;
-            const isAttempted = Boolean(answers[questionNumber]);
+            const isAttempted = Boolean(answers[questionNumber]?.trim());
             const isMarked = Boolean(reviewMap[questionNumber]);
             return (
               <button

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ACQUISITION_REDIRECT_HEADERS, codeSchema, destinationForPlacement, isKnownCrawler } from '@/lib/acquisition/validation';
+import { ACQUISITION_REDIRECT_HEADERS, codeSchema, destinationForPlacement, isKnownCrawler, isPrefetchRequest } from '@/lib/acquisition/validation';
 import { publicAcquisitionOrigin } from '@/lib/acquisition/public-link';
 import prisma from '@/lib/prisma';
 
@@ -15,9 +15,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
     return new Response('Not found', { status: 404 });
   }
 
-  // Aggregate requests only. Known crawler requests are excluded; other bots may remain.
+  // Aggregate requests only. Known crawler and prefetch requests are excluded; other bots may remain.
   // A scan never establishes a distinct visitor or physical poster presence.
-  if (!isKnownCrawler(request.headers.get('user-agent') ?? '')) {
+  if (!isKnownCrawler(request.headers.get('user-agent') ?? '') && !isPrefetchRequest(request.headers)) {
     const day = new Date();
     day.setUTCHours(0, 0, 0, 0);
     try {

@@ -18,7 +18,7 @@ export default function Methodology() {
         {t('subtitle')}
       </p>
       {/* Features Grid */}
-      <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+      <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-start max-w-5xl mx-auto">
         {/* Card 1 */}
         <div className="bg-white border border-gray-100/50 rounded-3xl p-8 shadow-sm hover:shadow-xl hover:border-gray-200 transition-all duration-300 transform hover:-translate-y-2 group">
           <div className="w-14 h-14 bg-surface rounded-2xl flex items-center justify-center mb-6 text-crimson group-hover:bg-crimson group-hover:text-white transition-colors duration-300 shadow-sm">
@@ -86,7 +86,6 @@ export default function Methodology() {
             description: t('subtitle'),
             thumbnailUrl: 'https://img.youtube.com/vi/r5eiUU3EpHE/maxresdefault.jpg',
             uploadDate: '2026-04-01T00:00:00+01:00',
-            contentUrl: 'https://www.youtube.com/watch?v=r5eiUU3EpHE',
             embedUrl: 'https://www.youtube.com/embed/r5eiUU3EpHE',
           }).replace(/</g, '\\u003c'),
         }}

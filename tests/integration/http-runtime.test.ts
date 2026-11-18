@@ -98,7 +98,7 @@ test('HTTP Runtime: /sitemap.xml serves canonical URLs', async () => {
   assert.match(text, /<loc>https:\/\/www\.ieltslab\.org\/en<\/loc>/);
   assert.match(text, /<loc>https:\/\/www\.ieltslab\.org\/fr<\/loc>/);
   assert.match(text, /<loc>https:\/\/www\.ieltslab\.org\/ar<\/loc>/);
-  assert.ok(!text.includes('<lastmod>'), 'Sitemap must omit lastmod without reliable per-URL modification dates');
+  assert.match(text, /<lastmod>\d{4}-\d{2}-\d{2}T00:00:00\.000Z<\/lastmod>/, 'Sitemap must emit valid ISO lastmod dates');
   assert.ok(!text.includes('ieltslab.app'), 'sitemap.xml must not contain ieltslab.app');
   assert.ok(!text.includes('ieltslaboran.com'), 'sitemap.xml must not contain ieltslaboran.com');
   assert.ok(!text.includes('ieltslab.tech'), 'sitemap.xml must not contain ieltslab.tech');

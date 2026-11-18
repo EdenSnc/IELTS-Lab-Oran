@@ -19,6 +19,9 @@ export async function extendEntitlementAccess(input: {
     `);
     const entitlement = await transaction.entitlement.findUnique({ where: { id: input.entitlementId } });
     if (!entitlement) throw new AuthError('ENTITLEMENT_NOT_FOUND', 404);
+    if (entitlement.status === 'REVOKED' || entitlement.status === 'PENDING') {
+      throw new AuthError('ENTITLEMENT_NOT_EXTENDABLE', 409);
+    }
     if (!entitlement.endsAt) throw new AuthError('ENTITLEMENT_NO_EXPIRY', 409);
     const base = entitlement.endsAt > new Date() ? entitlement.endsAt : new Date();
     const endsAt = new Date(base.getTime() + input.days * 86_400_000);

@@ -94,7 +94,22 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
         <div className="grid gap-4 lg:grid-cols-2">{campaign.placements.map((placement) => <article key={placement.id} className="rounded-lg border p-4">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-semibold">{placement.label}</h3>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${placement.active ? 'bg-emerald-50 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>{placement.active ? 'Active' : 'Paused'}</span>
+            <div className="flex items-center gap-2">
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${placement.active ? 'bg-emerald-50 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>{placement.active ? 'Active' : 'Paused'}</span>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void save({
+                  action: 'update_placement',
+                  placementId: placement.id,
+                  destination: placement.destination,
+                  active: !placement.active,
+                })}
+                className="rounded border px-2 py-0.5 text-xs hover:bg-neutral-50 disabled:opacity-50"
+              >
+                {placement.active ? 'Pause' : 'Resume'}
+              </button>
+            </div>
           </div>
           <p className="text-sm text-neutral-600">{placement.medium} · {placement.destination}</p>
           {/* QR data comes from the server-side encoder, never from user HTML. */}

@@ -10,7 +10,7 @@ import { listAccessCodes } from '@/lib/access-codes/access-code-service';
 import prisma from '@/lib/prisma';
 
 export default async function StaffOperationsPage() {
-  await requireStaffPageAal2();
+  await requireStaffPageAal2(['ADMIN'], '/staff/operations');
   const [operations, accessCodes, products] = await Promise.all([
     loadStaffPaymentOperations(),
     listAccessCodes(),

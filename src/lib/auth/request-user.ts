@@ -138,7 +138,11 @@ export async function requireRequestUserWithAssurance(request: Request) {
   };
 }
 
-export async function requireRequestUser(request: Request, roles?: readonly Role[]): Promise<User> {
+export async function requireRequestUser(
+  request: Request,
+  roles?: readonly Role[],
+  options?: { syncWhatsapp?: boolean },
+): Promise<User> {
   let user: User | null;
   const devUserId = process.env.SPEAKING_DEV_AUTH_USER_ID;
   if (process.env.NODE_ENV !== 'production' && devUserId) {
@@ -154,7 +158,7 @@ export async function requireRequestUser(request: Request, roles?: readonly Role
       }
       throw error;
     }
-    user = await syncApplicationUser(authUser);
+    user = await syncApplicationUser(authUser, options);
   }
 
   if (!user || user.status !== 'ACTIVE') throw new AuthError('ACCOUNT_UNAVAILABLE', 403);

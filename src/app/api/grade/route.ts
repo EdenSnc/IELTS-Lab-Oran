@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkBotId } from 'botid/server';
 import { z } from 'zod';
 import { gradeVerifiedObjectiveAnswers } from '@/lib/grading/objective-grading';
+import { checkSlidingWindowRateLimit, extractClientIp } from '@/lib/security/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,27 +27,47 @@ function noStoreJson(body: unknown, status = 200) {
 }
 
 export async function POST(request: NextRequest) {
-  const verification = await checkBotId();
-  if (verification.isBot) return noStoreJson({ error: 'ACCESS_DENIED' }, 403);
+  try {
+    const verification = await checkBotId();
+    if (verification.isBot) return noStoreJson({ error: 'ACCESS_DENIED' }, 403);
+  } catch {
+    return noStoreJson({ error: 'ACCESS_DENIED' }, 403);
+  }
 
   if (request.headers.get('content-type')?.split(';')[0] !== 'application/json') {
     return noStoreJson({ error: 'JSON_REQUIRED' }, 415);
   }
   const origin = request.headers.get('origin');
   const fetchSite = request.headers.get('sec-fetch-site');
-  let originHost: string | null = null;
+  const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
+  const requestHost = forwardedHost || request.headers.get('host');
+  if (!origin || !requestHost) {
+    return noStoreJson({ error: 'CROSS_SITE_REQUEST_REJECTED' }, 403);
+  }
+  let originHost: string;
   try {
-    originHost = origin ? new URL(origin).host : null;
+    originHost = new URL(origin).host;
   } catch {
     return noStoreJson({ error: 'CROSS_SITE_REQUEST_REJECTED' }, 403);
   }
-  const requestHost = request.headers.get('x-forwarded-host')
-    ?? request.headers.get('host');
   if (
-    (originHost && requestHost && originHost !== requestHost)
+    originHost !== requestHost
     || (fetchSite && fetchSite !== 'same-origin')
   ) {
     return noStoreJson({ error: 'CROSS_SITE_REQUEST_REJECTED' }, 403);
+  }
+
+  const rate = checkSlidingWindowRateLimit({
+    namespace: 'public-objective-grade',
+    key: extractClientIp(request),
+    limit: 20,
+    windowMs: 10 * 60_000,
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: 'RATE_LIMITED' },
+      { status: 429, headers: { 'Cache-Control': 'no-store, max-age=0', 'Retry-After': String(rate.retryAfterSeconds) } },
+    );
   }
   const declaredLength = Number(request.headers.get('content-length') ?? 0);
   if (declaredLength > 50_000) return noStoreJson({ error: 'PAYLOAD_TOO_LARGE' }, 413);

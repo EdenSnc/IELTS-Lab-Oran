@@ -48,7 +48,15 @@ function NotesIcon() {
   );
 }
 
-export default function TestHeader({ onFinish }: { onFinish?: () => void | Promise<void> }) {
+export default function TestHeader({
+  onFinish,
+  finishLabel = 'Finish test',
+  sampleMode = false,
+}: {
+  onFinish?: () => void | Promise<void>;
+  finishLabel?: string;
+  sampleMode?: boolean;
+}) {
   const timeLeft = useTestStore((state) => state.timeLeft);
   const setTimeLeft = useTestStore((state) => state.setTimeLeft);
   const isHidden = useTestStore((state) => state.isHidden);
@@ -65,13 +73,19 @@ export default function TestHeader({ onFinish }: { onFinish?: () => void | Promi
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [dismissedWarning, setDismissedWarning] = useState<5 | 10 | null>(null);
+  const [dismissedWarningState, setDismissedWarningState] = useState<{
+    section: string | null;
+    warning: 5 | 10 | null;
+  }>({ section: activeSection, warning: null });
+  const dismissedWarning = dismissedWarningState.section === activeSection
+    ? dismissedWarningState.warning
+    : null;
   const menuRef = useRef<HTMLDivElement>(null);
-  const initialTimeLeftRef = useRef(timeLeft);
   const deadlineRef = useRef(0);
 
   useEffect(() => {
-    deadlineRef.current = Date.now() + (initialTimeLeftRef.current * 1000);
+    const startingSeconds = useTestStore.getState().timeLeft;
+    deadlineRef.current = Date.now() + (startingSeconds * 1000);
     let finished = false;
     const finishAtDeadline = () => {
       if (finished) return;
@@ -82,7 +96,7 @@ export default function TestHeader({ onFinish }: { onFinish?: () => void | Promi
       if (onFinish) void onFinish();
       else {
         if (state.activeSection) state.completeSection(state.activeSection);
-        state.setTestPhase('instructions');
+        state.setTestPhase(sampleMode ? 'results' : 'instructions');
       }
     };
     const updateClock = () => {
@@ -101,7 +115,7 @@ export default function TestHeader({ onFinish }: { onFinish?: () => void | Promi
       window.clearTimeout(cutoff);
       document.removeEventListener('visibilitychange', updateClock);
     };
-  }, [onFinish, setTimeLeft]);
+  }, [activeSection, onFinish, sampleMode, setTimeLeft]);
 
   useEffect(() => {
     if (!showMenu) return;
@@ -175,7 +189,7 @@ export default function TestHeader({ onFinish }: { onFinish?: () => void | Promi
             onClick={() => setShowFinishModal(true)}
             className="ielts-finish-button"
           >
-            Finish test
+            {finishLabel}
           </button>
           <button
             type="button"
@@ -229,7 +243,7 @@ export default function TestHeader({ onFinish }: { onFinish?: () => void | Promi
       {showFinishModal && (
         <div className="ielts-modal-backdrop">
           <div role="dialog" aria-modal="true" aria-labelledby="finish-test-title" className="ielts-modal-card max-w-md text-center">
-            <h2 id="finish-test-title" className="text-xl font-bold">Finish test?</h2>
+            <h2 id="finish-test-title" className="text-xl font-bold">{finishLabel}?</h2>
             <p className="mt-3 text-[#54585a]">
               You will not be able to return to this section after you finish it.
             </p>
@@ -245,7 +259,7 @@ export default function TestHeader({ onFinish }: { onFinish?: () => void | Promi
                   if (onFinish) void onFinish();
                   else {
                     if (activeSection) useTestStore.getState().completeSection(activeSection);
-                    useTestStore.getState().setTestPhase('instructions');
+                    useTestStore.getState().setTestPhase(sampleMode ? 'results' : 'instructions');
                   }
                 }}
                 className="ielts-primary-button flex-1"
@@ -310,7 +324,11 @@ export default function TestHeader({ onFinish }: { onFinish?: () => void | Promi
           <div role="alertdialog" aria-modal="true" className="ielts-modal-card max-w-sm text-center">
             <h2 className="text-xl font-bold text-[#c10037]">Time warning</h2>
             <p className="mt-3 font-semibold">You have {timeWarning} minutes remaining.</p>
-            <button type="button" onClick={() => setDismissedWarning(timeWarning)} className="ielts-primary-button mt-6 w-full">
+            <button
+              type="button"
+              onClick={() => setDismissedWarningState({ section: activeSection, warning: timeWarning })}
+              className="ielts-primary-button mt-6 w-full"
+            >
               OK
             </button>
           </div>

@@ -7,6 +7,8 @@ import {
   destinationForPlacement,
   EXTERNAL_DESTINATIONS,
   isFirstPartyDestination,
+  isKnownCrawler,
+  isPrefetchRequest,
 } from '../../src/lib/acquisition/validation';
 import { publicAcquisitionLink, publicAcquisitionOrigin } from '../../src/lib/acquisition/public-link';
 
@@ -85,4 +87,15 @@ test('printed QR targets use a fixed or explicitly configured origin', () => {
     if (previous === undefined) delete process.env.ACQUISITION_PUBLIC_ORIGIN;
     else process.env.ACQUISITION_PUBLIC_ORIGIN = previous;
   }
+});
+
+test('QR scan counting excludes social link previews, HTTP clients, and browser prefetches', () => {
+  assert.equal(isKnownCrawler('WhatsApp/2.24.12 i'), true);
+  assert.equal(isKnownCrawler('facebookexternalhit/1.1'), true);
+  assert.equal(isKnownCrawler('python-requests/2.31.0'), true);
+  assert.equal(isKnownCrawler('Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15'), false);
+
+  assert.equal(isPrefetchRequest(new Headers({ 'sec-purpose': 'prefetch' })), true);
+  assert.equal(isPrefetchRequest(new Headers({ 'next-router-prefetch': '1' })), true);
+  assert.equal(isPrefetchRequest(new Headers()), false);
 });

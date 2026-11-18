@@ -12,7 +12,7 @@ const schema = z.object({
 
 export async function GET(request: Request) {
   try {
-    await requirePrivilegedRequestUser(request);
+    await requirePrivilegedRequestUser(request, ['ADMIN']);
     return noStoreJson({ accessCodes: await listAccessCodes() });
   } catch (error) {
     return apiError(error, 'ACCESS_CODE_LIST_FAILED');
@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    const actor = await requirePrivilegedRequestUser(request);
+    const actor = await requirePrivilegedRequestUser(request, ['ADMIN']);
     const input = schema.parse(await request.json());
     const accessCodes = await generateAccessCodes({
       ...input,

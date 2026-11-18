@@ -129,7 +129,7 @@ export async function processWritingGradingRun(
   grader: typeof gradeWritingTasks = gradeWritingTasks,
 ) {
   const workerId = randomUUID();
-  const claimed = await claimGradingRun(gradingRunId, workerId, 120_000);
+  const claimed = await claimGradingRun(gradingRunId, workerId, 60_000);
   if (!claimed) {
     const existing = await prisma.gradingRun.findUnique({
       where: { id: gradingRunId },

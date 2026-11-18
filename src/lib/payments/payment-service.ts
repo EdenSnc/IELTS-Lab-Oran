@@ -421,6 +421,9 @@ export async function processChargilyWebhook(rawBody: string, signature: string 
     });
 
     if (event.type === 'checkout.paid') {
+      if (payment.status === 'REFUNDED' || payment.order.status === 'REFUNDED') {
+        throw new PaymentServiceError('PAYMENT_ALREADY_REFUNDED', 409);
+      }
       await transaction.paymentAttempt.update({
         where: { id: payment.id },
         data: { status: 'SUCCEEDED', completedAt: payment.completedAt ?? now, failureCode: null, failureMessage: null },
@@ -540,14 +543,24 @@ export async function reconcilePaymentOperations(now = new Date()) {
   const staleBefore = new Date(now.getTime() - 60 * 60_000);
   return prisma.$transaction(async (transaction) => {
     const staleOrders = await transaction.order.findMany({
-      where: { status: 'PENDING', createdAt: { lt: staleBefore } },
+      where: {
+        status: 'PENDING',
+        createdAt: { lt: staleBefore },
+        paymentAttempts: {
+          none: { status: 'PROCESSING', providerCheckoutId: null },
+        },
+      },
       select: { id: true },
       take: 100,
     });
     const orderIds = staleOrders.map(({ id }) => id);
     if (orderIds.length) {
       await transaction.paymentAttempt.updateMany({
-        where: { orderId: { in: orderIds }, status: { in: ['PENDING', 'PROCESSING'] } },
+        where: {
+          orderId: { in: orderIds },
+          status: { in: ['PENDING', 'PROCESSING'] },
+          NOT: { status: 'PROCESSING', providerCheckoutId: null },
+        },
         data: { status: 'EXPIRED', completedAt: now, failureCode: 'CHECKOUT_EXPIRED' },
       });
       await transaction.order.updateMany({

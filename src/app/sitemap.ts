@@ -27,7 +27,7 @@ const LAST_MODIFIED: Partial<Record<(typeof indexablePaths)[number], string>> = 
   'articles/computer-vs-paper-ielts': '2026-11-17',
   'articles/free-ielts-resources-algeria': '2026-11-17',
   'articles/how-to-register-algeria': '2026-11-17',
-  'articles/italy-student-visa-english-tests-algeria': '2026-08-27',
+  'articles/italy-student-visa-english-tests-algeria': '2026-09-01',
 };
 
 export default function sitemap(): MetadataRoute.Sitemap {

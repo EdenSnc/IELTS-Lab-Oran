@@ -13,8 +13,11 @@ function seededRandom(seed: number) {
 function oracleNormalize(value: string, rules: NormalizationRules) {
   let result = rules.trimOuterWhitespace === false ? value : value.trim();
   result = result.replace(/\s+/gu, ' ').normalize(rules.unicodeForm ?? 'NFC');
-  if (rules.punctuationSensitive === false) result = result.replace(/[^\p{L}\p{N}\s]/gu, '');
-  if (rules.caseSensitive === false) result = result.toLowerCase();
+  if (rules.punctuationSensitive === false) {
+    result = result.replace(/[^\p{L}\p{N}\s]/gu, '').replace(/\s+/gu, ' ');
+    if (rules.trimOuterWhitespace !== false) result = result.trim();
+  }
+  if (rules.caseSensitive !== true) result = result.toLowerCase();
   return result;
 }
 

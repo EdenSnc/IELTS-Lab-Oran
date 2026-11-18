@@ -9,6 +9,8 @@ import { shouldRefreshSupabaseSession, type ProxyResponseKind } from './lib/supa
 const handleI18nRouting = createMiddleware(routing);
 const environment = parsePublicEnvironment(process.env);
 
+const BOTID_PROXY_SEGMENT = '149e9513-01fa-4fb0-aad4-566afd725d1b';
+
 function rtcConnectSources() {
   if (!process.env.LIVEKIT_URL) return [];
   const url = new URL(process.env.LIVEKIT_URL);
@@ -16,7 +18,16 @@ function rtcConnectSources() {
     throw new Error('LIVEKIT_URL_INVALID');
   }
   const host = url.port ? `${url.hostname}:${url.port}` : url.hostname;
-  return [`https://${host}`, `wss://${host}`];
+  const sources = [`https://${host}`, `wss://${host}`];
+  if (url.hostname.endsWith('.livekit.cloud') && !url.port) {
+    sources.push(
+      'https://*.livekit.cloud',
+      'wss://*.livekit.cloud',
+      'https://*.turn.livekit.cloud',
+      'wss://*.turn.livekit.cloud',
+    );
+  }
+  return sources;
 }
 
 function responseKind(response: NextResponse): ProxyResponseKind {
@@ -36,6 +47,7 @@ function applyRequestSecurityHeaders(
     development: process.env.NODE_ENV !== 'production',
     supabaseOrigin: new URL(environment.NEXT_PUBLIC_SUPABASE_URL).origin,
     rtcSources: rtcConnectSources(),
+    strictDynamic: kind !== 'rewrite',
   });
   const headerName = process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV !== 'preview'
     ? 'Content-Security-Policy'
@@ -48,6 +60,8 @@ function applyRequestSecurityHeaders(
       const value = response.headers.get(`x-middleware-request-${name}`);
       if (value !== null) requestHeaders.set(name, value);
     }
+    const refreshedCookie = request.headers.get('cookie');
+    if (refreshedCookie !== null) requestHeaders.set('cookie', refreshedCookie);
   }
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', csp);
@@ -85,6 +99,9 @@ function alignXDefaultWithEnglish(response: NextResponse) {
 
 export default async function proxy(request: NextRequest) {
   const firstSegment = request.nextUrl.pathname.split('/')[1];
+  if (firstSegment?.startsWith(BOTID_PROXY_SEGMENT)) {
+    return NextResponse.next();
+  }
   const isLocalizedRoute = routing.locales.some(
     (locale) => locale === firstSegment,
   );
@@ -99,7 +116,7 @@ export default async function proxy(request: NextRequest) {
   } else if (['api', 'sim', 'speaking', 'sample', 'staff', 'r'].includes(firstSegment)) {
     response = NextResponse.next();
   } else {
-    response = NextResponse.rewrite(new URL('/_not-found', request.url));
+    response = NextResponse.rewrite(new URL('/_not-found', request.url), { status: 404 });
   }
 
   const kind = responseKind(response);
@@ -111,6 +128,6 @@ export default async function proxy(request: NextRequest) {
  
 export const config = {
   matcher: [
-    '/((?!_next|_not-found|_vercel|.*\\..*).*)',
+    '/((?!_next|_not-found|_vercel|149e9513-01fa-4fb0-aad4-566afd725d1b|.*\\.[a-zA-Z0-9]{1,8}$).*)',
   ],
 };

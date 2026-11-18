@@ -16,6 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: A
     slug,
     title: articleSeoTitle(locale, slug),
     description: articleDescription(locale, slug),
+    publishedTime: '2026-08-27',
     modifiedTime: reviewedAt,
   });
 }

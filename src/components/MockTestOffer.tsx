@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { ACADEMIC_MOCK_TEST_PRODUCT } from '@/lib/commerce/catalog';
+import { logSafeError } from '@/lib/observability/safe-log';
 import prisma from '@/lib/prisma';
 import { recordFunnelEvent } from '@/lib/growth/funnel-events';
 
@@ -9,10 +10,16 @@ export default async function MockTestOffer() {
     getLocale(),
     getTranslations('MockTest'),
   ]);
-  const product = await prisma.product.findUnique({
-    where: { code: ACADEMIC_MOCK_TEST_PRODUCT.code, active: true },
-    select: { id: true, currency: true, priceMinor: true, accessDays: true },
-  });
+  let product: { id: string; currency: string; priceMinor: number; accessDays: number | null } | null = null;
+  try {
+    product = await prisma.product.findUnique({
+      where: { code: ACADEMIC_MOCK_TEST_PRODUCT.code, active: true },
+      select: { id: true, currency: true, priceMinor: true, accessDays: true },
+    });
+  } catch (error) {
+    logSafeError('MOCK_TEST_OFFER_DB_UNAVAILABLE', error);
+    return null;
+  }
   if (!product) return null;
   await recordFunnelEvent({ type: 'PRODUCT_VIEWED', productId: product.id, metadata: { surface: 'landing', locale } });
   const price = new Intl.NumberFormat(locale, {
@@ -33,7 +40,7 @@ export default async function MockTestOffer() {
             <span className="rounded-full border border-white/10 bg-white/[0.06] px-4 py-2">{t('storedResults', { days: product.accessDays ?? 0 })}</span>
           </div>
         </div>
-        <div className="flex min-w-64 flex-col justify-center border-t border-white/10 bg-white/[0.045] p-8 md:border-l md:border-t-0 md:p-10">
+        <div className="flex min-w-64 flex-col justify-center border-t border-white/10 bg-white/[0.045] p-8 md:border-s md:border-t-0 md:p-10">
           <p className="text-sm text-white/50">{t('priceLabel')}</p>
           <p className="mt-2 text-4xl font-semibold tracking-[-0.04em]">{price}</p>
           <Link href="/account" className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-bold text-charcoal transition hover:bg-[#ffebee]">

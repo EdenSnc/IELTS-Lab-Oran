@@ -68,8 +68,13 @@ export async function acquireAttemptExecution(input: {
     if (attempt.mode === AttemptMode.STRICT && duration === null) {
       throw new AuthError('ATTEMPT_TIME_LIMIT_MISSING', 409);
     }
-    const attemptExpiresAt = attempt.expiresAt
-      ?? (duration === null ? new Date(now.getTime() + 24 * 3_600_000) : new Date(now.getTime() + duration * 1_000));
+    const effectiveStart = attempt.startedAt ?? now;
+    const durationDeadline = duration === null
+      ? new Date(effectiveStart.getTime() + 24 * 3_600_000)
+      : new Date(effectiveStart.getTime() + duration * 1_000);
+    const attemptExpiresAt = attempt.startedAt
+      ? (attempt.expiresAt ?? durationDeadline)
+      : (attempt.expiresAt && attempt.expiresAt < durationDeadline ? attempt.expiresAt : durationDeadline);
     if (attemptExpiresAt <= now) {
       await transaction.assessmentAttempt.update({
         where: { id: attempt.id },
@@ -83,8 +88,8 @@ export async function acquireAttemptExecution(input: {
         where: { id: attempt.id },
         data: {
           state: AttemptState.ACTIVE,
-          startedAt: attempt.startedAt ?? now,
-          expiresAt: attempt.expiresAt,
+          startedAt: effectiveStart,
+          expiresAt: attemptExpiresAt,
         },
       });
       await transaction.funnelEvent.createMany({

@@ -1,10 +1,11 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { LeadSource } from '@prisma/client';
+import { LeadSource, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { applicationSchema, boundedTallyAnswer } from '@/lib/leads/application';
 import prisma from '@/lib/prisma';
 import { requireHumanRequest } from '@/lib/security/bot';
+import { checkSlidingWindowRateLimit, extractClientIp } from '@/lib/security/rate-limit';
 
 const MAX_BODY_BYTES = 32_768;
 const phonePattern = /^(?:\+213|0)[567]\d{8}$/;
@@ -57,7 +58,14 @@ interface LeadInput {
 }
 
 function normalisePhone(value: string): string | null {
-  const phone = value.trim().replace(/[\s().-]/g, '');
+  let phone = value.trim().replace(/[\s().-]/g, '');
+  if (phone.startsWith('00213')) {
+    phone = `+213${phone.slice(5)}`;
+  }
+  const trunkMatch = /^\+2130([567]\d{8})$/.exec(phone);
+  if (trunkMatch) {
+    phone = `+213${trunkMatch[1]}`;
+  }
   if (!phonePattern.test(phone)) return null;
   return phone.startsWith('0') ? `+213${phone.slice(1)}` : phone;
 }
@@ -65,7 +73,8 @@ function normalisePhone(value: string): string | null {
 function sameOrigin(request: Request): boolean {
   const origin = request.headers.get('origin');
   const forwardedHost = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
-  const host = forwardedHost ?? request.headers.get('host');
+  const host = (forwardedHost && forwardedHost.length > 0 ? forwardedHost : null)
+    ?? request.headers.get('host')?.trim();
   if (!origin || !host) return false;
 
   try {
@@ -185,6 +194,15 @@ function parseDirectLead(payload: unknown): LeadInput | null {
   };
 }
 
+function isExternalEventDuplicate(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+    return false;
+  }
+  const target = error.meta?.target;
+  return (Array.isArray(target) ? target.includes('externalEventId') : String(target ?? '').includes('externalEventId'))
+    || error.message.includes('externalEventId');
+}
+
 export async function POST(request: Request) {
   if (!request.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
     return NextResponse.json({ error: 'Content-Type must be application/json.' }, { status: 415 });
@@ -219,12 +237,23 @@ export async function POST(request: Request) {
     }
     lead = parseTallyLead(payload);
   } else if (sameOrigin(request)) {
+    const rl = checkSlidingWindowRateLimit({
+      namespace: 'leads-direct',
+      key: extractClientIp(request),
+      limit: 10,
+      windowMs: 60_000,
+    });
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Too many submissions. Please try again shortly.' }, { status: 429 });
+    }
     try {
       await requireHumanRequest();
     } catch {
       return NextResponse.json({ error: 'ACCESS_DENIED' }, { status: 403 });
     }
     lead = parseDirectLead(payload);
+  } else {
+    return NextResponse.json({ error: 'CROSS_ORIGIN_FORBIDDEN' }, { status: 403 });
   }
 
   if (!lead) {
@@ -233,11 +262,21 @@ export async function POST(request: Request) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      const prospect = await tx.prospect.upsert({
+      const existingProspect = await tx.prospect.findUnique({
         where: { phone: lead.phone },
-        update: { email: lead.email ?? undefined, name: lead.fullName ?? undefined },
-        create: { phone: lead.phone, email: lead.email, name: lead.fullName },
+        select: { id: true, email: true, name: true },
       });
+      const prospect = existingProspect
+        ? await tx.prospect.update({
+          where: { id: existingProspect.id },
+          data: {
+            ...(!existingProspect.email && lead.email ? { email: lead.email } : {}),
+            ...(!existingProspect.name && lead.fullName ? { name: lead.fullName } : {}),
+          },
+        })
+        : await tx.prospect.create({
+          data: { phone: lead.phone, email: lead.email, name: lead.fullName },
+        });
 
       await tx.leadMagnetDownload.create({
         data: {
@@ -267,13 +306,7 @@ export async function POST(request: Request) {
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
-    if (
-      lead.externalEventId &&
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      error.code === 'P2002'
-    ) {
+    if (lead.externalEventId && isExternalEventDuplicate(error)) {
       return NextResponse.json({ success: true, duplicate: true });
     }
 

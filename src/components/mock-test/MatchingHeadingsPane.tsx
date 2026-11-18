@@ -60,8 +60,10 @@ export default function MatchingHeadingsPane({
     clearHighlights,
   } = useTextAnnotations('reading', passage?.id ?? group.id);
 
-  const passageHtml = useMemo(() => (
-    (passage?.bodyHtml ?? passage?.plainText ?? '').replace(
+  const passageHtml = useMemo(() => {
+    const baseHtml = passage?.bodyHtml
+      ?? (passage?.plainText ? `<p>${escapeHtml(passage.plainText).replaceAll('\n\n', '</p><p>').replaceAll('\n', '<br />')}</p>` : '');
+    return baseHtml.replace(
       /<span data-answer-position="Q(\d+)">\[\d+\]<\/span>/g,
       (_match, rawNumber: string) => {
         const number = Number(rawNumber);
@@ -72,8 +74,8 @@ export default function MatchingHeadingsPane({
             : `<span class="mock-ielts-gap-number">${number}</span>`)
           + '</button>';
       },
-    )
-  ), [answers, optionByLabel, passage?.bodyHtml, passage?.plainText]);
+    );
+  }, [answers, optionByLabel, passage]);
 
   const assign = useCallback((number: number, label: string) => {
     for (const otherNumber of numbers) {

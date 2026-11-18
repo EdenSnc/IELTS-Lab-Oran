@@ -83,7 +83,12 @@ export default function Intake({ cohortStatus }: IntakeProps) {
                   {launch.deadlineLabel} · <time dateTime={COHORT_APPLICATION_DEADLINE}>{launch.deadline}</time>
                 </p>
               )}
-              <a href={COHORT_FORM_URL} className="mt-4 inline-flex rounded-full bg-crimson px-5 py-2.5 text-sm font-bold text-white hover:bg-red-800">
+              <a
+                href={COHORT_FORM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex rounded-full bg-crimson px-5 py-2.5 text-sm font-bold text-white hover:bg-red-800"
+              >
                 {deadlinePassed ? launch.closedCta : launch.apply}
               </a>
               <Link href={COHORT_ARTICLE_PATH} className="mt-3 block text-sm text-white underline underline-offset-4">{launch.title}</Link>
@@ -155,7 +160,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
               </div>
             </div>
 
-            <p className="text-gray-400 leading-relaxed font-light text-sm border-l-2 border-white/10 pl-4 mt-auto">
+            <p className="text-gray-400 leading-relaxed font-light text-sm border-s-2 border-white/10 ps-4 mt-auto">
               {t('footerText')}
             </p>
           </div>
@@ -188,7 +193,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
             className="shrink-0 inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/15 text-white/90 hover:text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all duration-200 backdrop-blur-sm"
           >
             {bt('cta')}
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="w-3.5 h-3.5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </a>

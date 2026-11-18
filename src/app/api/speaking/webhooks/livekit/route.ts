@@ -21,13 +21,24 @@ export async function POST(request: Request) {
     const event = await receiver.receive(raw, request.headers.get('authorization') ?? request.headers.get('authorize') ?? undefined);
     const roomName = event.room?.name ?? event.egressInfo?.roomName;
     if (!roomName) return noStoreJson({ received: true });
-    const session = await prisma.speakingSession.findUnique({ where: { rtcRoomName: roomName }, select: { id: true, state: true } });
+    const session = await prisma.speakingSession.findUnique({
+      where: { rtcRoomName: roomName },
+      select: {
+        id: true,
+        state: true,
+        recordingConsentAt: true,
+        consentRecord: { select: { type: true, action: true } },
+      },
+    });
     if (!session) return noStoreJson({ received: true });
 
     if (event.event === 'track_published' && event.track?.source === TrackSource.MICROPHONE && event.participant) {
       const identity = event.participant.identity;
       const kind = identity.startsWith('learner:') ? 'CANDIDATE_AUDIO' as const : identity.startsWith('examiner:') ? 'EXAMINER_AUDIO' as const : null;
-      if (kind) {
+      const hasRecordingConsent = Boolean(session.recordingConsentAt)
+        && session.consentRecord?.type === 'RECORDING'
+        && session.consentRecord.action === 'ACCEPTED';
+      if (kind && (kind !== 'CANDIDATE_AUDIO' || hasRecordingConsent)) {
         const endpoint = process.env.SPEAKING_RECORDING_S3_ENDPOINT;
         const accessKey = process.env.SPEAKING_RECORDING_S3_ACCESS_KEY;
         const secret = process.env.SPEAKING_RECORDING_S3_SECRET_KEY;
@@ -69,14 +80,23 @@ export async function POST(request: Request) {
       const info = event.egressInfo;
       if (info.error || info.errorCode) {
         await prisma.speakingRecording.updateMany({
-          where: { sessionId: session.id, status: { not: 'READY' } },
+          where: {
+            sessionId: session.id,
+            providerArtifactId: info.egressId,
+            status: { not: 'READY' },
+          },
           data: { status: 'FAILED', errorCode: String(info.errorCode || 'EGRESS_FAILED') },
         });
       } else {
         for (const [index, file] of info.fileResults.entries()) {
           const kind = recordingKind(file.filename);
           const placeholder = await prisma.speakingRecording.findFirst({
-            where: { sessionId: session.id, kind, storageKey: null }, orderBy: { createdAt: 'asc' },
+            where: {
+              sessionId: session.id,
+              kind,
+              OR: [{ providerArtifactId: info.egressId }, { storageKey: null }],
+            },
+            orderBy: { createdAt: 'asc' },
           });
           const data = {
             kind,
@@ -93,9 +113,12 @@ export async function POST(request: Request) {
             update: data,
           });
         }
-      }
-      if (session.state === 'ENDED' || session.state === 'RECORDING_PROCESSING') {
-        await prisma.speakingSession.update({ where: { id: session.id }, data: { state: 'AWAITING_HUMAN_SCORE' } });
+        const remainingActive = await prisma.speakingRecording.count({
+          where: { sessionId: session.id, status: { in: ['REQUESTED', 'RECORDING', 'PROCESSING'] } },
+        });
+        if (remainingActive === 0 && (session.state === 'ENDED' || session.state === 'RECORDING_PROCESSING')) {
+          await prisma.speakingSession.update({ where: { id: session.id }, data: { state: 'AWAITING_HUMAN_SCORE' } });
+        }
       }
     }
     return noStoreJson({ received: true });

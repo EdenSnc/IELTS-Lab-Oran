@@ -93,7 +93,7 @@ export default function LeadMagnet() {
       <div className="bg-charcoal text-white rounded-[3rem] p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden border border-white/10">
         <div className="absolute top-0 right-0 w-64 h-64 bg-crimson/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
         
-        <div className="md:w-1/2 relative z-10 text-center md:text-left">
+        <div className="md:w-1/2 relative z-10 text-center md:text-start">
           <h2 className="text-3xl font-extrabold tracking-tight mb-4">{t('title')}</h2>
           <p className="text-gray-300 text-lg font-light leading-relaxed mb-4">{t('subtitle')}</p>
           <p className="text-sm text-gray-400 font-medium">{t('description')}</p>
@@ -125,6 +125,7 @@ export default function LeadMagnet() {
                 ref={inputRef}
                 id="lm-phone"
                 type="tel"
+                dir="ltr"
                 autoComplete="tel"
                 value={phone}
                 onChange={(e) => {
@@ -135,7 +136,7 @@ export default function LeadMagnet() {
                 aria-invalid={status === 'error'}
                 aria-describedby={status === 'error' ? 'lm-phone-error' : undefined}
                 placeholder={t('placeholder')}
-                className="w-full bg-white/5 border border-white/10 text-white rounded-3xl px-6 py-4 focus:outline-none focus:border-crimson/50 focus:bg-white/10 transition-all placeholder-gray-500 text-lg font-medium"
+                className="w-full bg-white/5 border border-white/10 text-white rounded-3xl px-6 py-4 text-start focus:outline-none focus:border-crimson/50 focus:bg-white/10 transition-all placeholder-gray-500 text-lg font-medium"
               />
 
               {status === 'error' && (
@@ -162,7 +163,7 @@ export default function LeadMagnet() {
                 ) : (
                   <>
                     {t('submit')}
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                     </svg>
                   </>

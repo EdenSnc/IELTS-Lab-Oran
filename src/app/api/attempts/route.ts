@@ -8,9 +8,6 @@ import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
 const createAttemptSchema = z.object({
   entitlementId: z.string().uuid(),
   blueprintId: z.string().uuid(),
-  mode: z.nativeEnum(AttemptMode).default(AttemptMode.STRICT),
-  minimumSourceYear: z.number().int().min(1900).max(2200).optional(),
-  archiveIncluded: z.boolean().optional(),
 }).strict();
 
 export async function POST(request: Request) {
@@ -19,7 +16,11 @@ export async function POST(request: Request) {
     const user = await requireRequestUser(request, ['STUDENT']);
     await requireRequestDeviceSlot(request, user.id);
     const input = createAttemptSchema.parse(await request.json());
-    const attempt = await createAuthenticatedAttempt({ userId: user.id, ...input });
+    const attempt = await createAuthenticatedAttempt({
+      userId: user.id,
+      mode: AttemptMode.STRICT,
+      ...input,
+    });
     return noStoreJson({
       id: attempt.id,
       state: attempt.state,

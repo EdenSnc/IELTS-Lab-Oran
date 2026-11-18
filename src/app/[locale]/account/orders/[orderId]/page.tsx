@@ -12,6 +12,9 @@ import { syncApplicationUser } from '@/lib/auth/request-user';
 
 export default async function OrderReceiptPage({ params }: { params: Promise<{ locale: string; orderId: string }> }) {
   const { locale, orderId } = await params;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(orderId)) {
+    notFound();
+  }
   const client = await createSupabaseServerClient();
   const { data } = await client.auth.getUser();
   if (!data.user) redirect(`/${locale}/auth/sign-in`);

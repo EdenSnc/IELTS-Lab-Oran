@@ -41,6 +41,7 @@ export default function NotesSidebar() {
               {note.quote}
             </blockquote>
             <textarea
+              data-notes-editor="true"
               value={note.text}
               onChange={(event) => updateNote(activeSection, note.id, event.target.value)}
               placeholder="Type your note"

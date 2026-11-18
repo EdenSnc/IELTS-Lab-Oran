@@ -101,21 +101,21 @@ const COPY: Record<Locale, { badge: string; title: string; subtitle: string; rea
     title: 'Practical Guides for IELTS Candidates in Algeria',
     subtitle: 'Verified fees in Algerian Dinars, computer-delivered exam facts, and score tools tailored to Oran and Algerian candidates.',
     readMore: 'Read guide →',
-    viewAll: 'Browse all 10 IELTS Algeria guides →',
+    viewAll: 'Browse all 11 IELTS Algeria guides →',
   },
   fr: {
     badge: 'Guides pratiques IELTS Algérie & Oran',
     title: 'Ressources vérifiées pour les candidats à Oran et en Algérie',
     subtitle: 'Tarifs officiels en dinars, passage au format ordinateur, calculatrice CLB et préparation structurée.',
     readMore: 'Lire le guide →',
-    viewAll: 'Voir les 10 guides IELTS Algérie →',
+    viewAll: 'Voir les 11 guides IELTS Algérie →',
   },
   ar: {
     badge: 'دليل مرشحي IELTS في وهران والجزائر',
     title: 'أدلة عملية ومحدثة لاجتياز اختبار IELTS في الجزائر',
     subtitle: 'الرسوم الرسمية بالدينار الجزائري، تفاصيل الاختبار على الكمبيوتر، وحاسبة CLB لكندا.',
     readMore: 'اقرأ الدليل ←',
-    viewAll: 'تصفح جميع الأدلة العشرة ←',
+    viewAll: 'تصفح جميع الأدلة الـ 11 ←',
   },
 };
 

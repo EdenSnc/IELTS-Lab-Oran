@@ -7,9 +7,11 @@ export default function StrictDRM() {
     let internalWritingClipboard = '';
     let internalWritingClipboardExpiresAt = 0;
 
+    const normalizeLineEndings = (value: string) => value.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target instanceof Element ? e.target : null;
-      const isWritingResponse = Boolean(target?.closest('[data-writing-response="true"]'));
+      const isEditableEditor = Boolean(target?.closest('[data-writing-response="true"], [data-notes-editor="true"]'));
 
       if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
         e.preventDefault();
@@ -17,13 +19,13 @@ export default function StrictDRM() {
         return;
       }
 
-      // The official Writing editor offers basic editing shortcuts. Clipboard
-      // actions remain disabled in passages and short-answer fields.
+      // The official Writing editor and private scratchpad offer basic editing
+      // shortcuts. Clipboard actions remain disabled in passages and short-answer fields.
       if (
         (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey &&
         (e.key === 'c' || e.key === 'v' || e.key === 'x' || e.key === 'z' || e.key === 'C' || e.key === 'V' || e.key === 'X' || e.key === 'Z')
       ) {
-        if (e.key.toLowerCase() === 'z' || isWritingResponse) return;
+        if (e.key.toLowerCase() === 'z' || isEditableEditor) return;
         e.preventDefault();
         return;
       }
@@ -56,17 +58,17 @@ export default function StrictDRM() {
       e.preventDefault();
     };
 
-    const isWritingClipboardEvent = (e: ClipboardEvent) => (
+    const isEditableClipboardEvent = (e: ClipboardEvent) => (
       e.target instanceof Element
-      && Boolean(e.target.closest('[data-writing-response="true"]'))
+      && Boolean(e.target.closest('[data-writing-response="true"], [data-notes-editor="true"]'))
     );
 
     const handleCopy = (e: ClipboardEvent) => {
-      if (isWritingClipboardEvent(e)) {
+      if (isEditableClipboardEvent(e)) {
         const field = e.target instanceof HTMLTextAreaElement ? e.target : null;
-        internalWritingClipboard = field
+        internalWritingClipboard = normalizeLineEndings(field
           ? field.value.slice(field.selectionStart, field.selectionEnd)
-          : window.getSelection()?.toString() ?? '';
+          : window.getSelection()?.toString() ?? '');
         internalWritingClipboardExpiresAt = Date.now() + 10 * 60 * 1000;
         return;
       }
@@ -75,11 +77,11 @@ export default function StrictDRM() {
     };
 
     const handlePaste = (e: ClipboardEvent) => {
-      if (!isWritingClipboardEvent(e)) {
+      if (!isEditableClipboardEvent(e)) {
         e.preventDefault();
         return;
       }
-      const pastedText = e.clipboardData?.getData('text/plain') ?? '';
+      const pastedText = normalizeLineEndings(e.clipboardData?.getData('text/plain') ?? '');
       if (
         !internalWritingClipboard
         || Date.now() > internalWritingClipboardExpiresAt
@@ -88,11 +90,11 @@ export default function StrictDRM() {
     };
 
     const handleCut = (e: ClipboardEvent) => {
-      if (isWritingClipboardEvent(e)) {
+      if (isEditableClipboardEvent(e)) {
         const field = e.target instanceof HTMLTextAreaElement ? e.target : null;
-        internalWritingClipboard = field
+        internalWritingClipboard = normalizeLineEndings(field
           ? field.value.slice(field.selectionStart, field.selectionEnd)
-          : window.getSelection()?.toString() ?? '';
+          : window.getSelection()?.toString() ?? '');
         internalWritingClipboardExpiresAt = Date.now() + 10 * 60 * 1000;
         return;
       }

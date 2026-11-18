@@ -102,7 +102,8 @@ async function loadWritingTasks(
   const version = await prisma.testVersion.findFirst({
     where: {
       id: testVersionId,
-      ...(process.env.NODE_ENV === 'production' ? { status: 'PUBLISHED' as const } : {}),
+      status: 'PUBLISHED',
+      test: { isPublicDemo: true },
     },
     select: {
       id: true,

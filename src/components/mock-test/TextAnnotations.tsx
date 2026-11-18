@@ -133,29 +133,25 @@ function rangeFromTextOffsets(container: Node, startOffset: number, endOffset: n
 export function useTextAnnotations(section: IELTSSection, contentKey: string = section) {
   const containerRef = useRef<HTMLDivElement>(null);
   const instanceId = useId();
-  const storedRangesRef = useRef<StoredRange[]>([]);
-  const previousContentKeyRef = useRef(contentKey);
+  const storedRangesByKeyRef = useRef(new Map<string, StoredRange[]>());
   const [menu, setMenu] = useState<MenuState | null>(null);
   const addNote = useTestStore((state) => state.addNote);
 
   const rebuildRanges = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
-    const ranges = storedRangesRef.current.flatMap(({ startOffset, endOffset }) => {
+    const storedForKey = storedRangesByKeyRef.current.get(contentKey) ?? [];
+    const ranges = storedForKey.flatMap(({ startOffset, endOffset }) => {
       const range = rangeFromTextOffsets(container, startOffset, endOffset);
       return range && !range.collapsed ? [range] : [];
     });
     highlightRanges.set(instanceId, ranges);
     repaintHighlights();
-  }, [instanceId]);
+  }, [contentKey, instanceId]);
 
   useLayoutEffect(() => {
-    if (previousContentKeyRef.current !== contentKey) {
-      previousContentKeyRef.current = contentKey;
-      storedRangesRef.current = [];
-    }
     rebuildRanges();
-  });
+  }, [contentKey, rebuildRanges]);
 
   useLayoutEffect(() => {
     return () => {
@@ -176,16 +172,18 @@ export function useTextAnnotations(section: IELTSSection, contentKey: string = s
 
     const selectedRange = selection.getRangeAt(0);
     const rect = selectedRange.getBoundingClientRect();
+    const startOffset = textOffset(container, selectedRange.startContainer, selectedRange.startOffset);
+    const endOffset = textOffset(container, selectedRange.endContainer, selectedRange.endOffset);
+    const storedForKey = storedRangesByKeyRef.current.get(contentKey) ?? [];
     setMenu({
       contentKey,
       x: Math.max(8, Math.min(clientX ?? rect.left, window.innerWidth - 180)),
       y: Math.max(8, Math.min(clientY ?? rect.bottom + 8, window.innerHeight - 150)),
       quote,
-      startOffset: textOffset(container, selectedRange.startContainer, selectedRange.startOffset),
-      endOffset: textOffset(container, selectedRange.endContainer, selectedRange.endOffset),
-      highlighted: storedRangesRef.current.some((stored) => (
-        stored.startOffset < textOffset(container, selectedRange.endContainer, selectedRange.endOffset)
-        && stored.endOffset > textOffset(container, selectedRange.startContainer, selectedRange.startOffset)
+      startOffset,
+      endOffset,
+      highlighted: storedForKey.some((stored) => (
+        stored.startOffset < endOffset && stored.endOffset > startOffset
       )),
     });
     return true;
@@ -215,12 +213,19 @@ export function useTextAnnotations(section: IELTSSection, contentKey: string = s
 
   const highlight = () => {
     if (!menu || menu.contentKey !== contentKey) return;
+    const current = storedRangesByKeyRef.current.get(contentKey) ?? [];
     if (menu.highlighted) {
-      storedRangesRef.current = storedRangesRef.current.filter((stored) => (
-        stored.endOffset <= menu.startOffset || stored.startOffset >= menu.endOffset
-      ));
+      storedRangesByKeyRef.current.set(
+        contentKey,
+        current.filter((stored) => (
+          stored.endOffset <= menu.startOffset || stored.startOffset >= menu.endOffset
+        )),
+      );
     } else {
-      storedRangesRef.current.push({ startOffset: menu.startOffset, endOffset: menu.endOffset });
+      storedRangesByKeyRef.current.set(
+        contentKey,
+        [...current, { startOffset: menu.startOffset, endOffset: menu.endOffset }],
+      );
     }
     rebuildRanges();
     clearSelection();
@@ -233,7 +238,7 @@ export function useTextAnnotations(section: IELTSSection, contentKey: string = s
   };
 
   const clearHighlights = () => {
-    storedRangesRef.current = [];
+    storedRangesByKeyRef.current.delete(contentKey);
     rebuildRanges();
     clearSelection();
   };
@@ -268,9 +273,9 @@ export function TextAnnotationMenu({ menu, onHighlight, onNote, onClear }: {
 
   return (
     <div className="text-annotation-menu fixed z-[65] min-w-40 rounded-sm border border-gray-300 bg-white py-1 text-sm shadow-lg" style={{ top: menu.y, left: menu.x }} role="menu" aria-label="Selected text actions">
-      <button type="button" onPointerDown={action(onHighlight)} onClick={keyboardAction(onHighlight)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">{menu.highlighted ? 'Remove highlight' : 'Highlight'}</button>
-      <button type="button" onPointerDown={action(onNote)} onClick={keyboardAction(onNote)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Add note</button>
-      <button type="button" onPointerDown={action(onClear)} onClick={keyboardAction(onClear)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Clear all</button>
+      <button type="button" role="menuitem" onPointerDown={action(onHighlight)} onClick={keyboardAction(onHighlight)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">{menu.highlighted ? 'Remove highlight' : 'Highlight'}</button>
+      <button type="button" role="menuitem" onPointerDown={action(onNote)} onClick={keyboardAction(onNote)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Add note</button>
+      <button type="button" role="menuitem" onPointerDown={action(onClear)} onClick={keyboardAction(onClear)} className="block w-full px-4 py-2 text-left hover:bg-gray-100">Clear all</button>
     </div>
   );
 }

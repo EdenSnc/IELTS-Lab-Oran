@@ -24,11 +24,28 @@ test('Proxy forwards the URL locale alongside the CSP nonce', async () => {
   }
 });
 
-test('Proxy passes through /r/, /sample, and /staff routes without rewriting to /_not-found', async () => {
+test('Proxy passes through /r/, /sample, /staff, and BotID Kasada routes without rewriting to /_not-found', async () => {
   const { default: proxy } = await import('../../src/proxy');
 
-  for (const path of ['/r/abcDEF1234', '/sample?locale=en', '/staff/operations']) {
+  const passthroughPaths = [
+    '/r/abcDEF1234',
+    '/sample?locale=en',
+    '/staff/operations',
+    '/149e9513-01fa-4fb0-aad4-566afd725d1b-2d206a39-8ed7-437e-a3be-862e0f06eea3/c.js',
+  ];
+
+  for (const path of passthroughPaths) {
     const response = await proxy(new NextRequest(`https://www.ieltslab.org${path}`));
     assert.equal(response.headers.get('x-middleware-rewrite'), null, `${path} should not rewrite to /_not-found`);
   }
+});
+
+test('Proxy rewrites unmatched non-localized paths to /_not-found with 404 status and non-strict-dynamic CSP', async () => {
+  const { default: proxy } = await import('../../src/proxy');
+
+  const response = await proxy(new NextRequest('https://www.ieltslab.org/zz-unmatched-route'));
+  assert.equal(response.status, 404);
+  assert.match(response.headers.get('x-middleware-rewrite') ?? '', /\/_not-found$/);
+  const csp = response.headers.get('content-security-policy') ?? '';
+  assert.doesNotMatch(csp, /'strict-dynamic'/, 'Static /_not-found rewrite must not emit strict-dynamic without per-request nonce hydration');
 });

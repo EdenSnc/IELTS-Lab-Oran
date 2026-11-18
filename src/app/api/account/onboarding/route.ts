@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     const input = schema.parse(await request.json());
     const whatsapp = normalizeE164Phone(input.whatsapp);
     if (!whatsapp) throw new AuthError('INVALID_WHATSAPP', 400);
-    const user = await requireRequestUser(request);
+    const user = await requireRequestUser(request, undefined, { syncWhatsapp: false });
     await completeAccountOnboarding({
       ...input,
       userId: user.id,

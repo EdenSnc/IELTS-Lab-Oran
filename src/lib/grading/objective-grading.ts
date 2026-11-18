@@ -44,7 +44,8 @@ export async function gradeVerifiedObjectiveAnswers(input: {
   const version = await prisma.testVersion.findFirst({
     where: {
       id: input.testVersionId,
-      ...(process.env.NODE_ENV === 'production' ? { status: 'PUBLISHED' as const } : {}),
+      status: 'PUBLISHED',
+      test: { isPublicDemo: true },
     },
     select: {
       id: true,

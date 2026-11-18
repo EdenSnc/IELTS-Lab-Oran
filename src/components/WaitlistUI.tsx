@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { readActiveUtms } from '@/lib/acquisition/utm-client';
 
 const copy = {
   en: {
@@ -8,12 +9,13 @@ const copy = {
     headline: 'You missed it.\nDon\'t miss the next one.',
     sub: 'Seats go in hours. Get priority access before we open publicly.',
     form_label: 'Your WhatsApp number',
-    form_placeholder: '+ 213 7XX XXX XXX',
+    form_placeholder: '+213 7XX XXX XXX',
     form_cta: 'Reserve my spot',
     disclaimer: 'No spam. No cold calls. Just a single message when the next cohort opens.',
     whatsapp_label: 'Prefer to reach out directly?',
     whatsapp_cta: 'Message on WhatsApp',
     whatsapp_msg: 'Hi Mr. Senouci, I want to join the waitlist for the next IELTS Lab Oran cohort. Please notify me when seats open.',
+    phone_suffix: ' — My number: ',
     proof: [
       { n: '8', label: 'seats per cohort' },
       { n: '100%', label: 'computer-delivered' },
@@ -26,12 +28,13 @@ const copy = {
     headline: 'Vous l\'avez raté.\nNe ratez pas la prochaine.',
     sub: 'Les places partent en quelques heures. Accès prioritaire avant l\'ouverture publique.',
     form_label: 'Votre numéro WhatsApp',
-    form_placeholder: '+ 213 7XX XXX XXX',
+    form_placeholder: '+213 7XX XXX XXX',
     form_cta: 'Réserver ma place',
     disclaimer: 'Pas de spam. Pas d\'appels. Un seul message quand la prochaine cohorte ouvre.',
     whatsapp_label: 'Vous préférez contacter directement ?',
     whatsapp_cta: 'Message sur WhatsApp',
     whatsapp_msg: 'Bonjour Mr. Senouci, je souhaite rejoindre la liste d\'attente pour la prochaine cohorte d\'IELTS Lab Oran. Merci de me prévenir quand les places sont disponibles.',
+    phone_suffix: ' — Mon numéro : ',
     proof: [
       { n: '8', label: 'places par cohorte' },
       { n: '100%', label: 'sur ordinateur' },
@@ -44,12 +47,13 @@ const copy = {
     headline: 'فاتتك.\nلا تفوّت الدفعة القادمة.',
     sub: 'المقاعد تُحجز في ساعات. احصل على الأولوية قبل الإعلان العام.',
     form_label: 'رقم واتساب',
-    form_placeholder: '+ 213 7XX XXX XXX',
+    form_placeholder: '+213 7XX XXX XXX',
     form_cta: 'احجز مقعدي',
     disclaimer: 'لا رسائل مزعجة. لا اتصالات. فقط رسالة واحدة عند فتح الدفعة التالية.',
     whatsapp_label: 'تفضّل التواصل المباشر؟',
     whatsapp_cta: 'راسل على واتساب',
     whatsapp_msg: 'السلام عليكم سنوسي، أريد الانضمام إلى قائمة الانتظار للدفعة القادمة من IELTS Lab Oran. أرجو إخباري عند فتح المقاعد.',
+    phone_suffix: ' — رقمي: ',
     proof: [
       { n: '8', label: 'مقاعد لكل دفعة' },
       { n: '100%', label: 'اختبار رقمي' },
@@ -66,13 +70,31 @@ interface WaitlistUIProps {
 export default function WaitlistUI({ locale }: WaitlistUIProps) {
   const c = copy[locale as keyof typeof copy] ?? copy.en;
   const isRtl = locale === 'ar';
-  const waNumber = '213780343103';
+  const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '213780343103';
   const [phone, setPhone] = useState('');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const trimmed = phone.trim();
+    if (trimmed) {
+      const utms = readActiveUtms();
+      void fetch('/api/leads', {
+        method: 'POST',
+        keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: trimmed,
+          utmSource: utms.utm_source,
+          utmMedium: utms.utm_medium,
+          utmCampaign: utms.utm_campaign,
+          utmContent: utms.utm_content,
+          formName: 'Cohort Waitlist',
+          source: 'cohort_waitlist',
+        }),
+      }).catch(() => undefined);
+    }
     const msg = encodeURIComponent(
-      `${c.whatsapp_msg}${phone ? ` - My number: ${phone}` : ''}`
+      `${c.whatsapp_msg}${trimmed ? `${c.phone_suffix}${trimmed}` : ''}`,
     );
     window.open(`https://wa.me/${waNumber}?text=${msg}`, '_blank', 'noopener,noreferrer');
   }
@@ -123,7 +145,7 @@ export default function WaitlistUI({ locale }: WaitlistUIProps) {
         {/* Form Card */}
         <div className="w-full bg-white/[0.04] border border-white/10 rounded-3xl p-6 md:p-8 backdrop-blur-md mb-6 shadow-2xl">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <label htmlFor="wl-phone" className="text-white/80 text-sm font-semibold text-left block">
+            <label htmlFor="wl-phone" className="text-white/80 text-sm font-semibold text-start block">
               {c.form_label}
             </label>
             <div className="flex gap-3">
@@ -131,10 +153,11 @@ export default function WaitlistUI({ locale }: WaitlistUIProps) {
                 id="wl-phone"
                 name="phone"
                 type="tel"
+                dir="ltr"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder={c.form_placeholder}
-                className="flex-1 bg-white/10 border border-white/15 text-white placeholder:text-white/30 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-crimson/60 focus:border-crimson/60 transition-all min-w-0"
+                className="flex-1 bg-white/10 border border-white/15 text-white placeholder:text-white/30 rounded-xl px-4 py-3.5 text-sm text-start focus:outline-none focus:ring-2 focus:ring-crimson/60 focus:border-crimson/60 transition-all min-w-0"
               />
               <button
                 type="submit"

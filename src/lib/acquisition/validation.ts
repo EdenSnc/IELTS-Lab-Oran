@@ -88,5 +88,11 @@ export function isFirstPartyDestination(destination: string) {
 }
 
 export function isKnownCrawler(userAgent: string) {
-  return /bot|crawler|spider|preview|headless|lighthouse|curl|wget/i.test(userAgent);
+  return /bot|crawler|spider|preview|headless|lighthouse|curl|wget|facebookexternalhit|whatsapp|telegram|discord|slack|python|go-http-client|undici|axios|node-fetch/i.test(userAgent);
+}
+
+export function isPrefetchRequest(headers: Headers) {
+  const purpose = `${headers.get('purpose') ?? ''} ${headers.get('sec-purpose') ?? ''} ${headers.get('x-moz') ?? ''}`;
+  if (/prefetch|preview|prerender/i.test(purpose)) return true;
+  return headers.has('next-router-prefetch');
 }

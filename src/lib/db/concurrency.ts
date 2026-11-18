@@ -51,15 +51,6 @@ function retryDelay(retry: number) {
   return new Promise((resolve) => setTimeout(resolve, base + Math.floor(Math.random() * 26)));
 }
 
-function earliestExpiry(reservedAt: Date, durationSeconds: number | null, entitlementEndsAt: Date | null) {
-  const durationEndsAt = durationSeconds === null
-    ? null
-    : new Date(reservedAt.getTime() + durationSeconds * 1_000);
-  if (!durationEndsAt) return entitlementEndsAt;
-  if (!entitlementEndsAt) return durationEndsAt;
-  return durationEndsAt < entitlementEndsAt ? durationEndsAt : entitlementEndsAt;
-}
-
 /**
  * Reserves one permitted attempt and creates it in the same serializable
  * transaction. Never replace this with read-then-increment.
@@ -115,11 +106,9 @@ export async function reserveEntitlementAndCreateAttempt(input: StartAttemptInpu
           throw new EntitlementUnavailableError();
         }
 
-        const expiresAt = earliestExpiry(
-          reserved[0].reservedAt,
-          input.manifestPayload.totalTimeLimitSeconds,
-          reserved[0].endsAt,
-        );
+        // Unstarted DRAFT attempts only cap at entitlement expiry; the active
+        // sitting timer starts when acquireAttemptExecution transitions to ACTIVE.
+        const expiresAt = reserved[0].endsAt;
         const attempt = await transaction.assessmentAttempt.create({
           data: {
             userId: input.userId,

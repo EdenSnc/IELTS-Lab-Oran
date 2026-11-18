@@ -1,9 +1,12 @@
-import { readdirSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
 function collect(candidate) {
   const absolute = path.resolve(candidate);
+  if (statSync(absolute).isFile()) {
+    return absolute.endsWith('.test.ts') ? [absolute] : [];
+  }
   const entries = readdirSync(absolute, { withFileTypes: true });
   return entries.flatMap((entry) => {
     const nested = path.join(absolute, entry.name);
@@ -19,12 +22,14 @@ const files = (roots.length ? roots : ['tests/unit', 'tests/certification'])
 if (!files.length) throw new Error('No test files found.');
 
 for (const file of files) {
-  const result = spawnSync(process.execPath, [
-    '--conditions=react-server',
+  const isIntegration = file.split(path.sep).includes('integration');
+  const args = [
+    ...(isIntegration ? [] : ['--conditions=react-server']),
     '--import',
     'tsx',
     '--test',
     file,
-  ], { stdio: 'inherit' });
+  ];
+  const result = spawnSync(process.execPath, args, { stdio: 'inherit' });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }

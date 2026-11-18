@@ -9,6 +9,7 @@ initBotId({
     { path: '/api/auth/password', method: 'POST' },
     { path: '/api/account/redeem', method: 'POST' },
     { path: '/api/devices', method: 'POST' },
+    { path: '/api/devices', method: 'PATCH' },
     { path: '/api/devices/step-up', method: 'POST' },
     { path: '/api/payments/checkout', method: 'POST' },
   ],

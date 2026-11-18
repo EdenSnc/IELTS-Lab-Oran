@@ -84,15 +84,29 @@ async function enrollDeviceSlotInternal(
           select: { id: true },
         });
         if (!activeEntitlement) throw new AuthError('ACTIVE_TEST_ACCESS_REQUIRED', 403);
-        const existing = await transaction.deviceSlot.findMany({
-          where: { userId, revokedAt: null },
+        const allSlots = await transaction.deviceSlot.findMany({
+          where: { userId },
           orderBy: { slotNumber: 'asc' },
         });
+        const existing = allSlots.filter((candidate) => candidate.revokedAt === null);
         if (onlyIfNone && existing.length > 0) return null;
         const slotNumber = ([1, 2] as const).find((candidate) => (
           !existing.some((slot) => slot.slotNumber === candidate)
         ));
         if (!slotNumber) throw new AuthError('DEVICE_LIMIT_REACHED', 409);
+        const revokedSlot = allSlots.find((candidate) => candidate.slotNumber === slotNumber);
+        if (revokedSlot) {
+          return transaction.deviceSlot.update({
+            where: { id: revokedSlot.id },
+            data: {
+              tokenHash: issued.tokenHash,
+              label: label ?? null,
+              revokedAt: null,
+              enrolledAt: now,
+              lastSeenAt: now,
+            },
+          });
+        }
         return transaction.deviceSlot.create({
           data: { userId, slotNumber, tokenHash: issued.tokenHash, label },
         });
@@ -148,6 +162,9 @@ export async function replaceDeviceSlot(
     if (current.lastReplacedAt && current.lastReplacedAt > cooldownStart) {
       throw new AuthError('DEVICE_REPLACEMENT_COOLDOWN', 429);
     }
+    await transaction.attemptExecutionLease.deleteMany({
+      where: { deviceSlotId: current.id },
+    });
     return transaction.deviceSlot.update({
       where: { id: current.id },
       data: {

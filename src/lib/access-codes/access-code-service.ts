@@ -8,7 +8,7 @@ import { AuthError } from '@/lib/auth/request-user';
 import { funnelEventData } from '@/lib/growth/funnel-events';
 
 const CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-const STAFF_ROLES = new Set(['TEACHER', 'CONTENT_REVIEWER', 'ADMIN']);
+const STAFF_ROLES = new Set(['ADMIN']);
 
 function codeHash(code: string) {
   return createHash('sha256').update(code, 'utf8').digest('hex');
@@ -98,16 +98,19 @@ export async function redeemAccessCode(input: { userId: string; code: string }) 
     const now = new Date();
     if (accessCode.expiresAt && accessCode.expiresAt <= now) throw new AuthError('ACCESS_CODE_EXPIRED', 410);
     if (!accessCode.product.active) throw new AuthError('PRODUCT_NOT_AVAILABLE', 404);
-    const existing = await transaction.entitlement.findFirst({
+    const activeEntitlements = await transaction.entitlement.findMany({
       where: {
         userId: input.userId,
         productId: accessCode.productId,
         status: 'ACTIVE',
         OR: [{ endsAt: null }, { endsAt: { gt: now } }],
       },
-      select: { id: true },
+      select: { id: true, maximumAttempts: true, attemptsUsed: true },
     });
-    if (existing) throw new AuthError('ENTITLEMENT_ALREADY_ACTIVE', 409);
+    const hasRemainingAttempts = activeEntitlements.some((candidate) => (
+      candidate.maximumAttempts === null || candidate.attemptsUsed < candidate.maximumAttempts
+    ));
+    if (hasRemainingAttempts) throw new AuthError('ENTITLEMENT_ALREADY_ACTIVE', 409);
     const endsAt = accessCode.product.accessDays
       ? new Date(now.getTime() + accessCode.product.accessDays * 86_400_000)
       : null;
