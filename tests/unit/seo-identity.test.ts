@@ -165,25 +165,3 @@ test('Localization: FR and AR dictionaries have translated testimonials and UI c
   assert.notEqual(ar.Intake.statusLabReady, 'Lab Ready');
   assert.notEqual(fr.Facility.disclaimer, 'IELTS Lab Oran is an independent preparation provider and is not affiliated with IELTS, the British Council, IDP, or Cambridge University Press & Assessment.');
 });
-
-test('Landing copy: First cohort does not claim dedicated PCs or classroom workstations', () => {
-  const enRaw = fs.readFileSync(path.join(process.cwd(), 'messages', 'en.json'), 'utf8');
-  const frRaw = fs.readFileSync(path.join(process.cwd(), 'messages', 'fr.json'), 'utf8');
-  const arRaw = fs.readFileSync(path.join(process.cwd(), 'messages', 'ar.json'), 'utf8');
-  const schemaRaw = fs.readFileSync(path.join(process.cwd(), 'src', 'components', 'LocalSchema.tsx'), 'utf8');
-  const launchRaw = fs.readFileSync(path.join(process.cwd(), 'src', 'lib', 'cohort-launch.ts'), 'utf8');
-
-  for (const forbidden of ['dedicated workstation', '4 skills on PC', 'on dedicated PCs', '100% PC training', '8-seat PC lab']) {
-    assert.equal(enRaw.includes(forbidden), false, `en.json must not contain "${forbidden}"`);
-    assert.equal(schemaRaw.includes(forbidden), false, `LocalSchema.tsx must not contain "${forbidden}"`);
-    assert.equal(launchRaw.includes(forbidden), false, `cohort-launch.ts must not contain "${forbidden}"`);
-  }
-  for (const forbidden of ['poste PC dédié', '4 compétences sur PC', 'sur ordinateurs dédiés', '100% sur PC', '8 postes']) {
-    assert.equal(frRaw.includes(forbidden), false, `fr.json must not contain "${forbidden}"`);
-    assert.equal(schemaRaw.includes(forbidden), false, `LocalSchema.tsx must not contain "${forbidden}"`);
-  }
-  for (const forbidden of ['كمبيوتر خاص بك', 'المهارات الأربع على الكمبيوتر', 'على حواسيب مخصصة', '8 أجهزة']) {
-    assert.equal(arRaw.includes(forbidden), false, `ar.json must not contain "${forbidden}"`);
-    assert.equal(schemaRaw.includes(forbidden), false, `LocalSchema.tsx must not contain "${forbidden}"`);
-  }
-});

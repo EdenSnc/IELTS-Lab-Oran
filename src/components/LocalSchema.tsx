@@ -8,9 +8,9 @@ import {
 } from '@/lib/seo';
 
 const DESCRIPTIONS: Record<Locale, string> = {
-  en: 'Small-group in-person IELTS preparation (8 seats) in Bir El Djir, Oran, plus online mock practice, with individual Writing and Speaking feedback.',
-  fr: 'Préparation IELTS en présentiel en petit groupe (8 places) à Bir El Djir, Oran, et tests blancs en ligne, avec retours personnalisés en Writing et Speaking.',
-  ar: 'التحضير الحضوري لاختبار IELTS ضمن مجموعة صغيرة من 8 مقاعد في بئر الجير، وهران، مع اختبارات تجريبية عبر الإنترنت وملاحظات فردية في الكتابة والمحادثة.',
+  en: 'Small-group computer-based IELTS preparation in an 8-seat physical PC lab in Bir El Djir, Oran, with individual Writing and Speaking feedback.',
+  fr: 'Préparation IELTS sur ordinateur en petit groupe (8 places) à Bir El Djir, Oran, avec retours personnalisés en Writing et Speaking.',
+  ar: 'التحضير لاختبار IELTS على الكمبيوتر ضمن مجموعة صغيرة من 8 مقاعد في بئر الجير، وهران، مع تصحيح وملاحظات فردية في الكتابة والمحادثة.',
 };
 
 const COURSE_NAMES: Record<Locale, string> = {
