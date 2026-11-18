@@ -3,7 +3,7 @@ import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getComputerVsPaperContent, ArticleLocale } from '@/lib/articleContent';
 import ArticleMobileCta from '@/components/ArticleMobileCta';
-import ArticleTrust from '@/components/ArticleTrust';
+import ArticleTrust, { ArticleBreadcrumb } from '@/components/ArticleTrust';
 import {
   articleDescription,
   articleSeoTitle,
@@ -23,7 +23,7 @@ export async function generateMetadata({
     title: articleSeoTitle(locale, 'computer-vs-paper-ielts'),
     description: articleDescription(locale, 'computer-vs-paper-ielts'),
     publishedTime: '2026-07-29',
-    modifiedTime: '2026-11-17',
+    modifiedTime: '2026-11-18',
   });
 }
 
@@ -110,57 +110,60 @@ export default async function ArticlePage() {
   return (
     <>
       <Navbar />
-      <article
-        className={`pt-32 pb-32 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`}
+      <main
+        id="main-content"
+        className={`pt-32 pb-24 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`}
         dir={isRtl ? 'rtl' : 'ltr'}
       >
-        <h1 className="mb-8 text-4xl font-extrabold leading-tight tracking-tight md:text-5xl">
-          {content.title}
-        </h1>
+        <article>
+          <ArticleBreadcrumb locale={locale} title={content.title} />
+          <h1 className="mb-8 text-4xl font-extrabold leading-tight tracking-tight md:text-5xl">
+            {content.title}
+          </h1>
 
-        <div className="prose prose-lg prose-gray max-w-none text-gray-700 leading-relaxed">
-          <div className="mb-10 rounded-r-2xl border-l-4 border-crimson bg-red-50 p-6 shadow-sm">
-            <p className="mb-2 text-lg font-bold text-crimson">{content.alertTitle}</p>
-            <p
-              className="m-0 text-gray-700"
-              dangerouslySetInnerHTML={{ __html: content.alertText }}
-            />
-          </div>
+          <div className="prose prose-lg prose-gray max-w-none text-gray-700 leading-relaxed">
+            <div className="mb-10 rounded-e-2xl border-s-4 border-crimson bg-red-50 p-6 shadow-sm">
+              <p className="mb-2 text-lg font-bold text-[#b81428]">{content.alertTitle}</p>
+              <p
+                className="m-0 text-gray-700"
+                dangerouslySetInnerHTML={{ __html: content.alertText }}
+              />
+            </div>
 
-          <p className="lead mb-8 text-xl font-medium text-gray-600">{content.lead}</p>
+            <p className="lead mb-8 text-xl font-medium text-gray-600">{content.lead}</p>
 
-          <h2 className="mt-16 mb-6 text-3xl font-extrabold tracking-tight text-charcoal">
-            {content.h2_1}
-          </h2>
+            <h2 className="mt-16 mb-6 text-3xl font-extrabold tracking-tight text-charcoal">
+              {content.h2_1}
+            </h2>
 
-          <div className="not-prose my-8 grid gap-4 md:grid-cols-2">
-            {content.bullets.map((bullet, index) => {
-              const match = bullet.match(/<strong>(.*?)<\/strong>([\s\S]*)/);
-              const title = match ? match[1] : `Feature ${index + 1}`;
-              const text = match ? match[2].replace(/^:\s*/, '') : bullet;
+            <div className="not-prose my-8 grid gap-4 md:grid-cols-2">
+              {content.bullets.map((bullet, index) => {
+                const match = bullet.match(/<strong>(.*?)<\/strong>([\s\S]*)/);
+                const title = match ? match[1] : `Feature ${index + 1}`;
+                const text = match ? match[2].replace(/^:\s*/, '') : bullet;
 
-              return (
-                <div
-                  key={title}
-                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-colors hover:border-crimson/50"
-                >
-                  <div className="mb-2 flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-crimson/10 text-sm font-bold text-crimson">
-                      {index + 1}
+                return (
+                  <div
+                    key={title}
+                    className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-colors hover:border-crimson/50"
+                  >
+                    <div className="mb-2 flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-crimson/10 text-sm font-bold text-[#b81428] shrink-0">
+                        {index + 1}
+                      </div>
+                      <h3
+                        className="text-lg font-bold text-charcoal"
+                        dangerouslySetInnerHTML={{ __html: title }}
+                      />
                     </div>
-                    <h3
-                      className="text-lg font-bold text-charcoal"
-                      dangerouslySetInnerHTML={{ __html: title }}
+                    <p
+                      className="ms-11 text-sm text-gray-600"
+                      dangerouslySetInnerHTML={{ __html: text }}
                     />
                   </div>
-                  <p
-                    className="ml-11 text-sm text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: text }}
-                  />
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
 
           <h2 className="mt-16 mb-6 text-3xl font-extrabold tracking-tight text-charcoal">
             {content.h2_2}
@@ -202,7 +205,7 @@ export default async function ArticlePage() {
                 : locale === 'ar'
                   ? 'افتح عينة القراءة المجانية'
                   : 'Open free Reading sample'}
-              <span aria-hidden="true">&rarr;</span>
+              <span aria-hidden="true">{isRtl ? '←' : '→'}</span>
             </a>
           </div>
 
@@ -215,9 +218,9 @@ export default async function ArticlePage() {
             </div>
             <Link
               href="/#intake"
-              className="relative z-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-charcoal px-8 py-4 text-center font-bold text-white shadow-soft transition-colors hover:bg-crimson md:w-auto"
+              className="relative z-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-charcoal px-8 py-4 text-center font-bold text-white shadow-soft transition-colors hover:bg-[#c4162c] md:w-auto"
             >
-              {content.ctaBtn} <span aria-hidden="true">&rarr;</span>
+              {content.ctaBtn} <span aria-hidden="true">{isRtl ? '←' : '→'}</span>
             </Link>
           </div>
         </div>
@@ -228,6 +231,7 @@ export default async function ArticlePage() {
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
+              inLanguage: locale,
               mainEntity: faqs[locale].map((item) => ({
                 '@type': 'Question',
                 name: item.q,
@@ -247,7 +251,7 @@ export default async function ArticlePage() {
             title={content.title}
             description={articleDescription(locale, 'computer-vs-paper-ielts')}
             publishedAt="2026-07-29"
-            reviewedAt="2026-11-17"
+            reviewedAt="2026-11-18"
             sources={[
               {
                 label: locale === 'fr'
@@ -276,7 +280,8 @@ export default async function ArticlePage() {
             ]}
           />
         </div>
-      </article>
+        </article>
+      </main>
 
       <ArticleMobileCta />
     </>

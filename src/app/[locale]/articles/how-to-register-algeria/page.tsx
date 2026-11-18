@@ -3,7 +3,7 @@ import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { getHowToRegisterContent, ArticleLocale } from '@/lib/articleContent';
 import ArticleMobileCta from '@/components/ArticleMobileCta';
-import ArticleTrust from '@/components/ArticleTrust';
+import ArticleTrust, { ArticleBreadcrumb } from '@/components/ArticleTrust';
 import { articleDescription, articleSeoTitle, buildArticleMetadata } from '@/lib/seo';
 import { OSR_PATH, osrCopy } from '@/lib/one-skill-retake';
 
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: A
     title: articleSeoTitle(locale, 'how-to-register-algeria'),
     description: articleDescription(locale, 'how-to-register-algeria'),
     publishedTime: '2026-07-29',
-    modifiedTime: '2026-11-17',
+    modifiedTime: '2026-11-18',
   });
 }
 
@@ -111,7 +111,7 @@ export default async function ArticlePage() {
       },
       {
         q: 'Can I pay with Baridimob, CIB, Edahabia, or cash in Algeria?',
-        a: 'British Council Algeria supports online bank-card payment, digital banking/transfer, and HSBC cash deposit (subject to 1% cash stamp duty). Payment must be finalized within 72 hours of booking.',
+        a: 'On the official British Council Algeria booking portal, listed payment routes are online bank card, digital banking / bank transfer, and HSBC cash deposit (+1% cash stamp duty) within 72 hours—always check your booking confirmation email to see whether local CIB/Edahabia cards or bank transfers apply to your sitting, as direct Baridimob P2P transfers are not listed on the British Council portal. Separately, IELTS Lab Oran accepts CIB and Edahabia via Chargily Pay for online mock tests and Baridimob or cash for Oran cohorts.',
       },
       {
         q: 'Can I register with a national ID card instead of a passport?',
@@ -128,8 +128,8 @@ export default async function ArticlePage() {
         a: 'À Oran, les sessions sur ordinateur se déroulent au centre partenaire Imtiyaz El Djazair (76 bis avenue Sidi Chahmi, Hai Ibn Sina). Vérifiez toujours l’adresse exacte sur votre convocation.',
       },
       {
-        q: 'Comment payer : carte bancaire, virement ou espèces HSBC ?',
-        a: 'Le British Council Algérie propose le paiement en ligne par carte, la banque numérique / virement ou le dépôt en espèces auprès d’HSBC (+ 1 % de droit de timbre). Le règlement doit être finalisé sous 72 heures.',
+        q: 'Comment payer : CIB, Edahabia, Baridimob, virement ou espèces HSBC ?',
+        a: 'Sur le portail officiel du British Council Algérie, les options annoncées sont la carte bancaire en ligne, la banque numérique / le virement et le dépôt d’espèces chez HSBC (+ 1 % de droit de timbre) sous 72 h — vérifiez l’e-mail de confirmation pour les cartes locales (CIB/Edahabia), car le transfert direct Baridimob n’y figure pas. En revanche, IELTS Lab Oran accepte CIB/Edahabia via Chargily Pay pour ses tests blancs et Baridimob ou espèces pour les cohortes d’Oran.',
       },
       {
         q: 'Passeport ou carte d’identité pour l’inscription IELTS ?',
@@ -146,8 +146,8 @@ export default async function ArticlePage() {
         a: 'يُجرى الاختبار على الكمبيوتر في وهران بمركز امتياز الجزائر (76 مكرر شارع سيدي الشحمي، حي ابن سينا)، مع ضرورة التأكد من العنوان النهائي في رسالة تأكيد الحجز.',
       },
       {
-        q: 'ما طرق الدفع المتاحة وهل يقبل الدفع عبر HSBC أو البطاقة؟',
-        a: 'تشمل الطرق المعلنة الدفع بالبطاقة البنكية عبر الإنترنت، أو التحويل/الصيرفة الرقمية، أو الإيداع نقداً في بنك HSBC (مع رسم طابع نقدي 1%). يجب إتمام الدفع خلال 72 ساعة من الحجز.',
+        q: 'هل يُقبل الدفع بالبطاقة الذهبية أو CIB أو Baridimob أو نقداً في HSBC؟',
+        a: 'تشمل الطرق المعلنة لدى المجلس الثقافي البريطاني في الجزائر الدفع بالبطاقة البنكية عبر الإنترنت، أو الصيرفة الرقمية / التحويل البنكي، أو الإيداع النقدي لدى HSBC (+1% رسم طابع) خلال 72 ساعة؛ راجع رسالة تأكيد الحجز للتحقق من البطاقات المقبولة لأن التحويل المباشر عبر Baridimob غير مدرج في بوابة المجلس البريطاني. بينما يقبل مركز IELTS Lab Oran البطاقة الذهبية وCIB عبر Chargily Pay للاختبار التجريبي وBaridimob أو الدفع النقدي لدورات وهران.',
       },
       {
         q: 'هل يجب التسجيل بجواز السفر أم يكفي بطاقة التعريف الوطنية؟',
@@ -159,9 +159,11 @@ export default async function ArticlePage() {
   return (
     <>
       <Navbar />
-      <article className={`pt-32 pb-32 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
+      <main id="main-content" className={`pt-32 pb-24 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
+        <article>
+          <ArticleBreadcrumb locale={locale} title={c.title} />
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-8 leading-tight">{c.title}</h1>
-          <div className="bg-white border-l-4 border-crimson p-6 rounded-r-2xl shadow-sm mb-8">
+          <div className="bg-white border-s-4 border-crimson p-6 rounded-e-2xl shadow-sm mb-8">
               <p className="text-charcoal font-bold text-lg mb-2">{c.summaryTitle}</p>
               <p className="text-gray-600 m-0" dangerouslySetInnerHTML={{ __html: c.summaryText }} />
           </div>
@@ -220,7 +222,7 @@ export default async function ArticlePage() {
               <p dangerouslySetInnerHTML={{ __html: c.compIntro }} />
               <Link href={OSR_PATH} className="mt-3 inline-block font-semibold text-crimson underline">{osrCopy[locale].title}</Link>
 
-              <ul className="list-disc pl-5 my-4 space-y-2">
+              <ul className="list-disc ps-5 my-4 space-y-2">
                   {c.compBullets.map((b, i) => (
                     <li key={i} dangerouslySetInnerHTML={{ __html: b }} />
                   ))}
@@ -246,7 +248,7 @@ export default async function ArticlePage() {
                   </div>
                   <div className="relative z-10 md:w-1/3 w-full flex justify-end">
                       <Link href="/#intake" className="w-full md:w-auto text-center inline-flex justify-center items-center gap-2 bg-charcoal text-white px-8 py-4 rounded-full font-bold hover:bg-crimson transition-colors shadow-soft">
-                          {c.ctaBtn} <span aria-hidden="true">&rarr;</span>
+                          {c.ctaBtn} <span aria-hidden="true">{isRtl ? '←' : '→'}</span>
                       </Link>
                   </div>
               </div>
@@ -257,6 +259,7 @@ export default async function ArticlePage() {
               __html: JSON.stringify({
                 '@context': 'https://schema.org',
                 '@type': 'FAQPage',
+                inLanguage: locale,
                 mainEntity: faqs.map((item) => ({
                   '@type': 'Question',
                   name: item.q,
@@ -275,7 +278,7 @@ export default async function ArticlePage() {
               title={c.title}
               description={articleDescription(locale, 'how-to-register-algeria')}
               publishedAt="2026-07-29"
-              reviewedAt="2026-11-17"
+              reviewedAt="2026-11-18"
               sources={[
                 {
                   label: whereToPay.official,
@@ -296,7 +299,8 @@ export default async function ArticlePage() {
               ]}
             />
           </div>
-      </article>
+        </article>
+      </main>
       
       <ArticleMobileCta />
     </>

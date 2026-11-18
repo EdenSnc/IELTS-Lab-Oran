@@ -6,17 +6,22 @@ import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import { publicAcquisitionLink } from '@/lib/acquisition/public-link';
 import { isFirstPartyDestination } from '@/lib/acquisition/validation';
 import prisma from '@/lib/prisma';
+import { CANONICAL_ORIGIN } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(CANONICAL_ORIGIN),
   title: 'Acquisition Placements | IELTS Lab Oran',
+  alternates: { canonical: null, languages: {} },
+  openGraph: null,
   robots: { index: false, follow: false },
+  twitter: null,
 };
 
 export default async function AcquisitionPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const actor = await requireStaffPageAal2();
+  const actor = await requireStaffPageAal2(['CONTENT_REVIEWER', 'ADMIN']);
   if (actor.role !== 'ADMIN' && actor.role !== 'CONTENT_REVIEWER') notFound();
 
   const campaigns = await prisma.acquisitionCampaign.findMany({

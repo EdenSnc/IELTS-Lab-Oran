@@ -113,7 +113,7 @@ body {
     color: #0a0a0a; transition: color 0.5s ease;
 }
 .testimonial-card .title-text {
-    color: #6b7280; transition: color 0.5s ease;
+    color: #4b5563; transition: color 0.5s ease;
 }
 /* Active/Hovered State */
 .testimonial-card.active-testimonial {

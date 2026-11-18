@@ -1,10 +1,12 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 export default function FAQ() {
   const t = useTranslations('FAQ');
+  const rawLocale = useLocale();
+  const locale = rawLocale === 'fr' || rawLocale === 'ar' ? rawLocale : 'en';
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggle = (index: number) => {
@@ -18,7 +20,7 @@ export default function FAQ() {
     { q: t('q4'), a: t('a4') },
     { q: t('q5'), a: t('a5') },
     { q: t('q6'), a: t('a6') },
-    { q: t('q7'), a: t('a7') }
+    { q: t('q7'), a: t('a7') },
   ];
 
   return (
@@ -26,13 +28,14 @@ export default function FAQ() {
       <h2 className="text-3xl font-extrabold text-center mb-10 tracking-tight uppercase text-charcoal">{t('title')}</h2>
       <div className="flex flex-col gap-4">
         {faqs.map((faq, index) => (
-          <div key={index} className="bg-surface rounded-[2rem] border border-gray-100 overflow-hidden transition-all duration-300">
-            <button 
+          <div key={index} className="bg-surface rounded-[2rem] border border-gray-200/80 overflow-hidden transition-all duration-300">
+            <button
+              type="button"
               aria-expanded={openIndex === index}
               onClick={() => toggle(index)}
-              className="w-full text-left font-bold text-lg text-charcoal flex justify-between items-center p-6 focus:outline-none focus:bg-gray-50 transition-colors"
+              className="w-full text-start font-bold text-lg text-charcoal flex justify-between items-center gap-4 p-6 focus:outline-none focus:bg-gray-50 transition-colors"
             >
-              {faq.q}
+              <span>{faq.q}</span>
               <svg
                 className={`w-5 h-5 text-crimson shrink-0 transition-transform duration-300 ${openIndex === index ? 'rotate-180' : ''}`}
                 viewBox="0 0 20 20"
@@ -44,29 +47,30 @@ export default function FAQ() {
             </button>
             <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${openIndex === index ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
               <div className="overflow-hidden">
-                <p className="px-6 pb-6 text-gray-600 leading-relaxed font-medium">{faq.a}</p>
+                <p className="px-6 pb-6 text-gray-700 leading-relaxed font-medium">{faq.a}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
-      
+
       {/* Schema.org FAQPage JSON-LD */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": faqs.map(f => ({
-              "@type": "Question",
-              "name": f.q,
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": f.a
-              }
-            }))
-          }).replace(/</g, '\\u003c')
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            inLanguage: locale,
+            mainEntity: faqs.map((f) => ({
+              '@type': 'Question',
+              name: f.q,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: f.a,
+              },
+            })),
+          }).replace(/</g, '\\u003c'),
         }}
       />
     </section>

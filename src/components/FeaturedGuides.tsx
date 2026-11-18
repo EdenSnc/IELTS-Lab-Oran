@@ -132,7 +132,7 @@ export default function FeaturedGuides({ locale }: { locale: Locale }) {
       <div className="max-w-5xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-10">
           <div>
-            <span className="inline-block px-3 py-1 bg-crimson/10 text-crimson font-bold text-xs uppercase tracking-wider rounded-full mb-3">
+            <span className="inline-block px-3 py-1 bg-crimson/10 text-[#b81428] font-bold text-xs uppercase tracking-wider rounded-full mb-3">
               {copy.badge}
             </span>
             <h2 className="text-3xl md:text-4xl font-extrabold text-charcoal tracking-tight">
@@ -144,7 +144,7 @@ export default function FeaturedGuides({ locale }: { locale: Locale }) {
           </div>
           <Link
             href="/articles"
-            className="text-sm font-bold text-crimson hover:underline whitespace-nowrap shrink-0"
+            className="text-sm font-bold text-[#b81428] hover:underline whitespace-nowrap shrink-0"
           >
             {copy.viewAll}
           </Link>
@@ -158,17 +158,17 @@ export default function FeaturedGuides({ locale }: { locale: Locale }) {
               className="group flex flex-col justify-between rounded-2xl border border-black/10 bg-[#faf9f6] p-6 hover:border-crimson/40 hover:bg-white hover:shadow-md transition-all"
             >
               <div>
-                <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-crimson mb-2">
+                <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#b81428] mb-2">
                   {guide.tag[safeLocale]}
                 </span>
-                <h3 className="text-lg font-bold text-charcoal group-hover:text-crimson transition-colors leading-snug mb-2">
+                <h3 className="text-lg font-bold text-charcoal group-hover:text-[#b81428] transition-colors leading-snug mb-2">
                   {guide.title[safeLocale]}
                 </h3>
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   {guide.summary[safeLocale]}
                 </p>
               </div>
-              <span className="text-xs font-bold text-charcoal group-hover:text-crimson">
+              <span className="text-xs font-bold text-charcoal group-hover:text-[#b81428]">
                 {copy.readMore}
               </span>
             </Link>

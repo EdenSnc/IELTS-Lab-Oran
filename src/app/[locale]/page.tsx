@@ -12,6 +12,7 @@ import LeadMagnet from '@/components/LeadMagnet';
 import MockTestOffer from '@/components/MockTestOffer';
 import FeaturedGuides from '@/components/FeaturedGuides';
 import LocalSchema from '@/components/LocalSchema';
+import SiteFooter from '@/components/SiteFooter';
 import { getFoundingCohortStatus } from '@/lib/cohort';
 import { Locale } from '@/lib/seo';
 
@@ -24,7 +25,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
     <>
       <LocalSchema locale={safeLocale} />
       <Navbar />
-      <main className="flex flex-col">
+      <main id="main-content" className="flex flex-col">
         <Hero cohortStatus={cohortStatus} />
         <MockTestOffer />
         <Methodology />
@@ -38,7 +39,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         <LeadMagnet />
         <Facility />
       </main>
+      <SiteFooter locale={safeLocale} />
     </>
   );
 }
-

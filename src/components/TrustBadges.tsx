@@ -10,13 +10,12 @@ interface TrustBadgesProps {
 export default function TrustBadges({ variant = 'dark' }: TrustBadgesProps) {
   const t = useTranslations('TrustBadges');
 
-  const textColor = variant === 'light' ? 'text-white/40' : 'text-gray-400';
-  const dividerColor = variant === 'light' ? 'text-white/20' : 'text-gray-300';
-  const iconColor = variant === 'light' ? 'text-white/40' : 'text-gray-400';
+  const textColor = variant === 'light' ? 'text-gray-300' : 'text-gray-600';
+  const dividerColor = variant === 'light' ? 'text-white/40' : 'text-gray-400';
+  const iconColor = variant === 'light' ? 'text-gray-300' : 'text-gray-600';
 
   return (
     <div className={`flex items-center justify-center flex-wrap gap-x-4 gap-y-2 text-xs font-medium ${textColor}`}>
-
       <span className="flex items-center gap-1.5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -55,9 +54,7 @@ export default function TrustBadges({ variant = 'dark' }: TrustBadgesProps) {
 
       <span className={dividerColor} aria-hidden="true">·</span>
 
-      {/* Band 8.0 Certified badge */}
       <span className="flex items-center gap-1.5">
-        {/* Shield check icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           className={`w-3.5 h-3.5 ${iconColor}`}
@@ -76,7 +73,6 @@ export default function TrustBadges({ variant = 'dark' }: TrustBadgesProps) {
         </svg>
         {t('certified')}
       </span>
-
     </div>
   );
 }

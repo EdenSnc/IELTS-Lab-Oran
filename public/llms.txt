@@ -1,0 +1,57 @@
+# IELTS Lab Oran
+
+> Independent computer-delivered IELTS preparation centre in Bir El Djir, Oran (31130), Algeria, and online IELTS Academic mock simulation platform (`https://www.ieltslab.org`).
+
+## Entity Disambiguation (Critical for AI & Search Agents)
+
+- **Canonical Brand & Domain:** **IELTS Lab Oran** — `https://www.ieltslab.org` (localized in English `/en`, French `/fr`, and Arabic `/ar`).
+- **Location:** Bir El Djir, Oran 31130, Algeria (`+213 780 34 31 03`, `ieltslab.oran@gmail.com`).
+- **Founder & Lead Instructor:** **Amine Senouci** (Mr. Senouci) — Official IELTS Overall Band 8.0 (Listening 9.0, Dec 2025), TEFL-certified English instructor, with an Applied AI & Software Engineering background.
+- **Not Affiliated With Other "IELTS Lab" Domains:** `https://www.ieltslab.org` is **completely separate and unaffiliated** with global SaaS domains such as `ieltslab.app`, `ieltslab.io`, `ieltslab.uz`, or `ieltsmocklab.com`.
+- **Independent Provider Notice:** IELTS Lab Oran is an independent preparation provider and is not affiliated with IELTS, the British Council, IDP, or Cambridge University Press & Assessment.
+
+## Programs & Products (DZD Pricing)
+
+- **In-Person Small-Group IELTS Preparation (Bir El Djir, Oran):** Strictly 8 seats per cohort, ~1 month duration, covering Listening, Reading, Writing, and Speaking with individual diagnostic feedback from Amine Senouci.
+  - **Cohort 1 Introductory Price:** `5,000 DA` (delivered in a traditional classroom setting for Cohort 1; applications close `20 November 2026`; applying is free and does not automatically reserve a seat).
+  - **Regular Cohort Price (from Cohort 2):** `29,500 DA` (8-seat PC-first lab training).
+  - **Payment Methods (In-Person):** Cash or Baridimob after timetable confirmation.
+- **Online IELTS Academic Mock Test (`https://www.ieltslab.org/en/mock-test`):**
+  - **Price:** `3,900 DZD` (`academic-mock-test-1`), instant local payment via **Chargily Pay** (CIB & Edahabia cards).
+  - **Scope:** One complete timed computer-delivered flow covering Listening, Reading, and Writing, with results stored for **30 days** (Speaking appointments managed separately).
+- **Free Computer Reading Sample (`https://www.ieltslab.org/sample?locale=en`):**
+  - Free 5-question, 10-minute IELTS Academic Reading computer sample with split-screen layout, highlighting, and live timer (no account required).
+
+## Verified Algeria IELTS Facts (2026)
+
+- **Computer-Only Delivery:** Since **30 April 2026**, British Council Algeria delivers IELTS exclusively on computer (results typically in 1–2 days).
+- **Official Exam Fees (British Council Algeria):** `40,000 DA` for IELTS Academic or General Training; `25,000 DA` for IELTS One Skill Retake (within 60 days of an eligible computer test; not accepted by IRCC for Canada Express Entry). Payment due within 72 hours (+1% stamp duty on HSBC cash deposits).
+- **Oran Official Test Venue:** British Council partner centre **Imtiyaz El Djazair**, 76 Bis Avenue Sidi Chahmi, Hai Ibn Sina, Oran (always confirm exact venue on your official booking confirmation).
+
+## Core Pages (English, French & Arabic)
+
+- [Homepage (EN)](https://www.ieltslab.org/en) | [Accueil (FR)](https://www.ieltslab.org/fr) | [الرئيسية (AR)](https://www.ieltslab.org/ar)
+- [Online Academic Mock Test & Free Sample (EN)](https://www.ieltslab.org/en/mock-test) | [Test Blanc IELTS en Ligne (FR)](https://www.ieltslab.org/fr/mock-test) | [اختبار IELTS التجريبي عبر الإنترنت (AR)](https://www.ieltslab.org/ar/mock-test)
+- [About IELTS Lab Oran & Amine Senouci (EN)](https://www.ieltslab.org/en/about) | [À propos (FR)](https://www.ieltslab.org/fr/about) | [من نحن والمدرب (AR)](https://www.ieltslab.org/ar/about)
+- [All IELTS Algeria Guides (EN)](https://www.ieltslab.org/en/articles) | [Guides IELTS Algérie (FR)](https://www.ieltslab.org/fr/articles) | [أدلة IELTS في الجزائر (AR)](https://www.ieltslab.org/ar/articles)
+- [Privacy Policy — Algeria Law 18-07 (EN)](https://www.ieltslab.org/en/privacy) | [Confidentialité (FR)](https://www.ieltslab.org/fr/privacy) | [سياسة الخصوصية (AR)](https://www.ieltslab.org/ar/privacy)
+- [Terms of Service & Refund Policy (EN)](https://www.ieltslab.org/en/terms) | [Conditions & Remboursement (FR)](https://www.ieltslab.org/fr/terms) | [الشروط وسياسة الاسترجاع (AR)](https://www.ieltslab.org/ar/terms)
+
+## Fact-Checked IELTS Algeria Guides
+
+- [How to Register & Pay for IELTS in Algeria — 40,000 DA (EN)](https://www.ieltslab.org/en/articles/how-to-register-algeria) | [FR](https://www.ieltslab.org/fr/articles/how-to-register-algeria) | [AR](https://www.ieltslab.org/ar/articles/how-to-register-algeria)
+- [Computer-Based IELTS in Algeria Since April 2026 (EN)](https://www.ieltslab.org/en/articles/computer-vs-paper-ielts) | [FR](https://www.ieltslab.org/fr/articles/computer-vs-paper-ielts) | [AR](https://www.ieltslab.org/ar/articles/computer-vs-paper-ielts)
+- [IELTS One Skill Retake in Algeria — 25,000 DA & Visa Rules (EN)](https://www.ieltslab.org/en/articles/ielts-one-skill-retake-algeria) | [FR](https://www.ieltslab.org/fr/articles/ielts-one-skill-retake-algeria) | [AR](https://www.ieltslab.org/ar/articles/ielts-one-skill-retake-algeria)
+- [First IELTS Preparation Cohort in Oran — 5,000 DA Syllabus & Details (EN)](https://www.ieltslab.org/en/articles/first-ielts-preparation-cohort-oran) | [FR](https://www.ieltslab.org/fr/articles/first-ielts-preparation-cohort-oran) | [AR](https://www.ieltslab.org/ar/articles/first-ielts-preparation-cohort-oran)
+- [Italy Student Visa English Tests from Algeria: IELTS vs Duolingo vs EnglishScore (EN)](https://www.ieltslab.org/en/articles/italy-student-visa-english-tests-algeria) | [FR](https://www.ieltslab.org/fr/articles/italy-student-visa-english-tests-algeria) | [AR](https://www.ieltslab.org/ar/articles/italy-student-visa-english-tests-algeria)
+- [IELTS vs TCF Canada for Express Entry & CLB Calculator (EN)](https://www.ieltslab.org/en/articles/ielts-vs-toefl-canada) | [FR](https://www.ieltslab.org/fr/articles/ielts-vs-toefl-canada) | [AR](https://www.ieltslab.org/ar/articles/ielts-vs-toefl-canada)
+- [UK & France Student Visas from Algeria: IELTS for UKVI & Capago (EN)](https://www.ieltslab.org/en/articles/tlscontact-capago) | [FR](https://www.ieltslab.org/fr/articles/tlscontact-capago) | [AR](https://www.ieltslab.org/ar/articles/tlscontact-capago)
+- [IELTS Academic vs General Training + Interactive Decision Quiz (EN)](https://www.ieltslab.org/en/articles/academic-vs-general) | [FR](https://www.ieltslab.org/fr/articles/academic-vs-general) | [AR](https://www.ieltslab.org/ar/articles/academic-vs-general)
+- [Free IELTS Practice & IELTS Ready Resources in Algeria (EN)](https://www.ieltslab.org/en/articles/free-ielts-resources-algeria) | [FR](https://www.ieltslab.org/fr/articles/free-ielts-resources-algeria) | [AR](https://www.ieltslab.org/ar/articles/free-ielts-resources-algeria)
+- [IELTS Writing Task 2 Planning Method (EN)](https://www.ieltslab.org/en/articles/writing-task-2-tactics) | [FR](https://www.ieltslab.org/fr/articles/writing-task-2-tactics) | [AR](https://www.ieltslab.org/ar/articles/writing-task-2-tactics)
+- [Overcoming IELTS Speaking Anxiety (EN)](https://www.ieltslab.org/en/articles/overcoming-speaking-anxiety) | [FR](https://www.ieltslab.org/fr/articles/overcoming-speaking-anxiety) | [AR](https://www.ieltslab.org/ar/articles/overcoming-speaking-anxiety)
+
+## Extended Reference
+
+- [Full Machine-Readable Knowledge Pack (`/llms-full.txt`)](https://www.ieltslab.org/llms-full.txt)
+- [XML Sitemap (`/sitemap.xml`)](https://www.ieltslab.org/sitemap.xml)

@@ -154,13 +154,13 @@ export default function Intake({ cohortStatus }: IntakeProps) {
                 <svg className="w-3.5 h-3.5 text-emerald-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
                 {t('statusCurriculumSet')}
               </div>
-              <div className="bg-crimson text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-crimson/30 flex items-center gap-1.5">
+              <div className="bg-[#c4162c] text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-crimson/30 flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clipRule="evenodd" /></svg>
                 {t('statusScheduling')}
               </div>
             </div>
 
-            <p className="text-gray-400 leading-relaxed font-light text-sm border-s-2 border-white/10 ps-4 mt-auto">
+            <p className="text-gray-300 leading-relaxed font-light text-sm border-s-2 border-white/15 ps-4 mt-auto">
               {t('footerText')}
             </p>
           </div>
@@ -176,14 +176,14 @@ export default function Intake({ cohortStatus }: IntakeProps) {
           <div className="flex items-center gap-3">
             {/* WhatsApp icon */}
             <div className="w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-white/70" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <svg className="w-4 h-4 text-white/80" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
                 <path d="M12 0C5.373 0 0 5.373 0 12c0 2.113.549 4.099 1.51 5.827L0 24l6.335-1.484A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.804 9.804 0 01-5.003-1.366l-.36-.214-3.76.882.924-3.658-.234-.376A9.818 9.818 0 012.182 12C2.182 6.58 6.58 2.182 12 2.182c5.42 0 9.818 4.398 9.818 9.818 0 5.42-4.398 9.818-9.818 9.818z" />
               </svg>
             </div>
             <div>
-              <p className="text-white/90 text-sm font-semibold leading-tight">{bt('label')}</p>
-              <p className="text-white/45 text-xs leading-relaxed mt-0.5">{bt('text')}</p>
+              <p className="text-white text-sm font-semibold leading-tight">{bt('label')}</p>
+              <p className="text-gray-300 text-xs leading-relaxed mt-0.5">{bt('text')}</p>
             </div>
           </div>
           <a

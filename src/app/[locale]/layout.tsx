@@ -7,9 +7,8 @@ import { notFound } from 'next/navigation';
 import { Inter, Cairo } from 'next/font/google';
 import FloatingWidgetClient from '@/components/FloatingWidgetClient';
 import AcquisitionUtmCapture from '@/components/AcquisitionUtmCapture';
-import { Locale, buildWebsitePageMetadata } from '@/lib/seo';
+import { Locale, buildLocaleRootMetadata } from '@/lib/seo';
 import '../globals.css';
-
 
 const inter = Inter({
   subsets: ['latin'],
@@ -23,30 +22,20 @@ const cairo = Cairo({
   variable: '--font-cairo-face',
 });
 
+const SKIP_LABELS: Record<Locale, string> = {
+  en: 'Skip to main content',
+  fr: 'Aller au contenu principal',
+  ar: 'انتقل إلى المحتوى الرئيسي',
+};
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const safeLocale: Locale = locale === 'fr' || locale === 'ar' ? locale : 'en';
-  const descriptions: Record<Locale, string> = {
-    en: 'In-person computer-based IELTS preparation in Bir El Djir, Oran. Practise Listening, Reading, Writing, and Speaking in an 8-seat PC lab with individual feedback.',
-    fr: 'Préparation IELTS sur ordinateur en petit groupe (8 places) à Bir El Djir, Oran. Entraînez-vous aux 4 épreuves sur PC avec correction individuelle.',
-    ar: 'تحضير حضوري لاختبار IELTS على الكمبيوتر في بئر الجير، وهران. تدرّب على المهارات الأربع في قاعة من 8 مقاعد مع تصحيح وملاحظات فردية.',
-  };
-  const titles: Record<Locale, string> = {
-    en: 'IELTS Preparation in Oran (Computer-Based) | IELTS Lab Oran',
-    fr: 'Préparation IELTS sur ordinateur à Oran | IELTS Lab Oran',
-    ar: 'التحضير لاختبار IELTS على الكمبيوتر في وهران | IELTS Lab Oran',
-  };
-  return buildWebsitePageMetadata({
-    locale: safeLocale,
-    path: '',
-    title: titles[safeLocale],
-    description: descriptions[safeLocale],
-  });
+  return buildLocaleRootMetadata(locale);
 }
 
 export default async function LocaleLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
@@ -56,19 +45,26 @@ export default async function LocaleLayout({
     notFound();
   }
 
+  const safeLocale: Locale = locale === 'fr' || locale === 'ar' ? locale : 'en';
   const messages = await getMessages();
-  const isRtl = locale === 'ar';
+  const isRtl = safeLocale === 'ar';
   const fontClass = isRtl ? 'font-cairo' : 'font-sans';
 
   return (
     <html
-      lang={locale}
+      lang={safeLocale}
       dir={isRtl ? 'rtl' : 'ltr'}
       className={`scroll-smooth ${inter.variable} ${cairo.variable} ${fontClass}`}
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <body suppressHydrationWarning className="bg-surface text-charcoal selection:bg-crimson selection:text-white antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[120] focus:rounded-full focus:bg-charcoal focus:px-5 focus:py-3 focus:text-sm focus:font-bold focus:text-white focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-crimson"
+        >
+          {SKIP_LABELS[safeLocale]}
+        </a>
         <NextIntlClientProvider messages={messages}>
           <AcquisitionUtmCapture />
           {children}

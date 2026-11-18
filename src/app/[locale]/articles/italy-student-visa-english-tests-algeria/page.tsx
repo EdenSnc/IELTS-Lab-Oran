@@ -1,13 +1,13 @@
 import Navbar from '@/components/Navbar';
 import ArticleMobileCta from '@/components/ArticleMobileCta';
-import ArticleTrust from '@/components/ArticleTrust';
+import ArticleTrust, { ArticleBreadcrumb } from '@/components/ArticleTrust';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
 import { type ArticleLocale } from '@/lib/articleContent';
 import { articleDescription, articleSeoTitle, buildArticleMetadata } from '@/lib/seo';
 
 const slug = 'italy-student-visa-english-tests-algeria' as const;
-const reviewedAt = '2026-09-01';
+const reviewedAt = '2026-11-18';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: ArticleLocale }> }) {
   const { locale } = await params;
@@ -111,102 +111,231 @@ export default async function ArticlePage() {
   const description = articleDescription(locale, slug);
   const isRtl = locale === 'ar';
 
+  const italyAeo = {
+    en: {
+      summaryTitle: 'Quick Answer — Italy Study Visa English Tests in Algeria (2026)',
+      summaryText:
+        'For Algerian applicants seeking an Italian university study visa, university admission acceptance and Embassy visa-file acceptance are separate decisions. The Italian Embassy in Algiers explicitly names IELTS, TOEFL, Cambridge, and Trinity for B2 English-taught courses; neither Duolingo English Test nor British Council EnglishScore should be relied upon as a visa substitute without written consular confirmation.',
+      tableHeaders: ['Test', 'Embassy Visa List (Algiers)', 'Practical Guidance'],
+      faqTitle: 'Frequently Asked Questions — Italy Study Visa & IELTS in Algeria',
+      faqs: [
+        {
+          q: 'Is Duolingo English Test accepted by the Italian Embassy in Algiers for a student visa?',
+          a: 'Even when an Italian university accepts Duolingo for academic admission, Duolingo is not listed on the Italian Embassy in Algiers’ current university-visa certificate list. Do not rely on it for your visa dossier without explicit written confirmation from the Embassy/VFS.',
+        },
+        {
+          q: 'Is British Council EnglishScore the same as IELTS for an Italy visa?',
+          a: 'No. EnglishScore is a mobile CEFR certificate and is distinct from an official IELTS Academic test. It is not named on the Embassy in Algiers’ current list for university study visas.',
+        },
+        {
+          q: 'What IELTS band score corresponds to CEFR B2 for Italian universities?',
+          a: 'CEFR B2 generally maps to IELTS Overall Band 5.5–6.5 depending on the Italian university’s call for applications—always verify both the overall band and any skill minimums stated in your pre-enrolment (Universitaly) and Embassy checklist.',
+        },
+        {
+          q: 'How fast do computer IELTS results arrive in Algeria for urgent VFS appointments?',
+          a: 'Since British Council Algeria delivers IELTS exclusively on computer, official results are typically issued within 1 to 2 days of sitting the test.',
+        },
+      ],
+    },
+    fr: {
+      summaryTitle: 'Réponse rapide — Visa études Italie depuis l’Algérie (2026)',
+      summaryText:
+        'Pour un visa d’études universitaires en Italie depuis l’Algérie, l’admission universitaire et le dossier consulaire sont deux contrôles distincts. L’Ambassade d’Italie à Alger cite explicitement IELTS, TOEFL, Cambridge et Trinity pour le niveau B2 ; ni le Duolingo English Test ni EnglishScore ne garantissent la recevabilité du dossier visa sans accord consulaire écrit.',
+      tableHeaders: ['Test', 'Statut liste Ambassade (Alger)', 'Recommandation pratique'],
+      faqTitle: 'Questions fréquentes — Visa étudiant Italie & IELTS en Algérie',
+      faqs: [
+        {
+          q: 'Le Duolingo English Test suffit-il pour le visa étudiant Italie à Alger ?',
+          a: 'Même si une université italienne accepte Duolingo pour l’admission, ce test ne figure pas sur la liste actuelle publiée par l’Ambassade d’Italie à Alger pour le visa universitaire. Ne l’utilisez pas sans confirmation écrite de l’autorité consulaire.',
+        },
+        {
+          q: 'Le certificat mobile British Council EnglishScore remplace-t-il l’IELTS ?',
+          a: 'Non. EnglishScore est un test sur mobile distinct de l’IELTS Academic officiel et n’est pas mentionné dans la liste consulaire actuelle de l’Ambassade à Alger.',
+        },
+        {
+          q: 'Quel score IELTS correspond au niveau B2 demandé pour l’Italie ?',
+          a: 'L’échelle CECR B2 correspond généralement à un score IELTS compris entre 5.5 et 6.5 selon l’université. Vérifiez toujours le score exact exigé sur Universitaly et la fiche VFS/Ambassade.',
+        },
+        {
+          q: 'En combien de temps reçoit-on les résultats IELTS en Algérie ?',
+          a: 'Grâce au passage sur ordinateur auprès du British Council Algérie, les résultats officiels sont habituellement disponibles en 1 à 2 jours.',
+        },
+      ],
+    },
+    ar: {
+      summaryTitle: 'إجابة سريعة — اختبارات الإنجليزية لتأشيرة الدراسة في إيطاليا من الجزائر (2026)',
+      summaryText:
+        'بالنسبة للطلبة الجزائريين المتقدمين لتأشيرة الدراسة الجامعية في إيطاليا، يختلف قبول الجامعة عن شروط ملف التأشيرة القنصلي. تذكر السفارة الإيطالية بالجزائر صراحةً اختبارات IELTS وTOEFL وCambridge وTrinity لإثبات مستوى B2؛ ولا ينبغي الاعتماد على Duolingo أو EnglishScore كبديل مضمون للتأشيرة دون تأكيد مكتوب.',
+      tableHeaders: ['الاختبار', 'الوضع في قائمة السفارة بالجزائر', 'التوصية العملية'],
+      faqTitle: 'الأسئلة الشائعة — تأشيرة إيطاليا واختبار IELTS في الجزائر',
+      faqs: [
+        {
+          q: 'هل تقبل السفارة الإيطالية في الجزائر اختبار Duolingo لملف التأشيرة؟',
+          a: 'حتى لو قبلت الجامعة الإيطالية شهادة Duolingo في مرحلة القبول الأكاديمي، فإنه غير مدرج في القائمة الحالية المنشورة لدى السفارة الإيطالية بالجزائر لتأشيرات الدراسة الجامعية؛ لا تعتمد عليه دون موافقة مكتوبة.',
+        },
+        {
+          q: 'هل تُغني شهادة British Council EnglishScore عن اختبار IELTS؟',
+          a: 'لا، تطبيق EnglishScore عبر الهاتف يختلف عن اختبار IELTS Academic الرسمي وغير مذكور في قائمة السفارة الحالية لتأشيرات الدراسة.',
+        },
+        {
+          q: 'ما درجة IELTS الموافقة لمستوى B2 المطلوب للدراسة في إيطاليا؟',
+          a: 'يعادل مستوى B2 عموماً ما بين 5.5 و6.5 في اختبار IELTS حسب شروط كل جامعة إيطالية؛ تحقق دائماً من الدرجة الدقيقة المطلوبة في ملف Universitaly وتعليمات السفارة.',
+        },
+        {
+          q: 'كم يستغرق صدور نتائج IELTS على الكمبيوتر في الجزائر؟',
+          a: 'بفضل تقديم الاختبار على الكمبيوتر لدى المجلس الثقافي البريطاني في الجزائر، تصدر النتائج الرسمية عادةً خلال يوم إلى يومين.',
+        },
+      ],
+    },
+  }[locale];
+
   return (
     <>
       <Navbar />
-      <article className={`pt-32 pb-32 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-5 leading-tight">{c.title}</h1>
-        <p className="text-xl leading-relaxed text-gray-600 mb-10">{c.lead}</p>
+      <main id="main-content" className={`pt-32 pb-24 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
+        <article>
+          <ArticleBreadcrumb locale={locale} title={c.title} />
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-5 leading-tight">{c.title}</h1>
+          <p className="text-xl leading-relaxed text-gray-600 mb-8">{c.lead}</p>
 
-        <section className="rounded-3xl border border-red-200 bg-red-50 p-6 md:p-8 mb-12">
-          <h2 className="text-xl font-extrabold text-charcoal mb-3">{c.alertTitle}</h2>
-          <p className="leading-relaxed text-gray-700">{c.alert}</p>
-        </section>
-
-        <div className="prose prose-lg prose-gray max-w-none text-gray-700 leading-relaxed">
-          <h2 className="text-3xl font-extrabold mt-14 mb-5 text-charcoal tracking-tight">{c.distinctionTitle}</h2>
-          <p>{c.distinction}</p>
-
-          <h2 className="text-3xl font-extrabold mt-14 mb-6 text-charcoal tracking-tight">{c.tableTitle}</h2>
-          <div className="not-prose grid gap-4">
-            {c.rows.map(([testName, status, advice]) => (
-              <section key={testName} className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-                <h3 className="text-xl font-extrabold text-charcoal">{testName}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-gray-700">{status}</p>
-                <p className="mt-3 border-t border-gray-100 pt-3 text-sm font-semibold leading-relaxed text-gray-600">{advice}</p>
-              </section>
-            ))}
+          <div className="bg-white border-s-4 border-crimson p-6 rounded-e-2xl shadow-sm mb-10">
+            <h2 className="text-charcoal font-bold text-lg mb-2">{italyAeo.summaryTitle}</h2>
+            <p className="text-gray-700 text-sm sm:text-base leading-relaxed m-0">{italyAeo.summaryText}</p>
           </div>
 
-          <h2 className="text-3xl font-extrabold mt-14 mb-5 text-charcoal tracking-tight">{c.actionTitle}</h2>
-          <ol>
-            {c.actions.map((action) => <li key={action}>{action}</li>)}
-          </ol>
+          <section className="rounded-3xl border border-red-200 bg-red-50 p-6 md:p-8 mb-12">
+            <h2 className="text-xl font-extrabold text-charcoal mb-3">{c.alertTitle}</h2>
+            <p className="leading-relaxed text-gray-700">{c.alert}</p>
+          </section>
 
-          <h2 className="text-3xl font-extrabold mt-14 mb-5 text-charcoal tracking-tight">{c.finalTitle}</h2>
-          <p>{c.final}</p>
+          <div className="prose prose-lg prose-gray max-w-none text-gray-700 leading-relaxed">
+            <h2 className="text-3xl font-extrabold mt-14 mb-5 text-charcoal tracking-tight">{c.distinctionTitle}</h2>
+            <p>{c.distinction}</p>
 
-          <div className="not-prose mt-14 rounded-[2.5rem] bg-charcoal p-8 text-white md:p-10">
-            <h2 className="text-2xl font-extrabold">{c.ctaTitle}</h2>
-            <p className="mt-3 text-gray-200">{c.cta}</p>
-            <Link href="/#intake" className="mt-6 inline-flex rounded-full bg-crimson px-7 py-3 font-bold text-white transition-opacity hover:opacity-90">
-              {c.ctaButton}
-            </Link>
+            <h2 className="text-3xl font-extrabold mt-14 mb-6 text-charcoal tracking-tight">{c.tableTitle}</h2>
+            <div className="not-prose overflow-x-auto rounded-2xl border border-gray-200 shadow-sm mb-8">
+              <table className="w-full border-collapse text-start text-sm">
+                <thead>
+                  <tr className="bg-charcoal text-white">
+                    {italyAeo.tableHeaders.map((h) => (
+                      <th key={h} className="p-4 font-bold border-b border-white/10">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {c.rows.map(([testName, status, advice]) => (
+                    <tr key={testName}>
+                      <td className="p-4 font-extrabold text-charcoal bg-gray-50">{testName}</td>
+                      <td className="p-4 text-gray-700">{status}</td>
+                      <td className="p-4 text-gray-600 font-medium">{advice}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h2 className="text-3xl font-extrabold mt-14 mb-5 text-charcoal tracking-tight">{c.actionTitle}</h2>
+            <ol>
+              {c.actions.map((action) => <li key={action}>{action}</li>)}
+            </ol>
+
+            <h2 className="text-3xl font-extrabold mt-14 mb-5 text-charcoal tracking-tight">{c.finalTitle}</h2>
+            <p>{c.final}</p>
+
+            <h2 className="text-3xl font-extrabold mt-14 mb-6 text-charcoal tracking-tight">{italyAeo.faqTitle}</h2>
+            <div className="not-prose my-6 space-y-4">
+              {italyAeo.faqs.map((item) => (
+                <section key={item.q} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <h3 className="text-base font-bold text-charcoal mb-2">{item.q}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed m-0">{item.a}</p>
+                </section>
+              ))}
+            </div>
+
+            <div className="not-prose mt-14 rounded-[2.5rem] bg-charcoal p-8 text-white md:p-10">
+              <h2 className="text-2xl font-extrabold">{c.ctaTitle}</h2>
+              <p className="mt-3 text-gray-200">{c.cta}</p>
+              <Link href="/#intake" className="mt-6 inline-flex rounded-full bg-[#c4162c] px-7 py-3 font-bold text-white transition-opacity hover:opacity-90">
+                {c.ctaButton}
+              </Link>
+            </div>
           </div>
-        </div>
 
-        <div className="mt-16">
-          <ArticleTrust
-            locale={locale}
-            slug={slug}
-            title={c.title}
-            description={description}
-            reviewedAt={reviewedAt}
-            sources={[
-              {
-                label: locale === 'fr'
-                  ? 'Ambassade d’Italie à Alger : clarification visa d’études (27 août 2026)'
-                  : locale === 'ar'
-                    ? 'السفارة الإيطالية بالجزائر: توضيح حول تأشيرة الدراسة (27 أغسطس 2026)'
-                    : 'Italian Embassy in Algiers: study-visa clarification, 27 August 2026',
-                href: 'https://ambalgeri.esteri.it/it/news/dall_ambasciata/2026/08/visti-per-studio-2026-2027-chiarimenti-sulle-procedure-e-sulle-misure-straordinarie-dellambasciata/',
-              },
-              {
-                label: locale === 'fr'
-                  ? 'Ambassade d’Italie à Alger : pièces requises pour études universitaires'
-                  : locale === 'ar'
-                    ? 'السفارة الإيطالية بالجزائر: متطلبات تأشيرة الدراسة الجامعية'
-                    : 'Italian Embassy in Algiers: university study requirements',
-                href: 'https://ambalgeri.esteri.it/it/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/studio/universita/',
-              },
-              {
-                label: locale === 'fr'
-                  ? 'VFS Global Algérie : informations candidats visa d’études Italie'
-                  : locale === 'ar'
-                    ? 'VFS Global الجزائر: إرشادات طلاب تأشيرة إيطاليا'
-                    : 'VFS Global Algeria: student visa applicants',
-                href: 'https://visa.vfsglobal.com/dza/en/ita/news/student-visa-applicants',
-              },
-              {
-                label: locale === 'fr'
-                  ? 'Duolingo English Test : reconnaissance dans les universités italiennes'
-                  : locale === 'ar'
-                    ? 'اختبار Duolingo الإنجليزية: القبول في الجامعات الإيطالية'
-                    : 'Duolingo English Test: acceptance in Italian universities',
-                href: 'https://blog.englishtest.duolingo.com/duolingo-english-test-accepted-in-italy-2/',
-              },
-              {
-                label: locale === 'fr'
-                  ? 'British Council EnglishScore : fonctionnement et certificat'
-                  : locale === 'ar'
-                    ? 'British Council EnglishScore: تفاصيل الاختبار والشهادة'
-                    : 'British Council EnglishScore: test and certificate',
-                href: 'https://www.englishscore.com/',
-              },
-            ]}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'FAQPage',
+                inLanguage: locale,
+                mainEntity: italyAeo.faqs.map((item) => ({
+                  '@type': 'Question',
+                  name: item.q,
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: item.a,
+                  },
+                })),
+              }).replace(/</g, '\\u003c'),
+            }}
           />
-        </div>
-      </article>
+
+          <div className="mt-16">
+            <ArticleTrust
+              locale={locale}
+              slug={slug}
+              title={c.title}
+              description={description}
+              publishedAt="2026-08-27"
+              reviewedAt={reviewedAt}
+              sources={[
+                {
+                  label: locale === 'fr'
+                    ? 'Ambassade d’Italie à Alger : clarification visa d’études (27 août 2026)'
+                    : locale === 'ar'
+                      ? 'السفارة الإيطالية بالجزائر: توضيح حول تأشيرة الدراسة (27 أغسطس 2026)'
+                      : 'Italian Embassy in Algiers: study-visa clarification, 27 August 2026',
+                  href: 'https://ambalgeri.esteri.it/it/news/dall_ambasciata/2026/08/visti-per-studio-2026-2027-chiarimenti-sulle-procedure-e-sulle-misure-straordinarie-dellambasciata/',
+                },
+                {
+                  label: locale === 'fr'
+                    ? 'Ambassade d’Italie à Alger : pièces requises pour études universitaires'
+                    : locale === 'ar'
+                      ? 'السفارة الإيطالية بالجزائر: متطلبات تأشيرة الدراسة الجامعية'
+                      : 'Italian Embassy in Algiers: university study requirements',
+                  href: 'https://ambalgeri.esteri.it/it/servizi-consolari-e-visti/servizi-per-il-cittadino-straniero/studio/universita/',
+                },
+                {
+                  label: locale === 'fr'
+                    ? 'VFS Global Algérie : informations candidats visa d’études Italie'
+                    : locale === 'ar'
+                      ? 'VFS Global الجزائر: إرشادات طلاب تأشيرة إيطاليا'
+                      : 'VFS Global Algeria: student visa applicants',
+                  href: 'https://visa.vfsglobal.com/dza/en/ita/news/student-visa-applicants',
+                },
+                {
+                  label: locale === 'fr'
+                    ? 'Duolingo English Test : reconnaissance dans les universités italiennes'
+                    : locale === 'ar'
+                      ? 'اختبار Duolingo الإنجليزية: القبول في الجامعات الإيطالية'
+                      : 'Duolingo English Test: acceptance in Italian universities',
+                  href: 'https://blog.englishtest.duolingo.com/duolingo-english-test-accepted-in-italy-2/',
+                },
+                {
+                  label: locale === 'fr'
+                    ? 'British Council EnglishScore : fonctionnement et certificat'
+                    : locale === 'ar'
+                      ? 'British Council EnglishScore: تفاصيل الاختبار والشهادة'
+                      : 'British Council EnglishScore: test and certificate',
+                  href: 'https://www.englishscore.com/',
+                },
+              ]}
+            />
+          </div>
+        </article>
+      </main>
       <ArticleMobileCta />
     </>
   );

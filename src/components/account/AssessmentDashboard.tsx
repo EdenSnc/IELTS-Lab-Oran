@@ -187,8 +187,8 @@ export default function AssessmentDashboard({
       {(paymentOrder || message) && (
         <p role="status" className="mt-6 rounded-2xl border border-black/[0.07] bg-white px-5 py-4 text-sm leading-6 shadow-sm">
           {message ?? `Order ${paymentOrder?.status.toLowerCase()}. ${paymentOrder?.status === 'PAID' ? 'Your verified access is ready.' : paymentOrder?.status === 'PENDING' ? 'Waiting for the verified payment notification.' : 'No new access was granted.'}`}
-          {paymentOrder?.status === 'PENDING' && <button type="button" onClick={() => void refreshPaymentOrder(paymentOrder.id)} className="ml-3 font-semibold underline">Check status</button>}
-          {paymentOrder && <Link href={`/${locale}/account/orders/${paymentOrder.id}`} className="ml-3 font-semibold underline">Receipt</Link>}
+          {paymentOrder?.status === 'PENDING' && <button type="button" onClick={() => void refreshPaymentOrder(paymentOrder.id)} className="ms-3 font-semibold underline">Check status</button>}
+          {paymentOrder && <Link href={`/${locale}/account/orders/${paymentOrder.id}`} className="ms-3 font-semibold underline">Receipt</Link>}
         </p>
       )}
 

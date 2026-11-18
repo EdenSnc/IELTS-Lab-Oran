@@ -406,7 +406,7 @@ export function getArticlesListContent(locale: ArticleLocale) {
   const content = {
     en: {
       pageTitle: 'IELTS Algeria Guides',
-      pageSubtitle: 'Fact-checked IELTS registration, test-choice, visa, immigration, and preparation guides for candidates in Oran and across Algeria.',
+      pageSubtitle: 'Fact-checked 2026 IELTS Algeria guides: 40,000 DA fee, computer format, One Skill Retake, Express Entry CLB, and visa rules for Oran candidates.',
       articles: [
         { href: COHORT_ARTICLE_PATH, ...cohortLaunch.en },
         { href: OSR_PATH, category: osrCopy.en.category, title: osrCopy.en.title, desc: osrCopy.en.desc },
@@ -423,7 +423,7 @@ export function getArticlesListContent(locale: ArticleLocale) {
     },
     fr: {
       pageTitle: 'Guides IELTS Algérie',
-      pageSubtitle: 'Guides vérifiés sur l’inscription, le choix du test, les visas, l’immigration et la préparation à Oran et en Algérie.',
+      pageSubtitle: 'Guides IELTS Algérie 2026 vérifiés : tarif de 40 000 DA, format ordinateur, One Skill Retake, Entrée express CLB et visas étudiants depuis Oran.',
       articles: [
         { href: COHORT_ARTICLE_PATH, ...cohortLaunch.fr },
         { href: OSR_PATH, category: osrCopy.fr.category, title: osrCopy.fr.title, desc: osrCopy.fr.desc },
@@ -440,7 +440,7 @@ export function getArticlesListContent(locale: ArticleLocale) {
     },
     ar: {
       pageTitle: 'أدلة IELTS في الجزائر',
-      pageSubtitle: 'أدلة موثقة للتسجيل واختيار الاختبار والتأشيرات والهجرة والتحضير في وهران والجزائر.',
+      pageSubtitle: 'أدلة IELTS الموثقة في الجزائر 2026: رسوم 40,000 دج، نظام الكمبيوتر، إعادة مهارة واحدة، معادلة CLB لكندا، وشروط تأشيرات الدراسة لمرشحي وهران.',
       articles: [
         { href: COHORT_ARTICLE_PATH, ...cohortLaunch.ar },
         { href: OSR_PATH, category: osrCopy.ar.category, title: osrCopy.ar.title, desc: osrCopy.ar.desc },

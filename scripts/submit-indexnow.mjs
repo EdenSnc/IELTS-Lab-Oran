@@ -1,27 +1,17 @@
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { CANONICAL_ORIGIN, INDEXNOW_KEY, LOCALES } from '../src/lib/seo.ts';
-import { COHORT_ARTICLE_PATH } from '../src/lib/cohort-launch.ts';
-import { OSR_PATH } from '../src/lib/one-skill-retake.ts';
+import {
+  CANONICAL_ORIGIN,
+  INDEXABLE_LOCALIZED_PATHS,
+  INDEXNOW_KEY,
+  LOCALES,
+  isIndexableLocalizedPath,
+} from '../src/lib/seo.ts';
 
 const INDEXNOW_ENDPOINT = 'https://api.indexnow.org/indexnow';
 
-const ALL_PATHS = [
-  '',
-  'articles',
-  COHORT_ARTICLE_PATH.slice(1),
-  OSR_PATH.slice(1),
-  'articles/academic-vs-general',
-  'articles/computer-vs-paper-ielts',
-  'articles/free-ielts-resources-algeria',
-  'articles/how-to-register-algeria',
-  'articles/ielts-vs-toefl-canada',
-  'articles/italy-student-visa-english-tests-algeria',
-  'articles/overcoming-speaking-anxiety',
-  'articles/tlscontact-capago',
-  'articles/writing-task-2-tactics',
-];
+const ALL_PATHS = [...INDEXABLE_LOCALIZED_PATHS];
 
 function allSitemapUrls() {
   return ALL_PATHS.flatMap((p) => {
@@ -34,8 +24,8 @@ function changedUrlsFromGit() {
   const diff = execSync('git diff --name-only HEAD~1 HEAD', { encoding: 'utf8' }).trim().split(/\r?\n/).filter(Boolean);
   const urls = new Set();
   for (const file of diff) {
-    const m = file.match(/^src\/app\/\[locale\]\/(articles\/[^/]+)\/page\.tsx$/);
-    if (m) {
+    const m = file.match(/^src\/app\/\[locale\]\/(.+)\/page\.tsx$/);
+    if (m && isIndexableLocalizedPath(m[1])) {
       for (const locale of LOCALES) urls.add(`${CANONICAL_ORIGIN}/${locale}/${m[1]}`);
     } else if (
       file.startsWith('src/components/') ||

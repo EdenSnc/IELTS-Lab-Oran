@@ -10,8 +10,8 @@ export function isCohortDeadlinePassed(now: Date = new Date()): boolean {
 export const cohortLaunch = {
   en: {
     category: 'IELTS Lab news',
-    title: 'IELTS Lab’s first preparation camp in Oran',
-    desc: 'A small in-person group, about one month of practice and feedback, and a special first-cohort fee of 5,000 DA.',
+    title: 'First IELTS Preparation Cohort in Oran (5,000 DA)',
+    desc: 'In-person 8-seat IELTS preparation cohort in Bir El Djir, Oran: ~4 weeks of all-4-skills coaching, Writing & Speaking feedback, and 5,000 DA launch fee.',
     deadline: '20 November 2026',
     deadlineLabel: 'Application deadline',
     feeLabel: 'Special first-cohort price',
@@ -25,8 +25,8 @@ export const cohortLaunch = {
   },
   fr: {
     category: 'Actualités IELTS Lab',
-    title: 'Premier groupe de préparation à l’IELTS à Oran',
-    desc: 'Un petit groupe en présentiel, environ un mois de pratique et de retours personnalisés, au tarif de lancement de 5 000 DA.',
+    title: '1er Groupe de Préparation IELTS à Oran (5 000 DA)',
+    desc: 'Préparation IELTS en présentiel à Bir El Djir, Oran (8 places) : environ un mois sur les 4 épreuves, retours personnalisés et tarif de lancement 5 000 DA.',
     deadline: '20 novembre 2026',
     deadlineLabel: 'Date limite de candidature',
     feeLabel: 'Tarif exceptionnel du premier groupe',
@@ -40,8 +40,8 @@ export const cohortLaunch = {
   },
   ar: {
     category: 'أخبار IELTS Lab',
-    title: 'انطلاق أول دورة تحضيرية لاختبار IELTS في وهران',
-    desc: 'مجموعة حضورية صغيرة لمدة شهر تقريباً، بسعر إطلاق خاص قدره 5,000 دج للمجموعة الأولى.',
+    title: 'أول دورة تحضيرية لاختبار IELTS بوهران (5,000 دج)',
+    desc: 'دورة تحضيرية حضورية مصغرة (8 مقاعد) لاختبار IELTS في بئر الجير، وهران لمدة شهر تقريباً: المهارات الأربع، تصحيح فردي، وسعر إطلاق خاص قدره 5,000 دج.',
     deadline: '20 نوفمبر 2026',
     deadlineLabel: 'آخر أجل للتقديم',
     feeLabel: 'سعر استثنائي للمجموعة الأولى',

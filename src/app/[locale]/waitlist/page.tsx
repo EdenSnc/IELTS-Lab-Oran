@@ -1,14 +1,37 @@
+import type { Metadata } from 'next';
 import { getLocale } from 'next-intl/server';
-import { buildAlternates, Locale } from '@/lib/seo';
+import { CANONICAL_ORIGIN, Locale } from '@/lib/seo';
 import WaitlistUI from '@/components/WaitlistUI';
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: Locale }> }) {
-  const { locale } = await params;
-  return {
-    title: 'Join the Waitlist | IELTS Lab Oran',
+const META_COPY: Record<Locale, { title: string; description: string }> = {
+  en: {
+    title: 'Join the Next Cohort Waitlist | IELTS Lab Oran',
     description:
-      'The founding cohort is full. Join the waitlist for the next rigorous, computer-based IELTS Lab Oran preparation program.',
-    alternates: buildAlternates(locale, 'waitlist'),
+      'Join the priority waitlist for the next 8-seat computer-based IELTS preparation cohort in Bir El Djir, Oran.',
+  },
+  fr: {
+    title: 'Liste d’attente de la prochaine cohorte | IELTS Lab Oran',
+    description:
+      'Rejoignez la liste d’attente prioritaire pour le prochain groupe de 8 places de préparation IELTS sur ordinateur à Bir El Djir, Oran.',
+  },
+  ar: {
+    title: 'قائمة انتظار الدفعة القادمة | IELTS Lab Oran',
+    description:
+      'انضم إلى قائمة الانتظار ذات الأولوية للدفعة القادمة (8 مقاعد) من دورة التحضير لاختبار IELTS على الكمبيوتر في بئر الجير، وهران.',
+  },
+};
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const safeLocale: Locale = locale === 'fr' || locale === 'ar' ? locale : 'en';
+  const copy = META_COPY[safeLocale];
+  return {
+    metadataBase: new URL(CANONICAL_ORIGIN),
+    title: copy.title,
+    description: copy.description,
+    alternates: { canonical: null, languages: {} },
+    openGraph: null,
+    twitter: null,
     robots: { index: false, follow: false },
   };
 }

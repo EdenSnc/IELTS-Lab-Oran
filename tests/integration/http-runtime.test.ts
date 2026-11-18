@@ -239,3 +239,60 @@ test('HTTP Runtime: test-engine pages stay noindex and never emit localhost soci
   assert.match(html, /<meta[^>]*name="robots"[^>]*content="noindex, nofollow"/i);
   assert.ok(!html.includes('http://localhost:3000'), 'Production metadata must not expose localhost URLs');
 });
+
+
+test('HTTP Runtime: llms.txt, new trilingual hubs, landmarks, breadcrumbs, gated 307s, single-robots 404s, and RTL /sample', async () => {
+  for (const llmPath of ['/llms.txt', '/llms-full.txt']) {
+    const res = await fetch(`${BASE_URL}${llmPath}`);
+    assert.equal(res.status, 200, `${llmPath} must return 200`);
+    const text = await res.text();
+    assert.match(text, /https:\/\/www\.ieltslab\.org/);
+  }
+
+  for (const route of ['/en', '/en/mock-test', '/fr/mock-test', '/ar/mock-test', '/en/about', '/en/privacy', '/en/terms', '/en/articles/first-ielts-preparation-cohort-oran']) {
+    const res = await fetch(`${BASE_URL}${route}`);
+    assert.equal(res.status, 200, `${route} must return 200`);
+    assert.match(res.headers.get('link') ?? '', /hreflang="x-default"/i, `${route} must emit HTTP Link hreflang`);
+    const html = await res.text();
+    assert.equal((html.match(/<main(?:\s|>)/gi) ?? []).length, 1, `${route} must have exactly 1 <main>`);
+    assert.match(html, /<main[^>]*id="main-content"/i, `${route} <main> must expose id="main-content"`);
+    assert.equal((html.match(/<footer(?:\s|>)/gi) ?? []).length, 1, `${route} must have exactly 1 <footer>`);
+    assert.ok(html.indexOf('<footer') > html.indexOf('</main>'), `${route} <footer> must be a sibling after </main>`);
+    assert.ok(!html.includes('ieltslab.app') && !html.includes('ieltslaboran.com') && !html.includes('ieltslab.tech'));
+  }
+
+  const guideRes = await fetch(`${BASE_URL}/en/articles/how-to-register-algeria`);
+  assert.equal(guideRes.status, 200);
+  const guideHtml = await guideRes.text();
+  const breadcrumbIdx = guideHtml.indexOf('aria-label="Breadcrumb"');
+  const h1Idx = guideHtml.indexOf('<h1');
+  assert.ok(breadcrumbIdx !== -1 && h1Idx !== -1 && breadcrumbIdx < h1Idx, 'Visible breadcrumb must appear before <h1>');
+  assert.match(guideHtml, /"https:\/\/www\.ieltslab\.org\/#organization"/);
+  assert.match(guideHtml, /"https:\/\/www\.ieltslab\.org\/#instructor"/);
+  assert.match(guideHtml, /"inLanguage":"en"/);
+
+  const adminRes = await fetch(`${BASE_URL}/en/admin/acquisition`, { redirect: 'manual' });
+  assert.equal(adminRes.status, 307, 'Unauthenticated /en/admin/acquisition must redirect 307 instead of streaming 200 loading skeleton');
+  assert.equal(adminRes.headers.get('x-robots-tag'), 'noindex, nofollow');
+  assert.ok(!/hreflang=/i.test(adminRes.headers.get('link') ?? ''), 'Admin redirect must not emit Link hreflang');
+
+  for (const missingPath of ['/staff', '/en/this-does-not-exist', '/this-does-not-exist']) {
+    const res404 = await fetch(`${BASE_URL}${missingPath}`);
+    assert.equal(res404.status, 404, `${missingPath} must return 404`);
+    assert.equal(res404.headers.get('x-robots-tag'), 'noindex, nofollow');
+    assert.ok(!/hreflang=/i.test(res404.headers.get('link') ?? ''), `${missingPath} must not emit Link hreflang`);
+    const html404 = await res404.text();
+    const robotsTags = html404.match(/<meta[^>]*name="robots"[^>]*>/gi) ?? [];
+    assert.equal(robotsTags.length, 1, `${missingPath} must emit exactly 1 <meta name="robots"> tag, got: ${JSON.stringify(robotsTags)}`);
+    assert.ok(!/<link[^>]*rel="canonical"/i.test(html404), `${missingPath} must not emit canonical`);
+  }
+
+  const sampleAr = await fetch(`${BASE_URL}/sample?locale=ar`);
+  assert.equal(sampleAr.status, 200);
+  assert.equal(sampleAr.headers.get('x-robots-tag'), 'noindex, nofollow');
+  assert.ok(!/hreflang=/i.test(sampleAr.headers.get('link') ?? ''));
+  const sampleArHtml = await sampleAr.text();
+  assert.match(sampleArHtml, /<html[^>]*lang="ar"[^>]*dir="rtl"/i);
+  assert.match(sampleArHtml, /<meta[^>]*name="robots"[^>]*content="noindex, nofollow"/i);
+  assert.ok(!/<link[^>]*rel="canonical"/i.test(sampleArHtml));
+});

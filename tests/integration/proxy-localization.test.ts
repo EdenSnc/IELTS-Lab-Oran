@@ -51,3 +51,32 @@ test('Proxy rewrites unmatched non-localized paths to /_not-found with 404 statu
   const csp = response.headers.get('content-security-policy') ?? response.headers.get('content-security-policy-report-only') ?? '';
   assert.ok(csp.includes(`'nonce-${nonce}'`), '404 CSP header must include per-request nonce');
 });
+
+test('Proxy strips Link hreflang on 404/private paths, sets X-Robots-Tag, rewrites bare /staff to 404, and forwards x-sample-locale', async () => {
+  const { default: proxy } = await import('../../src/proxy');
+
+  const staffRes = await proxy(new NextRequest('https://www.ieltslab.org/staff'));
+  assert.equal(staffRes.status, 404);
+  assert.match(staffRes.headers.get('x-middleware-rewrite') ?? '', /\/_not-found$/);
+  assert.equal(staffRes.headers.get('link'), null);
+  assert.equal(staffRes.headers.get('x-robots-tag'), 'noindex, nofollow');
+
+  const missingLocaleRes = await proxy(new NextRequest('https://www.ieltslab.org/en/this-does-not-exist'));
+  assert.equal(missingLocaleRes.headers.get('link'), null);
+  assert.equal(missingLocaleRes.headers.get('x-robots-tag'), 'noindex, nofollow');
+
+  const adminRes = await proxy(new NextRequest('https://www.ieltslab.org/en/admin/acquisition'));
+  assert.equal(adminRes.headers.get('link'), null);
+  assert.equal(adminRes.headers.get('x-robots-tag'), 'noindex, nofollow');
+
+  const sampleArRes = await proxy(new NextRequest('https://www.ieltslab.org/sample?locale=ar'));
+  assert.equal(sampleArRes.headers.get('x-middleware-request-x-sample-locale'), 'ar');
+  assert.equal(sampleArRes.headers.get('x-robots-tag'), 'noindex, nofollow');
+
+  for (const locale of ['en', 'fr', 'ar']) {
+    for (const newSlug of ['mock-test', 'about', 'privacy', 'terms', 'articles/first-ielts-preparation-cohort-oran']) {
+      const okRes = await proxy(new NextRequest(`https://www.ieltslab.org/${locale}/${newSlug}`));
+      assert.match(okRes.headers.get('link') ?? '', /hreflang="x-default"/);
+    }
+  }
+});

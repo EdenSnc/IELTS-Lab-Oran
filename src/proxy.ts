@@ -1,7 +1,8 @@
 import createMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
-import {routing} from './i18n/routing';
+import { routing } from './i18n/routing';
 import { parsePublicEnvironment } from './lib/env';
+import { isIndexableLocalizedPath } from './lib/seo';
 import { buildContentSecurityPolicy } from './lib/security/content-security-policy';
 import { refreshSupabaseSession } from './lib/supabase/proxy-session';
 import { shouldRefreshSupabaseSession, type ProxyResponseKind } from './lib/supabase/proxy-policy';
@@ -40,6 +41,7 @@ function applyRequestSecurityHeaders(
   request: NextRequest,
   response: NextResponse,
   kind: ProxyResponseKind,
+  extraRequestHeaders?: Record<string, string>,
 ) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const csp = buildContentSecurityPolicy({
@@ -64,6 +66,11 @@ function applyRequestSecurityHeaders(
   }
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', csp);
+  if (extraRequestHeaders) {
+    for (const [key, value] of Object.entries(extraRequestHeaders)) {
+      requestHeaders.set(key, value);
+    }
+  }
 
   if (kind !== 'redirect') {
     const requestOverride = NextResponse.next({ request: { headers: requestHeaders } });
@@ -97,7 +104,9 @@ function alignXDefaultWithEnglish(response: NextResponse) {
 }
 
 export default async function proxy(request: NextRequest) {
-  const firstSegment = request.nextUrl.pathname.split('/')[1];
+  const pathname = request.nextUrl.pathname;
+  const segments = pathname.split('/');
+  const firstSegment = segments[1];
   if (firstSegment?.startsWith(BOTID_PROXY_SEGMENT)) {
     return NextResponse.next();
   }
@@ -105,26 +114,67 @@ export default async function proxy(request: NextRequest) {
     (locale) => locale === firstSegment,
   );
   let response: NextResponse;
+  const extraRequestHeaders: Record<string, string> = {};
 
   if (!firstSegment) {
     const destination = request.nextUrl.clone();
     destination.pathname = '/en';
     response = NextResponse.redirect(destination, 308);
   } else if (isLocalizedRoute) {
-    response = alignXDefaultWithEnglish(handleI18nRouting(request));
-  } else if (['api', 'sim', 'speaking', 'sample', 'staff', 'r'].includes(firstSegment)) {
+    const subPath = segments.slice(2).join('/');
+    const i18nResponse = handleI18nRouting(request);
+    if (isIndexableLocalizedPath(subPath)) {
+      response = alignXDefaultWithEnglish(i18nResponse);
+    } else {
+      // Never emit Link hreflang headers on private, noindex, or 404 localized URLs.
+      i18nResponse.headers.delete('Link');
+      if (subPath === 'articles/simulation-platform') {
+        i18nResponse.headers.set('X-Robots-Tag', 'noindex, follow');
+      } else {
+        i18nResponse.headers.set('X-Robots-Tag', 'noindex, nofollow');
+      }
+      response = i18nResponse;
+    }
+  } else if (firstSegment === 'staff') {
+    if (pathname === '/staff/operations' || pathname.startsWith('/staff/operations/')) {
+      response = NextResponse.next();
+    } else {
+      // Bare /staff or unknown /staff/* must 404 via /_not-found without matching /[locale].
+      response = NextResponse.rewrite(new URL('/_not-found', request.url), { status: 404 });
+    }
+    response.headers.delete('Link');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  } else if (firstSegment === 'sample') {
+    const requestedLocale = request.nextUrl.searchParams.get('locale');
+    if (requestedLocale === 'ar' || requestedLocale === 'fr' || requestedLocale === 'en') {
+      extraRequestHeaders['x-sample-locale'] = requestedLocale;
+    }
     response = NextResponse.next();
+    response.headers.delete('Link');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  } else if (['api', 'sim', 'speaking', 'r'].includes(firstSegment)) {
+    response = NextResponse.next();
+    if (firstSegment === 'sim' || firstSegment === 'speaking') {
+      response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    }
   } else {
     response = NextResponse.rewrite(new URL('/_not-found', request.url), { status: 404 });
+    response.headers.delete('Link');
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow');
   }
 
   const kind = responseKind(response);
-  if (shouldRefreshSupabaseSession(request.nextUrl.pathname, kind)) {
+  if (shouldRefreshSupabaseSession(pathname, kind)) {
     response = await refreshSupabaseSession(request, response);
   }
-  return applyRequestSecurityHeaders(request, response, kind);
+  return applyRequestSecurityHeaders(
+    request,
+    response,
+    kind,
+    Object.keys(extraRequestHeaders).length > 0 ? extraRequestHeaders : undefined,
+  );
 }
- 
+
 export const config = {
   matcher: [
     '/((?!_next|_not-found|_vercel|149e9513-01fa-4fb0-aad4-566afd725d1b|.*\\.[a-zA-Z0-9]{1,8}$).*)',

@@ -180,10 +180,10 @@ export default function ApplicationForm() {
     return (
       <div className="flex min-h-[30rem] flex-col justify-center">
         <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-xl text-emerald-700">✓</div>
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-crimson">{text.eyebrow}</p>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-[#b81428]">{text.eyebrow}</p>
         <h3 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-charcoal">{text.successTitle}</h3>
-        <p className="mt-4 text-sm leading-6 text-black/55">{text.success}</p>
-        {whatsappUrl && <a href={whatsappUrl} className="mt-7 inline-flex h-12 items-center justify-center rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson">{text.whatsapp}</a>}
+        <p className="mt-4 text-sm leading-6 text-gray-700">{text.success}</p>
+        {whatsappUrl && <a href={whatsappUrl} className="mt-7 inline-flex h-12 items-center justify-center rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-[#c4162c]">{text.whatsapp}</a>}
       </div>
     );
   }
@@ -192,24 +192,24 @@ export default function ApplicationForm() {
     <form ref={formRef} onSubmit={submit} noValidate className="flex h-full min-h-[34rem] flex-col">
       {step === 0 ? (
         <div className="flex flex-1 flex-col">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-crimson">{text.eyebrow}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b81428]">{text.eyebrow}</p>
           <h3 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-charcoal">{text.title}</h3>
-          <p className="mt-3 text-sm leading-6 text-black/55">{text.intro}</p>
+          <p className="mt-3 text-sm leading-6 text-gray-700">{text.intro}</p>
           <div className="mt-7 grid gap-3">
             {text.reasons.map(([title, description], index) => (
               <div key={title} className="flex gap-4 rounded-2xl bg-black/[0.025] p-4">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-crimson/[0.09] text-xs font-bold text-crimson">{index + 1}</span>
-                <div><p className="text-sm font-semibold text-charcoal">{title}</p><p className="mt-1 text-xs leading-5 text-black/50">{description}</p></div>
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-crimson/[0.1] text-xs font-bold text-[#b81428]">{index + 1}</span>
+                <div><p className="text-sm font-semibold text-charcoal">{title}</p><p className="mt-1 text-xs leading-5 text-gray-600">{description}</p></div>
               </div>
             ))}
           </div>
-          <button type="button" onClick={advance} className="mt-auto h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson">{text.begin}</button>
+          <button type="button" onClick={advance} className="mt-auto h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-[#c4162c]">{text.begin}</button>
         </div>
       ) : (
         <>
           <div>
-            <div className="flex items-center justify-between gap-4 text-xs font-bold uppercase tracking-[0.14em] text-black/40"><span>{text.step.replace('{current}', String(step)).replace('{total}', '5')}</span><span className="text-crimson">{text.sections[step - 1]}</span></div>
-            <div className="mt-3 h-1 overflow-hidden rounded-full bg-black/[0.06]"><div className="h-full rounded-full bg-crimson transition-[width]" style={{ width: `${step * 20}%` }} /></div>
+            <div className="flex items-center justify-between gap-4 text-xs font-bold uppercase tracking-[0.14em] text-gray-600"><span>{text.step.replace('{current}', String(step)).replace('{total}', '5')}</span><span className="text-[#b81428]">{text.sections[step - 1]}</span></div>
+            <div className="mt-3 h-1 overflow-hidden rounded-full bg-black/[0.08]"><div className="h-full rounded-full bg-[#c4162c] transition-[width]" style={{ width: `${step * 20}%` }} /></div>
           </div>
 
           <fieldset data-step="1" className={step === 1 ? 'mt-8 grid gap-5' : 'hidden'}>
@@ -224,7 +224,7 @@ export default function ApplicationForm() {
 
           <fieldset data-step="2" className={step === 2 ? 'mt-8 grid gap-5' : 'hidden'}>
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[1]}</legend>
-            <div className="grid gap-2"><span className="text-sm font-semibold text-black/70">{text.booked}</span><div className="grid grid-cols-2 gap-3">{([['yes', text.yes], ['no', text.no]] as const).map(([value, label]) => <label key={value} className={`cursor-pointer rounded-2xl border p-4 text-sm font-semibold transition ${bookedExam === value ? 'border-crimson bg-crimson/[0.055] text-crimson' : 'border-black/10 hover:border-black/20'}`}><input className="sr-only" type="radio" name="bookedExam" value={value} checked={bookedExam === value} onChange={() => setBookedExam(value)} required />{label}</label>)}</div></div>
+            <div className="grid gap-2"><span className="text-sm font-semibold text-black/70">{text.booked}</span><div className="grid grid-cols-2 gap-3">{([['yes', text.yes], ['no', text.no]] as const).map(([value, label]) => <label key={value} className={`cursor-pointer rounded-2xl border p-4 text-sm font-semibold transition ${bookedExam === value ? 'border-crimson bg-crimson/[0.055] text-[#b81428]' : 'border-black/10 hover:border-black/20'}`}><input className="sr-only" type="radio" name="bookedExam" value={value} checked={bookedExam === value} onChange={() => setBookedExam(value)} required />{label}</label>)}</div></div>
             {bookedExam === 'yes' && <label className={labelClass}>{text.bookedDate}<input className={fieldClass} name="bookedExamDate" type="date" required /></label>}
             {bookedExam === 'no' && <label className={labelClass}>{text.targetDate}<input className={fieldClass} name="targetExamDate" type="date" required /></label>}
           </fieldset>
@@ -240,15 +240,15 @@ export default function ApplicationForm() {
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[3]}</legend>
             <label className={labelClass}>{text.taken}<select className={fieldClass} name="takenIelts" value={takenIelts} onChange={(event) => setTakenIelts(event.target.value as YesNo)} required><option value="" disabled>—</option><option value="yes">{text.yes}</option><option value="no">{text.no}</option></select></label>
             {takenIelts === 'yes' && <label className={labelClass}>{text.recentScore}<input className={fieldClass} name="recentScore" maxLength={50} required /></label>}
-            <div className="grid gap-2"><span className="text-sm font-semibold text-black/70">{text.challenges}</span><div className="grid grid-cols-2 gap-2">{text.modules.map(([value, label]) => { const checked = challengingModules.includes(value); return <label key={value} className={`cursor-pointer rounded-2xl border p-3 text-center text-sm font-semibold transition ${checked ? 'border-crimson bg-crimson/[0.055] text-crimson' : 'border-black/10 hover:border-black/20'}`}><input className="sr-only" type="checkbox" name="challengingModules" value={value} checked={checked} onChange={() => setChallengingModules((current) => checked ? current.filter((item) => item !== value) : [...current, value])} />{label}</label>; })}</div></div>
-            <label className={labelClass}>{text.level}<select className={fieldClass} name="englishLevel" defaultValue="" required><option value="" disabled>—</option>{text.levels.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><span className="text-xs font-normal leading-5 text-black/45">{text.levelHelp}</span></label>
+            <div className="grid gap-2"><span className="text-sm font-semibold text-black/70">{text.challenges}</span><div className="grid grid-cols-2 gap-2">{text.modules.map(([value, label]) => { const checked = challengingModules.includes(value); return <label key={value} className={`cursor-pointer rounded-2xl border p-3 text-center text-sm font-semibold transition ${checked ? 'border-crimson bg-crimson/[0.055] text-[#b81428]' : 'border-black/10 hover:border-black/20'}`}><input className="sr-only" type="checkbox" name="challengingModules" value={value} checked={checked} onChange={() => setChallengingModules((current) => checked ? current.filter((item) => item !== value) : [...current, value])} />{label}</label>; })}</div></div>
+            <label className={labelClass}>{text.level}<select className={fieldClass} name="englishLevel" defaultValue="" required><option value="" disabled>—</option>{text.levels.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><span className="text-xs font-normal leading-5 text-gray-600">{text.levelHelp}</span></label>
             <label className={labelClass}>{text.urgency}<textarea className="min-h-28 w-full resize-y rounded-2xl border border-black/10 bg-black/[0.025] px-4 py-3 text-[15px] outline-none transition focus:border-crimson/45 focus:bg-white focus:ring-4 focus:ring-crimson/[0.07]" name="urgencyAndObstacles" minLength={10} maxLength={1500} placeholder={text.urgencyPlaceholder} required /></label>
           </fieldset>
 
           <fieldset data-step="5" className={step === 5 ? 'mt-8 grid gap-5' : 'hidden'}>
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[4]}</legend>
-            <label className="flex cursor-pointer gap-4 rounded-2xl border border-black/10 bg-black/[0.025] p-5 text-sm font-medium leading-6 text-black/70"><input className="mt-1 h-5 w-5 shrink-0 accent-crimson" type="checkbox" name="commitmentAccepted" value="yes" required /><span>{text.commitment}</span></label>
-            <p className="text-xs leading-5 text-black/45">{text.privacy}</p>
+            <label className="flex cursor-pointer gap-4 rounded-2xl border border-black/10 bg-black/[0.025] p-5 text-sm font-medium leading-6 text-gray-800"><input className="mt-1 h-5 w-5 shrink-0 accent-crimson" type="checkbox" name="commitmentAccepted" value="yes" required /><span>{text.commitment}</span></label>
+            <p className="text-xs leading-5 text-gray-600">{text.privacy}</p>
           </fieldset>
 
           <div className="mt-auto grid grid-cols-2 gap-3 pt-7">

@@ -1,6 +1,6 @@
 import Navbar from '@/components/Navbar';
 import ArticleMobileCta from '@/components/ArticleMobileCta';
-import ArticleTrust from '@/components/ArticleTrust';
+import ArticleTrust, { ArticleBreadcrumb } from '@/components/ArticleTrust';
 import ClbCalculator from '@/components/ClbCalculator';
 import { Link } from '@/i18n/routing';
 import { getLocale } from 'next-intl/server';
@@ -19,6 +19,8 @@ export async function generateMetadata({
     slug: 'ielts-vs-toefl-canada',
     title: articleSeoTitle(locale, 'ielts-vs-toefl-canada'),
     description,
+    publishedTime: '2026-07-29',
+    modifiedTime: '2026-11-18',
   });
 }
 
@@ -222,17 +224,86 @@ export default async function ArticlePage() {
   const description = articleDescription(locale, 'ielts-vs-toefl-canada');
   const isRtl = locale === 'ar';
 
+  const canadaFaqs = {
+    en: {
+      heading: 'Frequently Asked Questions — IELTS & TCF Canada from Algeria',
+      items: [
+        {
+          q: 'What IELTS band scores equal CLB 9 for Canada Express Entry?',
+          a: 'On IELTS General Training, CLB 9 requires at least Listening 8.0, Reading 7.0, Writing 7.0, and Speaking 7.0 in a single test sitting.',
+        },
+        {
+          q: 'Should Algerian candidates take TCF Canada, IELTS General Training, or both?',
+          a: 'If French is your strongest language, TCF Canada at NCLC 7+ unlocks French-proficiency draws; adding IELTS General Training at CLB 5+ (or CLB 7–9) currently adds +50 bilingual CRS points plus up to 24 second-language points.',
+        },
+        {
+          q: 'Are TOEFL iBT or IELTS Academic accepted for Express Entry?',
+          a: 'No. Neither TOEFL iBT nor IELTS Academic is accepted by IRCC for Express Entry immigration profiles, even though Canadian universities accept them for academic admission.',
+        },
+        {
+          q: 'Does IRCC accept IELTS One Skill Retake for Express Entry?',
+          a: 'No. IRCC explicitly requires all four module scores to come from a single full IELTS General Training sitting.',
+        },
+      ],
+    },
+    fr: {
+      heading: 'Questions fréquentes — IELTS & TCF Canada depuis l’Algérie',
+      items: [
+        {
+          q: 'Quels scores IELTS correspondent à CLB 9 pour Entrée express ?',
+          a: 'En IELTS General Training, le seuil CLB 9 exige au minimum Listening 8.0, Reading 7.0, Writing 7.0 et Speaking 7.0 lors d’une même session.',
+        },
+        {
+          q: 'Faut-il passer TCF Canada, IELTS General Training ou les deux ?',
+          a: 'Pour un candidat algérien francophone, obtenir NCLC 7+ au TCF Canada ouvre les rondes francophones, et ajouter CLB 5+ à l’IELTS General Training rapporte actuellement +50 points CRS de bilinguisme.',
+        },
+        {
+          q: 'Le TOEFL ou l’IELTS Academic sont-ils valables pour Entrée express ?',
+          a: 'Non. IRCC refuse le TOEFL et l’IELTS Academic pour Entrée express (ils ne servent qu’aux admissions universitaires).',
+        },
+        {
+          q: 'IRCC accepte-t-il l’IELTS One Skill Retake ?',
+          a: 'Non. IRCC n’accepte pas le One Skill Retake pour Entrée express ; les quatre compétences doivent provenir d’un examen complet unique.',
+        },
+      ],
+    },
+    ar: {
+      heading: 'الأسئلة الشائعة — اختبارات الهجرة إلى كندا من الجزائر',
+      items: [
+        {
+          q: 'ما درجات IELTS المطلوبة لتحقيق مستوى CLB 9 في Express Entry؟',
+          a: 'يتطلب مستوى CLB 9 في اختبار IELTS General Training تحقيق 8.0 في الاستماع و7.0 في القراءة و7.0 في الكتابة و7.0 في المحادثة في جلسة اختبار واحدة.',
+        },
+        {
+          q: 'هل الأفضل للجزائريين اجتياز TCF Canada أم IELTS General أم كليهما؟',
+          a: 'إذا كانت فرنسيتك قوية، فإن تحقيق NCLC 7+ في TCF Canada يفتح سحوبات الفئة الفرنكوفونية، وإضافة CLB 5+ في IELTS General يمنحك حالياً 50 نقطة CRS إضافية للمزاوجة اللغوية.',
+        },
+        {
+          q: 'هل تقبل كندا اختبار TOEFL أو IELTS Academic في Express Entry؟',
+          a: 'لا، ترفض وزارة الهجرة الكندية (IRCC) كلاً من TOEFL وIELTS Academic في ملفات الهجرة Express Entry، وتشترط IELTS General Training.',
+        },
+        {
+          q: 'هل تُقبل خدمة إعادة مهارة واحدة (One Skill Retake) للهجرة إلى كندا؟',
+          a: 'لا، ترفض IRCC نتائج One Skill Retake في نظام Express Entry وتشترط شهادة اختبار كامل من جلسة واحدة.',
+        },
+      ],
+    },
+  }[locale];
+
   return (
     <>
       <Navbar />
-      <article
-        className={`pt-32 pb-32 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`}
+      <main
+        id="main-content"
+        className={`pt-32 pb-24 px-6 max-w-3xl mx-auto ${isRtl ? 'font-cairo' : ''}`}
         dir={isRtl ? 'rtl' : 'ltr'}
       >
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
-          {c.title}
-        </h1>
-        <div className="bg-white border-l-4 border-crimson p-6 rounded-r-2xl shadow-sm mb-10">
+        <article>
+          <ArticleBreadcrumb locale={locale} title={c.title} />
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
+            {c.title}
+          </h1>
+          <div className="bg-white border-s-4 border-crimson p-6 rounded-e-2xl shadow-sm mb-10">
           <p className="text-charcoal font-bold text-lg mb-2">{c.keyTakeawayTitle}</p>
           <p
             className="text-gray-600 m-0"
@@ -386,6 +457,18 @@ export default async function ArticlePage() {
             {t.osr}
           </p>
 
+          <h2 className="text-3xl font-extrabold mt-16 mb-6 text-charcoal tracking-tight">
+            {canadaFaqs.heading}
+          </h2>
+          <div className="not-prose my-6 space-y-4">
+            {canadaFaqs.items.map((item) => (
+              <section key={item.q} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h3 className="text-base font-bold text-charcoal mb-2">{item.q}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed m-0">{item.a}</p>
+              </section>
+            ))}
+          </div>
+
           <div className="not-prose group relative mt-16 flex flex-col items-center justify-between gap-8 overflow-hidden rounded-[2.5rem] border border-gray-200 bg-white p-8 shadow-xl shadow-gray-200/50 md:flex-row md:p-10">
             <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-crimson/5 blur-3xl transition-colors duration-500 group-hover:bg-crimson/10" />
             <div className="relative z-10 md:w-2/3">
@@ -394,18 +477,40 @@ export default async function ArticlePage() {
             </div>
             <Link
               href="/#intake"
-              className="relative z-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-charcoal px-8 py-4 text-center font-bold text-white shadow-soft transition-colors hover:bg-crimson md:w-auto"
+              className="relative z-10 inline-flex w-full items-center justify-center gap-2 rounded-full bg-charcoal px-8 py-4 text-center font-bold text-white shadow-soft transition-colors hover:bg-[#c4162c] md:w-auto"
             >
               {c.ctaBtn} <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              inLanguage: locale,
+              mainEntity: canadaFaqs.items.map((item) => ({
+                '@type': 'Question',
+                name: item.q,
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: item.a,
+                },
+              })),
+            }).replace(/</g, '\\u003c'),
+          }}
+        />
+
         <div className="mt-16">
           <ArticleTrust
             locale={locale}
             slug="ielts-vs-toefl-canada"
             title={c.title}
             description={description}
+            publishedAt="2026-07-29"
+            reviewedAt="2026-11-18"
             sources={[
               {
                 label: locale === 'fr'
@@ -441,11 +546,11 @@ export default async function ArticlePage() {
               },
               {
                 label: locale === 'fr'
-                  ? 'Institut français d’Algérie : inscription au TCF Canada'
+                  ? 'Institut français d’Algérie : informations et inscription au TCF Canada'
                   : locale === 'ar'
-                    ? 'المعهد الفرنسي بالجزائر: التسجيل لاختبار TCF'
-                    : 'Institut français d’Algérie: TCF registration',
-                href: 'https://www.algerie.campusfrance.org/faq-concernant-le-tcf-mise-en-place-par-l-ifa',
+                    ? 'المعهد الفرنسي بالجزائر: التسجيل ومواعيد اختبار TCF Canada'
+                    : 'Institut français d’Algérie: TCF Canada registration',
+                href: 'https://www.if-algerie.com/tests-et-examens/tcf-canada',
               },
               {
                 label: locale === 'fr'
@@ -466,7 +571,8 @@ export default async function ArticlePage() {
             ]}
           />
         </div>
-      </article>
+        </article>
+      </main>
       <ArticleMobileCta />
     </>
   );

@@ -21,7 +21,7 @@ export function buildContentSecurityPolicy(input: {
     "img-src 'self' data: blob: https://images.unsplash.com https://img.youtube.com",
     "font-src 'self' data:",
     "media-src 'self' blob:",
-    "frame-src 'none'",
+    "frame-src https://www.youtube-nocookie.com",
     `connect-src 'self' ${input.supabaseOrigin} https://vitals.vercel-insights.com https://*.vercel-insights.com ${input.rtcSources.join(' ')}`.trim(),
     "worker-src 'self' blob:",
     "manifest-src 'self'",

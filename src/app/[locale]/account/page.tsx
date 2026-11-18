@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { CANONICAL_ORIGIN } from '@/lib/seo';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(CANONICAL_ORIGIN),
   robots: { index: false, follow: false },
 };
 import SignOutButton from '@/components/auth/SignOutButton';
@@ -93,8 +95,26 @@ export default async function AccountPage({
     })
     : null;
 
+  const firstName = user.name ? user.name.split(' ')[0] : '';
+  const isRtl = locale === 'ar';
+  const headerCopy =
+    locale === 'fr'
+      ? {
+          eyebrow: 'Votre espace IELTS Lab',
+          welcome: firstName ? `Bienvenue, ${firstName}` : 'Bienvenue',
+        }
+      : locale === 'ar'
+        ? {
+            eyebrow: 'مساحتك في IELTS Lab',
+            welcome: firstName ? `مرحباً، ${firstName}` : 'مرحباً بك',
+          }
+        : {
+            eyebrow: 'Your IELTS Lab',
+            welcome: firstName ? `Welcome, ${firstName}` : 'Welcome',
+          };
+
   return (
-    <main className="min-h-screen bg-[#f5f5f3] px-4 py-6 sm:px-6 sm:py-10">
+    <main id="main-content" className={`min-h-screen bg-[#f5f5f3] px-4 py-6 sm:px-6 sm:py-10 ${isRtl ? 'font-cairo' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between gap-5 px-1">
           <TestBrand href={`/${locale}`} responsive={false} />
@@ -102,9 +122,9 @@ export default async function AccountPage({
         </header>
 
         <section className="mt-8 overflow-hidden rounded-[2rem] border border-black/[0.07] bg-white p-7 shadow-[0_20px_70px_-40px_rgba(0,0,0,0.3)] sm:p-10">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-crimson">Your IELTS Lab</p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">Welcome{user.name ? `, ${user.name.split(' ')[0]}` : ''}</h1>
-          <p className="mt-3 text-sm text-black/50">{user.email}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b81428]">{headerCopy.eyebrow}</p>
+          <h1 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">{headerCopy.welcome}</h1>
+          <p className="mt-3 text-sm text-gray-600">{user.email}</p>
         </section>
 
         <AccountPlatform

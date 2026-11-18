@@ -12,7 +12,7 @@ export const routeRules = {
   uk: {
     status: 'conditional',
     source: 'https://www.gov.uk/guidance/prove-your-english-language-abilities-with-a-secure-english-language-test-selt',
-    extra: 'https://www.ielts.org/take-a-test/booking-your-test/one-skill-retake',
+    extra: 'https://ielts.org/take-a-test/booking-your-test/one-skill-retake',
   },
   australia: {
     status: 'conditional',
@@ -36,8 +36,8 @@ export type RetakeRoute = keyof typeof routeRules;
 export const osrCopy = {
   fr: {
     category: 'Examens et visas',
-    title: 'IELTS One Skill Retake en Algérie',
-    desc: 'Prix en dinars, centres dont Oran, démarche de réservation et règles par visa. Vérifiez votre dossier avant de payer.',
+    title: 'IELTS One Skill Retake en Algérie (25 000 DA)',
+    desc: 'One Skill Retake IELTS en Algérie (25 000 DA sous 60 jours) : centres dont Oran, réservation British Council et acceptation par visa (Canada, UK, Italie).',
     intro: 'Un seul score vous bloque ? Vous pouvez repasser cette compétence en Algérie si votre test initial et votre centre sont éligibles. Vérifiez d’abord que le destinataire de votre résultat l’accepte.',
     price: '25 000 DA',
     priceLabel: 'Tarif affiché en Algérie',
@@ -84,8 +84,8 @@ export const osrCopy = {
   },
   en: {
     category: 'Exams and visas',
-    title: 'IELTS One Skill Retake in Algeria',
-    desc: 'Check the fee in dinars, test centres including Oran, booking steps and visa rules before paying for IELTS One Skill Retake.',
+    title: 'IELTS One Skill Retake in Algeria (25,000 DA)',
+    desc: 'IELTS One Skill Retake in Algeria (25,000 DA within 60 days): Oran & Algiers centres, British Council booking steps, and Canada/UK/Italy visa rules.',
     intro: 'One band score holding you back? You can retake that skill in Algeria if your original test and centre are eligible. Check that the organisation receiving your score accepts the retake.',
     price: '25,000 DA',
     priceLabel: 'Listed Algeria fee',
@@ -132,8 +132,8 @@ export const osrCopy = {
   },
   ar: {
     category: 'الاختبارات والتأشيرات',
-    title: 'إعادة مهارة واحدة في اختبار IELTS في الجزائر',
-    desc: 'السعر بالدينار، مراكز الاختبار ومنها وهران، خطوات الحجز وقواعد التأشيرات قبل الدفع.',
+    title: 'إعادة مهارة واحدة IELTS One Skill Retake بالجزائر',
+    desc: 'إعادة مهارة واحدة في اختبار IELTS بالجزائر (25,000 دج خلال 60 يوماً): مراكز وهران والجزائر، خطوات الحجز، وقبول النتيجة لتأشيرات كندا وأوروبا.',
     intro: 'هل تحتاج إلى رفع نتيجتك في مهارة واحدة؟ يمكنك إعادتها في الجزائر إذا كان اختبارك الأول ومركزه مؤهلين. تأكد من قبول الجهة التي ستتلقى النتيجة قبل الحجز.',
     price: '25,000 دج',
     priceLabel: 'السعر المنشور في الجزائر',

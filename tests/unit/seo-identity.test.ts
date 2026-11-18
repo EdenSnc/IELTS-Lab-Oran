@@ -12,6 +12,8 @@ import {
   localizedUrl,
   buildArticleMetadata,
   buildWebsitePageMetadata,
+  GUIDE_POOL,
+  buildLocaleRootMetadata,
   defaultOgImageUrl,
 } from '@/lib/seo';
 import sitemap from '@/app/sitemap';
@@ -164,4 +166,134 @@ test('Localization: FR and AR dictionaries have translated testimonials and UI c
   assert.notEqual(fr.Intake.statusLabReady, 'Lab Ready');
   assert.notEqual(ar.Intake.statusLabReady, 'Lab Ready');
   assert.notEqual(fr.Facility.disclaimer, 'IELTS Lab Oran is an independent preparation provider and is not affiliated with IELTS, the British Council, IDP, or Cambridge University Press & Assessment.');
+});
+
+
+test('SEO: All indexable article SEO titles (<=60 chars) and descriptions (120..160 chars) meet SERP bounds', async () => {
+  const {
+    articleSeoTitle,
+    articleDescription,
+    STANDALONE_PAGE_SEO_TITLES,
+    STANDALONE_PAGE_SEO_DESCRIPTIONS,
+  } = await import('@/lib/seo');
+  const { cohortLaunch } = await import('@/lib/cohort-launch');
+  const { osrCopy } = await import('@/lib/one-skill-retake');
+  const { getArticlesListContent } = await import('@/lib/articleContent');
+
+  const slugs = [
+    'academic-vs-general',
+    'computer-vs-paper-ielts',
+    'free-ielts-resources-algeria',
+    'how-to-register-algeria',
+    'ielts-vs-toefl-canada',
+    'italy-student-visa-english-tests-algeria',
+    'overcoming-speaking-anxiety',
+    'tlscontact-capago',
+    'writing-task-2-tactics',
+  ] as const;
+
+  for (const locale of LOCALES) {
+    for (const slug of slugs) {
+      const title = articleSeoTitle(locale, slug);
+      const desc = articleDescription(locale, slug);
+      assert.ok(
+        title.length >= 25 && title.length <= 60,
+        `[${locale}] ${slug} title length ${title.length} out of [25..60]: "${title}"`,
+      );
+      assert.ok(
+        desc.length >= 120 && desc.length <= 160,
+        `[${locale}] ${slug} description length ${desc.length} out of [120..160]: "${desc}"`,
+      );
+    }
+
+    assert.ok(cohortLaunch[locale].title.length <= 60, `[${locale}] cohort title > 60 chars`);
+    assert.ok(
+      cohortLaunch[locale].desc.length >= 120 && cohortLaunch[locale].desc.length <= 160,
+      `[${locale}] cohort desc length ${cohortLaunch[locale].desc.length} out of [120..160]`,
+    );
+
+    assert.ok(osrCopy[locale].title.length <= 60, `[${locale}] OSR title > 60 chars`);
+    assert.ok(
+      osrCopy[locale].desc.length >= 120 && osrCopy[locale].desc.length <= 160,
+      `[${locale}] OSR desc length ${osrCopy[locale].desc.length} out of [120..160]`,
+    );
+
+    const listContent = getArticlesListContent(locale);
+    const hubTitle = `${listContent.pageTitle} | IELTS Lab Oran`;
+    assert.ok(hubTitle.length <= 60, `[${locale}] articles hub title > 60 chars`);
+    assert.ok(
+      listContent.pageSubtitle.length >= 120 && listContent.pageSubtitle.length <= 160,
+      `[${locale}] articles hub description length ${listContent.pageSubtitle.length} out of [120..160]`,
+    );
+  }
+
+  for (const slug of ['mock-test', 'about', 'privacy', 'terms'] as const) {
+    for (const locale of LOCALES) {
+      const title = STANDALONE_PAGE_SEO_TITLES[slug][locale];
+      const desc = STANDALONE_PAGE_SEO_DESCRIPTIONS[slug][locale];
+      assert.ok(
+        title.length >= 25 && title.length <= 60,
+        `[${locale}] /${slug} title length ${title.length} out of [25..60]: "${title}"`,
+      );
+      assert.ok(
+        desc.length >= 120 && desc.length <= 160,
+        `[${locale}] /${slug} description length ${desc.length} out of [120..160]: "${desc}"`,
+      );
+    }
+  }
+});
+
+test('SEO: Homepage metadata titles are <=60 chars and preserve PC-first positioning across EN/FR/AR', () => {
+  for (const locale of LOCALES) {
+    const meta = buildLocaleRootMetadata(locale);
+    const title = String(meta.title ?? '');
+    const description = String(meta.description ?? '');
+    assert.ok(title.length >= 35 && title.length <= 60, `[${locale}] homepage title length ${title.length} out of [35..60]: "${title}"`);
+    assert.ok(description.length >= 120 && description.length <= 160, `[${locale}] homepage desc length ${description.length} out of [120..160]`);
+  }
+  assert.match(String(buildLocaleRootMetadata('en').title), /Computer-Based/i);
+  assert.match(String(buildLocaleRootMetadata('fr').title), /ordinateur/i);
+  assert.match(String(buildLocaleRootMetadata('ar').title), /الكمبيوتر/u);
+
+  const invalidMeta = buildLocaleRootMetadata('staff');
+  assert.equal(invalidMeta.alternates?.canonical, null, 'Non-locale route must not leak /en canonical');
+});
+
+test('GEO & Crawl: llms.txt, llms-full.txt, extended AI bots, 51-URL sitemap, GUIDE_POOL, cdg1 region & compressed logo', () => {
+  const llmsTxt = fs.readFileSync(path.join(process.cwd(), 'public', 'llms.txt'), 'utf8');
+  const llmsFullTxt = fs.readFileSync(path.join(process.cwd(), 'public', 'llms-full.txt'), 'utf8');
+  assert.match(llmsTxt, /https:\/\/www\.ieltslab\.org/);
+  assert.match(llmsTxt, /unaffiliated/i);
+  assert.match(llmsFullTxt, /https:\/\/www\.ieltslab\.org\/en\/mock-test/);
+
+  const robotsConfig = robots();
+  const rules = Array.isArray(robotsConfig.rules) ? robotsConfig.rules : [robotsConfig.rules];
+  const allAgents = rules.flatMap((r) => (Array.isArray(r.userAgent) ? r.userAgent : [r.userAgent]));
+  for (const bot of ['OAI-SearchBot', 'PerplexityBot', 'Claude-SearchBot', 'Applebot-Extended', 'Meta-ExternalAgent', 'Amazonbot', 'CCBot']) {
+    assert.ok(allAgents.includes(bot), `robots.ts must explicitly configure ${bot}`);
+  }
+  for (const rule of rules) {
+    const disallows = Array.isArray(rule.disallow) ? rule.disallow : rule.disallow ? [rule.disallow] : [];
+    assert.ok(!disallows.includes('/staff/'), 'robots.ts must not block /staff/ so noindex can be read');
+  }
+
+  const entries = sitemap();
+  assert.equal(entries.length, 51, 'Sitemap must include all 17 localized paths x 3 locales = 51 URLs');
+  for (const requiredPath of ['mock-test', 'about', 'privacy', 'terms', 'articles/first-ielts-preparation-cohort-oran']) {
+    for (const locale of LOCALES) {
+      assert.ok(
+        entries.some((e) => e.url === `https://www.ieltslab.org/${locale}/${requiredPath}`),
+        `Sitemap missing /${locale}/${requiredPath}`,
+      );
+    }
+  }
+
+  assert.equal(GUIDE_POOL.length, 11, 'GUIDE_POOL must contain all 11 indexable guides');
+  assert.ok(GUIDE_POOL.some((g) => g.slug === 'first-ielts-preparation-cohort-oran'));
+
+  const vercelJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'vercel.json'), 'utf8'));
+  assert.deepEqual(vercelJson.regions, ['cdg1']);
+
+  const logoSize = fs.statSync(path.join(process.cwd(), 'public', 'logo_rounded.png')).size;
+  assert.ok(logoSize < 50_000, `public/logo_rounded.png must be <50KB, got ${logoSize} bytes`);
 });
