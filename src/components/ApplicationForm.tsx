@@ -82,8 +82,8 @@ const copy = {
   },
 } as const;
 
-const fieldClass = 'h-12 w-full rounded-2xl border border-black/10 bg-black/[0.025] px-4 text-[15px] text-charcoal outline-none transition focus:border-crimson/45 focus:bg-white focus:ring-4 focus:ring-crimson/[0.07]';
-const labelClass = 'grid gap-2 text-sm font-semibold text-black/70';
+const fieldClass = 'min-w-0 h-12 w-full rounded-2xl border border-black/10 bg-black/[0.025] px-3 text-base text-charcoal outline-none transition focus:border-crimson/45 focus:bg-white focus:ring-4 focus:ring-crimson/[0.07] md:px-4';
+const labelClass = 'grid min-w-0 gap-2 text-sm font-semibold text-black/70';
 
 export default function ApplicationForm() {
   const locale = useLocale() as Locale;
@@ -178,7 +178,7 @@ export default function ApplicationForm() {
 
   if (complete) {
     return (
-      <div className="flex min-h-[30rem] flex-col justify-center">
+      <div className="flex flex-col justify-center md:min-h-[30rem]">
         <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-xl text-emerald-700">✓</div>
         <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-[#b81428]">{text.eyebrow}</p>
         <h3 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-charcoal">{text.successTitle}</h3>
@@ -189,13 +189,13 @@ export default function ApplicationForm() {
   }
 
   return (
-    <form ref={formRef} onSubmit={submit} noValidate className="flex h-full min-h-[34rem] flex-col">
+    <form ref={formRef} onSubmit={submit} noValidate className="flex min-w-0 flex-col md:min-h-[34rem]">
       {step === 0 ? (
         <div className="flex flex-1 flex-col">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#b81428]">{text.eyebrow}</p>
-          <h3 className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-charcoal">{text.title}</h3>
+          <p className="hidden text-xs font-bold uppercase tracking-[0.18em] text-[#b81428] md:block">{text.eyebrow}</p>
+          <h3 className="text-2xl font-bold leading-tight tracking-[-0.035em] text-charcoal md:mt-3 md:text-3xl">{text.title}</h3>
           <p className="mt-3 text-sm leading-6 text-gray-700">{text.intro}</p>
-          <div className="mt-7 grid gap-3">
+          <div className="mt-7 hidden gap-3 md:grid">
             {text.reasons.map(([title, description], index) => (
               <div key={title} className="flex gap-4 rounded-2xl bg-black/[0.025] p-4">
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-crimson/[0.1] text-xs font-bold text-[#b81428]">{index + 1}</span>
@@ -203,7 +203,7 @@ export default function ApplicationForm() {
               </div>
             ))}
           </div>
-          <button type="button" onClick={advance} className="mt-auto h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-[#c4162c]">{text.begin}</button>
+          <button type="button" onClick={advance} className="mt-4 min-h-12 w-full rounded-full bg-charcoal px-4 py-2 text-base font-bold text-white transition hover:bg-[#c4162c] md:mt-6">{text.begin}</button>
         </div>
       ) : (
         <>

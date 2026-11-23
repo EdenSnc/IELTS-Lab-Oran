@@ -13,7 +13,7 @@ export default async function Hero({ cohortStatus }: HeroProps) {
   ]);
 
   return (
-    <header className="pt-32 pb-16 px-6 md:px-12 max-w-5xl mx-auto flex flex-col items-center text-center gap-6 min-h-[75vh] justify-center">
+    <header className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-4 px-4 pb-10 pt-24 text-center md:min-h-[75vh] md:gap-6 md:px-12 md:pb-16 md:pt-32">
       {/* Top badges */}
       <div className="flex flex-col gap-2 items-center justify-center">
         <span className="inline-flex items-center rounded-full border border-crimson/25 bg-crimson/5 px-3.5 py-1 text-xs font-bold tracking-wide text-[#b81428]">
@@ -28,16 +28,16 @@ export default async function Hero({ cohortStatus }: HeroProps) {
 
       {/* Main heading */}
       <div className="flex flex-col items-center gap-2">
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-[1.05] text-charcoal">
+        <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-charcoal sm:text-5xl md:text-7xl">
           {t('title')}
         </h1>
-        <p className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#c4162c]">
+        <p className="text-xl font-bold tracking-tight text-[#c4162c] sm:text-3xl md:text-5xl md:font-extrabold">
           {t('subtitle')}
         </p>
       </div>
 
       {/* Sub-description */}
-      <p className="text-xl md:text-2xl text-gray-700 max-w-2xl font-light leading-snug">
+      <p className="max-w-2xl text-base font-medium leading-snug text-gray-700 sm:text-xl md:text-2xl md:font-light">
         {t.rich('description', {
           highlight: (chunks) => <span className="highlight">{chunks}</span>,
         })}
@@ -45,23 +45,23 @@ export default async function Hero({ cohortStatus }: HeroProps) {
 
       {/* CTAs */}
       <div className="flex flex-col items-center w-full sm:w-auto">
-        <div className="flex flex-col sm:flex-row gap-4 w-full">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:gap-4">
           {cohortStatus.isFull ? (
-            <Link href="/#intake" className="bg-charcoal text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-gray-800 transition-all shadow-lg transform hover:-translate-y-1 w-full sm:w-auto flex justify-center items-center gap-2">
+            <Link href="/#intake" className="flex w-full items-center justify-center gap-2 rounded-full bg-charcoal px-5 py-3 font-bold text-white shadow-lg transition hover:bg-gray-800 sm:w-auto md:px-10 md:py-5 md:text-lg">
               {ct('fullCta')}
               <svg className="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </Link>
           ) : (
-            <Link href="/#intake" className="bg-[#c4162c] text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-red-800 transition-all shadow-glow hover:shadow-2xl transform hover:-translate-y-1 w-full sm:w-auto flex justify-center items-center gap-2">
+            <Link href="/#intake" className="flex w-full items-center justify-center gap-2 rounded-full bg-[#c4162c] px-5 py-3 font-bold text-white shadow-glow transition hover:bg-red-800 sm:w-auto md:px-10 md:py-5 md:text-lg">
               {t('reserve')}
               <svg className="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </Link>
           )}
-          <Link href="/#compare" className="bg-white border border-gray-200 text-charcoal px-10 py-5 rounded-full font-bold text-lg hover:bg-gray-100 transition-all w-full sm:w-auto text-center">
+          <Link href="/#compare" className="w-full rounded-full border border-gray-200 bg-white px-5 py-3 text-center font-bold text-charcoal transition hover:bg-gray-100 sm:w-auto md:px-10 md:py-5 md:text-lg">
             {t('details')}
           </Link>
         </div>

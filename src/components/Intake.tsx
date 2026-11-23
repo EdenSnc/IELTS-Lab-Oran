@@ -48,41 +48,47 @@ export default function Intake({ cohortStatus }: IntakeProps) {
     : 0;
 
   return (
-    <section id="intake" className="py-24 px-6 md:px-12 max-w-7xl mx-auto relative z-10">
+    <section id="intake" className="relative z-10 mx-auto w-full max-w-7xl scroll-mt-20 px-3 py-10 sm:px-6 md:px-12 md:py-24">
       {/* Outer card - always column so bypass sits below the two columns */}
-      <div className="bg-charcoal text-white rounded-5xl p-8 md:p-14 flex flex-col gap-10 shadow-2xl relative overflow-hidden">
+      <div className="relative flex flex-col gap-5 overflow-hidden rounded-3xl bg-charcoal p-3 text-white shadow-2xl sm:p-6 md:rounded-5xl md:p-10 lg:p-14">
 
         {/* Background Accents */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-crimson/10 rounded-full blur-[80px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[orange]/5 rounded-full blur-[80px] pointer-events-none" />
 
         {/* Two-column row: Info + Form */}
-        <div className="flex flex-col md:flex-row md:items-start gap-12">
+        <div className="relative z-10 grid gap-4 md:grid-cols-2 md:items-start md:gap-x-8 lg:gap-x-12">
 
           {/* Left Column: Info */}
-          <div className="md:w-1/2 flex flex-col justify-center relative z-10 text-white">
-            <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full text-xs font-bold tracking-widest uppercase mb-8 border border-white/10 shadow-sm backdrop-blur-md w-fit">
-              <span className="w-2 h-2 rounded-full bg-crimson animate-pulse shadow-glow" />
-              {t('badge')}
+          <div className="min-w-0 px-2 pt-2 md:px-0 md:pt-0">
+            <p className="mb-2 text-xs font-bold text-gray-300">{t('badge')}</p>
+            <h2 className="mb-3 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">{t('title')}</h2>
+
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="text-3xl font-extrabold md:text-4xl">{t('fee')}</p>
+              <p className="text-sm font-semibold text-gray-300">{t('feeTitle')}</p>
             </div>
+            {deadlinePassed ? (
+              <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
+                <p className="font-bold">{t('closedBadge')}</p>
+                <p className="mt-1 text-amber-100/90 leading-relaxed">{t('closedNote')}</p>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm font-semibold">
+                {launch.deadlineLabel} · <time dateTime={COHORT_APPLICATION_DEADLINE}>{launch.deadline}</time>
+              </p>
+            )}
+          </div>
 
-            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-8 leading-tight">{t('title')}</h2>
+          <div className="min-w-0 rounded-2xl border border-white/15 bg-white p-4 text-charcoal shadow-xl md:col-start-2 md:row-span-2 md:row-start-1 md:rounded-3xl md:p-8">
+            <ApplicationForm />
+          </div>
 
-            <div className="mb-10">
-              <p className="font-bold text-gray-300 uppercase tracking-widest text-xs mb-3">{t('feeTitle')}</p>
-              <p className="text-sm font-medium text-gray-300 mb-1">{t('previousFee')}</p>
-              <p className="mb-2 text-4xl font-extrabold text-white">{t('fee')}</p>
-              <p className="text-gray-300 font-medium leading-relaxed">{t('feeDesc')}</p>
-              {deadlinePassed ? (
-                <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
-                  <p className="font-bold">{t('closedBadge')}</p>
-                  <p className="mt-1 text-amber-100/90 leading-relaxed">{t('closedNote')}</p>
-                </div>
-              ) : (
-                <p className="mt-3 text-sm font-semibold">
-                  {launch.deadlineLabel} · <time dateTime={COHORT_APPLICATION_DEADLINE}>{launch.deadline}</time>
-                </p>
-              )}
+          <details className="min-w-0 rounded-2xl border border-white/15 bg-white/5 px-3 py-3 md:col-start-1 md:row-start-2 md:px-4">
+            <summary className="cursor-pointer text-sm font-semibold">{t('details')}</summary>
+            <div className="mt-3">
+              <p className="text-sm leading-relaxed text-gray-200">{t('feeDesc')}</p>
+              <p className="mt-1 text-sm text-gray-300">{t('previousFee')}</p>
               <a
                 href={COHORT_FORM_URL}
                 target="_blank"
@@ -94,7 +100,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
               <Link href={COHORT_ARTICLE_PATH} className="mt-3 block text-sm text-white underline underline-offset-4">{launch.title}</Link>
             </div>
 
-            <ul className="flex flex-col gap-5 font-medium mb-12">
+            <ul className="my-5 flex flex-col gap-3 font-medium">
               <li className="flex items-center gap-4 text-gray-200">
                 <svg className="w-5 h-5 text-crimson shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" /></svg>
                 <span className="text-[15px]">{t('feature1')}</span>
@@ -163,12 +169,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
             <p className="text-gray-300 leading-relaxed font-light text-sm border-s-2 border-white/15 ps-4 mt-auto">
               {t('footerText')}
             </p>
-          </div>
-
-          {/* Right Column: first-party application */}
-          <div className="md:w-1/2 bg-white rounded-3xl p-6 md:p-8 shadow-xl relative z-10 border-4 border-surface text-charcoal flex flex-col">
-            <ApplicationForm />
-          </div>
+          </details>
         </div>
 
         {/* Bypass CTA - full-width row BELOW the two columns */}
