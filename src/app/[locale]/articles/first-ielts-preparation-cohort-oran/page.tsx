@@ -49,7 +49,7 @@ const COHORT_PAGE_BODY: Record<
   en: {
     summaryTitle: 'Quick Answer — First Oran IELTS Cohort (2026)',
     summaryText:
-      'IELTS Lab Oran’s first in-person preparation cohort in Bir El Djir, Oran (31130) is an intensive ~4-week small-group course strictly capped at 8 seats and priced at 5,000 DA (introductory classroom edition; regular PC-lab rate from Cohort 2 is 29,500 DA). Applications close on 20 November 2026, and applying is free without locking a seat.',
+      'IELTS Lab Oran’s first in-person preparation cohort in Bir El Djir, Oran (31130) is an intensive ~4-week small-group course strictly capped at 8 seats and priced at 5,000 DA (introductory classroom edition; regular PC-lab rate from Cohort 2 is 29,500 DA). Applications close on 26 November 2026. Classes start that day. Applying is free and does not reserve a seat.',
     factsHeading: 'Cohort 1 Key Facts — Bir El Djir, Oran',
     facts: [
       ['Location', 'Bir El Djir, Oran 31130, Algeria'],
@@ -90,7 +90,7 @@ const COHORT_PAGE_BODY: Record<
     pricingTitle: 'Transparent DZD Pricing Comparison',
     pricingHeaders: ['Option', 'Format', 'Price (DZD)', 'Best For'],
     pricingRows: [
-      ['Cohort 1 (Founding Launch)', 'In-person 8-seat classroom · Bir El Djir', '5,000 DA', 'Oran candidates applying before 20 Nov 2026'],
+      ['Cohort 1 (Founding Launch)', 'In-person 8-seat classroom · Bir El Djir', '5,000 DA', 'Oran candidates applying by 26 Nov 2026'],
       ['Standard Cohort (Cohort 2+)', 'In-person 8-seat PC lab · Bir El Djir', '29,500 DA', 'Full computer-workstation small-group training'],
       ['Online Academic Mock Test', 'Web simulator (L + R + W · 30d results)', '3,900 DA', 'Candidates across Algeria via Chargily Pay (CIB/Edahabia)'],
       ['Official IELTS Exam (BC Algeria)', 'Official test centre (Oran / Algiers)', '40,000 DA', 'Official certification once mock scores hit target'],
@@ -105,7 +105,7 @@ const COHORT_PAGE_BODY: Record<
       'Submitting the availability or intake form is 100% free and does not automatically reserve a seat.',
       'Applicants should hold at least an intermediate English foundation (CEFR B1/B2); complete beginners (A1/A2) are advised to build core English before exam prep.',
       'Once the timetable is proposed via WhatsApp, seats are confirmed in order of enrolment completion (Cash or Baridimob).',
-      'If Cohort 1 is full or past the 20 November 2026 deadline, applicants receive priority notification when Cohort 2 opens.',
+      'If Cohort 1 is full or past the 26 November 2026 deadline, applicants receive priority notification when Cohort 2 opens.',
     ],
     faqTitle: 'Frequently Asked Questions — Oran IELTS Cohort',
     faqs: [
@@ -136,7 +136,7 @@ const COHORT_PAGE_BODY: Record<
   fr: {
     summaryTitle: 'Réponse rapide — 1re Cohorte IELTS à Oran (2026)',
     summaryText:
-      'Le premier groupe présentiel d’IELTS Lab Oran à Bir El Djir, Oran (31130) est une formation intensive d’environ 4 semaines strictement limitée à 8 places au tarif exceptionnel de lancement de 5 000 DA (édition en salle de cours ; tarif standard des prochaines cohortes : 29 500 DA). Candidatures gratuites jusqu’au 20 novembre 2026.',
+      'Le premier groupe présentiel d’IELTS Lab Oran à Bir El Djir, Oran (31130) est une formation intensive d’environ 4 semaines strictement limitée à 8 places au tarif exceptionnel de lancement de 5 000 DA (édition en salle de cours ; tarif standard des prochaines cohortes : 29 500 DA). Candidatures gratuites jusqu’au 26 novembre 2026. Les cours commencent le même jour.',
     factsHeading: 'Repères clés — Cohorte 1 (Bir El Djir, Oran)',
     facts: [
       ['Localisation', 'Bir El Djir, Oran 31130, Algérie'],
@@ -177,7 +177,7 @@ const COHORT_PAGE_BODY: Record<
     pricingTitle: 'Comparatif transparent des tarifs en dinars (DZD)',
     pricingHeaders: ['Formule', 'Format', 'Tarif (DZD)', 'Public visé'],
     pricingRows: [
-      ['Cohorte 1 (Lancement)', 'Présentiel 8 places en salle · Bir El Djir', '5 000 DA', 'Candidats d’Oran postulant avant le 20 nov. 2026'],
+      ['Cohorte 1 (Lancement)', 'Présentiel 8 places en salle · Bir El Djir', '5 000 DA', 'Candidats d’Oran postulant au plus tard le 26 nov. 2026'],
       ['Cohorte Standard (Cohorte 2+)', 'Présentiel 8 places sur PC · Bir El Djir', '29 500 DA', 'Formation complète sur postes informatiques'],
       ['Test blanc Academic en ligne', 'Simulateur web (L + R + W · accès 30 j)', '3 900 DA', 'Toute l’Algérie via Chargily Pay (CIB / Edahabia)'],
       ['Examen officiel (BC Algérie)', 'Centre officiel (Oran / Alger)', '40 000 DA', 'Certification officielle une fois le niveau atteint'],
@@ -192,7 +192,7 @@ const COHORT_PAGE_BODY: Record<
       'L’envoi du formulaire de disponibilités ou de candidature est 100 % gratuit et ne réserve pas automatiquement une place.',
       'Un niveau intermédiaire minimum (CECR B1/B2) est requis ; ce programme intensif ne remplace pas des cours d’anglais débutant (A1/A2).',
       'Une fois l’emploi du temps validé avec vous sur WhatsApp, l’inscription définitive s’effectue par espèces ou Baridimob dans la limite des 8 places.',
-      'Après la clôture du 20 novembre 2026 (ou si les 8 places sont complètes), votre dossier est prioritaire pour l’ouverture de la Cohorte 2.',
+      'Après la clôture du 26 novembre 2026 (ou si les 8 places sont complètes), votre dossier est prioritaire pour l’ouverture de la Cohorte 2.',
     ],
     faqTitle: 'Questions fréquentes — Cohorte IELTS à Oran',
     faqs: [
@@ -223,7 +223,7 @@ const COHORT_PAGE_BODY: Record<
   ar: {
     summaryTitle: 'إجابة سريعة — المجموعة الأولى لتحضير IELTS في وهران (2026)',
     summaryText:
-      'تُطلق IELTS Lab Oran أول دورة تحضيرية حضورية في بئر الجير، وهران (31130) ضمن مجموعة مصغرة لا تتجاوز 8 مقاعد ولمدة تقارب 4 أسابيع، بسعر إطلاق استثنائي قدره 5,000 دج (نسخة قاعة التدريس للمجموعة الأولى؛ السعر العادي بدءاً من الدفعة الثانية 29,500 دج). يُغلق التقديم في 20 نوفمبر 2026 والتقديم مجاني.',
+      'تُطلق IELTS Lab Oran أول دورة تحضيرية حضورية في بئر الجير، وهران (31130) ضمن مجموعة مصغرة لا تتجاوز 8 مقاعد ولمدة تقارب 4 أسابيع، بسعر إطلاق استثنائي قدره 5,000 دج (نسخة قاعة التدريس للمجموعة الأولى؛ السعر العادي بدءاً من الدفعة الثانية 29,500 دج). يُغلق التقديم في 26 نوفمبر 2026، وتبدأ الدروس في اليوم نفسه. التقديم مجاني.',
     factsHeading: 'أهم تفاصيل المجموعة الأولى — بئر الجير، وهران',
     facts: [
       ['الموقع الجغرافي', 'بئر الجير، وهران 31130، الجزائر'],
@@ -264,7 +264,7 @@ const COHORT_PAGE_BODY: Record<
     pricingTitle: 'مقارنة شفافة للأسعار بالدينار الجزائري',
     pricingHeaders: ['الخيار', 'الصيغة', 'السعر (دج)', 'الفئة المناسبة'],
     pricingRows: [
-      ['المجموعة الأولى (إطلاق)', 'حضوري 8 مقاعد في القسم · بئر الجير', '5,000 دج', 'مرشحو وهران المتقدمون قبل 20 نوفمبر 2026'],
+      ['المجموعة الأولى (إطلاق)', 'حضوري 8 مقاعد في القسم · بئر الجير', '5,000 دج', 'مرشحو وهران المتقدمون بحلول 26 نوفمبر 2026'],
       ['الدورة القياسية (الدفعة 2+)', 'حضوري 8 مقاعد في قاعة PC · بئر الجير', '29,500 دج', 'تدريب حضوري متكامل على أجهزة الكمبيوتر'],
       ['الاختبار التجريبي عبر الإنترنت', 'محاكاة ويب (استماع+قراءة+كتابة · 30 يوماً)', '3,900 دج', 'لجميع الولايات عبر Chargily Pay (الذهبية/CIB)'],
       ['الامتحان الرسمي (المجلس البريطاني)', 'مركز معتمد (وهران / الجزائر العاصمة)', '40,000 دج', 'للحصول على الشهادة الرسمية بعد الجاهزية'],
@@ -279,7 +279,7 @@ const COHORT_PAGE_BODY: Record<
       'إرسال استمارة التفرغ أو طلب الالتحاق مجاني تماماً ولا يحجز مقعداً بشكل تلقائي.',
       'تستهدف الدورة المترشحين ذوي المستوى المتوسط فما فوق (B1/B2)؛ ولا تغني عن تأسيس اللغة للمبتدئين (A1/A2).',
       'بعد مشاركة الجدول المؤكد عبر واتساب، يُثبّت المقعد عند إتمام التسجيل (نقداً أو عبر Baridimob) ضمن حدود المقاعد الثمانية.',
-      'بعد انتهاء مهلة 20 نوفمبر 2026 أو اكتمال العدد، يحصل المتقدمون على أولوية الإشعار فور فتح الدفعة الثانية.',
+      'بعد انتهاء مهلة 26 نوفمبر 2026 أو اكتمال العدد، يحصل المتقدمون على أولوية الإشعار فور فتح الدفعة الثانية.',
     ],
     faqTitle: 'الأسئلة الشائعة حول دورة وهران الحضورية',
     faqs: [

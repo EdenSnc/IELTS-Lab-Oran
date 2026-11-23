@@ -129,7 +129,7 @@
     "q6": "Que comprend le tarif de lancement de 5 000 DA ?",
     "a6": "Environ un mois de préparation à l'IELTS à Bir El Djir, Oran, en groupe de 8 en salle de cours pour cette cohorte de lancement, couvrant les quatre compétences avec suivi individuel en Writing et Speaking. Les horaires sont confirmés avant l'inscription.",
     "q7": "Quand le Lab ouvre-t-il, et la candidature réserve-t-elle une place ?",
-    "a7": "Les candidatures du premier groupe se clôturent le 20 novembre 2026. Postuler est gratuit et ne réserve pas de place ; nous contactons les candidats sélectionnés avec l'emploi du temps confirmé."
+    "a7": "Les candidatures du premier groupe se clôturent le 26 novembre 2026. Postuler est gratuit et ne réserve pas de place ; nous contactons les candidats sélectionnés avec l'emploi du temps confirmé."
   },
   "LeadMagnet": {
     "title": "Pas prêt à vous inscrire ?",
@@ -162,7 +162,7 @@
     "feature3": "Petit groupe de 8 en salle & stratégie d'examen",
     "capacitySummary": "8 places au total · candidature gratuite · ne réserve pas de place",
     "closedBadge": "Candidatures du 1er groupe clôturées",
-    "closedNote": "La session du 20 novembre est clôturée. Envoyez votre profil ci-dessous pour être contacté en priorité dès l'ouverture de la prochaine cohorte à Oran.",
+    "closedNote": "La session du 26 novembre est clôturée. Envoyez votre profil ci-dessous pour être contacté en priorité dès l'ouverture de la prochaine cohorte à Oran.",
     "statusLabReady": "Laboratoire prêt",
     "statusCurriculumSet": "Programme prêt",
     "statusScheduling": "Horaires via formulaire de disponibilités",
@@ -195,7 +195,7 @@
   },
   "EventWidget": {
     "badge": "Premier Groupe · Oran",
-    "title": "5 000 DA · Jusqu'au 20 nov.",
+    "title": "5 000 DA · Jusqu'au 26 nov.",
     "closedTitle": "Liste d'attente prochaine cohorte",
     "linkAriaLabel": "Voir les détails du premier groupe IELTS Lab Oran",
     "minimizeLabel": "Réduire la notification"

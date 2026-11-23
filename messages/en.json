@@ -129,7 +129,7 @@
     "q6": "What does the 5,000 DA first-cohort price cover?",
     "a6": "Approximately one month of small-group IELTS preparation in Bir El Djir, Oran, covering all four skills in a traditional classroom setting for this introductory cohort, with individual Writing and Speaking feedback. We confirm the timetable before enrolment.",
     "q7": "When does the Lab open, and does applying reserve a seat?",
-    "a7": "First-cohort applications close on 20 November 2026. Applying is free and does not reserve a seat; we contact applicants with the confirmed timetable and enrolment details."
+    "a7": "First-cohort applications close on 26 November 2026. Applying is free and does not reserve a seat; we contact applicants with the confirmed timetable and enrolment details."
   },
   "LeadMagnet": {
     "title": "Not Ready to Enroll?",
@@ -162,7 +162,7 @@
     "feature3": "Small 8-seat classroom & official exam strategy",
     "capacitySummary": "8 seats total · free to apply · does not reserve a seat",
     "closedBadge": "First-cohort applications closed",
-    "closedNote": "The 20 November intake window has closed. Submit your profile below to be contacted first when the next Oran cohort dates open.",
+    "closedNote": "The 26 November intake window has closed. Submit your profile below to be contacted first when the next Oran cohort dates open.",
     "statusLabReady": "Lab Ready",
     "statusCurriculumSet": "Curriculum Set",
     "statusScheduling": "Timetable via Availability Form",
@@ -195,7 +195,7 @@
   },
   "EventWidget": {
     "badge": "First Cohort · Oran",
-    "title": "5,000 DA · Apply by 20 Nov",
+    "title": "5,000 DA · Apply by 26 Nov",
     "closedTitle": "Join Next Cohort Waitlist",
     "linkAriaLabel": "View IELTS Lab Oran cohort details",
     "minimizeLabel": "Minimize notification"
