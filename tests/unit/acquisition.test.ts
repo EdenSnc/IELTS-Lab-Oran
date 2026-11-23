@@ -73,6 +73,14 @@ test('every destination uses a finite allowlist and external links do not gain c
   assert.equal(ACQUISITION_REDIRECT_HEADERS['Cache-Control'], 'no-store');
 });
 
+test('legacy availability QR codes lead to the tracked website application', () => {
+  assert.equal(isFirstPartyDestination('availability-form'), true);
+  assert.equal(
+    destinationForPlacement('availability-form', 'oran-posters', 'poster', 'abcDEF1234'),
+    '/fr?utm_source=ieltslab&utm_medium=poster&utm_campaign=oran-posters&utm_content=abcDEF1234#intake',
+  );
+});
+
 test('printed QR targets use a fixed or explicitly configured origin', () => {
   const previous = process.env.ACQUISITION_PUBLIC_ORIGIN;
   try {

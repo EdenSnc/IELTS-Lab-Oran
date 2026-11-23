@@ -42,7 +42,7 @@ const COPY: Record<
       {
         title: '2. In-Person Cohort Applications & Enrolment (Bir El Djir, Oran)',
         paragraphs: [
-          'Submitting an online application or weekly availability form is free of charge and does not automatically reserve one of the 8 cohort seats.',
+          'Submitting the online application with your availability is free of charge and does not automatically reserve one of the 8 cohort seats.',
           'Enrolment is finalized only after (a) level/fit review (intermediate B1/B2+ minimum), (b) mutual confirmation of the cohort timetable, and (c) tuition payment (5,000 DA introductory classroom fee for Cohort 1; 29,500 DA standard rate from subsequent cohorts).',
         ],
       },
@@ -88,7 +88,7 @@ const COPY: Record<
       {
         title: '2. Candidatures et inscription aux cohortes d’Oran',
         paragraphs: [
-          'L’envoi d’un formulaire de candidature ou de disponibilités est gratuit et ne réserve pas automatiquement l’une des 8 places du groupe.',
+          'L’envoi de la candidature avec vos disponibilités est gratuit et ne réserve pas automatiquement l’une des 8 places du groupe.',
           'L’inscription devient définitive uniquement après validation du niveau minimum requis (B1/B2+), confirmation mutuelle de l’emploi du temps et règlement des frais (tarif de lancement de 5 000 DA en salle pour le 1er groupe ; tarif standard de 29 500 DA pour les cohortes suivantes).',
         ],
       },
@@ -134,7 +134,7 @@ const COPY: Record<
       {
         title: '2. التقديم والتسجيل في الدورات الحضورية بوهران',
         paragraphs: [
-          'إرسال طلب الالتحاق أو استمارة أوقات التفرغ مجاني بالكامل ولا يُعد حجزاً تلقائياً لأحد المقاعد الثمانية.',
+          'إرسال طلب الالتحاق مع أوقات تفرّغك مجاني بالكامل ولا يُعد حجزاً تلقائياً لأحد المقاعد الثمانية.',
           'يتأكد التسجيل النهائي فقط بعد التحقق من ملاءمة المستوى اللغوي (B1/B2 فما فوق)، وتأكيد الجدول الزمني مع المترشح، وسداد الرسوم المقررة (5,000 دج سعر إطلاق المجموعة الأولى في قاعة التدريس؛ و29,500 دج السعر العادي للدفعات اللاحقة).',
         ],
       },

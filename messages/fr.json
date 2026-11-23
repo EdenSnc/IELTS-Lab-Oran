@@ -151,7 +151,7 @@
     "certified": "Instructeur Certifié"
   },
   "Intake": {
-    "details": "Détails du cours et autres façons de candidater",
+    "details": "Détails du cours",
     "title": "Candidater au Premier Groupe",
     "badge": "Groupes de 8 | Places Limitées",
     "feeTitle": "Tarif de lancement du premier groupe",
@@ -166,8 +166,8 @@
     "closedNote": "La session du 26 novembre est clôturée. Envoyez votre profil ci-dessous pour être contacté en priorité dès l'ouverture de la prochaine cohorte à Oran.",
     "statusLabReady": "Laboratoire prêt",
     "statusCurriculumSet": "Programme prêt",
-    "statusScheduling": "Horaires via formulaire de disponibilités",
-    "footerText": "Remplissez le formulaire ci-dessous ou celui des disponibilités. Nous contacterons les candidats sélectionnés via WhatsApp avec l'emploi du temps confirmé."
+    "statusScheduling": "Horaires selon vos disponibilités",
+    "footerText": "Indiquez vos disponibilités dans votre candidature. Nous transmettrons le planning confirmé par WhatsApp."
   },
   "Bypass": {
     "label": "Vous ne pouvez pas attendre la cohorte ?",

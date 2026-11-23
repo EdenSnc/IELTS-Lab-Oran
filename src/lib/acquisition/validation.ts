@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 export const codeSchema = z.string().regex(/^[A-Za-z0-9_-]{10,24}$/);
 export const campaignSlugSchema = z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80);
-export const AVAILABILITY_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdoYPQ9YyWY_-DmG0wEeAEzyOS8HFMwy655zWqLXX9fgYRtVg/viewform' as const;
+export const LEGACY_AVAILABILITY_DESTINATION = 'availability-form';
+export const FORM_DESTINATION = '/fr#intake';
 export const EXTERNAL_DESTINATIONS = {
   instagram: 'https://www.instagram.com/ieltslab.oran/',
   facebook: 'https://www.facebook.com/profile.php?id=61591282143384',
-  'availability-form': AVAILABILITY_FORM_URL,
 } as const;
 
 export const INTERNAL_DESTINATIONS = [
@@ -29,7 +29,7 @@ export const internalDestinationSchema = z.string().regex(
 );
 export const destinationSchema = z.union([
   internalDestinationSchema,
-  z.enum(['instagram', 'facebook', 'availability-form']),
+  z.enum(['instagram', 'facebook', LEGACY_AVAILABILITY_DESTINATION]),
 ]);
 export const ACQUISITION_REDIRECT_HEADERS = {
   'Cache-Control': 'no-store',
@@ -64,7 +64,8 @@ export const actionSchema = z.discriminatedUnion('action', [
 ]);
 
 export function destinationForPlacement(destination: string, campaign: string, medium: string, code: string) {
-  const safe = destinationSchema.parse(destination);
+  const configured = destinationSchema.parse(destination);
+  const safe = configured === LEGACY_AVAILABILITY_DESTINATION ? FORM_DESTINATION : configured;
   if (safe in EXTERNAL_DESTINATIONS) {
     return EXTERNAL_DESTINATIONS[safe as keyof typeof EXTERNAL_DESTINATIONS];
   }
@@ -84,7 +85,7 @@ export function destinationForPlacement(destination: string, campaign: string, m
 }
 
 export function isFirstPartyDestination(destination: string) {
-  return internalDestinationSchema.safeParse(destination).success;
+  return destination === LEGACY_AVAILABILITY_DESTINATION || internalDestinationSchema.safeParse(destination).success;
 }
 
 export function isKnownCrawler(userAgent: string) {

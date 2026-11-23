@@ -1,7 +1,6 @@
 export const COHORT_ARTICLE_PATH = '/articles/first-ielts-preparation-cohort-oran';
 export const COHORT_APPLICATION_DEADLINE = '2026-11-26';
 export const COHORT_DEADLINE_ISO = COHORT_APPLICATION_DEADLINE + 'T23:59:59.999+01:00';
-export const COHORT_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdoYPQ9YyWY_-DmG0wEeAEzyOS8HFMwy655zWqLXX9fgYRtVg/viewform';
 
 export function isCohortDeadlinePassed(now: Date = new Date()): boolean {
   return now.getTime() > Date.parse(COHORT_DEADLINE_ISO);
@@ -17,11 +16,11 @@ export const cohortLaunch = {
     feeLabel: 'Special first-cohort price',
     pastPriceLabel: 'Previously listed price',
     details: 'Practise all four IELTS skills in person with structured classroom exercises, timed practice and personal feedback on Writing and Speaking. The group is kept small so each participant gets individual attention.',
-    apply: 'Apply via the availability form',
+    apply: 'Apply for the camp',
     next: 'Send your weekly availability by 26 November. We’ll contact applicants with the timetable and enrolment details. Applying is free and does not reserve a seat.',
     closedTitle: 'First-cohort applications closed (26 Nov 2026)',
-    closedDesc: 'Applications for the first Oran cohort have closed. Submit your weekly availability or join the waitlist below to be contacted first when the next cohort opens.',
-    closedCta: 'Join the waitlist via the availability form',
+    closedDesc: 'Applications for the first Oran cohort have closed. Join the waitlist to share your availability for the next cohort.',
+    closedCta: 'Join the waitlist',
   },
   fr: {
     category: 'Actualités IELTS Lab',
@@ -32,10 +31,10 @@ export const cohortLaunch = {
     feeLabel: 'Tarif exceptionnel du premier groupe',
     pastPriceLabel: 'Ancien prix affiché',
     details: 'Travaillez les quatre compétences de l’IELTS en présentiel avec des exercices structurés en salle, des entraînements chronométrés et des retours personnalisés à l’écrit et à l’oral. L’effectif est limité pour que chacun bénéficie d’un suivi individuel.',
-    apply: 'Candidater via le formulaire de disponibilités',
+    apply: 'Candidater à la formation',
     next: 'Indiquez vos disponibilités avant la fin de la journée du 26 novembre. Nous contacterons les candidats avec les horaires et les modalités d’inscription. La candidature est gratuite et ne réserve pas de place.',
     closedTitle: 'Candidatures clôturées pour le 1er groupe (26 nov. 2026)',
-    closedDesc: 'La fenêtre de candidature pour le premier groupe est clôturée. Envoyez vos disponibilités ou rejoignez la liste d’attente pour être contacté en priorité pour le prochain groupe à Oran.',
+    closedDesc: 'Les candidatures au premier groupe sont clôturées. Rejoignez la liste d’attente et indiquez vos disponibilités pour le prochain groupe à Oran.',
     closedCta: 'Rejoindre la liste d’attente',
   },
   ar: {
@@ -47,10 +46,10 @@ export const cohortLaunch = {
     feeLabel: 'سعر استثنائي للمجموعة الأولى',
     pastPriceLabel: 'السعر المعروض سابقاً',
     details: 'تدرّب حضورياً على مهارات IELTS الأربع بتمارين صفية منظّمة وتدريبات محددة الوقت، مع ملاحظات فردية على الكتابة والمحادثة. عدد المشاركين محدود لإتاحة المتابعة الفردية لكل متدرّب.',
-    apply: 'قدّم طلبك عبر استمارة التفرّغ',
+    apply: 'قدّم طلبك للدورة',
     next: 'أرسل أوقات تفرّغك بحلول 26 نوفمبر. سنتواصل مع المتقدمين لمشاركة الجدول وتفاصيل التسجيل. تقديم الطلب مجاني ولا يحجز مقعداً.',
     closedTitle: 'انتهت فترة التقديم للمجموعة الأولى (26 نوفمبر 2026)',
-    closedDesc: 'أُغلقت طلبات المجموعة الأولى في وهران. يمكنك إرسال أوقات تفرّغك أو الانضمام لقائمة الانتظار للتواصل معك فور فتح المجموعة القادمة.',
+    closedDesc: 'أُغلقت طلبات المجموعة الأولى في وهران. انضم إلى قائمة الانتظار وأرسل أوقات تفرّغك للدفعة القادمة.',
     closedCta: 'الانضمام إلى قائمة الانتظار',
   },
 };

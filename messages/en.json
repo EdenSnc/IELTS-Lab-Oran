@@ -151,7 +151,7 @@
     "certified": "Certified Instructor"
   },
   "Intake": {
-    "details": "Course details and other ways to apply",
+    "details": "Course details",
     "title": "Apply for the First Cohort",
     "badge": "Groups of 8 | Limited Seats",
     "feeTitle": "First-cohort introductory price",
@@ -166,8 +166,8 @@
     "closedNote": "The 26 November intake window has closed. Submit your profile below to be contacted first when the next Oran cohort dates open.",
     "statusLabReady": "Lab Ready",
     "statusCurriculumSet": "Curriculum Set",
-    "statusScheduling": "Timetable via Availability Form",
-    "footerText": "Fill out the application or availability form. We will contact selected applicants via WhatsApp with the confirmed timetable."
+    "statusScheduling": "Timetable based on availability",
+    "footerText": "Include your availability in your application. We will share the confirmed timetable via WhatsApp."
   },
   "Bypass": {
     "label": "Can't wait for the cohort?",

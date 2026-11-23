@@ -5,7 +5,6 @@ import { Link } from '@/i18n/routing';
 import {
   COHORT_APPLICATION_DEADLINE,
   COHORT_ARTICLE_PATH,
-  COHORT_FORM_URL,
   cohortLaunch,
   isCohortDeadlinePassed,
 } from '@/lib/cohort-launch';
@@ -89,14 +88,6 @@ export default function Intake({ cohortStatus }: IntakeProps) {
             <div className="mt-3">
               <p className="text-sm leading-relaxed text-gray-200">{t('feeDesc')}</p>
               <p className="mt-1 text-sm text-gray-300">{t('previousFee')}</p>
-              <a
-                href={COHORT_FORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex rounded-full bg-crimson px-5 py-2.5 text-sm font-bold text-white hover:bg-red-800"
-              >
-                {deadlinePassed ? launch.closedCta : launch.apply}
-              </a>
               <Link href={COHORT_ARTICLE_PATH} className="mt-3 block text-sm text-white underline underline-offset-4">{launch.title}</Link>
             </div>
 

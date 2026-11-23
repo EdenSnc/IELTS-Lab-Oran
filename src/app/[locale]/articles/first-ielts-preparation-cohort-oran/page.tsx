@@ -8,7 +8,6 @@ import {
   COHORT_APPLICATION_DEADLINE,
   COHORT_ARTICLE_PATH,
   COHORT_DEADLINE_ISO,
-  COHORT_FORM_URL,
   cohortLaunch,
   isCohortDeadlinePassed,
 } from '@/lib/cohort-launch';
@@ -42,7 +41,6 @@ const COHORT_PAGE_BODY: Record<
     rulesBullets: string[];
     faqTitle: string;
     faqs: Array<{ q: string; a: string }>;
-    homeCta: string;
     mockCta: string;
   }
 > = {
@@ -102,7 +100,7 @@ const COHORT_PAGE_BODY: Record<
     ],
     rulesTitle: 'How Application, Selection & Enrolment Work',
     rulesBullets: [
-      'Submitting the availability or intake form is 100% free and does not automatically reserve a seat.',
+      'Submitting an application with your availability is free and does not reserve a seat.',
       'Applicants should hold at least an intermediate English foundation (CEFR B1/B2); complete beginners (A1/A2) are advised to build core English before exam prep.',
       'Once the timetable is proposed via WhatsApp, seats are confirmed in order of enrolment completion (Cash or Baridimob).',
       'If Cohort 1 is full or past the 26 November 2026 deadline, applicants receive priority notification when Cohort 2 opens.',
@@ -130,7 +128,6 @@ const COHORT_PAGE_BODY: Record<
         a: 'Candidates anywhere in Algeria can practise immediately using our free 5-question Reading sample (/sample) or full online IELTS Academic Mock Test (3,900 DZD via Chargily Pay), or message on WhatsApp for private 1-on-1 options.',
       },
     ],
-    homeCta: 'Apply on Homepage Intake',
     mockCta: 'Explore Online Mock Test (3,900 DA)',
   },
   fr: {
@@ -189,7 +186,7 @@ const COHORT_PAGE_BODY: Record<
     ],
     rulesTitle: 'Modalités de candidature et d’inscription',
     rulesBullets: [
-      'L’envoi du formulaire de disponibilités ou de candidature est 100 % gratuit et ne réserve pas automatiquement une place.',
+      'L’envoi de votre candidature avec vos disponibilités est gratuit et ne réserve pas de place.',
       'Un niveau intermédiaire minimum (CECR B1/B2) est requis ; ce programme intensif ne remplace pas des cours d’anglais débutant (A1/A2).',
       'Une fois l’emploi du temps validé avec vous sur WhatsApp, l’inscription définitive s’effectue par espèces ou Baridimob dans la limite des 8 places.',
       'Après la clôture du 26 novembre 2026 (ou si les 8 places sont complètes), votre dossier est prioritaire pour l’ouverture de la Cohorte 2.',
@@ -217,7 +214,6 @@ const COHORT_PAGE_BODY: Record<
         a: 'Vous pouvez tester gratuitement notre échantillon Reading sur /sample ou passer le test blanc IELTS Academic complet en ligne (3 900 DZD via Chargily Pay CIB/Edahabia).',
       },
     ],
-    homeCta: 'Postuler depuis la page d’accueil',
     mockCta: 'Voir le test blanc en ligne (3 900 DA)',
   },
   ar: {
@@ -276,7 +272,7 @@ const COHORT_PAGE_BODY: Record<
     ],
     rulesTitle: 'ضوابط التقديم والقبول والتسجيل النهائي',
     rulesBullets: [
-      'إرسال استمارة التفرغ أو طلب الالتحاق مجاني تماماً ولا يحجز مقعداً بشكل تلقائي.',
+      'إرسال طلب الالتحاق مع أوقات تفرّغك مجاني ولا يحجز مقعداً.',
       'تستهدف الدورة المترشحين ذوي المستوى المتوسط فما فوق (B1/B2)؛ ولا تغني عن تأسيس اللغة للمبتدئين (A1/A2).',
       'بعد مشاركة الجدول المؤكد عبر واتساب، يُثبّت المقعد عند إتمام التسجيل (نقداً أو عبر Baridimob) ضمن حدود المقاعد الثمانية.',
       'بعد انتهاء مهلة 26 نوفمبر 2026 أو اكتمال العدد، يحصل المتقدمون على أولوية الإشعار فور فتح الدفعة الثانية.',
@@ -304,7 +300,6 @@ const COHORT_PAGE_BODY: Record<
         a: 'يمكنك البدء فوراً بعينة القراءة المجانية (/sample) أو شراء اختبار IELTS Academic التجريبي الكامل عبر الإنترنت (3,900 دج عبر البطاقة الذهبية أو CIB)، أو مراسلتنا عبر واتساب للحصص الفردية.',
       },
     ],
-    homeCta: 'قدّم عبر نموذج الصفحة الرئيسية',
     mockCta: 'استكشف الاختبار التجريبي (3,900 دج)',
   },
 };
@@ -434,19 +429,11 @@ export default async function FirstCohortArticle() {
               </>
             )}
             <div className="mt-5 flex flex-wrap gap-3">
-              <a
-                href={COHORT_FORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/#intake"
                 className="inline-flex rounded-full bg-[#c4162c] px-6 py-3 text-sm font-bold text-white hover:bg-red-800"
               >
                 {deadlinePassed ? copy.closedCta : copy.apply}
-              </a>
-              <Link
-                href="/#intake"
-                className="inline-flex rounded-full border border-gray-300 bg-white px-6 py-3 text-sm font-bold text-charcoal hover:border-crimson hover:text-[#b81428]"
-              >
-                {body.homeCta}
               </Link>
             </div>
           </div>
@@ -569,15 +556,6 @@ export default async function FirstCohortArticle() {
               publishedAt="2026-11-16"
               reviewedAt="2026-11-18"
               sources={[
-                {
-                  label:
-                    locale === 'fr'
-                      ? 'IELTS Lab Oran : formulaire de disponibilité (Google Forms)'
-                      : locale === 'ar'
-                        ? 'IELTS Lab Oran: استمارة أوقات التفرغ'
-                        : 'IELTS Lab Oran: weekly availability form',
-                  href: COHORT_FORM_URL,
-                },
                 {
                   label:
                     locale === 'fr'

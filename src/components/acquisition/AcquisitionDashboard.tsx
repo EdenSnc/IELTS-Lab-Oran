@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useRef, useState, useTransition } from 'react';
-import { INTERNAL_DESTINATIONS } from '@/lib/acquisition/validation';
+import { FORM_DESTINATION, INTERNAL_DESTINATIONS, LEGACY_AVAILABILITY_DESTINATION } from '@/lib/acquisition/validation';
 
 type Placement = {
   id: string;
@@ -23,7 +23,6 @@ type Campaign = { id: string; name: string; slug: string; placements: Placement[
 
 const DESTINATION_OPTIONS = [
   ...INTERNAL_DESTINATIONS.map((path) => ({ value: path, label: path })),
-  { value: 'availability-form', label: 'Live camp availability form (Google Form)' },
   { value: 'instagram', label: 'Official Instagram profile' },
   { value: 'facebook', label: 'Official Facebook profile' },
 ];
@@ -123,7 +122,7 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
             event.preventDefault();
             void save({ action: 'update_placement', placementId: placement.id, destination: field(event.currentTarget, 'destination') });
           }}>
-            <label className="grid flex-1 gap-1 text-xs">Retarget destination<select name="destination" defaultValue={placement.destination} className="rounded border px-2 py-2">{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
+            <label className="grid flex-1 gap-1 text-xs">Retarget destination<select name="destination" defaultValue={placement.destination === LEGACY_AVAILABILITY_DESTINATION ? FORM_DESTINATION : placement.destination} className="rounded border px-2 py-2">{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
             <button disabled={busy} className="rounded border px-3 py-2 text-sm disabled:opacity-50">Update</button>
           </form>
           <p className="mt-3 text-xs text-neutral-600">Last on-site check: {placement.lastInspection ? `${placement.lastInspection.status} · ${new Date(placement.lastInspection.checkedAt).toLocaleString()}${placement.lastInspection.note ? ` · ${placement.lastInspection.note}` : ''}` : 'none recorded'}</p>
