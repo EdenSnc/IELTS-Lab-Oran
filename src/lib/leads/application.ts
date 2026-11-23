@@ -1,16 +1,18 @@
 import { z } from 'zod';
+import { availabilitySchema } from './availability';
 
 const nullableShortText = z.string().trim().max(200).nullish();
 const isoDate = z.string().date();
 
 export const applicationSchema = z.object({
-  schemaVersion: z.literal(2),
+  schemaVersion: z.union([z.literal(2), z.literal(3)]),
   discoverySource: z.enum(['google_search', 'google_maps', 'poster', 'social_media', 'workshop', 'friend', 'other']),
   bookedExam: z.boolean(),
   bookedExamDate: isoDate.nullish(),
   targetExamDate: isoDate.nullish(),
   purpose: z.enum(['higher_education', 'immigration', 'career', 'other']),
-  universityAdmission: z.boolean(),
+  universityAdmission: z.boolean().nullish(),
+  availability: availabilitySchema.optional(),
   targetCountry: z.string().trim().min(2).max(100),
   targetBand: z.enum(['5.5', '6.0', '6.5', '7.0', '7.5', '8.0', '8.5-9.0']),
   takenIelts: z.boolean(),
@@ -31,6 +33,14 @@ export const applicationSchema = z.object({
     referrerHost: z.string().trim().max(253).nullish(),
   }).strict(),
 }).strict().superRefine((application, context) => {
+  if (application.purpose === 'higher_education' && application.universityAdmission == null) {
+    context.addIssue({
+      code: 'custom', path: ['universityAdmission'], message: 'An admission answer is required for study applicants.',
+    });
+  }
+  if (application.schemaVersion === 3 && !application.availability) {
+    context.addIssue({ code: 'custom', path: ['availability'], message: 'Weekly availability is required.' });
+  }
   if (application.bookedExam && !application.bookedExamDate) {
     context.addIssue({
       code: 'custom',
@@ -52,7 +62,10 @@ export const applicationSchema = z.object({
       message: 'The most recent score is required.',
     });
   }
-});
+}).transform((application) => ({
+  ...application,
+  universityAdmission: application.purpose === 'higher_education' ? application.universityAdmission : null,
+}));
 
 export type ApplicationData = z.infer<typeof applicationSchema>;
 

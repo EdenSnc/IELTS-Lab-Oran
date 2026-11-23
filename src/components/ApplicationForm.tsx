@@ -3,9 +3,13 @@
 import { FormEvent, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { readActiveUtms } from '@/lib/acquisition/utm-client';
+import { availabilityCopy, availabilitySchema, formatAvailabilityHour, maxAvailabilityWindows, weekdays } from '@/lib/leads/availability';
 
 type Locale = 'en' | 'fr' | 'ar';
 type YesNo = '' | 'yes' | 'no';
+type AvailabilityWindow = { id: number; day: string; start: string; end: string };
+const startHours = Array.from({ length: 14 }, (_, i) => 8 + i);
+const endHours = Array.from({ length: 14 }, (_, i) => 9 + i);
 
 const copy = {
   en: {
@@ -88,15 +92,29 @@ const labelClass = 'grid min-w-0 gap-2 text-sm font-semibold text-black/70';
 export default function ApplicationForm() {
   const locale = useLocale() as Locale;
   const text = copy[locale] ?? copy.en;
+  const schedule = availabilityCopy[locale] ?? availabilityCopy.en;
   const formRef = useRef<HTMLFormElement>(null);
+  const nextWindowId = useRef(0);
   const [step, setStep] = useState(0);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
   const [complete, setComplete] = useState(false);
   const [bookedExam, setBookedExam] = useState<YesNo>('');
+  const [purpose, setPurpose] = useState('');
+  const [flexibleSchedule, setFlexibleSchedule] = useState(false);
+  const [windows, setWindows] = useState<AvailabilityWindow[]>([]);
   const [takenIelts, setTakenIelts] = useState<YesNo>('');
   const [challengingModules, setChallengingModules] = useState<string[]>([]);
   const [whatsappUrl, setWhatsappUrl] = useState<string>();
+
+  const availability = flexibleSchedule ? { mode: 'flexible' } : {
+    mode: 'windows',
+    windows: windows.map(({ day, start, end }) => ({ day, startHour: Number(start), endHour: Number(end) })),
+  };
+
+  function updateWindow(id: number, field: 'day' | 'start' | 'end', value: string) {
+    setWindows((current) => current.map((window) => window.id === id ? { ...window, [field]: value } : window));
+  }
 
   function validateStep(currentStep: number) {
     const fieldset = formRef.current?.querySelector<HTMLElement>(`[data-step="${currentStep}"]`);
@@ -107,6 +125,10 @@ export default function ApplicationForm() {
     }
     if (currentStep === 4 && challengingModules.length === 0) {
       setMessage(text.requiredModules);
+      return false;
+    }
+    if (currentStep === 5 && !availabilitySchema.safeParse(availability).success) {
+      setMessage(schedule.invalid);
       return false;
     }
     setMessage(undefined);
@@ -142,13 +164,14 @@ export default function ApplicationForm() {
           formName: 'IELTS Lab Oran Application', source: 'cohort_waitlist',
           utmSource: utms.utm_source, utmMedium: utms.utm_medium, utmCampaign: utms.utm_campaign, utmContent: utms.utm_content,
           application: {
-            schemaVersion: 2,
+            schemaVersion: 3,
             discoverySource: form.get('discoverySource'),
             bookedExam: bookedExam === 'yes',
             bookedExamDate: bookedExam === 'yes' ? form.get('bookedExamDate') : null,
             targetExamDate: bookedExam === 'no' ? form.get('targetExamDate') : null,
             purpose: form.get('purpose'),
-            universityAdmission: form.get('universityAdmission') === 'yes',
+            universityAdmission: purpose === 'higher_education' ? form.get('universityAdmission') === 'yes' : null,
+            availability,
             targetCountry: form.get('targetCountry'), targetBand: form.get('targetBand'),
             takenIelts: takenIelts === 'yes', recentScore: takenIelts === 'yes' ? form.get('recentScore') : null,
             challengingModules, englishLevel: form.get('englishLevel'), urgencyAndObstacles: form.get('urgencyAndObstacles'),
@@ -231,8 +254,10 @@ export default function ApplicationForm() {
 
           <fieldset data-step="3" className={step === 3 ? 'mt-8 grid gap-5' : 'hidden'}>
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[2]}</legend>
-            <label className={labelClass}>{text.purpose}<select className={fieldClass} name="purpose" defaultValue="" required><option value="" disabled>—</option>{text.purposeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <label className={labelClass}>{text.admission}<select className={fieldClass} name="universityAdmission" defaultValue="" required><option value="" disabled>—</option><option value="yes">{text.yes}</option><option value="no">{text.no}</option></select></label>
+            <label className={labelClass}>{text.purpose}<select className={fieldClass} name="purpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} required><option value="" disabled>—</option>{text.purposeOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+            {purpose === 'higher_education' && (
+              <label className={labelClass}>{text.admission}<select className={fieldClass} name="universityAdmission" defaultValue="" required><option value="" disabled>—</option><option value="yes">{text.yes}</option><option value="no">{text.no}</option></select></label>
+            )}
             <div className="grid gap-4 sm:grid-cols-2"><label className={labelClass}>{text.country}<input className={fieldClass} name="targetCountry" minLength={2} maxLength={100} required /></label><label className={labelClass}>{text.band}<select className={fieldClass} name="targetBand" defaultValue="" required><option value="" disabled>—</option>{text.bandOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label></div>
           </fieldset>
 
@@ -246,7 +271,52 @@ export default function ApplicationForm() {
           </fieldset>
 
           <fieldset data-step="5" className={step === 5 ? 'mt-8 grid gap-5' : 'hidden'}>
-            <legend className="text-2xl font-semibold tracking-tight">{text.sections[4]}</legend>
+            <legend className="text-2xl font-semibold tracking-tight">{schedule.title}</legend>
+            <p className="text-sm text-gray-700">{schedule.hint}</p>
+            <label className="flex items-start gap-3 text-sm font-semibold">
+              <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-crimson" checked={flexibleSchedule} onChange={(event) => setFlexibleSchedule(event.target.checked)} />
+              {schedule.flexible}
+            </label>
+            {!flexibleSchedule && (
+              <div className="grid gap-3">
+                {windows.map((window, index) => (
+                  <div key={window.id} className="grid min-w-0 grid-cols-2 gap-2 rounded-xl border border-gray-200 p-3">
+                    <label className={`${labelClass} col-span-2`}>
+                      {schedule.day}
+                      <select required className={fieldClass} value={window.day} onChange={(event) => updateWindow(window.id, 'day', event.target.value)}>
+                        <option value="" disabled>—</option>
+                        {weekdays.map((day, dayIndex) => <option key={day} value={day}>{schedule.days[dayIndex]}</option>)}
+                      </select>
+                    </label>
+                    <label className={labelClass}>
+                      {schedule.from}
+                      <select required dir="ltr" className={fieldClass} value={window.start} onChange={(event) => updateWindow(window.id, 'start', event.target.value)}>
+                        <option value="" disabled>—</option>
+                        {startHours.map((hour) => <option key={hour} value={hour}>{formatAvailabilityHour(hour)}</option>)}
+                      </select>
+                    </label>
+                    <label className={labelClass}>
+                      {schedule.to}
+                      <select required dir="ltr" className={fieldClass} value={window.end} onChange={(event) => updateWindow(window.id, 'end', event.target.value)}>
+                        <option value="" disabled>—</option>
+                        {endHours.map((hour) => <option key={hour} value={hour}>{formatAvailabilityHour(hour)}</option>)}
+                      </select>
+                    </label>
+                    <button type="button" aria-label={`${schedule.remove} ${index + 1}`} className="col-span-2 min-h-11 justify-self-end px-2 text-sm font-semibold text-crimson underline" onClick={() => setWindows((current) => current.filter(({ id }) => id !== window.id))}>
+                      {schedule.remove}
+                    </button>
+                  </div>
+                ))}
+                {windows.length < maxAvailabilityWindows && (
+                  <button type="button" className="min-h-11 rounded-full border border-gray-300 px-3 text-sm font-semibold text-charcoal hover:border-crimson" onClick={() => {
+                    const id = nextWindowId.current++;
+                    setWindows((current) => [...current, { id, day: '', start: '', end: '' }]);
+                  }}>
+                    + {schedule.add}
+                  </button>
+                )}
+              </div>
+            )}
             <label className="flex cursor-pointer gap-4 rounded-2xl border border-black/10 bg-black/[0.025] p-5 text-sm font-medium leading-6 text-gray-800"><input className="mt-1 h-5 w-5 shrink-0 accent-crimson" type="checkbox" name="commitmentAccepted" value="yes" required /><span>{text.commitment}</span></label>
             <p className="text-xs leading-5 text-gray-600">{text.privacy}</p>
           </fieldset>

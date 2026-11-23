@@ -54,6 +54,25 @@ test('application intake requires commitment and at least one challenging module
   }).success, false);
 });
 
+test('only study applicants need an admission answer', () => {
+  assert.equal(applicationSchema.safeParse({ ...validApplication, universityAdmission: null }).success, false);
+  const work = applicationSchema.parse({ ...validApplication, purpose: 'career' });
+  assert.equal(work.universityAdmission, null);
+});
+
+test('new applications require flexibility or a valid local time window', () => {
+  const current = { ...validApplication, schemaVersion: 3 };
+  assert.equal(applicationSchema.safeParse(current).success, false);
+  assert.equal(applicationSchema.safeParse({ ...current, availability: { mode: 'flexible' } }).success, true);
+  const window = { day: 'fri', startHour: 17, endHour: 19 };
+  assert.equal(applicationSchema.safeParse({
+    ...current, availability: { mode: 'windows', windows: [window] },
+  }).success, true);
+  for (const windows of [[], [{ ...window, endHour: 17 }], [{ ...window, startHour: 7 }]]) {
+    assert.equal(applicationSchema.safeParse({ ...current, availability: { mode: 'windows', windows } }).success, false);
+  }
+});
+
 test('legacy Tally answers are bounded before persistence', () => {
   assert.equal((boundedTallyAnswer('x'.repeat(3_000)) as string).length, 2_000);
   assert.deepEqual(boundedTallyAnswer(['Reading', 'Writing']), ['Reading', 'Writing']);
