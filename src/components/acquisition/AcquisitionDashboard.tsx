@@ -55,11 +55,13 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error || 'Save failed');
       form?.reset();
-      setMessage(data.archived === true ? 'Archived.' : data.archived === false ? 'Restored.' : 'Saved.');
+      setMessage(data.action === 'delete_campaign' ? 'Campaign deleted.' : data.archived === true ? 'Archived.' : data.archived === false ? 'Restored.' : 'Saved.');
       setUndo(reversal);
       startTransition(() => router.refresh());
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Save failed');
+      setMessage(error instanceof Error && error.message === 'CAMPAIGN_HAS_TRACKING_LINKS'
+        ? 'This campaign has tracking links and can be kept in Archived.'
+        : error instanceof Error ? error.message : 'Save failed');
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -98,8 +100,8 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-3xl font-extrabold tracking-tight">Posters</h1>
-        <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-gray-200" role="group" aria-label="Poster view">
+        <h2 className="text-xl font-extrabold tracking-tight">Campaigns and tracking links</h2>
+        <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-gray-200" role="group" aria-label="Tracking status">
           {([false, true] as const).map((archived) => (
             <button key={String(archived)} type="button" aria-pressed={archivedView === archived}
               onClick={() => { setArchivedView(archived); setCampaignFilter(''); }}
@@ -173,6 +175,18 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                   { action: 'archive_campaign', campaignId: campaign.id, archived: !campaign.archived }, undefined,
                   { action: 'archive_campaign', campaignId: campaign.id, archived: campaign.archived },
                 )}>{campaign.archived ? 'Restore campaign' : 'Archive campaign and pause its QR links'}</button>
+                {campaign.archived && (campaign.placements.length ? (
+                  <p className="text-sm text-stone-600">Tracking links and their history are kept in Archived.</p>
+                ) : (
+                  <details className="rounded-xl border border-stone-200 px-3">
+                    <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-[#9c1e2c]">Delete campaign</summary>
+                    <div className="space-y-2 pb-3">
+                      <p className="text-sm text-stone-600">Permanently remove this empty campaign?</p>
+                      <button type="button" disabled={busy} className={`${actionStyle} text-[#9c1e2c]`}
+                        onClick={() => void save({ action: 'delete_campaign', campaignId: campaign.id })}>Delete permanently</button>
+                    </div>
+                  </details>
+                ))}
               </div>
             </details>
             {!archivedView && <details className="rounded-2xl border border-gray-200 bg-white px-4">
@@ -206,7 +220,7 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                       <div><dt className="text-xs text-gray-600">Applications</dt><dd className="text-xl font-bold tabular-nums">{placement.leadSubmissions ?? '—'}</dd></div>
                     </dl>
                     <div className="flex flex-wrap gap-2">
-                      {!archived && <Link href={`/${locale}/admin/acquisition/poster/${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center rounded-xl bg-charcoal px-3 text-sm font-bold text-white hover:bg-crimson">Edit poster</Link>}
+                      {!archived && <Link href={`/${locale}/admin/acquisition/poster/${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center rounded-xl bg-charcoal px-3 text-sm font-bold text-white hover:bg-crimson">New poster</Link>}
                       {placement.active && !archived && <a href={placement.qrDataUrl} download={`ieltslab-${placement.code}.png`} className={actionStyle}>Download QR</a>}
                       <button type="button" onClick={() => void copyLink(placement.url)} className={actionStyle}>Copy link</button>
                       {placement.firstParty && (

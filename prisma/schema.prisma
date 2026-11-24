@@ -81,8 +81,33 @@ model AcquisitionPlacement {
   campaign    AcquisitionCampaign     @relation(fields: [campaignId], references: [id], onDelete: Restrict)
   inspections AcquisitionInspection[]
   dailyCounts AcquisitionDailyCount[]
+  posterDesigns PosterDesign[]
 
   @@index([campaignId, createdAt])
+  @@schema("app_private")
+}
+
+model PosterDesign {
+  id          String               @id @db.Uuid
+  placementId String               @db.Uuid
+  title       String               @db.VarChar(100)
+  artwork     Bytes
+  thumbnail   Bytes
+  mime        String               @db.VarChar(16)
+  width       Int
+  height      Int
+  x           Int
+  y           Int
+  size        Int
+  dpi         Int
+  version     Int                  @default(1)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  deletedAt   DateTime?
+  placement   AcquisitionPlacement @relation(fields: [placementId], references: [id], onDelete: Restrict)
+
+  @@index([deletedAt, updatedAt])
+  @@index([placementId])
   @@schema("app_private")
 }
 

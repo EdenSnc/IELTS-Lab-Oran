@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import QRCode from 'qrcode';
 import AcquisitionDashboard from '@/components/acquisition/AcquisitionDashboard';
+import PosterLibrary from '@/components/acquisition/PosterLibrary';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import { publicAcquisitionLink } from '@/lib/acquisition/public-link';
 import { isFirstPartyDestination } from '@/lib/acquisition/validation';
@@ -18,9 +20,46 @@ export const metadata: Metadata = {
   twitter: null,
 };
 
-export default async function AcquisitionPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function AcquisitionPage({ params, searchParams }: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ view?: string }>;
+}) {
   const { locale } = await params;
-  await requireStaffPageAal2(['ADMIN'], `/${locale}/admin/acquisition`);
+  const base = `/${locale}/admin/acquisition`;
+  const { view } = await searchParams;
+  const current = view === 'tracking' || view === 'trash' ? view : 'library';
+  await requireStaffPageAal2(['ADMIN'], current === 'library' ? base : `${base}?view=${current}`);
+  const tabs = (
+    <nav aria-label="Posters workspace" className="flex w-fit max-w-full flex-wrap gap-0.5 rounded-2xl border border-stone-200 bg-[#f0eeeb] p-1">
+      {([{ key: 'library', label: 'Library' }, { key: 'tracking', label: 'Tracking' }, { key: 'trash', label: 'Trash' }] as const).map(({ key, label }) => (
+        <Link key={key} href={key === 'library' ? base : `${base}?view=${key}`} aria-current={key === current ? 'page' : undefined}
+          className={`inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold ${key === current
+            ? 'bg-white text-charcoal shadow-sm' : 'text-stone-600 hover:text-charcoal'}`}>{label}</Link>
+      ))}
+    </nav>
+  );
+  if (current !== 'tracking') {
+    const trash = current === 'trash';
+    const [designs, locations] = await Promise.all([
+      prisma.posterDesign.findMany({
+        where: { deletedAt: trash ? { not: null } : null },
+        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        select: { id: true, title: true, width: true, height: true, dpi: true, version: true, placement: { select: { code: true, label: true } } },
+      }),
+      trash ? [] : prisma.acquisitionPlacement.findMany({
+        where: { archivedAt: null, campaign: { archivedAt: null } },
+        orderBy: { label: 'asc' },
+        select: { code: true, label: true, campaign: { select: { name: true } } },
+      }),
+    ]);
+    return <div className="space-y-5 sm:space-y-6">
+      <h1 className="text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-none tracking-tight">Posters</h1>
+      {tabs}
+      <PosterLibrary key={current} base={base} trash={trash}
+        designs={designs.map(({ placement, ...design }) => ({ ...design, code: placement.code, placement: placement.label }))}
+        locations={locations.map(({ code, label, campaign }) => ({ code, label, campaign: campaign.name }))} />
+    </div>;
+  }
 
   const campaigns = await prisma.acquisitionCampaign.findMany({
     orderBy: { createdAt: 'desc' },
@@ -77,5 +116,8 @@ export default async function AcquisitionPage({ params }: { params: Promise<{ lo
     })),
   })));
 
-  return <AcquisitionDashboard locale={locale} campaigns={cards} />;
+  return <div className="space-y-5 sm:space-y-6">
+    <h1 className="text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-none tracking-tight">Posters</h1>
+    {tabs}<AcquisitionDashboard locale={locale} campaigns={cards} />
+  </div>;
 }

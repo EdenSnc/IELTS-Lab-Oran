@@ -3,7 +3,7 @@ import test from 'node:test';
 import sharp from 'sharp';
 import {
   checkPosterDimensions, initialPosterQr, inspectPoster, movePosterQr,
-  qrSizeLimits, resizePosterQr, withPngPrintDpi,
+  posterQrEdges, qrSizeLimits, resizePosterQr, withPngPrintDpi,
 } from '../../src/lib/acquisition/poster-artwork';
 
 test('movement and resizing preserve the whole symbol and quiet zone inside the source', () => {
@@ -20,6 +20,22 @@ test('movement and resizing preserve the whole symbol and quiet zone inside the 
   assert.equal(resizePosterQr(art, origin, cells, 1).size, qrSizeLimits(art, cells).min);
   assert.deepEqual(movePosterQr(art, initial, NaN, Infinity), initial);
   assert.throws(() => initialPosterQr({ width: 100, height: 1000 }, cells), /at least 148/);
+});
+
+test('QR width increments by one pixel and renders crisp modules with the full quiet zone', () => {
+  const cells = 37;
+  const art = { width: 1748, height: 2480 };
+  const qr = initialPosterQr(art, cells);
+  assert.equal(resizePosterQr(art, qr, cells, qr.size + 1).size, qr.size + 1);
+  for (let width = 148; width <= 468; width++) {
+    const edges = posterQrEdges(width, cells);
+    assert.equal(edges.length, 30);
+    assert.ok(edges[0] >= 4 * width / cells);
+    assert.equal(width - edges.at(-1)!, edges[0]);
+    const modules = edges.slice(1).map((edge, i) => edge - edges[i]);
+    assert.ok(Math.min(...modules) >= 3);
+    assert.ok(Math.max(...modules) - Math.min(...modules) <= 1);
+  }
 });
 
 test('poster inspection validates type, size, truncation and advertised DPI', async () => {

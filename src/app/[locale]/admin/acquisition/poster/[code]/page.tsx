@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import QRCode from 'qrcode';
 import PosterEditor from '@/components/acquisition/PosterEditor';
+import { posterIdSchema } from '@/lib/acquisition/poster-design';
 import { codeSchema } from '@/lib/acquisition/validation';
 import { publicAcquisitionLink } from '@/lib/acquisition/public-link';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
@@ -15,16 +16,28 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function PosterPage({ params }: { params: Promise<{ locale: string; code: string }> }) {
+export default async function PosterPage({ params, searchParams }: {
+  params: Promise<{ locale: string; code: string }>;
+  searchParams: Promise<{ design?: string }>;
+}) {
   const { locale, code } = await params;
   const parsed = codeSchema.safeParse(code);
   if (!parsed.success) notFound();
-  await requireStaffPageAal2(['ADMIN'], `/${locale}/admin/acquisition/poster/${parsed.data}`);
+  const query = await searchParams;
+  const id = posterIdSchema.safeParse(query.design).data;
+  if (query.design && !id) notFound();
+  const path = `/${locale}/admin/acquisition/poster/${parsed.data}`;
+  await requireStaffPageAal2(['ADMIN'], id ? `${path}?design=${id}` : path);
   const placement = await prisma.acquisitionPlacement.findUnique({
     where: { code: parsed.data },
-    select: { code: true, label: true, active: true, archivedAt: true, campaign: { select: { archivedAt: true } } },
+    select: { id: true, code: true, label: true, active: true, archivedAt: true, campaign: { select: { archivedAt: true } } },
   });
   if (!placement) notFound();
+  const design = id ? await prisma.posterDesign.findFirst({
+    where: { id, placementId: placement.id, deletedAt: null },
+    select: { id: true, version: true, title: true, dpi: true, x: true, y: true, size: true },
+  }) : null;
+  if (id && !design) notFound();
 
   const url = publicAcquisitionLink(placement.code);
   const options = { errorCorrectionLevel: 'M', margin: QUIET_MODULES } as const;
@@ -32,7 +45,7 @@ export default async function PosterPage({ params }: { params: Promise<{ locale:
   const matrix = Array.from({ length: modules.size }, (_, row) =>
     Array.from({ length: modules.size }, (_, col) => modules.get(row, col) ? '1' : '0').join(''));
   const preview = await QRCode.toDataURL(url, { ...options, scale: 8 });
-  return <PosterEditor locale={locale} placement={{
+  return <PosterEditor key={id ?? placement.code} locale={locale} design={design} placement={{
     code: placement.code, label: placement.label,
     active: placement.active && !placement.archivedAt && !placement.campaign.archivedAt, matrix, preview,
   }} />;

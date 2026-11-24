@@ -14,6 +14,9 @@ test('founder tools share one route family and reviewers have no founder navigat
 
 test('sign-in and MFA resume only known workspace paths and application filters', () => {
   assert.equal(adminReturnPath('/fr/admin/acquisition/poster/W17khKhvB-6o'), '/fr/admin/acquisition/poster/W17khKhvB-6o');
+  assert.equal(adminReturnPath('/en/admin/acquisition?view=trash'), '/en/admin/acquisition?view=trash');
+  assert.equal(adminReturnPath('/en/admin/acquisition/poster/W17khKhvB-6o?design=98765432-1000-4000-8000-123456789abc'),
+    '/en/admin/acquisition/poster/W17khKhvB-6o?design=98765432-1000-4000-8000-123456789abc');
   assert.equal(adminReturnPath('/ar/admin/applications?page=2&placement=W17khKhvB-6o&utm_source=external'),
     '/ar/admin/applications?placement=W17khKhvB-6o&page=2');
   assert.equal(adminReturnPath('/en/admin/applications?page=-1&placement=short'), '/en/admin/applications');

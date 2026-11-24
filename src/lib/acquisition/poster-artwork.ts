@@ -125,7 +125,7 @@ export function inspectPoster(bytes: Uint8Array): Artwork {
 export function qrSizeLimits(art: Dimensions, cells: number, x = 0, y = 0) {
   return {
     min: cells * 4,
-    max: Math.floor(Math.min(art.width - x, art.height - y) / cells) * cells,
+    max: Math.min(art.width - x, art.height - y),
   };
 }
 
@@ -143,8 +143,17 @@ function coordinate(value: number, max: number, previous: number) {
 
 export function resizePosterQr(art: Dimensions, placement: PosterPlacement, cells: number, size: number): PosterPlacement {
   const { min, max } = qrSizeLimits(art, cells, placement.x, placement.y);
-  const rounded = Number.isFinite(size) ? Math.round(size / cells) * cells : placement.size;
+  const rounded = Number.isFinite(size) ? Math.round(size) : placement.size;
   return { ...placement, size: Math.max(min, Math.min(max, rounded)) };
+}
+
+export function posterQrEdges(size: number, cells: number) {
+  // Keep black modules on whole printer pixels at any QR width. Round the
+  // quiet zone outwards so both edges retain at least four modules.
+  const border = Math.ceil(size * QUIET_MODULES / cells);
+  const symbol = cells - 2 * QUIET_MODULES;
+  return Array.from({ length: symbol + 1 }, (_, index) =>
+    border + Math.round(index * (size - 2 * border) / symbol));
 }
 
 export function initialPosterQr(art: Dimensions, cells: number): PosterPlacement {

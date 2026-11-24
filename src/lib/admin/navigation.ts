@@ -39,5 +39,13 @@ export function adminReturnPath(value: unknown, locale?: string): string | undef
     if (page && /^[1-9]\d{0,3}$/.test(page)) safe.set('page', page);
     if (view === 'archived') safe.set('view', view);
   }
+  if (pathname.endsWith('/acquisition')) {
+    const view = new URLSearchParams(query).get('view');
+    if (view === 'tracking' || view === 'trash') safe.set('view', view);
+  }
+  if (pathname.includes('/acquisition/poster/')) {
+    const design = new URLSearchParams(query).get('design');
+    if (design && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(design)) safe.set('design', design);
+  }
   return safe.size ? `${pathname}?${safe.toString()}` : pathname;
 }

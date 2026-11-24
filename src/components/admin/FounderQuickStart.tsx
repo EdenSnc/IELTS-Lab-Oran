@@ -23,10 +23,9 @@ export default function FounderQuickStart({ locale }: { locale: string }) {
           try { localStorage.setItem(key, 'yes'); } catch { /* The guide is hidden for this visit. */ }
         }}>Dismiss</button>
       </div>
-      <p className="text-sm leading-relaxed text-gray-600">Add a poster placement, use its QR and review the applications it brings in.</p>
-      <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-crimson">
-        <Link href={`/${locale}/admin/acquisition`} className="inline-flex min-h-11 items-center underline">Set up a placement</Link>
-        <Link href={`/${locale}/admin/applications`} className="inline-flex min-h-11 items-center underline">Review applications</Link>
+      <p className="text-sm leading-relaxed text-stone-600">Create a tracking location, save a design, then see which applications it brings in.</p>
+      <div className="mt-2 flex flex-wrap gap-3 text-sm font-semibold text-[#8e1826]">
+        <Link href={`/${locale}/admin/acquisition?view=tracking`} className="inline-flex min-h-11 items-center underline">Set up a tracking link</Link>
       </div>
     </section>
   );

@@ -59,6 +59,19 @@ export async function POST(request: Request) {
             metadata: { slug: created.slug, name: created.name },
           },
         });
+      } else if (input.action === 'delete_campaign') {
+        const campaign = await tx.acquisitionCampaign.findUniqueOrThrow({
+          where: { id: input.campaignId },
+          select: { id: true, slug: true, archivedAt: true, _count: { select: { placements: true } } },
+        });
+        if (!campaign.archivedAt) throw new AuthError('ARCHIVE_CAMPAIGN_FIRST', 409);
+        if (campaign._count.placements) throw new AuthError('CAMPAIGN_HAS_TRACKING_LINKS', 409);
+        const { count } = await tx.acquisitionCampaign.deleteMany({ where: { id: campaign.id, archivedAt: campaign.archivedAt } });
+        if (!count) throw new AuthError('CAMPAIGN_CHANGED', 409);
+        await tx.staffActionAudit.create({ data: {
+          actorUserId: actor.id, action: 'ACQUISITION_CAMPAIGN_DELETED', targetType: 'AcquisitionCampaign',
+          targetId: campaign.id, reason: 'Deleted an archived campaign with zero tracking links', metadata: { slug: campaign.slug },
+        } });
       } else if (input.action === 'update_campaign' || input.action === 'archive_campaign') {
         const { campaignId } = input;
         const updated = await tx.acquisitionCampaign.update({
