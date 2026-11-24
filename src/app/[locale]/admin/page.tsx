@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import AdminNav from '@/components/acquisition/AdminNav';
+import { adminNavigation } from '@/lib/admin/navigation';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import prisma from '@/lib/prisma';
 
@@ -9,27 +9,38 @@ export const metadata = { title: 'Administration | IELTS Lab Oran', robots: { in
 export default async function AdminOverview({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   await requireStaffPageAal2(['ADMIN'], `/${locale}/admin`);
-  const [applications, activePlacements] = await Promise.all([
+  const [applications, activePlacements, paymentsWithoutAccess, upcomingSpeaking] = await Promise.all([
     prisma.inquiry.count(),
     prisma.acquisitionPlacement.count({ where: { active: true } }),
+    prisma.order.count({ where: { status: 'PAID', entitlements: { none: { status: 'ACTIVE' } } } }),
+    prisma.speakingAppointment.count({ where: { status: 'BOOKED', scheduledStartAt: { gte: new Date() } } }),
   ]);
+  const cards = {
+    applications: { count: applications, metric: 'Submissions', detail: 'Review applicant details and weekly availability.' },
+    posters: { count: activePlacements, metric: 'Active links', detail: 'Track scans, edit posters and download QR codes.' },
+    operations: { count: paymentsWithoutAccess, metric: 'Paid orders without active access', detail: 'Review payment issues, access codes and entitlements.' },
+    speaking: { count: upcomingSpeaking, metric: 'Upcoming bookings', detail: 'Manage appointments, examiner availability and reviews.' },
+  };
   return (
-    <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 sm:px-6">
-      <Link href={`/${locale}/account`} className="text-sm font-semibold text-crimson underline">Your account</Link>
-      <h1 className="text-3xl font-extrabold tracking-tight text-charcoal">IELTS Lab administration</h1>
-      <AdminNav active="overview" locale={locale} />
+    <div className="space-y-5">
+      <h1 className="text-3xl font-extrabold tracking-tight">Founder dashboard</h1>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Link href={`/${locale}/admin/applications`} className="rounded-2xl border border-gray-200 bg-white p-5 hover:border-crimson">
-          <strong className="block text-3xl tabular-nums text-crimson">{applications}</strong>
-          <span className="mt-1 block font-bold">Applications</span>
-          <span className="text-sm text-gray-600">Applicant details, availability and poster source</span>
-        </Link>
-        <Link href={`/${locale}/admin/acquisition`} className="rounded-2xl border border-gray-200 bg-white p-5 hover:border-crimson">
-          <strong className="block text-3xl tabular-nums text-crimson">{activePlacements}</strong>
-          <span className="mt-1 block font-bold">Active tracking links</span>
-          <span className="text-sm text-gray-600">Posters, QR codes, scans and inspections</span>
-        </Link>
+        {adminNavigation(locale, 'ADMIN').flatMap(({ id, label, href }) => {
+          if (id === 'overview') return [];
+          const { count, metric, detail } = cards[id];
+          return <Link key={id} href={href} className="min-w-0 rounded-2xl border border-gray-200 bg-white p-5 hover:border-crimson focus-visible:outline-crimson">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-bold">{label}</h2>
+              <span aria-hidden="true" className="text-xl leading-none text-crimson">↗</span>
+            </div>
+            <div className="mt-4 flex flex-wrap items-baseline gap-x-2">
+              <strong className="text-3xl font-extrabold tabular-nums text-crimson">{count}</strong>
+              <span className="text-sm font-semibold text-gray-700">{metric}</span>
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-gray-600">{detail}</p>
+          </Link>;
+        })}
       </div>
-    </main>
+    </div>
   );
 }

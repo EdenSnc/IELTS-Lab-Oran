@@ -26,11 +26,13 @@ export default function AuthForm({
   locale,
   mode,
   providers,
+  continueTo,
   initialMessage,
 }: {
   locale: string;
   mode: AuthMode;
   providers: EnabledAuthProviders;
+  continueTo?: string;
   initialMessage?: string;
 }) {
   const router = useRouter();
@@ -42,7 +44,7 @@ export default function AuthForm({
   async function signInWithProvider(provider: 'google' | 'facebook') {
     setPending(true);
     setMessage(undefined);
-    const redirectTo = `${window.location.origin}/api/auth/callback?next=/${locale}/account`;
+    const redirectTo = `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(continueTo ?? `/${locale}/account`)}`;
     const response = await fetch('/api/auth/oauth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -126,7 +128,7 @@ export default function AuthForm({
       return;
     }
     if (mode === 'sign-in' || mode === 'update-password') {
-      router.replace(`/${locale}/account`);
+      router.replace(mode === 'sign-in' && continueTo ? continueTo : `/${locale}/account`);
       router.refresh();
     }
   }

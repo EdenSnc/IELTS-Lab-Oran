@@ -4,12 +4,15 @@ import Image from 'next/image';
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
+import { adminReturnPath } from '@/lib/admin/navigation';
 
 const SAFE_STAFF_NEXT_PATH = /^\/(?:speaking|staff)(?:\/|$)/;
 
 function resolveStaffReturnPath(): string {
   if (typeof window === 'undefined') return '/speaking/examiner';
   const candidate = new URLSearchParams(window.location.search).get('next');
+  const workspace = adminReturnPath(candidate);
+  if (workspace) return workspace;
   if (!candidate || candidate.startsWith('//') || candidate.includes('\\')) {
     return '/speaking/examiner';
   }

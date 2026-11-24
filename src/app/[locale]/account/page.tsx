@@ -128,7 +128,7 @@ export default async function AccountPage({
           <p className="mt-3 text-sm text-gray-600">{user.email}</p>
           {user.role === 'ADMIN' && (
             <Link href={`/${locale}/admin`} className="mt-4 inline-flex min-h-11 items-center rounded-full bg-charcoal px-4 text-sm font-semibold text-white">
-              {locale === 'fr' ? 'Administration' : locale === 'ar' ? 'لوحة الإدارة' : 'Administration'}
+              {locale === 'fr' ? 'Tableau de bord' : locale === 'ar' ? 'لوحة الإدارة' : 'Founder dashboard'}
             </Link>
           )}
         </section>

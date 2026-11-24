@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import AdminNav from './AdminNav';
 import { useRef, useState, useTransition } from 'react';
 import { FORM_DESTINATION, INTERNAL_DESTINATIONS, LEGACY_AVAILABILITY_DESTINATION } from '@/lib/acquisition/validation';
 
@@ -83,10 +82,7 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
   }
 
   return (
-    <main className="mx-auto max-w-6xl space-y-5 px-4 py-8 text-charcoal sm:px-6">
-      {canViewApplications ? <AdminNav active="posters" locale={locale} /> : (
-        <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-crimson underline" href={`/${locale}/account`}>Your account</Link>
-      )}
+    <div className="space-y-5">
       <header>
         <h1 className="text-3xl font-extrabold tracking-tight">Posters & tracking</h1>
       </header>
@@ -208,6 +204,6 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
         <p className="rounded-xl border border-gray-200 bg-white p-4 text-gray-600">No placements match your search.</p>
       )}
       <p className="text-xs leading-relaxed text-gray-600">Link opens can include repeat visits. Applications count website submissions carrying the placement code.</p>
-    </main>
+    </div>
   );
 }

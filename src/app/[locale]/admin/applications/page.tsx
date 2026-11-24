@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import AdminNav from '@/components/acquisition/AdminNav';
 import { codeSchema } from '@/lib/acquisition/validation';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import { applicationSchema } from '@/lib/leads/application';
@@ -44,8 +43,7 @@ export default async function ApplicationsPage({ params, searchParams }: {
   const schedule = availabilityCopy.en;
   const pageLink = (n: number) => `${base}?${new URLSearchParams({ page: String(n), ...(code ? { placement: code } : {}) })}`;
   return (
-    <main className="mx-auto max-w-5xl space-y-5 px-4 py-8 sm:px-6">
-      <AdminNav active="applications" locale={locale} />
+    <div className="max-w-5xl space-y-5">
       <header>
         <h1 className="text-3xl font-extrabold tracking-tight text-charcoal">Applications</h1>
         <p className="mt-1 text-sm text-gray-600">{schedule.timezone}</p>
@@ -104,6 +102,6 @@ export default async function ApplicationsPage({ params, searchParams }: {
         {page > 1 && <Link className="inline-flex min-h-11 items-center underline" href={pageLink(page - 1)}>Previous page</Link>}
         {rows.length > pageSize && <Link className="inline-flex min-h-11 items-center underline" href={pageLink(page + 1)}>Next page</Link>}
       </nav>
-    </main>
+    </div>
   );
 }

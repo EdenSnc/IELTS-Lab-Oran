@@ -52,6 +52,18 @@ test('Proxy rewrites unmatched non-localized paths to /_not-found with 404 statu
   assert.ok(csp.includes(`'nonce-${nonce}'`), '404 CSP header must include per-request nonce');
 });
 
+test('Proxy supplies the current workspace return path rather than a caller-provided header', async () => {
+  const { default: proxy } = await import('../../src/proxy');
+  const headers = { 'x-ielts-admin-path': '/en/admin/operations' };
+  const workspace = await proxy(new NextRequest(
+    'https://www.ieltslab.org/fr/admin/applications?placement=W17khKhvB-6o&page=2', { headers },
+  ));
+  assert.equal(workspace.headers.get('x-middleware-request-x-ielts-admin-path'),
+    '/fr/admin/applications?placement=W17khKhvB-6o&page=2');
+  const other = await proxy(new NextRequest('https://www.ieltslab.org/fr/articles', { headers }));
+  assert.ok(!other.headers.get('x-middleware-override-headers')?.split(',').includes('x-ielts-admin-path'));
+});
+
 test('Proxy strips Link hreflang on 404/private paths, sets X-Robots-Tag, rewrites bare /staff to 404, and forwards x-sample-locale', async () => {
   const { default: proxy } = await import('../../src/proxy');
 

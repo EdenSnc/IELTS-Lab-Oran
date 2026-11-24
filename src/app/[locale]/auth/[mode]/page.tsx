@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import AuthForm, { type AuthMode } from '@/components/auth/AuthForm';
 import { authCopyForLocale, authErrorMessage } from '@/components/auth/auth-copy';
 import { getEnabledAuthProviders } from '@/lib/supabase/auth-providers';
+import { adminReturnPath } from '@/lib/admin/navigation';
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -15,12 +16,12 @@ export default async function AuthPage({
   searchParams,
 }: {
   params: Promise<{ locale: string; mode: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { locale, mode } = await params;
   if (!MODES.has(mode as AuthMode)) notFound();
   const providers = await getEnabledAuthProviders();
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
   const copy = authCopyForLocale(locale);
 
   return (
@@ -33,6 +34,7 @@ export default async function AuthPage({
           locale={locale}
           mode={mode as AuthMode}
           providers={providers}
+          continueTo={mode === 'sign-in' ? adminReturnPath(next, locale) : undefined}
           initialMessage={error ? authErrorMessage(locale, error) : undefined}
         />
         <p className="mx-auto mt-6 max-w-md text-center text-xs leading-5 text-black/40">

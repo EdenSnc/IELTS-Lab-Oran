@@ -28,7 +28,7 @@ const toMinutes = (value: string) => { const [hour, minute] = value.split(':').m
 const fromMinutes = (value: number | null) => value === null ? '—' : `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
 const dateKey = (value = new Date()) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
 
-export default function ExaminerDashboard() {
+export default function ExaminerDashboard({ embedded = false }: { embedded?: boolean }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [rules, setRules] = useState<Rule[]>([]);
   const [overrides, setOverrides] = useState<Override[]>([]);
@@ -192,27 +192,29 @@ export default function ExaminerDashboard() {
   const todayCount = appointments.filter((item) => item.status === 'BOOKED' && dateKey(new Date(item.scheduledStartAt)) === dateKey()).length;
   const upcomingCount = appointments.filter((item) => item.status === 'BOOKED' && (now === null || new Date(item.scheduledStartAt).getTime() >= now)).length;
   const formatter = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  const Surface = embedded ? 'div' : 'main';
 
   return (
-    <main className="speaking-premium-shell">
-      <header className="speaking-premium-header px-4 py-3 sm:px-7"><TestBrand responsive href="/en" /></header>
-      <div className="speaking-premium-container">
-        <section className="speaking-premium-hero speaking-premium-hero--dashboard">
+    <Surface className={`speaking-premium-shell${embedded ? ' speaking-workspace-embedded' : ''}`}>
+      {!embedded && <header className="speaking-premium-header px-4 py-3 sm:px-7"><TestBrand responsive href="/en" /></header>}
+      <div className={embedded ? 'min-w-0' : 'speaking-premium-container'}>
+        <section className={embedded ? '' : 'speaking-premium-hero speaking-premium-hero--dashboard'}>
           <div className="flex flex-wrap items-end justify-between gap-7">
-            <div><p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#c11221]">Examiner workspace</p><h1 className="mt-5">Speaking operations.</h1><p className="mt-5 max-w-2xl text-base leading-7 text-[#62615e] sm:text-lg">A focused workspace for availability, appointments, interviews and reviews.</p></div>
+            {embedded ? <h1 className="text-3xl font-extrabold tracking-tight">Speaking</h1>
+              : <div><p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#c11221]">Examiner workspace</p><h1 className="mt-5">Speaking operations.</h1><p className="mt-5 max-w-2xl text-base leading-7 text-[#62615e] sm:text-lg">A focused workspace for availability, appointments, interviews and reviews.</p></div>}
             {viewer?.role === 'ADMIN' && <label className="grid min-w-0 gap-2 text-sm font-bold sm:min-w-64">Manage examiner<select className="w-full bg-white px-3 py-2 font-normal" value={managedExaminerId} onChange={(event) => setManagedExaminerId(event.target.value)}>{examiners.map((examiner) => <option key={examiner.id} value={examiner.id}>{examiner.name ?? 'Examiner'}</option>)}</select></label>}
           </div>
         </section>
         {message && <p role="status" className="mt-4 rounded-xl border border-[#deddd8] bg-white p-3 text-sm">{message}</p>}
 
-        <section className="speaking-premium-card speaking-premium-walkthrough mt-7 p-5 sm:p-7">
+        {!embedded && <section className="speaking-premium-card speaking-premium-walkthrough mt-7 p-5 sm:p-7">
           <h2 className="text-lg font-bold">How to publish your appointment slots</h2>
           <ol className="mt-3 grid gap-3 text-sm text-[#555] md:grid-cols-3">
             <li className="rounded-2xl p-4"><strong className="mb-2 block">01 · Choose a weekly window</strong>Select the weekday, online or in-centre, and a start/end time below.</li>
             <li className="rounded-2xl p-4"><strong className="mb-2 block">02 · Save availability</strong>The window becomes bookable as fixed 20-minute slots.</li>
             <li className="rounded-2xl p-4"><strong className="mb-2 block">03 · Track assignments</strong>Confirmed candidates appear automatically under Appointments.</li>
           </ol>
-        </section>
+        </section>}
 
         <div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <button onClick={() => setFilter('upcoming')} className={`speaking-premium-metric border p-5 text-left ${filter === 'upcoming' ? 'border-black bg-black text-white' : 'bg-white'}`}><span className="text-3xl font-bold tracking-[-.04em]">{upcomingCount}</span><span className="mt-3 block text-sm">Upcoming</span></button>
@@ -254,6 +256,6 @@ export default function ExaminerDashboard() {
           </div>
         </div>
       </div>
-    </main>
+    </Surface>
   );
 }

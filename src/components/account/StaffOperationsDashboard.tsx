@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Operations = {
@@ -26,45 +26,61 @@ export default function StaffOperationsDashboard({ operations, accessCodes, prod
   const [message, setMessage] = useState<string>();
   const [pending, setPending] = useState(false);
   const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
+  const saving = useRef(false);
+
+  async function save(endpoint: string, payload: unknown, success: (body: { accessCodes?: Array<{ code: string }> }) => void) {
+    if (saving.current) return;
+    saving.current = true;
+    setPending(true);
+    setMessage(undefined);
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const body = await response.json() as { error?: string; accessCodes?: Array<{ code: string }> };
+      if (!response.ok) {
+        setMessage(body.error ?? 'The action could not be saved.');
+        return;
+      }
+      success(body);
+      router.refresh();
+    } catch {
+      setMessage('The result could not be confirmed. Refresh and review the record before trying again.');
+    } finally {
+      saving.current = false;
+      setPending(false);
+    }
+  }
 
   async function action(event: FormEvent<HTMLFormElement>, kind: 'release_attempt' | 'extend_access') {
     event.preventDefault();
-    setPending(true);
-    setMessage(undefined);
     const form = new FormData(event.currentTarget);
     const payload = kind === 'release_attempt'
       ? { action: kind, attemptId: form.get('attemptId'), reason: form.get('reason'), force: form.get('force') === 'on' }
       : { action: kind, entitlementId: form.get('entitlementId'), days: Number(form.get('days')), reason: form.get('reason') };
-    const response = await fetch('/api/staff/operations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    const body = await response.json() as { error?: string };
-    setPending(false);
-    setMessage(response.ok ? 'Audited staff action completed.' : (body.error ?? 'Staff action failed.'));
-    if (response.ok) router.refresh();
+    await save('/api/staff/operations', payload, () => setMessage('Staff action saved.'));
   }
 
   async function generateCodes(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
-    setMessage(undefined);
-    setGeneratedCodes([]);
     const form = new FormData(event.currentTarget);
-    const expiresAt = form.get('expiresAt');
-    const response = await fetch('/api/staff/access-codes', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        productId: form.get('productId'),
-        quantity: Number(form.get('quantity')),
-        reason: form.get('reason'),
-        expiresAt: expiresAt ? new Date(String(expiresAt)).toISOString() : null,
-      }),
+    const expires = form.get('expiresAt');
+    const expiresAt = expires ? new Date(String(expires)) : null;
+    if (expiresAt && !Number.isFinite(expiresAt.getTime())) {
+      setMessage('Enter a valid expiry date.');
+      return;
+    }
+    await save('/api/staff/access-codes', {
+      productId: form.get('productId'),
+      quantity: Number(form.get('quantity')),
+      reason: form.get('reason'),
+      expiresAt: expiresAt?.toISOString() ?? null,
+    }, (body) => {
+      setGeneratedCodes(body.accessCodes?.map(({ code }) => code) ?? []);
+      setMessage('Codes generated. Copy them now.');
     });
-    const body = await response.json() as { error?: string; accessCodes?: Array<{ code: string }> };
-    setPending(false);
-    if (!response.ok) return setMessage(body.error ?? 'Access-code generation failed.');
-    setGeneratedCodes(body.accessCodes?.map(({ code }) => code) ?? []);
-    setMessage('Codes generated. Copy them now; only hashes are stored.');
-    router.refresh();
   }
 
   const cards = [
@@ -74,11 +90,10 @@ export default function StaffOperationsDashboard({ operations, accessCodes, prod
     ['Device cooldowns', operations.deviceLockouts.length],
   ] as const;
   return (
-    <main className="min-h-screen bg-[#f5f5f3] px-5 py-10">
-      <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-bold uppercase tracking-[.16em] text-crimson">Staff · AAL2 protected</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight">Payment and access operations</h1>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{cards.map(([label, count]) => <div key={label} className="rounded-3xl bg-white p-6 shadow-sm"><p className="text-sm text-black/50">{label}</p><strong className="mt-2 block text-3xl">{count}</strong></div>)}</div>
+    <div>
+        <h1 className="text-3xl font-extrabold tracking-tight">Payments &amp; access</h1>
+        <div className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">{cards.map(([label, count]) => <div key={label} className="min-w-0 rounded-xl border border-gray-200 bg-white p-3 sm:p-4"><p className="text-sm text-gray-600">{label}</p><strong className="mt-1 block text-2xl tabular-nums text-crimson">{count}</strong></div>)}</div>
+        <p role="status" className="mt-3 text-sm font-semibold text-crimson">{pending ? 'Saving…' : message}</p>
         <section className="mt-6 grid gap-5 lg:grid-cols-2">
           <form onSubmit={(event) => void action(event, 'release_attempt')} className="grid gap-3 rounded-3xl bg-white p-6 shadow-sm">
             <h2 className="text-xl font-semibold">Release attempt</h2>
@@ -110,7 +125,6 @@ export default function StaffOperationsDashboard({ operations, accessCodes, prod
             <div className="mt-4 grid gap-2">{accessCodes.map((code) => <div key={code.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-black/[.025] px-4 py-3 text-xs"><span><strong>{code.product.name}</strong> · {code.codeHint}</span><span>{code.redeemedAt ? `Redeemed by ${code.redeemedBy?.email ?? code.redeemedBy?.name ?? 'learner'}` : code.expiresAt ? `Expires ${new Date(code.expiresAt).toLocaleDateString()}` : 'Available'}</span></div>)}</div>
           </div>
         </section>
-        {message && <p role="status" className="mt-5 rounded-2xl bg-white p-4 text-sm">{message}</p>}
         <section className="mt-6 rounded-3xl bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold">Webhook failures</h2>
           <div className="mt-4 grid gap-2">{operations.webhookFailures.map((failure) => <div key={failure.errorCode} className="flex justify-between rounded-xl bg-black/[.025] px-4 py-3 text-sm"><span>{failure.errorCode}</span><strong>{failure._count._all}</strong></div>)}</div>
@@ -121,7 +135,6 @@ export default function StaffOperationsDashboard({ operations, accessCodes, prod
           <div className="rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Duplicate unresolved orders</h2><div className="mt-4 grid gap-2">{operations.duplicateUnresolved.map((group) => <div key={`${group.userId}:${group.productId}`} className="rounded-xl bg-black/[.025] p-3 text-xs"><strong>{group.orderIds.length} orders</strong><p className="mt-1 break-all">user {group.userId}</p></div>)}</div></div>
           <div className="rounded-3xl bg-white p-6 shadow-sm"><h2 className="text-xl font-semibold">Device replacement cooldowns</h2><div className="mt-4 grid gap-2">{operations.deviceLockouts.map((slot) => <div key={slot.id} className="rounded-xl bg-black/[.025] p-3 text-xs"><strong>Device {slot.slotNumber} · {slot.label ?? 'Unnamed'}</strong><p className="mt-1 break-all">user {slot.userId} · replacements {slot.replacementCount}</p></div>)}</div></div>
         </section>
-      </div>
-    </main>
+    </div>
   );
 }

@@ -193,7 +193,7 @@ export default function PosterEditor({ placement, locale }: { placement: Placeme
   const busy = loading || exporting;
 
   return (
-    <main className="mx-auto max-w-6xl space-y-4 px-4 py-6 text-charcoal sm:px-6">
+    <div className="space-y-4">
       <Link href={listUrl} className="inline-flex min-h-11 items-center text-sm font-semibold text-crimson underline">← Posters &amp; tracking</Link>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div><h1 className="text-3xl font-extrabold tracking-tight">Poster editor</h1><p className="mt-1 break-words text-sm text-gray-600">{placement.label} · {placement.code}</p></div>
@@ -277,6 +277,6 @@ export default function PosterEditor({ placement, locale }: { placement: Placeme
           </aside>
         )}
       </div>
-    </main>
+    </div>
   );
 }

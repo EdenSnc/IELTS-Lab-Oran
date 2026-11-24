@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import type { Role } from '@prisma/client';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { syncApplicationUser } from './request-user';
+import { adminReturnPath } from '@/lib/admin/navigation';
 
 type StaffRole = Extract<Role, 'TEACHER' | 'CONTENT_REVIEWER' | 'ADMIN'>;
 
@@ -24,8 +25,15 @@ export async function requireStaffPageAal2(
   returnTo?: string,
 ) {
   const { user, currentLevel } = await loadCurrentStaffAuthContext();
-  if (!user || user.status !== 'ACTIVE') redirect('/en/auth/sign-in');
-  if (!allowedRoles.includes(user.role as StaffRole)) redirect('/en/account');
+  if (!user || user.status !== 'ACTIVE') {
+    const workspace = adminReturnPath(returnTo);
+    if (workspace) redirect(`/${workspace.split('/')[1]}/auth/sign-in?next=${encodeURIComponent(workspace)}`);
+    redirect('/en/auth/sign-in');
+  }
+  if (!allowedRoles.includes(user.role as StaffRole)) {
+    const locale = adminReturnPath(returnTo)?.split('/')[1] ?? 'en';
+    redirect(`/${locale}/account`);
+  }
   if (currentLevel !== 'aal2') {
     const mfaTarget = returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//')
       ? `/speaking/mfa?next=${encodeURIComponent(returnTo)}`

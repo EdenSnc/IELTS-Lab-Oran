@@ -1579,6 +1579,13 @@ body {
   backdrop-filter: saturate(150%) blur(18px);
 }
 
+.speaking-premium-shell.speaking-workspace-embedded {
+  min-height: 0;
+  overflow: visible;
+  background: transparent;
+  font-family: inherit;
+}
+
 .speaking-premium-container {
   width: min(100%, 80rem);
   margin-inline: auto;

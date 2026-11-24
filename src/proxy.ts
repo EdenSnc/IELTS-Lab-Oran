@@ -6,6 +6,7 @@ import { isIndexableLocalizedPath } from './lib/seo';
 import { buildContentSecurityPolicy } from './lib/security/content-security-policy';
 import { refreshSupabaseSession } from './lib/supabase/proxy-session';
 import { shouldRefreshSupabaseSession, type ProxyResponseKind } from './lib/supabase/proxy-policy';
+import { ADMIN_PATH_HEADER, adminReturnPath } from './lib/admin/navigation';
 
 const handleI18nRouting = createMiddleware(routing);
 const environment = parsePublicEnvironment(process.env);
@@ -66,6 +67,7 @@ function applyRequestSecurityHeaders(
   }
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('Content-Security-Policy', csp);
+  requestHeaders.delete(ADMIN_PATH_HEADER);
   if (extraRequestHeaders) {
     for (const [key, value] of Object.entries(extraRequestHeaders)) {
       requestHeaders.set(key, value);
@@ -115,6 +117,8 @@ export default async function proxy(request: NextRequest) {
   );
   let response: NextResponse;
   const extraRequestHeaders: Record<string, string> = {};
+  const adminPath = adminReturnPath(pathname + request.nextUrl.search);
+  if (adminPath) extraRequestHeaders[ADMIN_PATH_HEADER] = adminPath;
 
   if (!firstSegment) {
     const destination = request.nextUrl.clone();
