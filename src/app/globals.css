@@ -9,14 +9,15 @@
 
 @media (hover: hover) and (pointer: fine) and (forced-colors: none) {
   :root {
-    --cursor-default: url('/cursors/brand-arrow.svg') 4 4, default;
-    --cursor-pointer: url('/cursors/brand-arrow.svg') 4 4, pointer;
-    --cursor-readable: url('/cursors/brand-arrow.svg') 4 4, default;
+    --cursor-default: url('/cursors/brand-arrow.png') 4 4, url('/cursors/brand-arrow.svg') 4 4, default;
+    --cursor-pointer: url('/cursors/brand-arrow.png') 4 4, url('/cursors/brand-arrow.svg') 4 4, pointer;
+    --cursor-readable: url('/cursors/brand-arrow.png') 4 4, url('/cursors/brand-arrow.svg') 4 4, default;
   }
 }
 
 @layer base {
   html { cursor: var(--cursor-default); }
+  :where(mark, img:not([draggable='true'])) { cursor: inherit; }
   :where(a[href], button, summary, select, label[for], [role='button'], [role='link'], input:is([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'])) {
     cursor: var(--cursor-pointer);
   }
@@ -26,6 +27,10 @@
   :where([contenteditable='false']) { cursor: var(--cursor-readable); }
   :where(button, input, select, textarea):disabled,
   :where([aria-disabled='true']) { cursor: not-allowed; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  img:not([draggable='true']) { -webkit-user-drag: none; }
 }
 
 @utility cursor-default { cursor: var(--cursor-default); }

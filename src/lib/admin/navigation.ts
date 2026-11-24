@@ -10,7 +10,7 @@ const sections = [
 ] as const;
 
 export function adminNavigation(locale: string, role: AdminRole) {
-  return sections.filter((section) => role === 'ADMIN' || section.id === 'posters')
+  return sections.filter(() => role === 'ADMIN')
     .map((section) => ({ ...section, href: `/${locale}/admin${section.segment}` }));
 }
 
@@ -34,8 +34,10 @@ export function adminReturnPath(value: unknown, locale?: string): string | undef
     const incoming = new URLSearchParams(query);
     const code = incoming.get('placement');
     const page = incoming.get('page');
+    const view = incoming.get('view');
     if (code && /^[A-Za-z0-9_-]{10,24}$/.test(code)) safe.set('placement', code);
     if (page && /^[1-9]\d{0,3}$/.test(page)) safe.set('page', page);
+    if (view === 'archived') safe.set('view', view);
   }
   return safe.size ? `${pathname}?${safe.toString()}` : pathname;
 }

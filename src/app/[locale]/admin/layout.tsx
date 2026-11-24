@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import AdminShell from '@/components/admin/AdminShell';
 import { ADMIN_PATH_HEADER, adminReturnPath } from '@/lib/admin/navigation';
@@ -24,7 +23,6 @@ export default async function AdminLayout({ children, params }: {
   // loading.tsx Suspense boundary can flush an HTTP 200 skeleton to crawlers.
   const { locale } = await params;
   const pathname = adminReturnPath((await headers()).get(ADMIN_PATH_HEADER), locale) ?? `/${locale}/admin`;
-  const actor = await requireStaffPageAal2(['CONTENT_REVIEWER', 'ADMIN'], pathname);
-  if (actor.role !== 'ADMIN' && actor.role !== 'CONTENT_REVIEWER') notFound();
-  return <AdminShell locale={locale} role={actor.role}>{children}</AdminShell>;
+  await requireStaffPageAal2(['ADMIN'], pathname);
+  return <AdminShell locale={locale}>{children}</AdminShell>;
 }

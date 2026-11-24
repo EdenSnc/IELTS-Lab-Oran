@@ -19,9 +19,10 @@ export default async function PosterPage({ params }: { params: Promise<{ locale:
   const { locale, code } = await params;
   const parsed = codeSchema.safeParse(code);
   if (!parsed.success) notFound();
-  await requireStaffPageAal2(['ADMIN', 'CONTENT_REVIEWER'], `/${locale}/admin/acquisition/poster/${parsed.data}`);
+  await requireStaffPageAal2(['ADMIN'], `/${locale}/admin/acquisition/poster/${parsed.data}`);
   const placement = await prisma.acquisitionPlacement.findUnique({
-    where: { code: parsed.data }, select: { code: true, label: true, active: true },
+    where: { code: parsed.data },
+    select: { code: true, label: true, active: true, archivedAt: true, campaign: { select: { archivedAt: true } } },
   });
   if (!placement) notFound();
 
@@ -31,5 +32,8 @@ export default async function PosterPage({ params }: { params: Promise<{ locale:
   const matrix = Array.from({ length: modules.size }, (_, row) =>
     Array.from({ length: modules.size }, (_, col) => modules.get(row, col) ? '1' : '0').join(''));
   const preview = await QRCode.toDataURL(url, { ...options, scale: 8 });
-  return <PosterEditor locale={locale} placement={{ ...placement, matrix, preview }} />;
+  return <PosterEditor locale={locale} placement={{
+    code: placement.code, label: placement.label,
+    active: placement.active && !placement.archivedAt && !placement.campaign.archivedAt, matrix, preview,
+  }} />;
 }

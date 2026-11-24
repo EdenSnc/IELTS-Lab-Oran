@@ -62,6 +62,7 @@ model AcquisitionCampaign {
   name       String                 @db.VarChar(120)
   slug       String                 @unique @db.VarChar(80)
   createdAt  DateTime               @default(now())
+  archivedAt DateTime?
   placements AcquisitionPlacement[]
 
   @@schema("app_private")
@@ -76,6 +77,7 @@ model AcquisitionPlacement {
   medium      String                  @db.VarChar(40)
   active      Boolean                 @default(true)
   createdAt   DateTime                @default(now())
+  archivedAt  DateTime?
   campaign    AcquisitionCampaign     @relation(fields: [campaignId], references: [id], onDelete: Restrict)
   inspections AcquisitionInspection[]
   dailyCounts AcquisitionDailyCount[]
@@ -134,6 +136,8 @@ model Inquiry {
   message    String   @db.Text
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
+  archivedAt DateTime?
+  founderDetails Json?
 
   prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
 

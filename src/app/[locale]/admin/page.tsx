@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { adminNavigation } from '@/lib/admin/navigation';
+import FounderQuickStart from '@/components/admin/FounderQuickStart';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import prisma from '@/lib/prisma';
 
@@ -10,8 +11,8 @@ export default async function AdminOverview({ params }: { params: Promise<{ loca
   const { locale } = await params;
   await requireStaffPageAal2(['ADMIN'], `/${locale}/admin`);
   const [applications, activePlacements, paymentsWithoutAccess, upcomingSpeaking] = await Promise.all([
-    prisma.inquiry.count(),
-    prisma.acquisitionPlacement.count({ where: { active: true } }),
+    prisma.inquiry.count({ where: { archivedAt: null } }),
+    prisma.acquisitionPlacement.count({ where: { active: true, archivedAt: null, campaign: { archivedAt: null } } }),
     prisma.order.count({ where: { status: 'PAID', entitlements: { none: { status: 'ACTIVE' } } } }),
     prisma.speakingAppointment.count({ where: { status: 'BOOKED', scheduledStartAt: { gte: new Date() } } }),
   ]);
@@ -22,7 +23,7 @@ export default async function AdminOverview({ params }: { params: Promise<{ loca
     speaking: { count: upcomingSpeaking, metric: 'Upcoming bookings', detail: 'Manage appointments, examiner availability and reviews.' },
   };
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h1 className="text-3xl font-extrabold tracking-tight">Founder dashboard</h1>
       <div className="grid gap-3 sm:grid-cols-2">
         {adminNavigation(locale, 'ADMIN').flatMap(({ id, label, href }) => {
@@ -41,6 +42,7 @@ export default async function AdminOverview({ params }: { params: Promise<{ loca
           </Link>;
         })}
       </div>
+      <FounderQuickStart locale={locale} />
     </div>
   );
 }

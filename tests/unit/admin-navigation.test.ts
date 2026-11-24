@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { activeAdminSection, adminNavigation, adminReturnPath } from '../../src/lib/admin/navigation';
 
-test('founder tools share one route family while reviewers see their existing Posters area', () => {
+test('founder tools share one route family and reviewers have no founder navigation', () => {
   assert.deepEqual(adminNavigation('en', 'ADMIN').map((link) => link.href), [
     '/en/admin', '/en/admin/applications', '/en/admin/acquisition', '/en/admin/operations', '/en/admin/speaking',
   ]);
-  assert.deepEqual(adminNavigation('fr', 'CONTENT_REVIEWER').map((link) => link.href), ['/fr/admin/acquisition']);
+  assert.deepEqual(adminNavigation('fr', 'CONTENT_REVIEWER'), []);
   assert.equal(activeAdminSection('/fr/admin/acquisition/poster/W17khKhvB-6o', 'fr'), 'posters');
   assert.equal(activeAdminSection('/fr/admin/', 'fr'), 'overview');
   assert.equal(activeAdminSection('/fr/admin/acquisitions', 'fr'), undefined);

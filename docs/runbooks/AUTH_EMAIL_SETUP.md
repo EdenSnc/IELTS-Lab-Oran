@@ -1,5 +1,15 @@
 # Production authentication email setup
 
+## Hosting and identity migration
+
+The target is IELTS Lab-managed authentication email and password recovery,
+independent of Supabase Auth. Include this in the hosting and identity
+migration. Verify sender-domain authentication, password-reset delivery,
+one-time expiring reset links, MFA recovery and account access on staging
+before switching providers. Preserve the mapping between account IDs, roles
+and paid access, and run a rollback rehearsal with the old provider available.
+The setup below covers the current integration during the transition.
+
 Supabase's built-in SMTP service is for development only. IELTS Lab Oran should use the native Supabase + Resend integration for authentication mail, while Supabase remains the authentication system.
 
 ## One-time external setup

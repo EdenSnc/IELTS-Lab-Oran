@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { codeSchema } from '@/lib/acquisition/validation';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import { applicationSchema } from '@/lib/leads/application';
-import { availabilityCopy, formatAvailabilityHour, weekdays } from '@/lib/leads/availability';
+import ApplicationsInbox, { type InboxItem } from '@/components/admin/ApplicationsInbox';
+import { founderDetailsSchema } from '@/lib/admin/application-record';
 import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,7 @@ function readApplication(message: string) {
 
 export default async function ApplicationsPage({ params, searchParams }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ placement?: string; page?: string }>;
+  searchParams: Promise<{ placement?: string; page?: string; view?: string }>;
 }) {
   const { locale } = await params;
   const base = `/${locale}/admin/applications`;
@@ -31,77 +32,71 @@ export default async function ApplicationsPage({ params, searchParams }: {
   const query = await searchParams;
   const code = codeSchema.safeParse(query.placement).data;
   const page = /^\d{1,4}$/.test(query.page ?? '') ? Math.max(1, Number(query.page)) : 1;
-  const where = code ? { message: { contains: `"utmContent":"${code}"` } } : undefined;
+  const archived = query.view === 'archived';
+  const where = { archivedAt: archived ? { not: null } : null, ...(code ? { message: { contains: `"utmContent":"${code}"` } } : {}) };
   const [rows, placements] = await Promise.all([
     prisma.inquiry.findMany({
       where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (page - 1) * pageSize, take: pageSize + 1,
-      select: { id: true, message: true, createdAt: true, prospect: { select: { name: true, email: true, phone: true } } },
+      select: { id: true, message: true, createdAt: true, archivedAt: true, founderDetails: true, prospect: { select: { name: true, email: true, phone: true } } },
     }),
     prisma.acquisitionPlacement.findMany({ select: { code: true, label: true } }),
   ]);
   const labelByCode = new Map(placements.map((placement) => [placement.code, placement.label]));
-  const schedule = availabilityCopy.en;
-  const pageLink = (n: number) => `${base}?${new URLSearchParams({ page: String(n), ...(code ? { placement: code } : {}) })}`;
+  const inbox: InboxItem[] = rows.slice(0, pageSize).map(({ id, message, createdAt, archivedAt, founderDetails, prospect }) => {
+    const applicant = readApplication(message);
+    const details = founderDetailsSchema.safeParse(founderDetails);
+    const override = details.success ? details.data : null;
+    const attribution = applicant?.attribution.utmContent;
+    const facts = applicant ? [
+      { label: 'Goal', value: `${purposeLabels[applicant.purpose]} · ${applicant.targetCountry} · Band ${applicant.targetBand}` },
+      { label: 'English level', value: applicant.englishLevel },
+    ] : [];
+    const exam = applicant?.bookedExamDate ?? applicant?.targetExamDate;
+    if (exam) facts.push({ label: 'Exam date', value: exam });
+    if (applicant?.universityAdmission != null) facts.push({ label: 'University admission', value: applicant.universityAdmission ? 'Yes' : 'No' });
+    return {
+      id, received: received.format(createdAt), archived: Boolean(archivedAt),
+      poster: attribution ? labelByCode.get(attribution) : undefined,
+      notes: applicant?.urgencyAndObstacles ?? (message.startsWith('{') ? undefined : message),
+      facts,
+      override,
+      details: override ?? { name: prospect.name ?? '', phone: prospect.phone, email: prospect.email, notes: '', availability: applicant?.availability ?? null },
+    };
+  });
+  const link = (options: { page?: number; archived?: boolean; code?: string }) => {
+    const query = new URLSearchParams({
+      ...(options.code ? { placement: options.code } : {}),
+      ...(options.archived ? { view: 'archived' } : {}),
+      ...(options.page ? { page: String(options.page) } : {}),
+    });
+    return query.size ? `${base}?${query}` : base;
+  };
   return (
     <div className="max-w-5xl space-y-5">
-      <header>
-        <h1 className="text-3xl font-extrabold tracking-tight text-charcoal">Applications</h1>
-        <p className="mt-1 text-sm text-gray-600">{schedule.timezone}</p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-3xl font-extrabold tracking-tight">Applications</h1>
+        <nav aria-label="Application status" className="inline-flex rounded-full bg-white p-1 ring-1 ring-gray-200">
+          {([false, true] as const).map((view) => (
+            <Link key={String(view)} aria-current={archived === view ? 'page' : undefined} href={link({ archived: view, code })}
+              className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold ${archived === view ? 'bg-charcoal text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+              {view ? 'Archived' : 'Current'}
+            </Link>
+          ))}
+        </nav>
       </header>
       {code && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm">
           <span>Poster <strong>{labelByCode.get(code) ?? code}</strong></span>
-          <Link href={base} className="inline-flex min-h-11 items-center font-semibold text-crimson underline">Clear filter</Link>
+          <Link href={link({ archived })} className="inline-flex min-h-11 items-center font-semibold text-crimson underline">Clear filter</Link>
         </div>
       )}
-      {rows.length === 0 && <p className="rounded-xl border border-gray-200 bg-white p-5 text-gray-600">No applications here yet.</p>}
-      <div className="grid gap-2">
-        {rows.slice(0, pageSize).map(({ id, message, createdAt, prospect }) => {
-          const application = readApplication(message);
-          const availability = application?.availability;
-          const attribution = application?.attribution.utmContent;
-          const poster = attribution ? labelByCode.get(attribution) : undefined;
-          return (
-            <details key={id} className="rounded-xl border border-gray-200 bg-white">
-              <summary className="cursor-pointer px-4 py-3">
-                <span className="font-bold">{prospect.name || prospect.phone}</span>
-                <span className="ms-2 text-sm text-gray-600">{received.format(createdAt)}</span>
-                {poster && <span className="ms-2 rounded bg-red-50 px-2 py-1 text-xs font-semibold text-crimson">{poster}</span>}
-              </summary>
-              <div className="space-y-3 border-t border-gray-100 px-4 py-4 text-sm">
-                <div className="flex flex-wrap gap-x-4 gap-y-1">
-                  <a href={`tel:${prospect.phone}`} dir="ltr" className="font-semibold text-crimson underline">{prospect.phone}</a>
-                  {prospect.email && <span className="break-all">{prospect.email}</span>}
-                </div>
-                <div>
-                  <h2 className="font-semibold">{schedule.title}</h2>
-                  {!availability ? <p className="text-gray-600">Availability was not collected for this application.</p>
-                    : availability.mode === 'flexible' ? <p>Flexible schedule</p>
-                    : <ul className="mt-1 flex flex-wrap gap-2">{availability.windows.map((slot, index) => (
-                      <li key={index} className="rounded bg-gray-100 px-2 py-1">
-                        {schedule.days[weekdays.indexOf(slot.day)]} {formatAvailabilityHour(slot.startHour)}–{formatAvailabilityHour(slot.endHour)}
-                      </li>
-                    ))}</ul>}
-                </div>
-                {application && (
-                  <dl className="grid gap-3 border-t border-gray-100 pt-3 sm:grid-cols-2">
-                    <div><dt className="font-semibold">Goal</dt><dd>{purposeLabels[application.purpose]} · {application.targetCountry} · Band {application.targetBand}</dd></div>
-                    <div><dt className="font-semibold">Exam date</dt><dd>{application.bookedExamDate ?? application.targetExamDate}</dd></div>
-                    <div><dt className="font-semibold">English level</dt><dd>{application.englishLevel} · {application.challengingModules.join(', ')}</dd></div>
-                    {application.universityAdmission != null && <div><dt className="font-semibold">University admission</dt><dd>{application.universityAdmission ? 'Yes' : 'No'}</dd></div>}
-                    <div className="sm:col-span-2"><dt className="font-semibold">Notes</dt><dd className="whitespace-pre-wrap break-words">{application.urgencyAndObstacles}</dd></div>
-                  </dl>
-                )}
-                {!application && <p className="whitespace-pre-wrap break-words text-gray-700">{message}</p>}
-              </div>
-            </details>
-          );
-        })}
-      </div>
-      <nav className="flex flex-wrap gap-4 text-sm font-semibold text-crimson" aria-label="Application pages">
-        {page > 1 && <Link className="inline-flex min-h-11 items-center underline" href={pageLink(page - 1)}>Previous page</Link>}
-        {rows.length > pageSize && <Link className="inline-flex min-h-11 items-center underline" href={pageLink(page + 1)}>Next page</Link>}
-      </nav>
+      <ApplicationsInbox rows={inbox} archived={archived} />
+      {(page > 1 || rows.length > pageSize) && (
+        <nav className="flex flex-wrap gap-4 text-sm font-semibold text-crimson" aria-label="Application pages">
+          {page > 1 && <Link className="inline-flex min-h-11 items-center underline" href={link({page:page-1, archived, code})}>Previous page</Link>}
+          {rows.length > pageSize && <Link className="inline-flex min-h-11 items-center underline" href={link({page:page+1, archived, code})}>Next page</Link>}
+        </nav>
+      )}
     </div>
   );
 }

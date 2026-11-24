@@ -16,8 +16,9 @@ const floatingCursor = (await readFile('src/components/FloatingWidget.tsx', 'utf
 const server = createServer(async (request, response) => {
   try {
     if (request.url.startsWith('/cursors/')) {
-      if (request.url !== '/cursors/brand-arrow.svg') { response.writeHead(404); response.end(); return; }
-      response.setHeader('Content-Type', 'image/svg+xml'); response.end(await readFile(`public${request.url}`)); return;
+      if (!/^\/cursors\/brand-arrow\.(svg|png)$/u.test(request.url)) { response.writeHead(404); response.end(); return; }
+      response.setHeader('Content-Type', request.url.endsWith('.png') ? 'image/png' : 'image/svg+xml');
+      response.end(await readFile(`public${request.url}`)); return;
     }
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     if (request.url === '/preview') {
@@ -45,6 +46,7 @@ const cursor = (page, id) => page.locator(id).evaluate(element => getComputedSty
 try {
   const sourceSvg = await readFile('public/cursors/brand-arrow.svg', 'utf8');
   const pixels = await sharp(Buffer.from(sourceSvg)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  assert.deepEqual(await sharp('public/cursors/brand-arrow.png').ensureAlpha().raw().toBuffer(), pixels.data);
   const pixel = (x, y) => [...pixels.data.subarray((y * pixels.info.width + x) * 4, (y * pixels.info.width + x) * 4 + 4)];
   const blackPixels = [];
   for (let y = 0; y < pixels.info.height; y++) for (let x = 0; x < pixels.info.width; x++) {
@@ -85,9 +87,25 @@ try {
   await page.mouse.move(box.x + 1, box.y + box.height / 2); await page.mouse.down();
   await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2, { steps: 12 }); await page.mouse.up();
   assert.match(await page.evaluate(() => getSelection().toString()), /selectable passage words/u);
+  assert.match(await cursor(page, '#nested-prose'), /brand-arrow\.png.*brand-arrow\.svg.*default$/u);
   await page.evaluate(() => { const range = getSelection().getRangeAt(0); const mark = document.createElement('mark'); mark.id = 'new-highlight'; mark.dataset.ieltsHighlight = 'true'; range.surroundContents(mark); getSelection().removeAllRanges(); });
   assert.match(await cursor(page, '#new-highlight'), /brand-arrow\.svg.*default$/u);
   assert.equal(await page.locator('#new-highlight').innerText(), 'selectable passage words');
+  const image = page.locator('#arrow');
+  assert.match(await cursor(page, '#arrow'), /brand-arrow\.png/u);
+  assert.equal(await image.evaluate(element => getComputedStyle(element).webkitUserDrag), 'none');
+  await image.evaluate(element => {
+    const range = document.createRange();
+    range.selectNode(element);
+    getSelection().addRange(range);
+    document.addEventListener('contextmenu', event => {
+      element.dataset.contextMenu = event.defaultPrevented ? 'blocked' : 'native';
+    }, { once: true });
+  });
+  assert.match(await cursor(page, '#arrow'), /brand-arrow\.png/u);
+  await image.click({ button: 'right' });
+  assert.equal(await image.getAttribute('data-context-menu'), 'native');
+  assert.match(await cursor(page, '#arrow'), /brand-arrow\.png/u);
   await page.locator('#plain-edit').fill('New plain notes'); assert.equal(await page.locator('#plain-edit').innerText(), 'New plain notes');
   await page.locator('#passage-input').fill('Written answer'); assert.equal(await page.locator('#passage-input').inputValue(), 'Written answer');
   await page.locator('#edit-child').click(); await page.keyboard.press('End'); await page.keyboard.type(' appended'); assert.match(await page.locator('#passage-edit').innerText(), /appended/u);
@@ -121,7 +139,7 @@ try {
   assert.match(await cursor(staticPage, '#link'), /brand-arrow\.svg/u, 'cursor styling does not require JavaScript'); await noJs.close();
   // An unavailable asset still has a valid native fallback and leaves interaction
   // intact. Browser/OS-owned controls are deliberately outside this styling.
-  const missingAsset = await browser.newContext(); await missingAsset.route('**/cursors/brand-arrow.svg', route => route.abort());
+  const missingAsset = await browser.newContext(); await missingAsset.route(/\/cursors\/brand-arrow\.(png|svg)$/u, route => route.abort());
   const fallbackPage = await missingAsset.newPage(); await fallbackPage.goto(base);
   assert.match(await cursor(fallbackPage, '#passage'), /brand-arrow\.svg.*default$/u);
   await fallbackPage.getByRole('button', { name: 'Continue', exact: true }).click(); assert.equal(await fallbackPage.locator('#button').innerText(), 'Continued');

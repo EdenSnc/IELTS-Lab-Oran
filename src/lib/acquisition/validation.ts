@@ -35,18 +35,22 @@ export const ACQUISITION_REDIRECT_HEADERS = {
   'Cache-Control': 'no-store',
   'Referrer-Policy': 'no-referrer',
 } as const;
+const medium = z.enum(['poster', 'flyer', 'card', 'partner', 'social']);
+const label = z.string().trim().min(2).max(120);
 
 export const actionSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('campaign'),
-    name: z.string().trim().min(2).max(120),
+    name: label,
     slug: campaignSlugSchema,
   }).strict(),
+  z.object({ action: z.literal('update_campaign'), campaignId: z.uuid(), name: label }).strict(),
+  z.object({ action: z.literal('archive_campaign'), campaignId: z.uuid(), archived: z.boolean() }).strict(),
   z.object({
     action: z.literal('placement'),
     campaignId: z.string().uuid(),
-    label: z.string().trim().min(2).max(120),
-    medium: z.enum(['poster', 'flyer', 'card', 'partner', 'social']),
+    label,
+    medium,
     destination: destinationSchema,
   }).strict(),
   z.object({
@@ -54,7 +58,10 @@ export const actionSchema = z.discriminatedUnion('action', [
     placementId: z.string().uuid(),
     destination: destinationSchema,
     active: z.boolean().optional(),
+    label: label.optional(),
+    medium: medium.optional(),
   }).strict(),
+  z.object({ action: z.literal('archive_placement'), placementId: z.uuid(), archived: z.boolean() }).strict(),
   z.object({
     action: z.literal('inspection'),
     placementId: z.string().uuid(),

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
 import QRCode from 'qrcode';
 import AcquisitionDashboard from '@/components/acquisition/AcquisitionDashboard';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
@@ -21,8 +20,7 @@ export const metadata: Metadata = {
 
 export default async function AcquisitionPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const actor = await requireStaffPageAal2(['CONTENT_REVIEWER', 'ADMIN'], `/${locale}/admin/acquisition`);
-  if (actor.role !== 'ADMIN' && actor.role !== 'CONTENT_REVIEWER') notFound();
+  await requireStaffPageAal2(['ADMIN'], `/${locale}/admin/acquisition`);
 
   const campaigns = await prisma.acquisitionCampaign.findMany({
     orderBy: { createdAt: 'desc' },
@@ -54,6 +52,7 @@ export default async function AcquisitionPage({ params }: { params: Promise<{ lo
     id: campaign.id,
     name: campaign.name,
     slug: campaign.slug,
+    archived: Boolean(campaign.archivedAt),
     placements: await Promise.all(campaign.placements.map(async (placement) => {
       const url = publicAcquisitionLink(placement.code);
       return {
@@ -63,6 +62,7 @@ export default async function AcquisitionPage({ params }: { params: Promise<{ lo
         medium: placement.medium,
         destination: placement.destination,
         active: placement.active,
+        archived: Boolean(placement.archivedAt),
         firstParty: isFirstPartyDestination(placement.destination),
         url,
         qrDataUrl: await QRCode.toDataURL(url, { margin: 4, width: 480, errorCorrectionLevel: 'M' }),
@@ -77,5 +77,5 @@ export default async function AcquisitionPage({ params }: { params: Promise<{ lo
     })),
   })));
 
-  return <AcquisitionDashboard locale={locale} campaigns={cards} canViewApplications={actor.role === 'ADMIN'} />;
+  return <AcquisitionDashboard locale={locale} campaigns={cards} />;
 }

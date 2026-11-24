@@ -13,6 +13,7 @@ type Placement = {
   medium: string;
   destination: string;
   active: boolean;
+  archived: boolean;
   firstParty: boolean;
   url: string;
   qrDataUrl: string;
@@ -20,7 +21,7 @@ type Placement = {
   leadSubmissions: number | null;
   lastInspection: { status: string; note: string | null; checkedAt: string } | null;
 };
-type Campaign = { id: string; name: string; slug: string; placements: Placement[] };
+type Campaign = { id: string; name: string; slug: string; archived: boolean; placements: Placement[] };
 
 const DESTINATION_OPTIONS = [
   ...INTERNAL_DESTINATIONS.map((path) => ({ value: path, label: path })),
@@ -28,17 +29,19 @@ const DESTINATION_OPTIONS = [
   { value: 'facebook', label: 'Official Facebook profile' },
 ];
 
-export default function AcquisitionDashboard({ locale, campaigns, canViewApplications }: { locale: string; campaigns: Campaign[]; canViewApplications: boolean }) {
+export default function AcquisitionDashboard({ locale, campaigns }: { locale: string; campaigns: Campaign[] }) {
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const busy = saving || refreshing;
   const [message, setMessage] = useState('');
+  const [undo, setUndo] = useState<Record<string, unknown>>();
+  const [archivedView, setArchivedView] = useState(false);
   const [campaignFilter, setCampaignFilter] = useState('');
   const [search, setSearch] = useState('');
 
-  async function save(data: Record<string, unknown>, form?: HTMLFormElement) {
+  async function save(data: Record<string, unknown>, form?: HTMLFormElement, reversal?: Record<string, unknown>) {
     if (savingRef.current || refreshing) return;
     savingRef.current = true;
     setSaving(true);
@@ -52,7 +55,8 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error || 'Save failed');
       form?.reset();
-      setMessage('Saved.');
+      setMessage(data.archived === true ? 'Archived.' : data.archived === false ? 'Restored.' : 'Saved.');
+      setUndo(reversal);
       startTransition(() => router.refresh());
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Save failed');
@@ -64,8 +68,18 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
 
   const field = (form: HTMLFormElement, name: string) => String(new FormData(form).get(name) ?? '');
 
-  const selected = campaigns.filter((campaign) => !campaignFilter || campaign.id === campaignFilter);
+  const selected = campaigns.filter((campaign) => (!campaignFilter || campaign.id === campaignFilter) &&
+    (archivedView ? campaign.archived || campaign.placements.some((placement) => placement.archived) : !campaign.archived));
+  const term = search.trim().toLowerCase();
+  const results = selected.map((campaign) => ({
+    campaign,
+    visible: campaign.placements.filter((placement) =>
+      (archivedView ? campaign.archived || placement.archived : !placement.archived) &&
+      `${placement.label} ${placement.code}`.toLowerCase().includes(term)),
+  })).filter(({ campaign, visible }) => !term || visible.length > 0 || campaign.name.toLowerCase().includes(term));
   const all = campaigns.flatMap((campaign) => campaign.placements);
+  const activeCount = campaigns.filter((campaign) => !campaign.archived)
+    .reduce((total, campaign) => total + campaign.placements.filter((placement) => placement.active && !placement.archived).length, 0);
   const totalScans = all.reduce((sum, placement) => sum + placement.redirectRequests, 0);
   const totalApplications = all.reduce((sum, placement) => sum + (placement.leadSubmissions ?? 0), 0);
   const fieldStyle = 'min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-sm';
@@ -82,13 +96,22 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
   }
 
   return (
-    <div className="space-y-5">
-      <header>
-        <h1 className="text-3xl font-extrabold tracking-tight">Posters & tracking</h1>
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-3xl font-extrabold tracking-tight">Posters</h1>
+        <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-gray-200" role="group" aria-label="Poster view">
+          {([false, true] as const).map((archived) => (
+            <button key={String(archived)} type="button" aria-pressed={archivedView === archived}
+              onClick={() => { setArchivedView(archived); setCampaignFilter(''); }}
+              className={`min-h-11 rounded-full px-4 text-sm font-semibold ${archivedView === archived ? 'bg-charcoal text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
+              {archived ? 'Archived' : 'Current'}
+            </button>
+          ))}
+        </div>
       </header>
       <dl className="grid grid-cols-3 gap-2">
         {([
-          ['Active links', all.filter((placement) => placement.active).length],
+          ['Active links', activeCount],
           ['Link opens', totalScans],
           ['Applications', totalApplications],
         ] as const).map(([label, value]) => (
@@ -111,7 +134,7 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
         </label>
       </div>
 
-      <details className="rounded-xl border border-gray-200 bg-white px-4">
+      {!archivedView && <details className="rounded-2xl border border-gray-200 bg-white px-4">
         <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">New campaign</summary>
         <form className="grid gap-3 border-t border-gray-100 py-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={(event) => {
           event.preventDefault();
@@ -121,21 +144,38 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
           <label className="grid gap-1 text-sm">Campaign identifier<input name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} placeholder="oran-posters" className={fieldStyle} /></label>
           <button disabled={busy} className={submitStyle}>Add campaign</button>
         </form>
-      </details>
+      </details>}
 
-      <p role="status" className="text-sm font-semibold text-crimson">{saving ? 'Saving…' : refreshing ? 'Refreshing…' : message}</p>
-      {campaigns.length === 0 && <p className="rounded-xl border border-gray-200 bg-white p-5 text-gray-600">Add a campaign to create your first link.</p>}
-      {selected.map((campaign) => {
-        const term = search.trim().toLowerCase();
-        const visible = campaign.placements.filter((placement) => `${placement.label} ${placement.code}`.toLowerCase().includes(term));
-        if (term && visible.length === 0) return null;
+      <div className="flex flex-wrap items-center gap-3">
+        <p role="status" className="text-sm font-semibold text-crimson">{saving ? 'Saving…' : refreshing ? 'Refreshing…' : message}</p>
+        {undo && <button type="button" disabled={busy} className={actionStyle} onClick={() => void save(undo)}>Undo</button>}
+      </div>
+      {results.length === 0 && <p className="rounded-2xl border border-gray-200 bg-white p-5 text-gray-600">{term ? 'No campaigns or placements match your search.' : archivedView ? 'No archived campaigns or placements.' : 'No current campaigns. Add one or restore it from Archived.'}</p>}
+      {results.map(({ campaign, visible }) => {
         return (
           <section key={campaign.id} className="space-y-3">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-xl font-bold">{campaign.name}</h2>
               <span className="text-sm text-gray-600">{visible.length} placements</span>
             </div>
-            <details className="rounded-xl border border-gray-200 bg-white px-4">
+            <details className="rounded-2xl border border-gray-200 bg-white px-4">
+              <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">Manage campaign</summary>
+              <div className="space-y-3 border-t border-gray-100 py-3">
+                {!campaign.archived && <form className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end" onSubmit={(event) => {
+                  event.preventDefault();
+                  void save({ action: 'update_campaign', campaignId: campaign.id, name: field(event.currentTarget, 'name') }, undefined,
+                    { action: 'update_campaign', campaignId: campaign.id, name: campaign.name });
+                }}>
+                  <label className="grid gap-1 text-sm">Campaign name<input name="name" key={campaign.name} defaultValue={campaign.name} required minLength={2} maxLength={120} className={fieldStyle} /></label>
+                  <button disabled={busy} className={actionStyle}>Save name</button>
+                </form>}
+                <button type="button" disabled={busy} className={actionStyle} onClick={() => void save(
+                  { action: 'archive_campaign', campaignId: campaign.id, archived: !campaign.archived }, undefined,
+                  { action: 'archive_campaign', campaignId: campaign.id, archived: campaign.archived },
+                )}>{campaign.archived ? 'Restore campaign' : 'Archive campaign and pause its QR links'}</button>
+              </div>
+            </details>
+            {!archivedView && <details className="rounded-2xl border border-gray-200 bg-white px-4">
               <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">New placement</summary>
               <form className="grid gap-3 border-t border-gray-100 py-3 md:grid-cols-[1fr_auto_1fr_auto] md:items-end" onSubmit={(event) => {
                 event.preventDefault();
@@ -146,15 +186,16 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
                 <label className="grid gap-1 text-sm">Destination<select name="destination" defaultValue={FORM_DESTINATION} className={fieldStyle}>{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
                 <button disabled={busy} className={submitStyle}>Add placement</button>
               </form>
-            </details>
+            </details>}
             <div className="grid gap-3 lg:grid-cols-2">
               {visible.map((placement) => {
                 const destination = placement.destination === LEGACY_AVAILABILITY_DESTINATION ? FORM_DESTINATION : placement.destination;
+                const archived = placement.archived || campaign.archived;
                 return (
                   <article key={placement.id} className="min-w-0 space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${placement.active ? 'bg-emerald-50 text-emerald-800' : 'bg-gray-100 text-gray-700'}`}>{placement.active ? 'Active' : 'Paused'}</span>
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${placement.active && !archived ? 'bg-emerald-50 text-emerald-800' : 'bg-gray-100 text-gray-700'}`}>{archived ? 'Archived' : placement.active ? 'Active' : 'Paused'}</span>
                         <h3 className="mt-2 break-words font-bold">{placement.label}</h3>
                         <p className="mt-1 break-all text-xs text-gray-600">{placement.medium} · {placement.code}</p>
                       </div>
@@ -165,33 +206,42 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
                       <div><dt className="text-xs text-gray-600">Applications</dt><dd className="text-xl font-bold tabular-nums">{placement.leadSubmissions ?? '—'}</dd></div>
                     </dl>
                     <div className="flex flex-wrap gap-2">
-                      <Link href={`/${locale}/admin/acquisition/poster/${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center rounded-lg bg-charcoal px-3 text-sm font-bold text-white hover:bg-crimson">Edit poster</Link>
-                      <a href={placement.qrDataUrl} download={`ieltslab-${placement.code}.png`} className={actionStyle}>Download QR</a>
+                      {!archived && <Link href={`/${locale}/admin/acquisition/poster/${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center rounded-xl bg-charcoal px-3 text-sm font-bold text-white hover:bg-crimson">Edit poster</Link>}
+                      {placement.active && !archived && <a href={placement.qrDataUrl} download={`ieltslab-${placement.code}.png`} className={actionStyle}>Download QR</a>}
                       <button type="button" onClick={() => void copyLink(placement.url)} className={actionStyle}>Copy link</button>
-                      {canViewApplications && placement.firstParty && (
+                      {placement.firstParty && (
                         <Link href={`/${locale}/admin/applications?placement=${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-crimson underline">View applications</Link>
                       )}
                     </div>
                     <details className="border-t border-gray-200">
                       <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">Manage placement</summary>
                       <a href={placement.url} className="break-all text-sm text-crimson underline">{placement.url}</a>
-                      <form className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end" onSubmit={(event) => {
+                      {!archived && <form className="mt-3 grid gap-3 sm:grid-cols-2 sm:items-end" onSubmit={(event) => {
                         event.preventDefault();
-                        void save({ action: 'update_placement', placementId: placement.id, destination: field(event.currentTarget, 'destination') });
+                        const form = event.currentTarget;
+                        void save({ action: 'update_placement', placementId: placement.id, destination: field(form, 'destination'), label: field(form, 'label'), medium: field(form, 'medium') }, undefined,
+                          { action: 'update_placement', placementId: placement.id, destination, label: placement.label, medium: placement.medium });
                       }}>
-                        <label className="grid gap-1 text-sm">Destination<select name="destination" defaultValue={destination} className={fieldStyle}>{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
-                        <button disabled={busy} className={actionStyle}>Update link</button>
-                      </form>
-                      <button type="button" disabled={busy} className={`${actionStyle} mt-2`} onClick={() => void save({ action: 'update_placement', placementId: placement.id, destination, active: !placement.active })}>{placement.active ? 'Pause this link' : 'Resume this link'}</button>
+                        <label className="grid gap-1 text-sm">Placement name<input name="label" key={placement.label} defaultValue={placement.label} required minLength={2} maxLength={120} className={fieldStyle} /></label>
+                        <label className="grid gap-1 text-sm">Medium<select name="medium" key={placement.medium} defaultValue={placement.medium} className={fieldStyle}>{['poster', 'flyer', 'card', 'partner', 'social'].map((medium) => <option key={medium}>{medium}</option>)}</select></label>
+                        <label className="grid gap-1 text-sm">Destination<select name="destination" key={destination} defaultValue={destination} className={fieldStyle}>{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
+                        <button disabled={busy} className={actionStyle}>Save placement</button>
+                      </form>}
+                      {!archived && <button type="button" disabled={busy} className={`${actionStyle} mt-2`} onClick={() => void save({ action: 'update_placement', placementId: placement.id, destination, active: !placement.active }, undefined,
+                        { action: 'update_placement', placementId: placement.id, destination, active: placement.active })}>{placement.active ? 'Pause link' : 'Resume link'}</button>}
+                      {!campaign.archived && <button type="button" disabled={busy} className={`${actionStyle} mt-2 ms-2`} onClick={() => void save(
+                        { action: 'archive_placement', placementId: placement.id, archived: !placement.archived }, undefined,
+                        { action: 'archive_placement', placementId: placement.id, archived: placement.archived },
+                      )}>{placement.archived ? 'Restore placement' : 'Archive placement'}</button>}
                       <p className="mt-4 break-words text-sm text-gray-600">Last check · {placement.lastInspection ? `${placement.lastInspection.status} · ${new Date(placement.lastInspection.checkedAt).toLocaleDateString()}${placement.lastInspection.note ? ` · ${placement.lastInspection.note}` : ''}` : 'Pending'}</p>
-                      <form className="mt-2 grid gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-end" onSubmit={(event) => {
+                      {!archived && <form className="mt-2 grid gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-end" onSubmit={(event) => {
                         event.preventDefault();
                         void save({ action: 'inspection', placementId: placement.id, status: field(event.currentTarget, 'status'), note: field(event.currentTarget, 'note') }, event.currentTarget);
                       }}>
                         <label className="grid gap-1 text-sm">Status<select name="status" className={fieldStyle}><option value="present">Present</option><option value="missing">Missing</option><option value="damaged">Damaged</option><option value="unknown">Unknown</option></select></label>
                         <label className="grid gap-1 text-sm">Note<input name="note" maxLength={300} className={fieldStyle} /></label>
                         <button disabled={busy} className={actionStyle}>Save check</button>
-                      </form>
+                      </form>}
                     </details>
                   </article>
                 );
@@ -200,9 +250,6 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
           </section>
         );
       })}
-      {search.trim() && !selected.some((campaign) => campaign.placements.some((placement) => `${placement.label} ${placement.code}`.toLowerCase().includes(search.trim().toLowerCase()))) && (
-        <p className="rounded-xl border border-gray-200 bg-white p-4 text-gray-600">No placements match your search.</p>
-      )}
       <p className="text-xs leading-relaxed text-gray-600">Link opens can include repeat visits. Applications count website submissions carrying the placement code.</p>
     </div>
   );

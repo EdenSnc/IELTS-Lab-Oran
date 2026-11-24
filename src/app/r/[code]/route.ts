@@ -7,7 +7,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   const { code } = await params;
   if (!codeSchema.safeParse(code).success) return new Response('Not found', { status: 404 });
   const placement = await prisma.acquisitionPlacement.findUnique({ where: { code }, include: { campaign: true } });
-  if (!placement?.active) return new Response('Not found', { status: 404 });
+  if (!placement?.active || placement.archivedAt || placement.campaign.archivedAt) {
+    return new Response('Not found', { status: 404, headers: ACQUISITION_REDIRECT_HEADERS });
+  }
   let path: string;
   try {
     path = destinationForPlacement(placement.destination, placement.campaign.slug, placement.medium, code);
