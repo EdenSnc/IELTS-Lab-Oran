@@ -160,10 +160,10 @@ export default function PosterEditor({ placement, locale }: { placement: Placeme
       context.drawImage(art.image, 0, 0);
       context.fillRect(qr.x, qr.y, qr.size, qr.size);
       context.fillStyle = '#000';
-      const module = qr.size / cells;
+      const moduleSize = qr.size / cells;
       for (const [row, line] of placement.matrix.entries()) {
         for (let col = 0; col < line.length; col++) {
-          if (line[col] === '1') context.fillRect(qr.x + (col + QUIET_MODULES) * module, qr.y + (row + QUIET_MODULES) * module, module, module);
+          if (line[col] === '1') context.fillRect(qr.x + (col + QUIET_MODULES) * moduleSize, qr.y + (row + QUIET_MODULES) * moduleSize, moduleSize, moduleSize);
         }
       }
       const png = withPngPrintDpi(await (await canvasPng(canvas)).arrayBuffer(), dpi);
