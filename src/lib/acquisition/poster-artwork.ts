@@ -7,6 +7,24 @@ const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 type Dimensions = { width: number; height: number };
 export const PRINT_PAPERS = { A6: [105, 148], A5: [148, 210], A4: [210, 297], A3: [297, 420] } as const;
 export type PrintPaper = keyof typeof PRINT_PAPERS | 'original';
+export const PRINT_QR_WIDTHS = { A6: [25, 35, 45], A5: [35, 50, 65], A4: [45, 65, 85], A3: [55, 80, 105] } as const;
+
+export function printQrSourceWidth(mm: number, scale: number, dpi: number) {
+  return Math.ceil(Math.round(mm * dpi / 25.4) / scale);
+}
+
+export function printQrMeasurements(size: number, cells: number, rounded: boolean, dpi: number) {
+  if (size < 4 * cells) return null;
+  const { codeSize } = posterQrBacking(size, cells, rounded);
+  const edges = posterQrEdges(codeSize, cells);
+  const mmPerPixel = 25.4 / dpi;
+  return {
+    totalMm: size * mmPerPixel,
+    quietMm: edges[0] * mmPerPixel,
+    symbolMm: (edges[edges.length - 1] - edges[0]) * mmPerPixel,
+  };
+}
+
 export function posterPrintLayout(art: Dimensions, paper: PrintPaper, dpi: number) {
   if (paper === 'original') return { ...art, dpi, scale: 1, left: 0, top: 0 };
   const [short, long] = PRINT_PAPERS[paper];

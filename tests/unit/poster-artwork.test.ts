@@ -4,7 +4,21 @@ import sharp from 'sharp';
 import {
   checkPosterDimensions, initialPosterQr, inspectPoster, movePosterQr,
   isEvenLightQrArea, isLightQrColor, posterQrBacking, posterQrEdges, qrSizeLimits, resizePosterQr, withPngPrintDpi,
+  PRINT_QR_WIDTHS, posterPrintLayout, printQrMeasurements, printQrSourceWidth,
 } from '../../src/lib/acquisition/poster-artwork';
+
+test('paper-specific QR presets produce their physical width and four-module borders at 300 dpi', () => {
+  for (const paper of ['A6', 'A5', 'A4', 'A3'] as const) {
+    const print = posterPrintLayout({ width: 1748, height: 2480 }, paper, 300);
+    for (const mm of PRINT_QR_WIDTHS[paper]) {
+      const source = printQrSourceWidth(mm, print.scale, print.dpi);
+      const measure = printQrMeasurements(Math.floor(source * print.scale), 37, false, print.dpi);
+      assert.ok(measure);
+      assert.ok(Math.abs(measure.totalMm - mm) < 0.22);
+      assert.ok(measure.quietMm >= measure.symbolMm / 29 * 4);
+    }
+  }
+});
 
 test('movement and resizing preserve the whole symbol and quiet zone inside the source', () => {
   const art = { width: 1748, height: 2480 };

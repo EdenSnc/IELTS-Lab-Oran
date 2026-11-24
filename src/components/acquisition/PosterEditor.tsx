@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type Poin
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
 import {
   checkPosterDimensions, initialPosterQr, inspectPoster, isEvenLightQrArea, isLightQrColor, movePosterQr, posterQrBacking, posterQrEdges,
-  posterPrintLayout, PRINT_PAPERS, qrSizeLimits, QUIET_MODULES, resizePosterQr, validDpi, withPngPrintDpi, type PosterPlacement, type PrintPaper,
+  posterPrintLayout, PRINT_PAPERS, PRINT_QR_WIDTHS, printQrMeasurements, printQrSourceWidth, qrSizeLimits, QUIET_MODULES, resizePosterQr, validDpi, withPngPrintDpi, type PosterPlacement, type PrintPaper,
 } from '@/lib/acquisition/poster-artwork';
 import { MAX_SAVED_ARTWORK_BYTES } from '@/lib/acquisition/poster-design';
 
@@ -93,6 +93,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
   const transparent = qrBackground === 'artwork';
   const backing = qr ? posterQrBacking(qr.size, cells, roundQr && !transparent) : undefined;
   const print = art && posterPrintLayout(art, paper, dpi);
+  const measures = qr && print && printQrMeasurements(Math.floor(qr.size * print.scale), cells, roundQr && !transparent, print.dpi);
 
   useEffect(() => () => {
     loadId.current++;
@@ -431,7 +432,30 @@ export default function PosterEditor({ placement, locale, design }: { placement:
           <aside className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4">
             <label className="grid gap-1 text-sm font-semibold">Poster name<input value={title} onChange={(event) => setTitle(event.target.value)}
               maxLength={100} disabled={busy} className={inputClass} /></label>
+            <label className="grid gap-1 text-sm font-semibold">Print size
+              <select className={inputClass} value={paper} disabled={busy} onChange={(event) => setPaper(event.target.value as PrintPaper)}>
+                {Object.entries(PRINT_PAPERS).map(([name, [width, height]]) => <option key={name} value={name}>{name} · {width} × {height} mm</option>)}
+                <option value="original">Original artwork dimensions</option>
+              </select>
+            </label>
             <h2 className="font-bold">QR position</h2>
+            {paper !== 'original' && <fieldset className="min-w-0">
+              <legend className="mb-1.5 text-sm font-semibold">Printed QR width · includes border</legend>
+              <div className="grid grid-cols-3 gap-1.5">
+                {PRINT_QR_WIDTHS[paper].map((mm, index) => {
+                  const size = printQrSourceWidth(mm, print.scale, print.dpi);
+                  const label = ['Compact', 'Standard', 'Larger'][index];
+                  return <button key={mm} type="button" aria-label={`${label}, ${mm} mm`}
+                    aria-pressed={qr.size === size}
+                    disabled={busy || size < 4 * cells || size > Math.min(art.width, art.height)}
+                    className="grid min-h-11 place-content-center rounded-xl border border-stone-200 px-1 py-1 text-xs aria-pressed:border-crimson aria-pressed:bg-red-50 disabled:opacity-50"
+                    onClick={() => {
+                      setQr(movePosterQr(art, { ...qr, size }, qr.x + (qr.size - size) / 2, qr.y + (qr.size - size) / 2));
+                      setStatus(`QR set to ${mm} mm including the scan border.`);
+                    }}><span>{label}</span><strong>{mm} mm</strong></button>;
+                })}
+              </div>
+            </fieldset>}
             <div className="grid grid-cols-2 gap-2">
               <PixelField label="Left (px)" value={qr.x} min={0} max={art.width - qr.size} onCommit={(x) => setQr(movePosterQr(art, qr, x, qr.y))} />
               <PixelField label="Top (px)" value={qr.y} min={0} max={art.height - qr.size} onCommit={(y) => setQr(movePosterQr(art, qr, qr.x, y))} />
@@ -472,20 +496,17 @@ export default function PosterEditor({ placement, locale, design }: { placement:
                 </label>
               </>}
             </fieldset>
-            <label className="grid gap-1 text-sm font-semibold">Print size
-              <select className={inputClass} value={paper} disabled={busy} onChange={(event) => setPaper(event.target.value as PrintPaper)}>
-                {Object.entries(PRINT_PAPERS).map(([name, [width, height]]) => <option key={name} value={name}>{name} · {width} × {height} mm</option>)}
-                <option value="original">Original artwork dimensions</option>
-              </select>
-            </label>
             {paper === 'original' && <PixelField label="Print DPI" value={dpi} min={72} max={1200} onCommit={(value) => {
               if (validDpi(value)) { setDpi(value); setError(''); }
               else setError('Enter a print resolution between 72 and 1200 DPI.');
             }} />}
             <div className="border-t border-gray-200 pt-3 text-sm text-gray-600">
               <p>{print.width} × {print.height} pixels · {print.dpi} dpi</p>
-              <p className="mt-1">QR with margin · {(Math.floor(qr.size * print.scale) * 25.4 / print.dpi).toFixed(1)} mm</p>
-              <p className="mt-2 text-xs">One pixel per step. Four-module scan border.</p>
+              {measures ? <>
+                <p className="mt-1">QR with border · {measures.totalMm.toFixed(1)} mm</p>
+                <p>Scan border · {measures.quietMm.toFixed(1)} mm per side</p>
+                <p className="mt-2 text-xs">Test a printed proof from about {Math.round(measures.symbolMm)} cm (10:1 guideline).</p>
+              </> : <p className="mt-1 text-xs text-[#9c1e2c]">Increase the QR width for this paper size.</p>}
             </div>
           </aside>
         )}
