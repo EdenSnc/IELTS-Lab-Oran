@@ -46,7 +46,7 @@ const copy = {
     privacy: 'Your details are stored for application review and essential follow-up. WhatsApp opens only after our system confirms that the application was saved.',
     requiredModules: 'Choose at least one challenging module.',
     successTitle: 'Application successfully submitted.',
-    success: 'Your application has been saved for one of eight places (applying does not reserve a seat). You are now being redirected to WhatsApp for the final handoff.',
+    success: 'Your application is saved. Continue on WhatsApp for follow-up.',
     handoff: 'Hello IELTS Lab Oran, I just submitted my application. My name is {name}.',
     whatsapp: 'Open WhatsApp now', error: 'Unable to submit the application. Your answers remain here so you can try again.',
   },
@@ -81,7 +81,7 @@ const copy = {
     taken: 'هل اجتزت IELTS من قبل؟', recentScore: 'ما أحدث نتيجة حصلت عليها؟', challenges: 'ما المهارات الأكثر صعوبة بالنسبة لك؟', modules: [['listening', 'الاستماع'], ['reading', 'القراءة'], ['writing', 'الكتابة'], ['speaking', 'المحادثة']],
     level: 'كيف تصف مستواك الحالي؟', levels: [['A1', 'مبتدئ (A1)'], ['A2', 'أساسي (A2)'], ['B1', 'متوسط (B1)'], ['B2', 'فوق المتوسط (B2)'], ['C1+', 'متقدم (C1+)']], levelHelp: 'لست متأكداً؟ يمكنك استخدام اختبار EF SET المجاني لتقدير مستوى CEFR.',
     urgency: 'اشرح مدى استعجالك وأكبر نقطة ضعف أو عائق لديك.', urgencyPlaceholder: 'مثال: ينفد وقتي في القراءة وأجد صعوبة في تنظيم أفكار الكتابة.', commitment: 'أفهم أن سعر المجموعة الحضورية الأولى 5,000 دج ومدتها نحو شهر. سأراجع الجدول المؤكد قبل التسجيل. إرسال الطلب لا يحجز مقعداً.',
-    privacy: 'تُحفظ بياناتك لدراسة الطلب والمتابعة الضرورية. لا يتم فتح واتساب إلا بعد تأكيد حفظ الطلب.', requiredModules: 'اختر مهارة واحدة على الأقل.', successTitle: 'تم إرسال الطلب بنجاح.', success: 'تم حفظ طلبك لدراسة القبول ضمن المقاعد الثمانية (لا يحجز مقعداً تلقائياً). سيتم تحويلك الآن إلى واتساب لإكمال المتابعة.', handoff: 'مرحباً IELTS Lab Oran، أرسلت طلبي للتو. اسمي {name}.', whatsapp: 'فتح واتساب', error: 'تعذر إرسال الطلب. ستبقى إجاباتك محفوظة لتتمكن من المحاولة مجدداً.',
+    privacy: 'تُحفظ بياناتك لدراسة الطلب والمتابعة الضرورية. لا يتم فتح واتساب إلا بعد تأكيد حفظ الطلب.', requiredModules: 'اختر مهارة واحدة على الأقل.', successTitle: 'تم إرسال الطلب بنجاح.', success: 'تم حفظ طلبك. تابع عبر واتساب لإكمال الإجراءات.', handoff: 'مرحباً IELTS Lab Oran، أرسلت طلبي للتو. اسمي {name}.', whatsapp: 'فتح واتساب', error: 'تعذر إرسال الطلب. ستبقى إجاباتك محفوظة لتتمكن من المحاولة مجدداً.',
   },
 } as const;
 

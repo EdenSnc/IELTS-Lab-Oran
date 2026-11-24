@@ -4,6 +4,7 @@ import { applicationSchema } from './application';
 export function normalizeLeadPhone(value: string): string | null {
   let phone = value.normalize('NFKC').trim()
     .replace(/[٠-٩۰-۹]/g, (digit) => String(digit.charCodeAt(0) & 15))
+    .replace(/[\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, '')
     .replace(/[\s().-]/g, '');
   if (phone.startsWith('00')) phone = `+${phone.slice(2)}`;
   if (/^2130?[567]\d{8}$/.test(phone)) phone = `+${phone}`;

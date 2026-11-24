@@ -85,6 +85,7 @@ test('common WhatsApp phone formats are accepted consistently and invalid fields
     assert.equal(normalizeLeadPhone(phone), '+213555000000');
   }
   assert.equal(normalizeLeadPhone('+33612345678'), '+33612345678');
+  assert.equal(normalizeLeadPhone('\u200e+٢١٣ (٠)٥٥٥ ٠٠ ٠٠ ٠٠\u200f'), '+213555000000');
   const result = directLeadSchema.safeParse({ phone: '0123', application: { ...validApplication, schemaVersion: 3 } });
   assert.equal(result.success, false);
   if (!result.success) assert.deepEqual(invalidLeadFields(result.error.issues), ['phone', 'availability']);
