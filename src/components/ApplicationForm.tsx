@@ -3,19 +3,18 @@
 import { FormEvent, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { readActiveUtms } from '@/lib/acquisition/utm-client';
-import { availabilityCopy, availabilitySchema, formatAvailabilityHour, maxAvailabilityWindows, weekdays } from '@/lib/leads/availability';
+import { availabilityCopy, availabilitySchema, type AvailabilityWindow } from '@/lib/leads/availability';
+import AvailabilityPicker from './AvailabilityPicker';
+import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '@/lib/leads/direct-intake';
 
 type Locale = 'en' | 'fr' | 'ar';
 type YesNo = '' | 'yes' | 'no';
-type AvailabilityWindow = { id: number; day: string; start: string; end: string };
-const startHours = Array.from({ length: 14 }, (_, i) => 8 + i);
-const endHours = Array.from({ length: 14 }, (_, i) => 9 + i);
 
 const copy = {
   en: {
     eyebrow: 'Official intake portal',
     title: 'IELTS Lab Oran Application',
-    intro: 'A focused application for an intensive, computer-based IELTS preparation programme in Oran.',
+    intro: 'Tell us your IELTS goal and when you can attend in Oran.',
     reasons: [
       ['PCs, not paper', 'The official exam is digital. Train on the interface you will actually face.'],
       ['A clear band blueprint', 'Turn examiner criteria into practical, repeatable decisions.'],
@@ -53,7 +52,7 @@ const copy = {
   },
   fr: {
     eyebrow: 'Portail officiel de candidature', title: 'Candidature IELTS Lab Oran',
-    intro: 'Une candidature ciblée pour une préparation IELTS intensive et entièrement informatisée à Oran.',
+    intro: 'Indiquez votre objectif IELTS et vos disponibilités à Oran.',
     reasons: [['Sur PC, pas sur papier', "L’examen officiel est numérique. Entraînez-vous sur l’interface réelle."], ['Une stratégie de score claire', 'Transformez les critères des examinateurs en décisions pratiques et répétables.'], ['Environ un mois', 'Travaillez les compétences prioritaires avant votre test.']],
     begin: 'Commencer', back: 'Retour', next: 'Suivant', submit: 'Envoyer la candidature', pending: 'Envoi…', step: 'Étape {current} sur {total}',
     sections: ['Identité et contact', 'Calendrier du test', 'Objectif et destination', 'Diagnostic', 'Engagement'],
@@ -71,7 +70,7 @@ const copy = {
     successTitle: 'Candidature envoyée avec succès.', success: 'Votre candidature est enregistrée (sans réservation automatique de place). Redirection vers WhatsApp pour finaliser le suivi.', handoff: 'Bonjour IELTS Lab Oran, je viens d’envoyer ma candidature. Je m’appelle {name}.', whatsapp: 'Ouvrir WhatsApp', error: 'Impossible d’envoyer la candidature. Vos réponses sont conservées pour réessayer.',
   },
   ar: {
-    eyebrow: 'بوابة الترشح الرسمية', title: 'طلب الالتحاق بـ IELTS Lab Oran', intro: 'طلب مركز لبرنامج تحضير مكثف لاختبار IELTS على الكمبيوتر في وهران.',
+    eyebrow: 'بوابة الترشح الرسمية', title: 'طلب الالتحاق بـ IELTS Lab Oran', intro: 'اذكر هدفك من اختبار IELTS والأوقات التي يمكنك الحضور فيها في وهران.',
     reasons: [['التدريب على الكمبيوتر', 'الاختبار الرسمي رقمي، لذلك تتدرب على الواجهة التي ستواجهها فعلاً.'], ['خطة واضحة للنتيجة', 'نحوّل معايير المصححين إلى قرارات عملية قابلة للتكرار.'], ['نحو شهر', 'تدرّب على المهارات التي تحتاج إليها قبل الاختبار.']],
     begin: 'ابدأ الطلب', back: 'رجوع', next: 'التالي', submit: 'إرسال الطلب', pending: 'جارٍ الإرسال…', step: 'الخطوة {current} من {total}',
     sections: ['الهوية والاتصال', 'موعد الاختبار', 'الهدف والوجهة', 'التشخيص', 'الالتزام'],
@@ -88,13 +87,18 @@ const copy = {
 
 const fieldClass = 'min-w-0 h-12 w-full rounded-2xl border border-black/10 bg-black/[0.025] px-3 text-base text-charcoal outline-none transition focus:border-crimson/45 focus:bg-white focus:ring-4 focus:ring-crimson/[0.07] md:px-4';
 const labelClass = 'grid min-w-0 gap-2 text-sm font-semibold text-black/70';
+const fieldFeedback = {
+  en: { phone: 'Enter a WhatsApp number such as 0555 00 00 00 or +213 555 00 00 00.', check: 'Check this answer' },
+  fr: { phone: 'Entrez un numéro WhatsApp comme 0555 00 00 00 ou +213 555 00 00 00.', check: 'Réponse à vérifier' },
+  ar: { phone: 'أدخل رقم واتساب مثل 0555 00 00 00 أو ‎+213 555 00 00 00.', check: 'الإجابة التي تحتاج إلى مراجعة' },
+};
 
 export default function ApplicationForm() {
   const locale = useLocale() as Locale;
   const text = copy[locale] ?? copy.en;
+  const feedback = fieldFeedback[locale] ?? fieldFeedback.en;
   const schedule = availabilityCopy[locale] ?? availabilityCopy.en;
   const formRef = useRef<HTMLFormElement>(null);
-  const nextWindowId = useRef(0);
   const [step, setStep] = useState(0);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
@@ -103,18 +107,12 @@ export default function ApplicationForm() {
   const [purpose, setPurpose] = useState('');
   const [flexibleSchedule, setFlexibleSchedule] = useState(false);
   const [windows, setWindows] = useState<AvailabilityWindow[]>([]);
+  const [scheduleDraft, setScheduleDraft] = useState(false);
   const [takenIelts, setTakenIelts] = useState<YesNo>('');
   const [challengingModules, setChallengingModules] = useState<string[]>([]);
   const [whatsappUrl, setWhatsappUrl] = useState<string>();
 
-  const availability = flexibleSchedule ? { mode: 'flexible' } : {
-    mode: 'windows',
-    windows: windows.map(({ day, start, end }) => ({ day, startHour: Number(start), endHour: Number(end) })),
-  };
-
-  function updateWindow(id: number, field: 'day' | 'start' | 'end', value: string) {
-    setWindows((current) => current.map((window) => window.id === id ? { ...window, [field]: value } : window));
-  }
+  const availability = flexibleSchedule ? { mode: 'flexible' } : { mode: 'windows', windows };
 
   function validateStep(currentStep: number) {
     const fieldset = formRef.current?.querySelector<HTMLElement>(`[data-step="${currentStep}"]`);
@@ -123,8 +121,20 @@ export default function ApplicationForm() {
     for (const control of controls) {
       if (!control.reportValidity()) return false;
     }
+    if (currentStep === 1) {
+      const phone = fieldset.querySelector<HTMLInputElement>('[name=phone]');
+      if (!phone || !normalizeLeadPhone(phone.value)) {
+        setMessage(feedback.phone);
+        phone?.focus();
+        return false;
+      }
+    }
     if (currentStep === 4 && challengingModules.length === 0) {
       setMessage(text.requiredModules);
+      return false;
+    }
+    if (currentStep === 5 && !flexibleSchedule && scheduleDraft) {
+      setMessage(schedule.saveDraft);
       return false;
     }
     if (currentStep === 5 && !availabilitySchema.safeParse(availability).success) {
@@ -145,6 +155,28 @@ export default function ApplicationForm() {
     try { return new URL(document.referrer).host; } catch { return null; }
   }
 
+  function showFieldError(fields: string[]) {
+    const labels: Record<string, [number, string]> = {
+      phone: [1, text.phone], email: [1, text.email], fullName: [1, text.fullName],
+      discoverySource: [1, text.discovery], bookedExamDate: [2, text.bookedDate],
+      targetExamDate: [2, text.targetDate], purpose: [3, text.purpose],
+      universityAdmission: [3, text.admission], targetCountry: [3, text.country],
+      targetBand: [3, text.band], recentScore: [4, text.recentScore],
+      challengingModules: [4, text.challenges], englishLevel: [4, text.level],
+      urgencyAndObstacles: [4, text.urgency], availability: [5, schedule.title],
+      commitmentAccepted: [5, text.sections[4]],
+    };
+    const key = fields.find((field) => Object.hasOwn(labels, field));
+    if (!key) {
+      setMessage(text.error);
+      return;
+    }
+    const [fieldStep, label] = labels[key];
+    setStep(fieldStep);
+    setMessage(key === 'phone' ? feedback.phone : key === 'availability' ? schedule.invalid : `${feedback.check} « ${label} »`);
+    requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>(`[name="${key}"]`)?.focus());
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!validateStep(5)) return;
@@ -156,10 +188,7 @@ export default function ApplicationForm() {
 
     try {
       const fullName = String(form.get('fullName') ?? '').trim();
-      const response = await fetch('/api/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const parsed = directLeadSchema.safeParse({
           phone: form.get('phone'), email: form.get('email'), fullName,
           formName: 'IELTS Lab Oran Application', source: 'cohort_waitlist',
           utmSource: utms.utm_source, utmMedium: utms.utm_medium, utmCampaign: utms.utm_campaign, utmContent: utms.utm_content,
@@ -177,14 +206,26 @@ export default function ApplicationForm() {
             challengingModules, englishLevel: form.get('englishLevel'), urgencyAndObstacles: form.get('urgencyAndObstacles'),
             commitmentAccepted: form.get('commitmentAccepted') === 'yes', locale,
             attribution: {
-              utmTerm: utms.utm_term, utmContent: utms.utm_content, gclid: query.get('gclid'), fbclid: query.get('fbclid'),
-              landingPath: `${window.location.pathname}${window.location.search}`, referrerHost: referrerHost(),
+              utmTerm: utms.utm_term, utmContent: utms.utm_content,
+              gclid: query.get('gclid')?.slice(0, 200), fbclid: query.get('fbclid')?.slice(0, 200),
+              landingPath: window.location.pathname, referrerHost: referrerHost(),
             },
           },
-        }),
       });
-      const payload = await response.json() as { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? text.error);
+      if (!parsed.success) {
+        showFieldError(invalidLeadFields(parsed.error.issues));
+        return;
+      }
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsed.data),
+      });
+      const payload = await response.json() as { fields?: string[] };
+      if (!response.ok) {
+        showFieldError(payload.fields ?? []);
+        return;
+      }
 
       const number = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '213780343103').replace(/\D/gu, '');
       const handoff = `https://wa.me/${number}?text=${encodeURIComponent(text.handoff.replace('{name}', fullName))}`;
@@ -235,6 +276,8 @@ export default function ApplicationForm() {
             <div className="mt-3 h-1 overflow-hidden rounded-full bg-black/[0.08]"><div className="h-full rounded-full bg-[#c4162c] transition-[width]" style={{ width: `${step * 20}%` }} /></div>
           </div>
 
+          {message && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-5 text-red-800">{message}</p>}
+
           <fieldset data-step="1" className={step === 1 ? 'mt-8 grid gap-5' : 'hidden'}>
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[0]}</legend>
             <label className={labelClass}>{text.fullName}<input className={fieldClass} name="fullName" autoComplete="name" minLength={2} maxLength={120} required /></label>
@@ -274,49 +317,10 @@ export default function ApplicationForm() {
             <legend className="text-2xl font-semibold tracking-tight">{schedule.title}</legend>
             <p className="text-sm text-gray-700">{schedule.hint}</p>
             <label className="flex items-start gap-3 text-sm font-semibold">
-              <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-crimson" checked={flexibleSchedule} onChange={(event) => setFlexibleSchedule(event.target.checked)} />
+              <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-crimson" checked={flexibleSchedule} onChange={(event) => { setFlexibleSchedule(event.target.checked); setScheduleDraft(false); }} />
               {schedule.flexible}
             </label>
-            {!flexibleSchedule && (
-              <div className="grid gap-3">
-                {windows.map((window, index) => (
-                  <div key={window.id} className="grid min-w-0 grid-cols-2 gap-2 rounded-xl border border-gray-200 p-3">
-                    <label className={`${labelClass} col-span-2`}>
-                      {schedule.day}
-                      <select required className={fieldClass} value={window.day} onChange={(event) => updateWindow(window.id, 'day', event.target.value)}>
-                        <option value="" disabled>—</option>
-                        {weekdays.map((day, dayIndex) => <option key={day} value={day}>{schedule.days[dayIndex]}</option>)}
-                      </select>
-                    </label>
-                    <label className={labelClass}>
-                      {schedule.from}
-                      <select required dir="ltr" className={fieldClass} value={window.start} onChange={(event) => updateWindow(window.id, 'start', event.target.value)}>
-                        <option value="" disabled>—</option>
-                        {startHours.map((hour) => <option key={hour} value={hour}>{formatAvailabilityHour(hour)}</option>)}
-                      </select>
-                    </label>
-                    <label className={labelClass}>
-                      {schedule.to}
-                      <select required dir="ltr" className={fieldClass} value={window.end} onChange={(event) => updateWindow(window.id, 'end', event.target.value)}>
-                        <option value="" disabled>—</option>
-                        {endHours.map((hour) => <option key={hour} value={hour}>{formatAvailabilityHour(hour)}</option>)}
-                      </select>
-                    </label>
-                    <button type="button" aria-label={`${schedule.remove} ${index + 1}`} className="col-span-2 min-h-11 justify-self-end px-2 text-sm font-semibold text-crimson underline" onClick={() => setWindows((current) => current.filter(({ id }) => id !== window.id))}>
-                      {schedule.remove}
-                    </button>
-                  </div>
-                ))}
-                {windows.length < maxAvailabilityWindows && (
-                  <button type="button" className="min-h-11 rounded-full border border-gray-300 px-3 text-sm font-semibold text-charcoal hover:border-crimson" onClick={() => {
-                    const id = nextWindowId.current++;
-                    setWindows((current) => [...current, { id, day: '', start: '', end: '' }]);
-                  }}>
-                    + {schedule.add}
-                  </button>
-                )}
-              </div>
-            )}
+            {!flexibleSchedule && <AvailabilityPicker locale={locale} windows={windows} onChange={setWindows} onDraft={setScheduleDraft} />}
             <label className="flex cursor-pointer gap-4 rounded-2xl border border-black/10 bg-black/[0.025] p-5 text-sm font-medium leading-6 text-gray-800"><input className="mt-1 h-5 w-5 shrink-0 accent-crimson" type="checkbox" name="commitmentAccepted" value="yes" required /><span>{text.commitment}</span></label>
             <p className="text-xs leading-5 text-gray-600">{text.privacy}</p>
           </fieldset>
@@ -325,7 +329,6 @@ export default function ApplicationForm() {
             <button type="button" disabled={pending} onClick={() => { setMessage(undefined); setStep((current) => Math.max(0, current - 1)); }} className="h-12 rounded-full border border-black/10 px-5 text-sm font-semibold text-charcoal transition hover:border-black/20 hover:bg-black/[0.025] disabled:opacity-50">{text.back}</button>
             {step < 5 ? <button type="button" onClick={advance} className="h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson">{text.next}</button> : <button disabled={pending} className="h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson disabled:cursor-wait disabled:opacity-55">{pending ? text.pending : text.submit}</button>}
           </div>
-          {message && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-5 text-red-800">{message}</p>}
         </>
       )}
     </form>

@@ -51,11 +51,12 @@ export function readActiveUtms(): AttributionParams {
   }
   const query = new URLSearchParams(window.location.search);
   const stored = readStored();
+  const get = (key: typeof UTM_KEYS[number]) => query.get(key)?.trim().slice(0, 200) || stored[key] || null;
   return {
-    utm_source: query.get('utm_source')?.trim() || stored.utm_source || null,
-    utm_medium: query.get('utm_medium')?.trim() || stored.utm_medium || null,
-    utm_campaign: query.get('utm_campaign')?.trim() || stored.utm_campaign || null,
-    utm_content: query.get('utm_content')?.trim() || stored.utm_content || null,
-    utm_term: query.get('utm_term')?.trim() || stored.utm_term || null,
+    utm_source: get('utm_source'),
+    utm_medium: get('utm_medium'),
+    utm_campaign: get('utm_campaign'),
+    utm_content: get('utm_content'),
+    utm_term: get('utm_term'),
   };
 }

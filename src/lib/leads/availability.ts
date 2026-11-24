@@ -9,6 +9,8 @@ const windowSchema = z.object({
   endHour: z.number().int().min(9).max(22),
 }).strict().refine(({ startHour, endHour }) => startHour < endHour, { path: ['endHour'] });
 
+export type AvailabilityWindow = z.infer<typeof windowSchema>;
+
 export const availabilitySchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('flexible') }).strict(),
   z.object({
@@ -32,6 +34,9 @@ export const availabilityCopy = {
     from: 'From',
     to: 'To',
     remove: 'Remove',
+    chooseDay: 'Choose a day',
+    saveDraft: 'Add the time window before submitting.',
+    shortDays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
     invalid: 'Add a valid time window or choose a flexible schedule. End time must be after start time.',
     days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
   },
@@ -45,6 +50,9 @@ export const availabilityCopy = {
     from: 'De',
     to: 'À',
     remove: 'Supprimer',
+    chooseDay: 'Choisissez un jour',
+    saveDraft: 'Ajoutez le créneau saisi avant d’envoyer la candidature.',
+    shortDays: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
     invalid: 'Ajoutez un créneau valide ou indiquez que vos horaires sont flexibles. L’heure de fin doit suivre l’heure de début.',
     days: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
   },
@@ -58,6 +66,9 @@ export const availabilityCopy = {
     from: 'من',
     to: 'إلى',
     remove: 'حذف',
+    chooseDay: 'اختر يومًا',
+    saveDraft: 'أضف الفترة المحددة قبل إرسال الطلب.',
+    shortDays: ['أحد', 'اثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت'],
     invalid: 'أضف فترة صالحة أو اختر الأوقات المرنة. يجب أن يكون وقت الانتهاء بعد وقت البدء.',
     days: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
   },

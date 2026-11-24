@@ -2,35 +2,13 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { LeadSource, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { applicationSchema, boundedTallyAnswer } from '@/lib/leads/application';
+import { boundedTallyAnswer } from '@/lib/leads/application';
+import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '@/lib/leads/direct-intake';
 import prisma from '@/lib/prisma';
 import { requireHumanRequest } from '@/lib/security/bot';
 import { checkSlidingWindowRateLimit, extractClientIp } from '@/lib/security/rate-limit';
 
 const MAX_BODY_BYTES = 32_768;
-const phonePattern = /^(?:\+213|0)[567]\d{8}$/;
-const optionalText = z.string().trim().max(200).nullish();
-
-const directLeadSchema = z.object({
-  phone: z.string().trim().min(1).max(32),
-  email: z.email().max(320).nullish(),
-  fullName: z.string().trim().min(2).max(120).nullish(),
-  utmSource: optionalText,
-  utmMedium: optionalText,
-  utmCampaign: optionalText,
-  utmContent: optionalText,
-  formName: z.string().trim().min(1).max(200).default('Direct Submission'),
-  source: z
-    .enum([
-      LeadSource.lead_magnet_pdf,
-      LeadSource.workshop,
-      LeadSource.cohort_waitlist,
-      LeadSource.unknown,
-    ])
-    .default(LeadSource.unknown),
-  application: applicationSchema.optional(),
-}).strict();
-
 const tallyWebhookSchema = z.object({
   eventId: z.string().trim().min(1).max(200),
   data: z.object({
@@ -55,19 +33,6 @@ interface LeadInput {
   utmContent: string | null;
   externalEventId: string | null;
   application: unknown | null;
-}
-
-function normalisePhone(value: string): string | null {
-  let phone = value.trim().replace(/[\s().-]/g, '');
-  if (phone.startsWith('00213')) {
-    phone = `+213${phone.slice(5)}`;
-  }
-  const trunkMatch = /^\+2130([567]\d{8})$/.exec(phone);
-  if (trunkMatch) {
-    phone = `+213${trunkMatch[1]}`;
-  }
-  if (!phonePattern.test(phone)) return null;
-  return phone.startsWith('0') ? `+213${phone.slice(1)}` : phone;
 }
 
 function sameOrigin(request: Request): boolean {
@@ -148,7 +113,7 @@ function parseTallyLead(payload: unknown): LeadInput | null {
     ) {
       fullName = value.slice(0, 120);
     }
-    phone ??= normalisePhone(value);
+    phone ??= normalizeLeadPhone(value);
   }
 
   if (!phone) return null;
@@ -172,25 +137,19 @@ function parseTallyLead(payload: unknown): LeadInput | null {
   };
 }
 
-function parseDirectLead(payload: unknown): LeadInput | null {
-  const parsed = directLeadSchema.safeParse(payload);
-  if (!parsed.success) return null;
-
-  const phone = normalisePhone(parsed.data.phone);
-  if (!phone) return null;
-
+function directLead(data: z.output<typeof directLeadSchema>): LeadInput {
   return {
-    phone,
-    email: parsed.data.email?.toLowerCase() ?? null,
-    fullName: parsed.data.fullName ?? null,
-    formName: parsed.data.formName,
-    source: parsed.data.source,
-    utmSource: parsed.data.utmSource ?? null,
-    utmMedium: parsed.data.utmMedium ?? null,
-    utmCampaign: parsed.data.utmCampaign ?? null,
-    utmContent: parsed.data.utmContent ?? null,
+    phone: data.phone,
+    email: data.email?.toLowerCase() ?? null,
+    fullName: data.fullName ?? null,
+    formName: data.formName,
+    source: data.source,
+    utmSource: data.utmSource ?? null,
+    utmMedium: data.utmMedium ?? null,
+    utmCampaign: data.utmCampaign ?? null,
+    utmContent: data.utmContent ?? null,
     externalEventId: null,
-    application: parsed.data.application ?? null,
+    application: data.application ?? null,
   };
 }
 
@@ -251,7 +210,14 @@ export async function POST(request: Request) {
     } catch {
       return NextResponse.json({ error: 'ACCESS_DENIED' }, { status: 403 });
     }
-    lead = parseDirectLead(payload);
+    const parsed = directLeadSchema.safeParse(payload);
+    if (!parsed.success) {
+      return NextResponse.json({
+        error: 'Check the application fields and try again.',
+        fields: invalidLeadFields(parsed.error.issues),
+      }, { status: 422 });
+    }
+    lead = directLead(parsed.data);
   } else {
     return NextResponse.json({ error: 'CROSS_ORIGIN_FORBIDDEN' }, { status: 403 });
   }

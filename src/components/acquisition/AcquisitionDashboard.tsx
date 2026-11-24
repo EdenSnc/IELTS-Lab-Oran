@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
+import AdminNav from './AdminNav';
 import { useRef, useState, useTransition } from 'react';
 import { FORM_DESTINATION, INTERNAL_DESTINATIONS, LEGACY_AVAILABILITY_DESTINATION } from '@/lib/acquisition/validation';
 
@@ -27,13 +29,15 @@ const DESTINATION_OPTIONS = [
   { value: 'facebook', label: 'Official Facebook profile' },
 ];
 
-export default function AcquisitionDashboard({ locale, campaigns }: { locale: string; campaigns: Campaign[] }) {
+export default function AcquisitionDashboard({ locale, campaigns, canViewApplications }: { locale: string; campaigns: Campaign[]; canViewApplications: boolean }) {
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const busy = saving || refreshing;
   const [message, setMessage] = useState('');
+  const [campaignFilter, setCampaignFilter] = useState('');
+  const [search, setSearch] = useState('');
 
   async function save(data: Record<string, unknown>, form?: HTMLFormElement) {
     if (savingRef.current || refreshing) return;
@@ -61,81 +65,148 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
 
   const field = (form: HTMLFormElement, name: string) => String(new FormData(form).get(name) ?? '');
 
+  const selected = campaigns.filter((campaign) => !campaignFilter || campaign.id === campaignFilter);
+  const all = campaigns.flatMap((campaign) => campaign.placements);
+  const totalScans = all.reduce((sum, placement) => sum + placement.redirectRequests, 0);
+  const totalApplications = all.reduce((sum, placement) => sum + (placement.leadSubmissions ?? 0), 0);
+  const fieldStyle = 'min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-sm';
+  const actionStyle = 'inline-flex min-h-11 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold hover:border-crimson';
+  const submitStyle = 'min-h-11 rounded-lg bg-charcoal px-4 text-sm font-semibold text-white disabled:opacity-50';
+
+  async function copyLink(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      setMessage('Link copied.');
+    } catch {
+      setMessage('Copy the URL under Manage placement.');
+    }
+  }
+
   return (
-    <main className="mx-auto max-w-6xl space-y-8 px-5 py-10 text-neutral-900">
-      <div>
-        <a className="text-sm text-blue-700 underline" href={`/${locale}/account`}>← Account</a>
-        <h1 className="mt-3 text-3xl font-semibold">Acquisition placements</h1>
-        <p className="mt-2 max-w-3xl text-sm text-neutral-600">Create a link for each physical or partner placement, print its QR code, retarget destinations dynamically, and record on-site checks. Link requests exclude known crawlers but can include repeat visits and other bots. Internal lead submissions count forms carrying this code.</p>
+    <main className="mx-auto max-w-6xl space-y-5 px-4 py-8 text-charcoal sm:px-6">
+      {canViewApplications ? <AdminNav active="posters" locale={locale} /> : (
+        <Link className="inline-flex min-h-11 items-center text-sm font-semibold text-crimson underline" href={`/${locale}/account`}>Your account</Link>
+      )}
+      <header>
+        <h1 className="text-3xl font-extrabold tracking-tight">Posters & tracking</h1>
+      </header>
+      <dl className="grid grid-cols-3 gap-2">
+        {([
+          ['Active links', all.filter((placement) => placement.active).length],
+          ['Link opens', totalScans],
+          ['Applications', totalApplications],
+        ] as const).map(([label, value]) => (
+          <div key={label} className="min-w-0 rounded-xl border border-gray-200 bg-white p-3 sm:p-4">
+            <dt className="text-xs font-semibold text-gray-600 sm:text-sm">{label}</dt>
+            <dd className="mt-1 text-2xl font-extrabold tabular-nums text-crimson">{value}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="grid gap-2 sm:grid-cols-[1fr_1fr]">
+        <label className="grid gap-1 text-sm font-semibold">Campaign
+          <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className={fieldStyle}>
+            <option value="">All campaigns</option>
+            {campaigns.map((campaign) => <option key={campaign.id} value={campaign.id}>{campaign.name}</option>)}
+          </select>
+        </label>
+        <label className="grid gap-1 text-sm font-semibold">Find a placement
+          <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name or QR code" className={fieldStyle} />
+        </label>
       </div>
-      <p role="status" className="min-h-6 text-sm text-blue-800">{saving ? 'Saving…' : refreshing ? 'Refreshing…' : message}</p>
-      <form className="flex flex-wrap items-end gap-3 rounded-xl border p-4" onSubmit={(event) => {
-        event.preventDefault();
-        void save({ action: 'campaign', name: field(event.currentTarget, 'name'), slug: field(event.currentTarget, 'slug') }, event.currentTarget);
-      }}>
-        <label className="grid gap-1 text-sm">Campaign name<input name="name" required minLength={2} maxLength={120} className="rounded border px-3 py-2" /></label>
-        <label className="grid gap-1 text-sm">Slug<input name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} placeholder="oran-posters" className="rounded border px-3 py-2" /></label>
-        <button disabled={busy} className="rounded bg-blue-800 px-4 py-2 text-sm text-white disabled:opacity-50">Add campaign</button>
-      </form>
-      {campaigns.length === 0 && <p className="rounded-xl border p-5 text-neutral-600">No campaigns yet.</p>}
-      {campaigns.map((campaign) => <section key={campaign.id} className="space-y-4 rounded-xl border p-5">
-        <div><h2 className="text-xl font-semibold">{campaign.name}</h2><p className="text-xs text-neutral-500">{campaign.slug}</p></div>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => {
+
+      <details className="rounded-xl border border-gray-200 bg-white px-4">
+        <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">New campaign</summary>
+        <form className="grid gap-3 border-t border-gray-100 py-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={(event) => {
           event.preventDefault();
-          void save({ action: 'placement', campaignId: campaign.id, label: field(event.currentTarget, 'label'), medium: field(event.currentTarget, 'medium'), destination: field(event.currentTarget, 'destination') }, event.currentTarget);
+          void save({ action: 'campaign', name: field(event.currentTarget, 'name'), slug: field(event.currentTarget, 'slug') }, event.currentTarget);
         }}>
-          <label className="grid gap-1 text-sm">Placement label<input name="label" required minLength={2} maxLength={120} placeholder="Library entrance" className="rounded border px-3 py-2" /></label>
-          <label className="grid gap-1 text-sm">Medium<select name="medium" className="rounded border px-3 py-2"><option value="poster">Poster</option><option value="flyer">Flyer</option><option value="card">Card</option><option value="partner">Partner</option><option value="social">Social</option></select></label>
-          <label className="grid gap-1 text-sm">Destination<select name="destination" defaultValue="/fr#intake" className="rounded border px-3 py-2">{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
-          <button disabled={busy} className="rounded bg-blue-800 px-4 py-2 text-sm text-white disabled:opacity-50">Add placement</button>
+          <label className="grid gap-1 text-sm">Campaign name<input name="name" required minLength={2} maxLength={120} className={fieldStyle} /></label>
+          <label className="grid gap-1 text-sm">Campaign identifier<input name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} placeholder="oran-posters" className={fieldStyle} /></label>
+          <button disabled={busy} className={submitStyle}>Add campaign</button>
         </form>
-        {campaign.placements.length === 0 && <p className="text-sm text-neutral-500">No placements yet.</p>}
-        <div className="grid gap-4 lg:grid-cols-2">{campaign.placements.map((placement) => <article key={placement.id} className="rounded-lg border p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-semibold">{placement.label}</h3>
-            <div className="flex items-center gap-2">
-              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${placement.active ? 'bg-emerald-50 text-emerald-700' : 'bg-neutral-100 text-neutral-600'}`}>{placement.active ? 'Active' : 'Paused'}</span>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void save({
-                  action: 'update_placement',
-                  placementId: placement.id,
-                  destination: placement.destination,
-                  active: !placement.active,
-                })}
-                className="rounded border px-2 py-0.5 text-xs hover:bg-neutral-50 disabled:opacity-50"
-              >
-                {placement.active ? 'Pause' : 'Resume'}
-              </button>
+      </details>
+
+      <p role="status" className="text-sm font-semibold text-crimson">{saving ? 'Saving…' : refreshing ? 'Refreshing…' : message}</p>
+      {campaigns.length === 0 && <p className="rounded-xl border border-gray-200 bg-white p-5 text-gray-600">Add a campaign to create your first link.</p>}
+      {selected.map((campaign) => {
+        const term = search.trim().toLowerCase();
+        const visible = campaign.placements.filter((placement) => `${placement.label} ${placement.code}`.toLowerCase().includes(term));
+        if (term && visible.length === 0) return null;
+        return (
+          <section key={campaign.id} className="space-y-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 className="text-xl font-bold">{campaign.name}</h2>
+              <span className="text-sm text-gray-600">{visible.length} placements</span>
             </div>
-          </div>
-          <p className="text-sm text-neutral-600">{placement.medium} · {placement.destination}</p>
-          {/* QR data comes from the server-side encoder, never from user HTML. */}
-          <Image unoptimized src={placement.qrDataUrl} width={240} height={240} alt={`QR code for ${placement.label}`} className="my-3 border" />
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <a href={placement.url} className="break-all text-blue-700 underline">{placement.url}</a>
-            <a href={placement.qrDataUrl} download={`ieltslab-${placement.code}.png`} className="font-medium text-crimson underline">Download QR</a>
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div className="rounded bg-neutral-100 p-3"><strong className="block text-xl">{placement.redirectRequests}</strong>{placement.firstParty ? 'Landing redirect requests' : 'Outbound link requests'}</div><div className="rounded bg-neutral-100 p-3"><strong className="block text-xl">{placement.leadSubmissions ?? '—'}</strong>{placement.firstParty ? 'Matching-code lead submissions' : 'External form/social outcomes unavailable'}</div></div>
-          <form className="mt-4 flex flex-wrap items-end gap-2 border-t pt-3" onSubmit={(event) => {
-            event.preventDefault();
-            void save({ action: 'update_placement', placementId: placement.id, destination: field(event.currentTarget, 'destination') });
-          }}>
-            <label className="grid flex-1 gap-1 text-xs">Retarget destination<select name="destination" defaultValue={placement.destination === LEGACY_AVAILABILITY_DESTINATION ? FORM_DESTINATION : placement.destination} className="rounded border px-2 py-2">{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
-            <button disabled={busy} className="rounded border px-3 py-2 text-sm disabled:opacity-50">Update</button>
-          </form>
-          <p className="mt-3 text-xs text-neutral-600">Last on-site check: {placement.lastInspection ? `${placement.lastInspection.status} · ${new Date(placement.lastInspection.checkedAt).toLocaleString()}${placement.lastInspection.note ? ` · ${placement.lastInspection.note}` : ''}` : 'none recorded'}</p>
-          <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={(event) => {
-            event.preventDefault();
-            void save({ action: 'inspection', placementId: placement.id, status: field(event.currentTarget, 'status'), note: field(event.currentTarget, 'note') }, event.currentTarget);
-          }}>
-            <label className="grid gap-1 text-xs">Status<select name="status" className="rounded border px-2 py-2"><option value="present">Present</option><option value="missing">Missing</option><option value="damaged">Damaged</option><option value="unknown">Unknown</option></select></label>
-            <label className="grid gap-1 text-xs">Note<input name="note" maxLength={300} className="rounded border px-2 py-2" /></label>
-            <button disabled={busy} className="rounded border px-3 py-2 text-sm disabled:opacity-50">Record check</button>
-          </form>
-        </article>)}</div>
-      </section>)}
+            <details className="rounded-xl border border-gray-200 bg-white px-4">
+              <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">New placement</summary>
+              <form className="grid gap-3 border-t border-gray-100 py-3 md:grid-cols-[1fr_auto_1fr_auto] md:items-end" onSubmit={(event) => {
+                event.preventDefault();
+                void save({ action: 'placement', campaignId: campaign.id, label: field(event.currentTarget, 'label'), medium: field(event.currentTarget, 'medium'), destination: field(event.currentTarget, 'destination') }, event.currentTarget);
+              }}>
+                <label className="grid gap-1 text-sm">Placement name<input name="label" required minLength={2} maxLength={120} placeholder="Library entrance" className={fieldStyle} /></label>
+                <label className="grid gap-1 text-sm">Medium<select name="medium" className={fieldStyle}><option value="poster">Poster</option><option value="flyer">Flyer</option><option value="card">Card</option><option value="partner">Partner</option><option value="social">Social</option></select></label>
+                <label className="grid gap-1 text-sm">Destination<select name="destination" defaultValue={FORM_DESTINATION} className={fieldStyle}>{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
+                <button disabled={busy} className={submitStyle}>Add placement</button>
+              </form>
+            </details>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {visible.map((placement) => {
+                const destination = placement.destination === LEGACY_AVAILABILITY_DESTINATION ? FORM_DESTINATION : placement.destination;
+                return (
+                  <article key={placement.id} className="min-w-0 space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${placement.active ? 'bg-emerald-50 text-emerald-800' : 'bg-gray-100 text-gray-700'}`}>{placement.active ? 'Active' : 'Paused'}</span>
+                        <h3 className="mt-2 break-words font-bold">{placement.label}</h3>
+                        <p className="mt-1 break-all text-xs text-gray-600">{placement.medium} · {placement.code}</p>
+                      </div>
+                      <Image unoptimized src={placement.qrDataUrl} width={76} height={76} alt={`QR for ${placement.label}`} className="shrink-0 rounded-lg border border-gray-100" />
+                    </div>
+                    <dl className="grid grid-cols-2 gap-2 rounded-xl bg-gray-50 px-3 py-2 text-sm">
+                      <div><dt className="text-xs text-gray-600">Link opens</dt><dd className="text-xl font-bold tabular-nums">{placement.redirectRequests}</dd></div>
+                      <div><dt className="text-xs text-gray-600">Applications</dt><dd className="text-xl font-bold tabular-nums">{placement.leadSubmissions ?? '—'}</dd></div>
+                    </dl>
+                    <div className="flex flex-wrap gap-2">
+                      <a href={placement.qrDataUrl} download={`ieltslab-${placement.code}.png`} className={actionStyle}>Download QR</a>
+                      <button type="button" onClick={() => void copyLink(placement.url)} className={actionStyle}>Copy link</button>
+                      {canViewApplications && placement.firstParty && (
+                        <Link href={`/${locale}/admin/applications?placement=${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-crimson underline">View applications</Link>
+                      )}
+                    </div>
+                    <details className="border-t border-gray-200">
+                      <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">Manage placement</summary>
+                      <a href={placement.url} className="break-all text-sm text-crimson underline">{placement.url}</a>
+                      <form className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end" onSubmit={(event) => {
+                        event.preventDefault();
+                        void save({ action: 'update_placement', placementId: placement.id, destination: field(event.currentTarget, 'destination') });
+                      }}>
+                        <label className="grid gap-1 text-sm">Destination<select name="destination" defaultValue={destination} className={fieldStyle}>{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
+                        <button disabled={busy} className={actionStyle}>Update link</button>
+                      </form>
+                      <button type="button" disabled={busy} className={`${actionStyle} mt-2`} onClick={() => void save({ action: 'update_placement', placementId: placement.id, destination, active: !placement.active })}>{placement.active ? 'Pause this link' : 'Resume this link'}</button>
+                      <p className="mt-4 break-words text-sm text-gray-600">Last check · {placement.lastInspection ? `${placement.lastInspection.status} · ${new Date(placement.lastInspection.checkedAt).toLocaleDateString()}${placement.lastInspection.note ? ` · ${placement.lastInspection.note}` : ''}` : 'Pending'}</p>
+                      <form className="mt-2 grid gap-2 sm:grid-cols-[auto_1fr_auto] sm:items-end" onSubmit={(event) => {
+                        event.preventDefault();
+                        void save({ action: 'inspection', placementId: placement.id, status: field(event.currentTarget, 'status'), note: field(event.currentTarget, 'note') }, event.currentTarget);
+                      }}>
+                        <label className="grid gap-1 text-sm">Status<select name="status" className={fieldStyle}><option value="present">Present</option><option value="missing">Missing</option><option value="damaged">Damaged</option><option value="unknown">Unknown</option></select></label>
+                        <label className="grid gap-1 text-sm">Note<input name="note" maxLength={300} className={fieldStyle} /></label>
+                        <button disabled={busy} className={actionStyle}>Save check</button>
+                      </form>
+                    </details>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+      {search.trim() && !selected.some((campaign) => campaign.placements.some((placement) => `${placement.label} ${placement.code}`.toLowerCase().includes(search.trim().toLowerCase()))) && (
+        <p className="rounded-xl border border-gray-200 bg-white p-4 text-gray-600">No placements match your search.</p>
+      )}
+      <p className="text-xs leading-relaxed text-gray-600">Link opens can include repeat visits. Applications count website submissions carrying the placement code.</p>
     </main>
   );
 }

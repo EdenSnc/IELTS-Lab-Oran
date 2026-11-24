@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { applicationSchema, boundedTallyAnswer } from '../../src/lib/leads/application';
+import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '../../src/lib/leads/direct-intake';
 
 const validApplication = {
   schemaVersion: 2,
@@ -76,4 +77,14 @@ test('new applications require flexibility or a valid local time window', () => 
 test('legacy Tally answers are bounded before persistence', () => {
   assert.equal((boundedTallyAnswer('x'.repeat(3_000)) as string).length, 2_000);
   assert.deepEqual(boundedTallyAnswer(['Reading', 'Writing']), ['Reading', 'Writing']);
+});
+
+test('common WhatsApp phone formats are accepted consistently and invalid fields are named', () => {
+  for (const phone of ['0555 00 00 00', '213555000000', '002130555000000', '٠٥٥٥ ٠٠ ٠٠ ٠٠', '+213 (0)555 00 00 00']) {
+    assert.equal(normalizeLeadPhone(phone), '+213555000000');
+  }
+  assert.equal(normalizeLeadPhone('+33612345678'), '+33612345678');
+  const result = directLeadSchema.safeParse({ phone: '0123', application: { ...validApplication, schemaVersion: 3 } });
+  assert.equal(result.success, false);
+  if (!result.success) assert.deepEqual(invalidLeadFields(result.error.issues), ['phone', 'availability']);
 });
