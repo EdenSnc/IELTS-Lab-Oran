@@ -3,10 +3,10 @@ import {
   withPngPrintDpi, type PosterPlacement, type PrintPaper,
 } from './poster-artwork';
 
-export type PosterExportFormat = 'png' | 'pdf';
+export type PosterExportFormat = 'png' | 'pdf' | 'both';
 type PrintArtwork = { image: HTMLImageElement; width: number; height: number };
 type PrintDesign = PosterPlacement & { qrBackground: string; roundQr: boolean; dpi: number };
-type PrintPage = { png: Blob; width: number; height: number; dpi: number; widthPoints: number; heightPoints: number };
+type PrintPage = { png: Blob; dpi: number; widthPoints: number; heightPoints: number; usedSafeBacking: boolean };
 
 async function fetchPoster(url: string, milliseconds: number, signal?: AbortSignal) {
   signal?.throwIfAborted();
@@ -45,17 +45,17 @@ export async function checkPrintableLocation(code: string, signal?: AbortSignal)
 }
 
 export async function renderPrintPoster(art: PrintArtwork, design: PrintDesign, paper: PrintPaper, matrix: string[]): Promise<PrintPage> {
-  const transparent = design.qrBackground === 'artwork';
-  if (transparent && !isEvenLightQrArea(samplePosterArtwork(art, design.x, design.y, design.size))) {
-    throw new Error('Move the QR onto a light, plain area or choose a backing color before exporting.');
-  }
+  const usesArtwork = design.qrBackground === 'artwork';
+  const usedSafeBacking = usesArtwork
+    && !isEvenLightQrArea(samplePosterArtwork(art, design.x, design.y, design.size));
+  const transparent = usesArtwork && !usedSafeBacking;
   const print = posterPrintLayout(art, paper, design.dpi);
   const cells = matrix.length + 2 * QUIET_MODULES;
   const size = Math.floor(design.size * print.scale);
   if (size < 4 * cells) throw new Error('Increase the QR width for this paper size.');
   const x = Math.round(print.left + design.x * print.scale);
   const y = Math.round(print.top + design.y * print.scale);
-  const backing = posterQrBacking(size, cells, design.roundQr && !transparent);
+  const backing = posterQrBacking(size, cells, usedSafeBacking || (design.roundQr && !transparent));
   const canvas = document.createElement('canvas');
   canvas.width = print.width;
   canvas.height = print.height;
@@ -66,7 +66,7 @@ export async function renderPrintPoster(art: PrintArtwork, design: PrintDesign, 
     context.fillRect(0, 0, print.width, print.height);
     context.drawImage(art.image, print.left, print.top, art.width * print.scale, art.height * print.scale);
     if (!transparent) {
-      context.fillStyle = design.qrBackground;
+      context.fillStyle = usedSafeBacking ? '#ffffff' : design.qrBackground;
       context.beginPath();
       context.roundRect(x, y, size, size, backing.radius);
       context.fill();
@@ -85,7 +85,7 @@ export async function renderPrintPoster(art: PrintArtwork, design: PrintDesign, 
     const landscape = art.width > art.height;
     return {
       png: withPngPrintDpi(await png.arrayBuffer(), print.dpi),
-      width: print.width, height: print.height, dpi: print.dpi,
+      dpi: print.dpi, usedSafeBacking,
       widthPoints: paper === 'original' ? print.width * 72 / print.dpi : (landscape ? long : short) * 72 / 25.4,
       heightPoints: paper === 'original' ? print.height * 72 / print.dpi : (landscape ? short : long) * 72 / 25.4,
     };
@@ -146,6 +146,11 @@ export async function renderSavedPoster(design: PrintDesign & { id: string; vers
 
 export function posterFileStem(title: string) {
   return title.replace(/[^\p{L}\p{N}_ -]/gu, '').trim().slice(0, 80) || 'IELTSLab-poster';
+}
+
+export async function zipPosterFiles(files: Record<string, Uint8Array>) {
+  const { zipSync } = await import('fflate');
+  return new Blob([new Uint8Array(zipSync(files, { level: 0 }))], { type: 'application/zip' });
 }
 
 export function downloadPosterFile(blob: Blob, filename: string) {

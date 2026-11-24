@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
-import { checkPrintableLocation, createPosterPdf, downloadPosterFile, posterFileStem, renderPrintPoster, samplePosterArtwork, type PosterExportFormat } from '@/lib/acquisition/poster-export';
+import { checkPrintableLocation, createPosterPdf, downloadPosterFile, posterFileStem, renderPrintPoster, samplePosterArtwork, zipPosterFiles, type PosterExportFormat } from '@/lib/acquisition/poster-export';
 import {
   checkPosterDimensions, initialPosterQr, inspectPoster, isEvenLightQrArea, isLightQrColor, movePosterQr, posterQrBacking,
   posterPrintLayout, PRINT_PAPERS, PRINT_QR_WIDTHS, printQrMeasurements, printQrSourceWidth, qrSizeLimits, QUIET_MODULES, resizePosterQr, validDpi, type PosterPlacement, type PrintPaper,
@@ -16,6 +16,14 @@ type Drag = { pointer: number; x: number; y: number; resize: boolean; start: Pos
 type Placement = { code: string; label: string; active: boolean; preview: string; matrix: string[] };
 type Design = PosterPlacement & { id: string; title: string; dpi: number; version: number; qrBackground: string; roundQr: boolean };
 const inputClass = 'min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-base';
+const saveErrors: Record<string, string> = {
+  INVALID_POSTER_ARTWORK: 'The artwork could not be read. Re-upload a valid PNG or JPEG.',
+  INVALID_POSTER_UPLOAD: 'The upload could not be read. Re-upload the artwork and try again.',
+  INVALID_QR_PLACEMENT: 'Move or resize the QR so it fits inside the artwork, then save again.',
+  INVALID_REQUEST: 'Check the poster name, QR settings and print resolution, then try again.',
+  PLACEMENT_NOT_FOUND: 'This tracking location is missing. Open the library and choose a location.',
+  POSTER_NOT_FOUND: 'This poster is missing or in Trash. Check the library before saving.',
+};
 
 function posterSettings(title: string, dpi: number, qr: PosterPlacement, qrBackground: string, roundQr: boolean) {
   return { title: title.trim(), dpi, x: qr.x, y: qr.y, size: qr.size, qrBackground, roundQr };
@@ -192,11 +200,13 @@ export default function PosterEditor({ placement, locale, design }: { placement:
       form.set('details', JSON.stringify({ id, version, ...settings }));
       if (art.file) form.set('artwork', art.file);
       const response = await fetch('/api/staff/posters', { method: 'POST', body: form });
-      if (!response.ok) throw new Error(response.status === 409
-        ? 'This poster changed in another tab. Reopen it before saving.'
-        : response.status === 401 || response.status === 403 ? 'Sign in again to save the poster.'
-        : response.status === 413 ? 'Choose a PNG or JPEG up to 4 MiB.'
-        : 'Could not save this poster. Check the artwork and QR position.');
+      if (!response.ok) {
+        const problem = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(response.status === 409 ? 'This poster changed elsewhere. Open the latest version before saving.'
+          : response.status === 401 || response.status === 403 ? 'Sign in again to save the poster.'
+          : response.status === 413 ? 'Choose a PNG or JPEG up to 4 MiB.'
+          : saveErrors[problem?.error ?? ''] ?? 'Saving failed. Your edits are still here. Try again.');
+      }
       const result = await response.json() as { id: string; version: number };
       setVersion(result.version);
       setTitle(title.trim());
@@ -209,7 +219,8 @@ export default function PosterEditor({ placement, locale, design }: { placement:
       history.replaceState(null, '', url);
       setStatus('Poster saved.');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Could not save this poster.');
+      setError(reason instanceof TypeError ? 'Could not reach the site. Your edits are still here. Try saving again.'
+        : reason instanceof Error ? reason.message : 'Could not save this poster.');
     } finally {
       saveLock.current = false;
       setSaving(false);
@@ -261,15 +272,20 @@ export default function PosterEditor({ placement, locale, design }: { placement:
       setActive(currentActive);
       if (!currentActive) throw new Error('Resume this link in Tracking before exporting.');
       const page = await renderPrintPoster(art, { ...qr, qrBackground, roundQr, dpi }, paper, placement.matrix);
+      const name = `${posterFileStem(title)}-${placement.code}-${paper}-${print.dpi}dpi`;
       let result = page.png;
-      if (format === 'pdf') {
+      if (format !== 'png') {
         const pdf = await createPosterPdf();
         await pdf.add(page);
         result = await pdf.finish();
+        if (format === 'both') result = await zipPosterFiles({
+          [`${name}.pdf`]: new Uint8Array(await result.arrayBuffer()),
+          [`${name}.png`]: new Uint8Array(await page.png.arrayBuffer()),
+        });
       }
       if (token !== loadId.current) return;
-      downloadPosterFile(result, `${posterFileStem(title)}-${placement.code}-${paper}-${print.dpi}dpi.${format}`);
-      setStatus('Poster downloaded.');
+      downloadPosterFile(result, `${name}.${format === 'both' ? 'zip' : format}`);
+      setStatus(page.usedSafeBacking ? 'Poster downloaded with a rounded white QR backing for scanning.' : 'Poster downloaded.');
     } catch (reason) {
       setError(reason instanceof Error && reason.name === 'TimeoutError' ? 'The export request timed out. Try again.'
         : reason instanceof Error ? reason.message : 'Unable to export the poster.');
@@ -296,10 +312,11 @@ export default function PosterEditor({ placement, locale, design }: { placement:
           className="min-h-11 rounded-full border border-stone-200 bg-white px-3 text-sm font-semibold">
           <option value="png">PNG · sRGB</option>
           <option value="pdf">Print PDF · sRGB</option>
+          <option value="both">Both · ZIP</option>
         </select>
         <button type="button" className="min-h-11 rounded-full border border-stone-200 bg-white px-4 text-sm font-bold disabled:opacity-50"
           disabled={!art || !qr || busy} onClick={() => void downloadPoster()}>
-          {exporting ? 'Preparing…' : format === 'pdf' ? 'Download print PDF' : 'Download PNG'}
+          {exporting ? 'Preparing…' : format === 'pdf' ? 'Download print PDF' : format === 'both' ? 'Download both' : 'Download PNG'}
         </button>
         <button type="button" className="min-h-11 rounded-full bg-charcoal px-5 text-sm font-bold text-white disabled:opacity-50"
           disabled={!art || !qr || !title.trim() || busy} onClick={() => void savePoster()}>{saving ? 'Saving…' : 'Save poster'}</button>
@@ -307,7 +324,10 @@ export default function PosterEditor({ placement, locale, design }: { placement:
       </header>
       {!active && <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">This QR link is paused. Resume it in Tracking before printing.</p>}
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-900">{error}</p>}
-      <p role="status" className="text-sm text-gray-700">{loading ? 'Opening poster…' : status}</p>
+      <p role="status" className={`empty:hidden rounded-xl border px-3 py-2.5 text-sm font-medium ${
+        status === 'Poster saved.' && !dirty ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-stone-200 bg-white text-stone-700'
+      }`}>{loading ? 'Opening poster…' : saving ? 'Saving your poster…' : exporting ? 'Preparing your download…'
+        : status === 'Poster saved.' && dirty ? 'Unsaved changes.' : status}</p>
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
         <section aria-label="Poster preview" className={`min-w-0 rounded-2xl border p-3 sm:p-4 ${dragOver ? 'border-crimson bg-red-50' : 'border-gray-200 bg-[#f4f2ef]'}`}
@@ -424,7 +444,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
                 <option value="artwork">Use poster artwork</option>
               </select>
               {transparent ? <p role="status" className={`text-xs ${areaSafe === false ? 'text-[#9c1e2c]' : 'text-stone-700'}`}>
-                {areaSafe === false ? 'Move the QR fully onto a light, even area to export.' : areaSafe ? 'Light, even backing found.' : 'Checking the artwork…'}
+                {areaSafe === false ? 'Export will add a rounded white backing here. Move onto a light, even area to export directly over the artwork.' : areaSafe ? 'Light, even backing found.' : 'Checking the artwork…'}
               </p> : <>
                 <div className="flex flex-wrap items-center gap-2">
                   <label className="inline-flex items-center gap-2 text-sm">Color

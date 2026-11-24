@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
 import { posterQrBacking, PRINT_PAPERS, type PrintPaper } from '@/lib/acquisition/poster-artwork';
-import { checkPrintableLocation, createPosterPdf, downloadPosterFile, posterFileStem, renderSavedPoster, type PosterExportFormat } from '@/lib/acquisition/poster-export';
+import { checkPrintableLocation, createPosterPdf, downloadPosterFile, posterFileStem, renderSavedPoster, zipPosterFiles, type PosterExportFormat } from '@/lib/acquisition/poster-export';
 
 type Design = { id: string; title: string; version: number; width: number; height: number; x: number; y: number; size: number;
   dpi: number; code: string; placement: string; thumbnail?: string; qrPreview: string;
@@ -24,6 +24,8 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
   const [code, setCode] = useState('');
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState('');
+  const [problems, setProblems] = useState<string[]>([]);
+  const [safeBackings, setSafeBackings] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [undo, setUndo] = useState<{ id: string; version: number }>();
   const [confirmation, setConfirmation] = useState<Confirmation>();
@@ -48,10 +50,15 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
     const { signal } = controller;
     setExporting(true);
     setMessage('Preparing posters…');
+    setProblems([]);
+    setSafeBackings([]);
     try {
-      const pdf = format === 'pdf' ? await createPosterPdf() : undefined;
+      const pdf = format !== 'png' ? await createPosterPdf() : undefined;
       const checks = new Map<string, boolean>();
       const files: Record<string, Uint8Array> = {};
+      const skipped: string[] = [];
+      const backed: string[] = [];
+      let count = 0;
       for (const [index, design] of selectedDesigns.entries()) {
         signal.throwIfAborted();
         setMessage(`Preparing poster ${index + 1} of ${selectedDesigns.length}…`);
@@ -60,23 +67,39 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
           checks.set(design.code, active);
           if (!active) throw new Error('Resume its QR link in Tracking before printing.');
           const rendered = await renderSavedPoster(design, paper, signal);
+          const png = format !== 'pdf' ? new Uint8Array(await rendered.png.arrayBuffer()) : undefined;
           if (pdf) await pdf.add(rendered);
-          else {
-            const name = `${String(index + 1).padStart(2, '0')}-${posterFileStem(design.title)}-${design.code}-${paper}.png`;
-            files[name] = new Uint8Array(await rendered.png.arrayBuffer());
+          if (png) {
+            const name = `${String(count + 1).padStart(2, '0')}-${posterFileStem(design.title)}-${design.code}-${paper}.png`;
+            files[name] = png;
           }
+          if (rendered.usedSafeBacking) backed.push(design.title);
+          count++;
         } catch (reason) {
-          throw new Error(`${design.title}: ${reason instanceof Error ? reason.message : 'Could not export.'}`);
+          signal.throwIfAborted();
+          skipped.push(`${design.title}: ${reason instanceof Error ? reason.message : 'Could not export.'}`);
         }
       }
-      const result = pdf ? await pdf.finish()
-        : new Blob([new Uint8Array((await import('fflate')).zipSync(files, { level: 0 }))], { type: 'application/zip' });
+      if (!count) {
+        setMessage('No posters could be downloaded.');
+        setProblems(skipped);
+        return;
+      }
+      const name = `IELTSLab-posters-${paper}`;
+      const document = await pdf?.finish();
+      if (document && format === 'both') files[`${name}.pdf`] = new Uint8Array(await document.arrayBuffer());
+      const result = format === 'pdf' && document ? document : await zipPosterFiles(files);
       signal.throwIfAborted();
-      downloadPosterFile(result, `IELTSLab-posters-${paper}.${pdf ? 'pdf' : 'zip'}`);
-      setMessage(`Downloaded ${selectedDesigns.length} ${selectedDesigns.length === 1 ? 'poster' : 'posters'}.`);
+      downloadPosterFile(result, `${name}.${format === 'pdf' ? 'pdf' : 'zip'}`);
+      setMessage(`Downloaded ${count} of ${selectedDesigns.length} ${selectedDesigns.length === 1 ? 'poster' : 'posters'}.`);
+      setProblems(skipped);
+      setSafeBackings(backed);
     } catch (reason) {
       if (signal.aborted) setMessage('Poster download cancelled.');
-      else setMessage(reason instanceof Error ? reason.message : 'Could not export the selected posters.');
+      else {
+        setMessage('Download failed.');
+        setProblems([reason instanceof Error ? reason.message : 'Could not export the selected posters.']);
+      }
     } finally {
       exportTask.current = null;
       setExporting(false);
@@ -89,6 +112,8 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
     lock.current = true;
     setBusy(true);
     setMessage('');
+    setProblems([]);
+    setSafeBackings([]);
     try {
       const response = await fetch('/api/staff/posters', {
         method: action === 'purge' ? 'DELETE' : 'PATCH',
@@ -103,7 +128,7 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
       setMessage(action === 'trash' ? 'Poster moved to Trash.' : action === 'restore' ? 'Poster restored.' : 'Poster permanently deleted.');
       router.refresh();
     } catch (problem) {
-      setMessage(problem instanceof Error ? problem.message : 'Could not update poster.');
+      setProblems([problem instanceof Error ? problem.message : 'Could not update poster.']);
       router.refresh();
     } finally {
       setBusy(false);
@@ -146,6 +171,7 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
               className="h-11 max-w-full rounded-xl border border-stone-200 bg-white px-2 text-sm">
               <option value="pdf">Print PDF · sRGB</option>
               <option value="png">PNG files · ZIP</option>
+              <option value="both">PDF + PNG files · ZIP</option>
             </select>
           </label>
           <button className={solid} type="button" onClick={() => void downloadSelected()} disabled={busy || exporting || !selectedDesigns.length}>Download selected</button>
@@ -172,6 +198,12 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
         {message && <p className="text-sm font-semibold text-charcoal">{message}</p>}
         {undo && <button type="button" disabled={busy} className={line} onClick={() => void change(undo, 'restore')}>Undo</button>}
       </div>
+      {safeBackings.length > 0 && <p role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+        Rounded white QR backing added to the export for {safeBackings.join(', ')}.
+      </p>}
+      {problems.length > 0 && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+        <ul className="space-y-1">{problems.map((problem, index) => <li key={index}>{problem}</li>)}</ul>
+      </div>}
       {!visible.length && <p className="rounded-2xl border border-dashed border-stone-300 p-8 text-center text-sm text-stone-600">
         {query ? 'No posters match your search.' : trash ? 'Trash is empty.' : 'Your saved posters will appear here.'}
       </p>}
