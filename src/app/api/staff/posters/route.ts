@@ -14,10 +14,15 @@ export async function GET(request: Request) {
     const query = new URL(request.url).searchParams;
     const id = posterIdSchema.parse(query.get('id'));
     const thumbnail = query.get('thumbnail') === '1';
+    const version = query.get('version');
+    if (version !== null && (!/^[1-9]\d{0,9}$/.test(version) || Number(version) > 2_147_483_647)) {
+      return noStoreJson({ error: 'INVALID_REQUEST' }, 400);
+    }
+    const where = { id, ...(version !== null ? { version: Number(version), deletedAt: null } : {}) };
     const asset = thumbnail
-      ? await prisma.posterDesign.findUnique({ where: { id }, select: { thumbnail: true } })
+      ? await prisma.posterDesign.findUnique({ where, select: { thumbnail: true } })
         .then((poster) => poster && { bytes: poster.thumbnail, mime: 'image/jpeg' })
-      : await prisma.posterDesign.findUnique({ where: { id }, select: { artwork: true, mime: true } })
+      : await prisma.posterDesign.findUnique({ where, select: { artwork: true, mime: true } })
         .then((poster) => poster && { bytes: poster.artwork, mime: poster.mime });
     if (!asset) return noStoreJson({ error: 'POSTER_NOT_FOUND' }, 404);
     return new Response(asset.bytes, {
@@ -87,7 +92,7 @@ export async function POST(request: Request) {
         if (!count) throw new AuthError('POSTER_CONFLICT', 409);
       } else if (incoming) {
         const { count } = await tx.posterDesign.createMany({
-          data: { id, placementId: placement.id, ...incoming, ...layout }, skipDuplicates: true,
+          data: { id, placementId: placement.id, ...incoming, ...layout, roundQr: layout.roundQr ?? true }, skipDuplicates: true,
         });
         if (!count) {
           const previous = await tx.posterDesign.findUnique({
@@ -99,7 +104,7 @@ export async function POST(request: Request) {
           if (previous?.placementId !== placement.id || previous.version !== 1 || previous.deletedAt
             || previous.title !== layout.title || previous.x !== layout.x || previous.y !== layout.y
             || previous.size !== layout.size || previous.dpi !== layout.dpi
-            || previous.qrBackground !== (layout.qrBackground ?? '#ffffff') || previous.roundQr !== (layout.roundQr ?? false)
+            || previous.qrBackground !== (layout.qrBackground ?? '#ffffff') || previous.roundQr !== (layout.roundQr ?? true)
             || !Buffer.from(previous.artwork).equals(Buffer.from(incoming.artwork))) {
             throw new AuthError('POSTER_CONFLICT', 409);
           }

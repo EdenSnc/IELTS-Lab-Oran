@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
+import { checkPrintableLocation, createPosterPdf, downloadPosterFile, posterFileStem, renderPrintPoster, samplePosterArtwork, type PosterExportFormat } from '@/lib/acquisition/poster-export';
 import {
-  checkPosterDimensions, initialPosterQr, inspectPoster, isEvenLightQrArea, isLightQrColor, movePosterQr, posterQrBacking, posterQrEdges,
-  posterPrintLayout, PRINT_PAPERS, PRINT_QR_WIDTHS, printQrMeasurements, printQrSourceWidth, qrSizeLimits, QUIET_MODULES, resizePosterQr, validDpi, withPngPrintDpi, type PosterPlacement, type PrintPaper,
+  checkPosterDimensions, initialPosterQr, inspectPoster, isEvenLightQrArea, isLightQrColor, movePosterQr, posterQrBacking,
+  posterPrintLayout, PRINT_PAPERS, PRINT_QR_WIDTHS, printQrMeasurements, printQrSourceWidth, qrSizeLimits, QUIET_MODULES, resizePosterQr, validDpi, type PosterPlacement, type PrintPaper,
 } from '@/lib/acquisition/poster-artwork';
 import { MAX_SAVED_ARTWORK_BYTES } from '@/lib/acquisition/poster-design';
 
@@ -15,18 +16,6 @@ type Drag = { pointer: number; x: number; y: number; resize: boolean; start: Pos
 type Placement = { code: string; label: string; active: boolean; preview: string; matrix: string[] };
 type Design = PosterPlacement & { id: string; title: string; dpi: number; version: number; qrBackground: string; roundQr: boolean };
 const inputClass = 'min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-base';
-
-function sampleArtwork(art: Artwork, x: number, y: number, size: number) {
-  const side = Math.min(size, 256);
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = side;
-  const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
-  if (!context) throw new Error('Artwork sampling is unavailable in this browser.');
-  context.fillStyle = '#ffffff';
-  context.fillRect(0, 0, side, side);
-  context.drawImage(art.image, x, y, size, size, 0, 0, side, side);
-  return context.getImageData(0, 0, side, side).data;
-}
 
 function posterSettings(title: string, dpi: number, qr: PosterPlacement, qrBackground: string, roundQr: boolean) {
   return { title: title.trim(), dpi, x: qr.x, y: qr.y, size: qr.size, qrBackground, roundQr };
@@ -50,23 +39,18 @@ function PixelField({ label, value, min, max, onCommit }: {
   );
 }
 
-function canvasPng(canvas: HTMLCanvasElement) {
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('The browser could not export this poster.')), 'image/png');
-  });
-}
-
 export default function PosterEditor({ placement, locale, design }: { placement: Placement; locale: string; design: Design | null }) {
   const router = useRouter();
   const [art, setArt] = useState<Artwork>();
   const [qr, setQr] = useState<PosterPlacement>();
   const [dpi, setDpi] = useState(design?.dpi ?? 300);
   const [paper, setPaper] = useState<PrintPaper>('A5');
+  const [format, setFormat] = useState<PosterExportFormat>('png');
   const [title, setTitle] = useState(design?.title ?? placement.label);
   const [version, setVersion] = useState(design?.version);
   const [qrBackground, setQrBackground] = useState(design?.qrBackground ?? '#ffffff');
   const [backingColor, setBackingColor] = useState(design?.qrBackground === 'artwork' ? '#ffffff' : design?.qrBackground ?? '#ffffff');
-  const [roundQr, setRoundQr] = useState(design?.roundQr ?? false);
+  const [roundQr, setRoundQr] = useState(design?.roundQr ?? true);
   const [picking, setPicking] = useState(false);
   const [areaSafe, setAreaSafe] = useState<boolean>();
   const [confirmation, setConfirmation] = useState<Confirmation>();
@@ -160,7 +144,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
   useEffect(() => {
     if (!art || !qr || !transparent) return;
     const frame = requestAnimationFrame(() => {
-      try { setAreaSafe(isEvenLightQrArea(sampleArtwork(art, qr.x, qr.y, qr.size))); }
+      try { setAreaSafe(isEvenLightQrArea(samplePosterArtwork(art, qr.x, qr.y, qr.size))); }
       catch { setAreaSafe(false); }
     });
     return () => cancelAnimationFrame(frame);
@@ -271,68 +255,25 @@ export default function PosterEditor({ placement, locale, design }: { placement:
     setStatus('');
     setError('');
     const token = loadId.current;
-    const canvas = document.createElement('canvas');
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 10_000);
     try {
-      if (transparent && !isEvenLightQrArea(sampleArtwork(art, qr.x, qr.y, qr.size))) {
-        throw new Error('Move the QR onto a light, plain area or choose a backing color before exporting.');
-      }
-      const response = await fetch(`/api/staff/acquisition?code=${encodeURIComponent(placement.code)}`, {
-        cache: 'no-store', signal: controller.signal,
-      });
-      window.clearTimeout(timeout);
-      if (response.status === 401 || response.status === 403) throw new Error('Sign in to the dashboard again, then retry the export.');
-      if (response.status === 404) throw new Error('This placement no longer exists.');
-      if (!response.ok) throw new Error('Could not check the QR link. Try downloading again.');
-      const { active: currentActive } = await response.json() as { active?: boolean };
+      const currentActive = await checkPrintableLocation(placement.code);
       if (token !== loadId.current) return;
-      setActive(currentActive === true);
-      if (currentActive !== true) throw new Error('Resume this link in Tracking before exporting.');
-
-      const size = Math.floor(qr.size * print.scale);
-      if (size < 4 * cells) throw new Error('Increase the QR width for this paper size.');
-      const x = Math.round(print.left + qr.x * print.scale);
-      const y = Math.round(print.top + qr.y * print.scale);
-      const exported = posterQrBacking(size, cells, roundQr && !transparent);
-      canvas.width = print.width;
-      canvas.height = print.height;
-      const context = canvas.getContext('2d', { alpha: false, colorSpace: 'srgb' });
-      if (!context) throw new Error('This browser could not create a print image.');
-      context.fillStyle = '#fff';
-      context.fillRect(0, 0, print.width, print.height);
-      context.drawImage(art.image, print.left, print.top, art.width * print.scale, art.height * print.scale);
-      if (!transparent) {
-        context.fillStyle = qrBackground;
-        context.beginPath();
-        context.roundRect(x, y, size, size, exported.radius);
-        context.fill();
+      setActive(currentActive);
+      if (!currentActive) throw new Error('Resume this link in Tracking before exporting.');
+      const page = await renderPrintPoster(art, { ...qr, qrBackground, roundQr, dpi }, paper, placement.matrix);
+      let result = page.png;
+      if (format === 'pdf') {
+        const pdf = await createPosterPdf();
+        await pdf.add(page);
+        result = await pdf.finish();
       }
-      context.fillStyle = '#000';
-      const edges = posterQrEdges(exported.codeSize, cells);
-      for (const [row, line] of placement.matrix.entries()) {
-        for (let col = 0; col < line.length; col++) {
-          if (line[col] === '1') context.fillRect(x + exported.inset + edges[col], y + exported.inset + edges[row], edges[col + 1] - edges[col], edges[row + 1] - edges[row]);
-        }
-      }
-      const png = withPngPrintDpi(await (await canvasPng(canvas)).arrayBuffer(), print.dpi);
       if (token !== loadId.current) return;
-      const url = URL.createObjectURL(png);
-      const link = document.createElement('a');
-      const stem = title.replace(/[^\p{L}\p{N}_ -]/gu, '').trim().slice(0, 80);
-      link.href = url;
-      link.download = `${stem || 'IELTSLab-poster'}-${placement.code}-${paper}-${print.dpi}dpi.png`;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      downloadPosterFile(result, `${posterFileStem(title)}-${placement.code}-${paper}-${print.dpi}dpi.${format}`);
       setStatus('Poster downloaded.');
     } catch (reason) {
-      setError(controller.signal.aborted ? 'The QR link check timed out. Try downloading again.'
+      setError(reason instanceof Error && reason.name === 'TimeoutError' ? 'The export request timed out. Try again.'
         : reason instanceof Error ? reason.message : 'Unable to export the poster.');
     } finally {
-      window.clearTimeout(timeout);
-      canvas.width = canvas.height = 0;
       exportLock.current = false;
       setExporting(false);
     }
@@ -350,9 +291,15 @@ export default function PosterEditor({ placement, locale, design }: { placement:
         <div><h1 className="text-3xl font-extrabold tracking-tight">{version ? 'Edit poster' : 'New poster'}</h1><p className="mt-1 break-words text-sm text-gray-600">{placement.label}</p></div>
         <div className="flex flex-wrap items-center gap-2">
         <button type="button" disabled={busy} onClick={exit} className="min-h-11 rounded-full px-4 text-sm font-semibold text-stone-600 hover:bg-stone-100">Cancel</button>
+        <select aria-label="Download format" value={format} disabled={busy}
+          onChange={(event) => setFormat(event.target.value as PosterExportFormat)}
+          className="min-h-11 rounded-full border border-stone-200 bg-white px-3 text-sm font-semibold">
+          <option value="png">PNG · sRGB</option>
+          <option value="pdf">Print PDF · sRGB</option>
+        </select>
         <button type="button" className="min-h-11 rounded-full border border-stone-200 bg-white px-4 text-sm font-bold disabled:opacity-50"
           disabled={!art || !qr || busy} onClick={() => void downloadPoster()}>
-          {exporting ? 'Preparing…' : 'Download PNG'}
+          {exporting ? 'Preparing…' : format === 'pdf' ? 'Download print PDF' : 'Download PNG'}
         </button>
         <button type="button" className="min-h-11 rounded-full bg-charcoal px-5 text-sm font-bold text-white disabled:opacity-50"
           disabled={!art || !qr || !title.trim() || busy} onClick={() => void savePoster()}>{saving ? 'Saving…' : 'Save poster'}</button>
@@ -388,7 +335,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
                 const y = Math.min(art.height - 1, Math.max(0, Math.floor((event.clientY - rect.top) * art.height / rect.height)));
                 setPicking(false);
                 try {
-                  const rgb = sampleArtwork(art, x, y, 1);
+                  const rgb = samplePosterArtwork(art, x, y, 1);
                   const color = '#' + Array.from(rgb.slice(0, 3), (channel) => channel.toString(16).padStart(2, '0')).join('');
                   selectColor(color);
                   if (isLightQrColor(color)) navigator.vibrate?.(10);

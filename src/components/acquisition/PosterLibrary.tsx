@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
-import { posterQrBacking } from '@/lib/acquisition/poster-artwork';
+import { posterQrBacking, PRINT_PAPERS, type PrintPaper } from '@/lib/acquisition/poster-artwork';
+import { checkPrintableLocation, createPosterPdf, downloadPosterFile, posterFileStem, renderSavedPoster, type PosterExportFormat } from '@/lib/acquisition/poster-export';
 
 type Design = { id: string; title: string; version: number; width: number; height: number; x: number; y: number; size: number;
   dpi: number; code: string; placement: string; thumbnail?: string; qrPreview: string;
-  qrBackground: string; roundQr: boolean; cells: number };
+  qrBackground: string; roundQr: boolean; cells: number; trackingUrl: string };
 type Location = { code: string; label: string; campaign: string };
 type Action = 'trash' | 'restore' | 'purge';
 const button = 'inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors disabled:opacity-50 motion-reduce:transition-none';
@@ -26,9 +27,62 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
   const [busy, setBusy] = useState(false);
   const [undo, setUndo] = useState<{ id: string; version: number }>();
   const [confirmation, setConfirmation] = useState<Confirmation>();
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [paper, setPaper] = useState<PrintPaper>('A5');
+  const [format, setFormat] = useState<PosterExportFormat>('pdf');
+  const [exporting, setExporting] = useState(false);
   const lock = useRef(false);
+  const exportTask = useRef<AbortController>(null);
   const query = search.trim().toLowerCase();
   const visible = designs.filter((design) => `${design.title} ${design.placement}`.toLowerCase().includes(query));
+  const selectedDesigns = designs.filter(({ id }) => selected.includes(id));
+
+  useEffect(() => () => exportTask.current?.abort(), []);
+
+  async function downloadSelected() {
+    if (lock.current || !selectedDesigns.length) return;
+    lock.current = true;
+    const controller = new AbortController();
+    exportTask.current = controller;
+    const { signal } = controller;
+    setExporting(true);
+    setMessage('Preparing posters…');
+    try {
+      const pdf = format === 'pdf' ? await createPosterPdf() : undefined;
+      const checks = new Map<string, boolean>();
+      const files: Record<string, Uint8Array> = {};
+      for (const [index, design] of selectedDesigns.entries()) {
+        signal.throwIfAborted();
+        setMessage(`Preparing poster ${index + 1} of ${selectedDesigns.length}…`);
+        try {
+          const active = checks.get(design.code) ?? await checkPrintableLocation(design.code, signal);
+          checks.set(design.code, active);
+          if (!active) throw new Error('Resume its QR link in Tracking before printing.');
+          const rendered = await renderSavedPoster(design, paper, signal);
+          if (pdf) await pdf.add(rendered);
+          else {
+            const name = `${String(index + 1).padStart(2, '0')}-${posterFileStem(design.title)}-${design.code}-${paper}.png`;
+            files[name] = new Uint8Array(await rendered.png.arrayBuffer());
+          }
+        } catch (reason) {
+          throw new Error(`${design.title}: ${reason instanceof Error ? reason.message : 'Could not export.'}`);
+        }
+      }
+      const result = pdf ? await pdf.finish()
+        : new Blob([new Uint8Array((await import('fflate')).zipSync(files, { level: 0 }))], { type: 'application/zip' });
+      signal.throwIfAborted();
+      downloadPosterFile(result, `IELTSLab-posters-${paper}.${pdf ? 'pdf' : 'zip'}`);
+      setMessage(`Downloaded ${selectedDesigns.length} ${selectedDesigns.length === 1 ? 'poster' : 'posters'}.`);
+    } catch (reason) {
+      if (signal.aborted) setMessage('Poster download cancelled.');
+      else setMessage(reason instanceof Error ? reason.message : 'Could not export the selected posters.');
+    } finally {
+      exportTask.current = null;
+      setExporting(false);
+      lock.current = false;
+    }
+  }
 
   async function change(design: { id: string; version: number }, action: Action) {
     if (lock.current) return;
@@ -60,12 +114,42 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
   return (
     <section className="space-y-5" aria-label={trash ? 'Trashed poster designs' : 'Poster designs'}>
       {!trash && (
-        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
           <input type="search" aria-label="Find a poster" value={search} onChange={(event) => setSearch(event.target.value)}
             placeholder="Find a poster or location" className="min-h-11 min-w-0 rounded-xl border border-stone-200 bg-white px-4 text-base sm:max-w-sm" />
+          <button className={line} type="button" aria-expanded={selecting} disabled={exporting} onClick={() => {
+            setSelecting(!selecting);
+            setSelected([]);
+          }}>{selecting ? 'Done selecting' : 'Select posters'}</button>
           <button className={solid} type="button" aria-expanded={creating} aria-controls="new-poster" onClick={() => setCreating(!creating)}>
             <span aria-hidden="true" className="me-2 text-lg leading-none">+</span> New poster
           </button>
+        </div>
+      )}
+      {!trash && selecting && (
+        <div className="flex flex-wrap items-end gap-2 rounded-2xl border border-stone-200 bg-white p-3" aria-label="Batch download">
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <strong className="px-1 text-sm">{selectedDesigns.length} selected</strong>
+            <button type="button" className={line} disabled={exporting || !visible.length}
+              onClick={() => setSelected((current) => [...new Set([...current, ...visible.map(({ id }) => id)])])}>Select all shown</button>
+            <button type="button" className={line} disabled={exporting || !selectedDesigns.length} onClick={() => setSelected([])}>Clear</button>
+          </div>
+          <label className="grid gap-1 text-sm font-semibold">Print size
+            <select value={paper} onChange={(event) => setPaper(event.target.value as PrintPaper)} disabled={exporting}
+              className="h-11 max-w-full rounded-xl border border-stone-200 bg-white px-2 text-sm">
+              {Object.keys(PRINT_PAPERS).map((name) => <option key={name}>{name}</option>)}
+              <option value="original">Original sizes</option>
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm font-semibold">Format
+            <select value={format} onChange={(event) => setFormat(event.target.value as PosterExportFormat)} disabled={exporting}
+              className="h-11 max-w-full rounded-xl border border-stone-200 bg-white px-2 text-sm">
+              <option value="pdf">Print PDF · sRGB</option>
+              <option value="png">PNG files · ZIP</option>
+            </select>
+          </label>
+          <button className={solid} type="button" onClick={() => void downloadSelected()} disabled={busy || exporting || !selectedDesigns.length}>Download selected</button>
+          {exporting && <button className={line} type="button" onClick={() => exportTask.current?.abort()}>Cancel download</button>}
         </div>
       )}
       {!trash && creating && (
@@ -118,14 +202,23 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
             </div>
           );
           return <article key={design.id} className="min-w-0 rounded-[1.4rem] border border-stone-200 bg-white p-2 shadow-[0_2px_12px_#1f151008]">
-            {trash ? poster : <Link href={href} aria-label={`Open ${design.title}`} className="block rounded-[1.15rem] focus-visible:outline-2 focus-visible:outline-crimson">{poster}</Link>}
+            {selecting && !trash ? (
+              <label className="relative block cursor-pointer rounded-[1.15rem]">
+                <input type="checkbox" aria-label={`Select ${design.title}`} checked={selected.includes(design.id)} disabled={exporting}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setSelected((current) => checked ? [...current, design.id] : current.filter((id) => id !== design.id));
+                  }} className="absolute left-3 top-3 z-10 size-6 accent-crimson" />
+                {poster}
+              </label>
+            ) : trash ? poster : <Link href={href} aria-label={`Open ${design.title}`} className="block rounded-[1.15rem] focus-visible:outline-2 focus-visible:outline-crimson">{poster}</Link>}
             <div className="space-y-3 px-3 pb-3 pt-4">
               <div><h2 className="break-words text-base font-bold">{design.title}</h2><p className="mt-0.5 break-words text-sm text-stone-600">{design.placement} · {design.dpi} dpi</p></div>
               <div className="flex flex-wrap items-center gap-2">
                 {trash
                   ? <button className={line} type="button" disabled={busy} onClick={() => void change(design, 'restore')}>Restore</button>
                   : <Link className={line} href={href}>Edit poster</Link>}
-                <button className={button + ' text-[#9c1e2c] hover:bg-red-50'} type="button" disabled={busy} onClick={() => setConfirmation({
+                <button className={button + ' text-[#9c1e2c] hover:bg-red-50'} type="button" disabled={busy || exporting} onClick={() => setConfirmation({
                   title: trash ? 'Permanently delete poster?' : 'Delete poster?',
                   detail: trash ? `“${design.title}” will be erased. Its printed QR link will keep working.`
                     : `“${design.title}” will move to Trash. Its printed QR link will keep working.`,

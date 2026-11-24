@@ -63,7 +63,7 @@ export default async function AcquisitionPage({ params, searchParams }: {
       const url = publicAcquisitionLink(placement.code);
       const options = { errorCorrectionLevel: 'M' } as const;
       return {
-        ...design, code: placement.code, placement: placement.label,
+        ...design, code: placement.code, placement: placement.label, trackingUrl: url,
         thumbnail: previews.get(design.id),
         cells: QRCode.create(url, options).modules.size + 2 * QUIET_MODULES,
         qrPreview: await QRCode.toDataURL(url, { ...options, margin: QUIET_MODULES, scale: 3, color: { light: '#00000000' } }),

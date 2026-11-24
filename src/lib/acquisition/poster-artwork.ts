@@ -252,13 +252,18 @@ export function withPngPrintDpi(buffer: ArrayBuffer, dpi: number) {
   density[16] = 1;
   view.setUint32(17, crc32(density.subarray(4, 17)));
 
+  const chunks = [...pngChunks(bytes)];
+  const srgb = new Uint8Array([0, 0, 0, 1, 115, 82, 71, 66, 0, 0, 0, 0, 0]);
+  new DataView(srgb.buffer).setUint32(9, crc32(srgb.subarray(4, 9)));
+  const hasColorProfile = chunks.some(({ type }) => type === 'iCCP' || type === 'sRGB');
   const pieces: Uint8Array<ArrayBuffer>[] = [bytes.subarray(0, 8)];
   let inserted = false;
-  for (const chunk of pngChunks(bytes)) {
+  for (const chunk of chunks) {
     if (chunk.type === 'pHYs') continue;
     pieces.push(bytes.subarray(chunk.start, chunk.end));
     if (chunk.type === 'IHDR' && !inserted) {
       pieces.push(density);
+      if (!hasColorProfile) pieces.push(srgb);
       inserted = true;
     }
   }
