@@ -148,8 +148,14 @@ function directLead(data: z.output<typeof directLeadSchema>): LeadInput {
     utmMedium: data.utmMedium ?? null,
     utmCampaign: data.utmCampaign ?? null,
     utmContent: data.utmContent ?? null,
-    externalEventId: null,
-    application: data.application ?? null,
+    externalEventId: data.submissionId && data.application ? `website-application:${data.submissionId}` : null,
+    application: data.application ? {
+      ...data.application,
+      attribution: {
+        ...data.application.attribution,
+        utmContent: data.utmSource === 'ieltslab' ? data.utmContent ?? null : null,
+      },
+    } : null,
   };
 }
 
@@ -228,21 +234,17 @@ export async function POST(request: Request) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      const existingProspect = await tx.prospect.findUnique({
-        where: { phone: lead.phone },
-        select: { id: true, email: true, name: true },
-      });
-      const prospect = existingProspect
-        ? await tx.prospect.update({
-          where: { id: existingProspect.id },
-          data: {
-            ...(!existingProspect.email && lead.email ? { email: lead.email } : {}),
-            ...(!existingProspect.name && lead.fullName ? { name: lead.fullName } : {}),
-          },
-        })
-        : await tx.prospect.create({
-          data: { phone: lead.phone, email: lead.email, name: lead.fullName },
-        });
+      // A concurrent application for the same number must reuse the contact.
+      // Keep any established name and email when another enquiry arrives.
+      const [prospect] = await tx.$queryRaw<Array<{ id: string }>>`
+        INSERT INTO app_private."Prospect" AS prospect ("phone", "name", "email", "updatedAt")
+        VALUES (${lead.phone}, ${lead.fullName}, ${lead.email}, CURRENT_TIMESTAMP)
+        ON CONFLICT ("phone") DO UPDATE SET
+          "name" = COALESCE(NULLIF(prospect."name", ''), EXCLUDED."name", prospect."name"),
+          "email" = COALESCE(NULLIF(prospect."email", ''), EXCLUDED."email", prospect."email"),
+          "updatedAt" = CURRENT_TIMESTAMP
+        RETURNING "id"
+      `;
 
       await tx.leadMagnetDownload.create({
         data: {
@@ -273,7 +275,16 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (lead.externalEventId && isExternalEventDuplicate(error)) {
-      return NextResponse.json({ success: true, duplicate: true });
+      if (!tallySignature) {
+        const original = await prisma.leadMagnetDownload.findUnique({
+          where: { externalEventId: lead.externalEventId },
+          select: { prospect: { select: { phone: true } } },
+        });
+        if (original?.prospect.phone !== lead.phone) {
+          return NextResponse.json({ error: 'This submission has already been used.' }, { status: 409 });
+        }
+      }
+      return NextResponse.json({ success: true, duplicate: true }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
     console.error('Lead submission failed:', error);

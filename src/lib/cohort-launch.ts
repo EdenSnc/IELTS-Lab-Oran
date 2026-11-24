@@ -21,6 +21,7 @@ export const cohortLaunch = {
     closedTitle: 'First-cohort applications closed (26 Nov 2026)',
     closedDesc: 'Applications for the first Oran cohort have closed. Join the waitlist to share your availability for the next cohort.',
     closedCta: 'Join the waitlist',
+    waitlistNote: 'Share your availability to hear about the next cohort.',
   },
   fr: {
     category: 'Actualités IELTS Lab',
@@ -36,6 +37,7 @@ export const cohortLaunch = {
     closedTitle: 'Candidatures clôturées pour le 1er groupe (26 nov. 2026)',
     closedDesc: 'Les candidatures au premier groupe sont clôturées. Rejoignez la liste d’attente et indiquez vos disponibilités pour le prochain groupe à Oran.',
     closedCta: 'Rejoindre la liste d’attente',
+    waitlistNote: 'Indiquez vos disponibilités pour recevoir les informations sur le prochain groupe.',
   },
   ar: {
     category: 'أخبار IELTS Lab',
@@ -51,5 +53,6 @@ export const cohortLaunch = {
     closedTitle: 'انتهت فترة التقديم للمجموعة الأولى (26 نوفمبر 2026)',
     closedDesc: 'أُغلقت طلبات المجموعة الأولى في وهران. انضم إلى قائمة الانتظار وأرسل أوقات تفرّغك للدفعة القادمة.',
     closedCta: 'الانضمام إلى قائمة الانتظار',
+    waitlistNote: 'أرسل أوقات تفرّغك لتصلك معلومات الدفعة القادمة.',
   },
 };

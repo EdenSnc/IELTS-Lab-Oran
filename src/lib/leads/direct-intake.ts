@@ -29,6 +29,7 @@ export const directLeadSchema = z.object({
   utmCampaign: optionalText,
   utmContent: optionalText,
   formName: z.string().trim().min(1).max(200).default('Direct Submission'),
+  submissionId: z.uuid().optional(),
   source: z.enum(['lead_magnet_pdf', 'workshop', 'cohort_waitlist', 'unknown']).default('unknown'),
   application: applicationSchema.optional(),
 }).strict();

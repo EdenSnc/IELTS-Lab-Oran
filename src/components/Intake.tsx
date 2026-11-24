@@ -11,7 +11,6 @@ import {
 import type { Locale } from '@/lib/seo';
 import ApplicationForm from './ApplicationForm';
 import TrustBadges from './TrustBadges';
-import { useState, useEffect } from 'react';
 import type { CohortStatus } from '@/lib/cohort';
 
 interface IntakeProps {
@@ -26,24 +25,11 @@ export default function Intake({ cohortStatus }: IntakeProps) {
 
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '213780343103';
 
-  const [localClaimed, setLocalClaimed] = useState(cohortStatus.claimed);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        if (window.localStorage.getItem('ielts_cohort_signed_up')) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setLocalClaimed(Math.min(cohortStatus.claimed + 1, cohortStatus.total));
-        }
-      } catch {
-        // ignore
-      }
-    }
-  }, [cohortStatus.claimed, cohortStatus.total]);
-
   const deadlinePassed = isCohortDeadlinePassed();
+  const waitlist = deadlinePassed || cohortStatus.isFull;
+  const confirmedSeats = cohortStatus.claimed;
   const fillPct = cohortStatus.total > 0
-    ? Math.round((localClaimed / cohortStatus.total) * 100)
+    ? Math.round((confirmedSeats / cohortStatus.total) * 100)
     : 0;
 
   return (
@@ -61,26 +47,28 @@ export default function Intake({ cohortStatus }: IntakeProps) {
           {/* Left Column: Info */}
           <div className="min-w-0 px-2 pt-2 md:px-0 md:pt-0">
             <p className="mb-2 text-xs font-bold text-gray-300">{t('badge')}</p>
-            <h2 className="mb-3 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">{t('title')}</h2>
+            <h2 className="mb-3 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">{waitlist ? launch.closedCta : t('title')}</h2>
 
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <p className="text-3xl font-extrabold md:text-4xl">{t('fee')}</p>
-              <p className="text-sm font-semibold text-gray-300">{t('feeTitle')}</p>
-            </div>
-            {deadlinePassed ? (
+            {waitlist ? (
               <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
-                <p className="font-bold">{t('closedBadge')}</p>
-                <p className="mt-1 text-amber-100/90 leading-relaxed">{t('closedNote')}</p>
+                <p className="font-bold">{deadlinePassed ? t('closedBadge') : ct('full')}</p>
+                <p className="mt-1 text-amber-100/90 leading-relaxed">{deadlinePassed ? t('closedNote') : launch.waitlistNote}</p>
               </div>
             ) : (
-              <p className="mt-2 text-sm font-semibold">
-                {launch.deadlineLabel} · <time dateTime={COHORT_APPLICATION_DEADLINE}>{launch.deadline}</time>
-              </p>
+              <>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <p className="text-3xl font-extrabold md:text-4xl">{t('fee')}</p>
+                  <p className="text-sm font-semibold text-gray-300">{t('feeTitle')}</p>
+                </div>
+                <p className="mt-2 text-sm font-semibold">
+                  {launch.deadlineLabel} · <time dateTime={COHORT_APPLICATION_DEADLINE}>{launch.deadline}</time>
+                </p>
+              </>
             )}
           </div>
 
           <div className="min-w-0 rounded-2xl border border-white/15 bg-white p-4 text-charcoal shadow-xl md:col-start-2 md:row-span-2 md:row-start-1 md:rounded-3xl md:p-8">
-            <ApplicationForm />
+            <ApplicationForm waitlist={waitlist} />
           </div>
 
           <details className="min-w-0 rounded-2xl border border-white/15 bg-white/5 px-3 py-3 md:col-start-1 md:row-start-2 md:px-4">
@@ -112,7 +100,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
             </div>
 
             {/* Founding Cohort Counter / Capacity summary */}
-            {localClaimed === 0 && !cohortStatus.isFull ? (
+            {confirmedSeats === 0 && !waitlist ? (
               <div className="w-full max-w-sm bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2rem] px-6 py-4 flex flex-col items-start gap-1.5 mb-8">
                 <p className="text-sm font-bold text-white">{t('capacitySummary')}</p>
                 <p className="text-xs text-white/70">{ct('discountNote')}</p>
@@ -123,10 +111,10 @@ export default function Intake({ cohortStatus }: IntakeProps) {
                   <span className="text-white/70">
                     {cohortStatus.isFull
                       ? ct('full')
-                      : ct('claimedText', { claimed: localClaimed, total: cohortStatus.total })}
+                      : ct('claimedText', { claimed: confirmedSeats, total: cohortStatus.total })}
                   </span>
                   <span className="text-white font-bold">
-                    {localClaimed}/{cohortStatus.total}
+                    {confirmedSeats}/{cohortStatus.total}
                   </span>
                 </div>
                 <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
@@ -135,7 +123,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
                     style={{ width: `${fillPct}%` }}
                   />
                 </div>
-                {!cohortStatus.isFull && (
+                {!waitlist && (
                   <p className="text-xs text-white/70 text-center">{ct('discountNote')}</p>
                 )}
               </div>

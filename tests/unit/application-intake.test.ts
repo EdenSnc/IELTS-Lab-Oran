@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { applicationSchema, boundedTallyAnswer } from '../../src/lib/leads/application';
 import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '../../src/lib/leads/direct-intake';
+import { resolveVisitUtms } from '../../src/lib/acquisition/utm-client';
 
 const validApplication = {
   schemaVersion: 2,
@@ -87,4 +88,37 @@ test('common WhatsApp phone formats are accepted consistently and invalid fields
   const result = directLeadSchema.safeParse({ phone: '0123', application: { ...validApplication, schemaVersion: 3 } });
   assert.equal(result.success, false);
   if (!result.success) assert.deepEqual(invalidLeadFields(result.error.issues), ['phone', 'availability']);
+});
+
+test('availability is ordered and overlapping or adjacent windows become one window', () => {
+  const application = applicationSchema.parse({
+    ...validApplication, schemaVersion: 3, availability: { mode: 'windows', windows: [
+      { day: 'fri', startHour: 18, endHour: 21 },
+      { day: 'sun', startHour: 8, endHour: 9 },
+      { day: 'fri', startHour: 16, endHour: 18 },
+      { day: 'fri', startHour: 17, endHour: 19 },
+      { day: 'sun', startHour: 20, endHour: 22 },
+    ] },
+  });
+  assert.deepEqual(application.availability, { mode: 'windows', windows: [
+    { day: 'sun', startHour: 8, endHour: 9 },
+    { day: 'sun', startHour: 20, endHour: 22 },
+    { day: 'fri', startHour: 16, endHour: 21 },
+  ] });
+});
+
+test('a retry key is optional for legacy clients and invalid keys are rejected', () => {
+  const contact = { phone: '0555000000', application: validApplication };
+  assert.equal(directLeadSchema.safeParse(contact).success, true);
+  assert.equal(directLeadSchema.safeParse({ ...contact, submissionId: crypto.randomUUID() }).success, true);
+  assert.equal(directLeadSchema.safeParse({ ...contact, submissionId: 'not-a-uuid' }).success, false);
+});
+
+test('an explicit new campaign replaces old attribution rather than inheriting a poster code', () => {
+  const poster = { utm_content: 'W17khKhvB-6o', utm_source: 'ieltslab', utm_medium: 'poster' };
+  assert.equal(resolveVisitUtms(new URLSearchParams(), poster).utm_content, poster.utm_content);
+  const newVisit = resolveVisitUtms(new URLSearchParams('utm_source=instagram'), poster);
+  assert.equal(newVisit.utm_source, 'instagram');
+  assert.equal(newVisit.utm_content, null);
+  assert.equal(newVisit.utm_medium, null);
 });

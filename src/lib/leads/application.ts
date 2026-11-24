@@ -65,6 +65,9 @@ export const applicationSchema = z.object({
 }).transform((application) => ({
   ...application,
   universityAdmission: application.purpose === 'higher_education' ? application.universityAdmission : null,
+  bookedExamDate: application.bookedExam ? application.bookedExamDate : null,
+  targetExamDate: application.bookedExam ? null : application.targetExamDate,
+  recentScore: application.takenIelts ? application.recentScore : null,
 }));
 
 export type ApplicationData = z.infer<typeof applicationSchema>;

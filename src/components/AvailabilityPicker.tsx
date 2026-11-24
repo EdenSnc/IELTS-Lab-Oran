@@ -5,6 +5,7 @@ import {
   availabilityCopy,
   formatAvailabilityHour,
   maxAvailabilityWindows,
+  mergeAvailabilityWindows,
   weekdays,
   type AvailabilityWindow,
 } from '@/lib/leads/availability';
@@ -26,9 +27,7 @@ export default function AvailabilityPicker({ locale, windows, onChange, onDraft 
   function addWindow() {
     if (!day || !start || !end || Number(start) >= Number(end) || windows.length >= maxAvailabilityWindows) return;
     const window = { day, startHour: Number(start), endHour: Number(end) };
-    if (!windows.some((value) => value.day === day && value.startHour === window.startHour && value.endHour === window.endHour)) {
-      onChange([...windows, window].sort((a, b) => weekdays.indexOf(a.day) - weekdays.indexOf(b.day) || a.startHour - b.startHour));
-    }
+    onChange(mergeAvailabilityWindows([...windows, window]));
     setStart('');
     setEnd('');
     onDraft(false);
@@ -51,8 +50,9 @@ export default function AvailabilityPicker({ locale, windows, onChange, onDraft 
             <select name="availabilityStart" dir="ltr" className={inputClass} value={start} onChange={(event) => {
               const value = event.target.value;
               setStart(value);
-              if (Number(end) <= Number(value)) setEnd('');
-              onDraft(Boolean(value || end));
+              const compatibleEnd = value && Number(end) > Number(value) ? end : '';
+              setEnd(compatibleEnd);
+              onDraft(Boolean(value || compatibleEnd));
             }}>
               <option value="">—</option>
               {hours.slice(0, -1).map((hour) => <option key={hour} value={hour}>{formatAvailabilityHour(hour)}</option>)}

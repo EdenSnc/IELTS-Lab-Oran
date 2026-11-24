@@ -88,17 +88,19 @@ const copy = {
 const fieldClass = 'min-w-0 h-12 w-full rounded-2xl border border-black/10 bg-black/[0.025] px-3 text-base text-charcoal outline-none transition focus:border-crimson/45 focus:bg-white focus:ring-4 focus:ring-crimson/[0.07] md:px-4';
 const labelClass = 'grid min-w-0 gap-2 text-sm font-semibold text-black/70';
 const fieldFeedback = {
-  en: { phone: 'Enter a WhatsApp number such as 0555 00 00 00 or +213 555 00 00 00.', check: 'Check this answer' },
-  fr: { phone: 'Entrez un numéro WhatsApp comme 0555 00 00 00 ou +213 555 00 00 00.', check: 'Réponse à vérifier' },
-  ar: { phone: 'أدخل رقم واتساب مثل 0555 00 00 00 أو ‎+213 555 00 00 00.', check: 'الإجابة التي تحتاج إلى مراجعة' },
+  en: { phone: 'Enter a WhatsApp number such as 0555 00 00 00 or +213 555 00 00 00.', check: 'Check this answer', waitlist: 'I agree to be contacted about the next cohort and will review its timetable and fee before enrolling.' },
+  fr: { phone: 'Entrez un numéro WhatsApp comme 0555 00 00 00 ou +213 555 00 00 00.', check: 'Réponse à vérifier', waitlist: 'J’accepte d’être contacté pour le prochain groupe et de vérifier ses horaires et son tarif avant de m’inscrire.' },
+  ar: { phone: 'أدخل رقم واتساب مثل 0555 00 00 00 أو ‎+213 555 00 00 00.', check: 'الإجابة التي تحتاج إلى مراجعة', waitlist: 'أوافق على التواصل معي بشأن الدفعة القادمة وسأراجع مواعيدها ورسومها قبل التسجيل.' },
 };
 
-export default function ApplicationForm() {
+export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
   const locale = useLocale() as Locale;
   const text = copy[locale] ?? copy.en;
   const feedback = fieldFeedback[locale] ?? fieldFeedback.en;
   const schedule = availabilityCopy[locale] ?? availabilityCopy.en;
   const formRef = useRef<HTMLFormElement>(null);
+  const submitting = useRef(false);
+  const lastSubmission = useRef<{ body: string; id: string }>(undefined);
   const [step, setStep] = useState(0);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
@@ -147,7 +149,7 @@ export default function ApplicationForm() {
 
   function advance() {
     if (!validateStep(step)) return;
-    setStep((current) => Math.min(5, current + 1));
+    setStep(Math.min(5, step + 1));
   }
 
   function referrerHost() {
@@ -179,12 +181,19 @@ export default function ApplicationForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting.current || complete) return;
+    if (step < 5) {
+      advance();
+      return;
+    }
     if (!validateStep(5)) return;
     const form = new FormData(event.currentTarget);
     const query = new URLSearchParams(window.location.search);
     const utms = readActiveUtms();
+    submitting.current = true;
     setPending(true);
     setMessage(undefined);
+    let requestTimeout: number | undefined;
 
     try {
       const fullName = String(form.get('fullName') ?? '').trim();
@@ -216,10 +225,17 @@ export default function ApplicationForm() {
         showFieldError(invalidLeadFields(parsed.error.issues));
         return;
       }
+      const body = JSON.stringify(parsed.data);
+      if (lastSubmission.current?.body !== body) {
+        lastSubmission.current = { body, id: crypto.randomUUID() };
+      }
+      const controller = new AbortController();
+      requestTimeout = window.setTimeout(() => controller.abort(), 15_000);
       const response = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed.data),
+        body: JSON.stringify({ ...parsed.data, submissionId: lastSubmission.current.id }),
+        signal: controller.signal,
       });
       const payload = await response.json() as { fields?: string[] };
       if (!response.ok) {
@@ -231,11 +247,12 @@ export default function ApplicationForm() {
       const handoff = `https://wa.me/${number}?text=${encodeURIComponent(text.handoff.replace('{name}', fullName))}`;
       setComplete(true);
       setWhatsappUrl(handoff);
-      try { window.localStorage.setItem('ielts_cohort_signed_up', 'true'); } catch { /* optional */ }
       window.setTimeout(() => window.location.assign(handoff), 1_800);
-    } catch (error) {
-      setMessage(error instanceof Error && error.message !== 'Unable to save lead.' ? error.message : text.error);
+    } catch {
+      setMessage(text.error);
     } finally {
+      window.clearTimeout(requestTimeout);
+      submitting.current = false;
       setPending(false);
     }
   }
@@ -254,7 +271,7 @@ export default function ApplicationForm() {
 
   return (
     <form ref={formRef} onSubmit={submit} noValidate className="flex min-w-0 flex-col md:min-h-[34rem]">
-      {step === 0 ? (
+      {step === 0 && (
         <div className="flex flex-1 flex-col">
           <p className="hidden text-xs font-bold uppercase tracking-[0.18em] text-[#b81428] md:block">{text.eyebrow}</p>
           <h3 className="text-2xl font-bold leading-tight tracking-[-0.035em] text-charcoal md:mt-3 md:text-3xl">{text.title}</h3>
@@ -269,8 +286,8 @@ export default function ApplicationForm() {
           </div>
           <button type="button" onClick={advance} className="mt-4 min-h-12 w-full rounded-full bg-charcoal px-4 py-2 text-base font-bold text-white transition hover:bg-[#c4162c] md:mt-6">{text.begin}</button>
         </div>
-      ) : (
-        <>
+      )}
+      <div className={step === 0 ? 'hidden' : 'contents'}>
           <div>
             <div className="flex items-center justify-between gap-4 text-xs font-bold uppercase tracking-[0.14em] text-gray-600"><span>{text.step.replace('{current}', String(step)).replace('{total}', '5')}</span><span className="text-[#b81428]">{text.sections[step - 1]}</span></div>
             <div className="mt-3 h-1 overflow-hidden rounded-full bg-black/[0.08]"><div className="h-full rounded-full bg-[#c4162c] transition-[width]" style={{ width: `${step * 20}%` }} /></div>
@@ -321,7 +338,7 @@ export default function ApplicationForm() {
               {schedule.flexible}
             </label>
             {!flexibleSchedule && <AvailabilityPicker locale={locale} windows={windows} onChange={setWindows} onDraft={setScheduleDraft} />}
-            <label className="flex cursor-pointer gap-4 rounded-2xl border border-black/10 bg-black/[0.025] p-5 text-sm font-medium leading-6 text-gray-800"><input className="mt-1 h-5 w-5 shrink-0 accent-crimson" type="checkbox" name="commitmentAccepted" value="yes" required /><span>{text.commitment}</span></label>
+            <label className="flex cursor-pointer gap-4 rounded-2xl border border-black/10 bg-black/[0.025] p-5 text-sm font-medium leading-6 text-gray-800"><input className="mt-1 h-5 w-5 shrink-0 accent-crimson" type="checkbox" name="commitmentAccepted" value="yes" required /><span>{waitlist ? feedback.waitlist : text.commitment}</span></label>
             <p className="text-xs leading-5 text-gray-600">{text.privacy}</p>
           </fieldset>
 
@@ -329,8 +346,7 @@ export default function ApplicationForm() {
             <button type="button" disabled={pending} onClick={() => { setMessage(undefined); setStep((current) => Math.max(0, current - 1)); }} className="h-12 rounded-full border border-black/10 px-5 text-sm font-semibold text-charcoal transition hover:border-black/20 hover:bg-black/[0.025] disabled:opacity-50">{text.back}</button>
             {step < 5 ? <button type="button" onClick={advance} className="h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson">{text.next}</button> : <button disabled={pending} className="h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson disabled:cursor-wait disabled:opacity-55">{pending ? text.pending : text.submit}</button>}
           </div>
-        </>
-      )}
+      </div>
     </form>
   );
 }

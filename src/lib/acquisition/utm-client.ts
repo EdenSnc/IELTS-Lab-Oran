@@ -11,6 +11,26 @@ export type AttributionParams = {
   utm_term: string | null;
 };
 
+function taggedVisit(query: URLSearchParams): Partial<AttributionParams> | null {
+  const next: Partial<AttributionParams> = {};
+  for (const key of UTM_KEYS) {
+    const value = query.get(key)?.trim();
+    if (value) next[key] = value.slice(0, 200);
+  }
+  return Object.keys(next).length ? next : null;
+}
+
+export function resolveVisitUtms(query: URLSearchParams, previous: Partial<AttributionParams>): AttributionParams {
+  const active = taggedVisit(query) ?? previous;
+  return {
+    utm_source: active.utm_source ?? null,
+    utm_medium: active.utm_medium ?? null,
+    utm_campaign: active.utm_campaign ?? null,
+    utm_content: active.utm_content ?? null,
+    utm_term: active.utm_term ?? null,
+  };
+}
+
 function readStored(): Partial<AttributionParams> {
   if (typeof window === 'undefined') return {};
   try {
@@ -31,15 +51,8 @@ function readStored(): Partial<AttributionParams> {
 export function captureLandingUtms() {
   if (typeof window === 'undefined') return;
   try {
-    const query = new URLSearchParams(window.location.search);
-    const hasAny = UTM_KEYS.some((key) => Boolean(query.get(key)));
-    if (!hasAny) return;
-    const next: Partial<AttributionParams> = {};
-    for (const key of UTM_KEYS) {
-      const value = query.get(key)?.trim();
-      if (value) next[key] = value.slice(0, 200);
-    }
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    const next = taggedVisit(new URLSearchParams(window.location.search));
+    if (next) window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {
     // sessionStorage unavailable
   }
@@ -49,14 +62,5 @@ export function readActiveUtms(): AttributionParams {
   if (typeof window === 'undefined') {
     return { utm_source: null, utm_medium: null, utm_campaign: null, utm_content: null, utm_term: null };
   }
-  const query = new URLSearchParams(window.location.search);
-  const stored = readStored();
-  const get = (key: typeof UTM_KEYS[number]) => query.get(key)?.trim().slice(0, 200) || stored[key] || null;
-  return {
-    utm_source: get('utm_source'),
-    utm_medium: get('utm_medium'),
-    utm_campaign: get('utm_campaign'),
-    utm_content: get('utm_content'),
-    utm_term: get('utm_term'),
-  };
+  return resolveVisitUtms(new URLSearchParams(window.location.search), readStored());
 }

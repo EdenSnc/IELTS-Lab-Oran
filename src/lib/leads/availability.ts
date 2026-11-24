@@ -11,13 +11,29 @@ const windowSchema = z.object({
 
 export type AvailabilityWindow = z.infer<typeof windowSchema>;
 
+export function mergeAvailabilityWindows(windows: AvailabilityWindow[]): AvailabilityWindow[] {
+  const ordered = [...windows].sort((a, b) => weekdays.indexOf(a.day) - weekdays.indexOf(b.day) || a.startHour - b.startHour);
+  const merged: AvailabilityWindow[] = [];
+  for (const window of ordered) {
+    const last = merged.at(-1);
+    if (last?.day === window.day && last.endHour >= window.startHour) {
+      last.endHour = Math.max(last.endHour, window.endHour);
+    } else {
+      merged.push({ ...window });
+    }
+  }
+  return merged;
+}
+
 export const availabilitySchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('flexible') }).strict(),
   z.object({
     mode: z.literal('windows'),
     windows: z.array(windowSchema).min(1).max(maxAvailabilityWindows),
   }).strict(),
-]);
+]).transform((availability) => availability.mode === 'windows'
+  ? { ...availability, windows: mergeAvailabilityWindows(availability.windows) }
+  : availability);
 
 export function formatAvailabilityHour(hour: number) {
   return `${String(hour).padStart(2, '0')}:00`;
