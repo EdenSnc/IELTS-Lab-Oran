@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 
-type Design = { id: string; title: string; version: number; width: number; height: number; dpi: number; code: string; placement: string };
+type Design = { id: string; title: string; version: number; width: number; height: number; x: number; y: number; size: number;
+  dpi: number; code: string; placement: string; thumbnail?: string; qrPreview: string };
 type Location = { code: string; label: string; campaign: string };
 type Action = 'trash' | 'restore' | 'purge';
 const button = 'inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors disabled:opacity-50 motion-reduce:transition-none';
@@ -83,7 +84,7 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
           </> : <Link className={line} href={`${base}?view=tracking`}>Add a tracking location</Link>}
         </form>
       )}
-      <div className="flex flex-wrap items-center gap-3" role="status">
+      <div className="flex flex-wrap items-center gap-3 empty:hidden" role="status">
         {message && <p className="text-sm font-semibold text-charcoal">{message}</p>}
         {undo && <button type="button" disabled={busy} className={line} onClick={() => void change(undo, 'restore')}>Undo</button>}
       </div>
@@ -95,10 +96,18 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
           const href = `${base}/poster/${encodeURIComponent(design.code)}?design=${design.id}`;
           const poster = (
             <div className="grid h-48 place-items-center overflow-hidden rounded-[1.15rem] bg-[#f3f0ed] p-4">
-              {/* The image is private, so the browser loads it with the founder's session. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img loading="lazy" decoding="async" alt="" src={`/api/staff/posters?id=${design.id}&thumbnail=1&v=${design.version}`}
-                className="h-full min-h-0 max-w-full rounded-sm object-contain drop-shadow-md" />
+              <div className="relative max-w-full overflow-hidden rounded-sm shadow-md" style={{
+                width: `${10 * design.width / design.height}rem`, aspectRatio: `${design.width}/${design.height}`,
+              }}>
+                {/* Private previews are either included in the owner page or loaded with their session. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img loading={design.thumbnail ? 'eager' : 'lazy'} alt="" src={design.thumbnail ?? `/api/staff/posters?id=${design.id}&thumbnail=1&v=${design.version}`}
+                  className="block size-full object-fill" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img alt="" src={design.qrPreview} className="absolute aspect-square" style={{
+                  left: `${design.x / design.width * 100}%`, top: `${design.y / design.height * 100}%`, width: `${design.size / design.width * 100}%`,
+                }} />
+              </div>
             </div>
           );
           return <article key={design.id} className="min-w-0 rounded-[1.4rem] border border-stone-200 bg-white p-2 shadow-[0_2px_12px_#1f151008]">

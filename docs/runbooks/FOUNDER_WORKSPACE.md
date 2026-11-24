@@ -19,5 +19,12 @@ short save feedback and use Archive and Restore for removal. Keep printed
 QR identifiers stable. Use a short, dismissible orientation in the workspace
 and guide first use at the point of action.
 
+Posters are saved print designs linked to a tracking location. The library
+stores the original PNG or JPEG, placement and DPI. Moving a design to Trash
+or purging it leaves the location and its scan history intact. Campaigns with
+tracking locations can be archived and restored. Empty archived campaigns can
+be permanently deleted. The editor adjusts QR width by one pixel and reserves
+the four-module quiet zone required for scanning.
+
 The workspace and its marketing/application APIs require ADMIN and MFA.
 Examiner and learner tools use their own permissions.

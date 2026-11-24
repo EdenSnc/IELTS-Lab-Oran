@@ -44,7 +44,8 @@ export default async function AcquisitionPage({ params, searchParams }: {
       prisma.posterDesign.findMany({
         where: { deletedAt: trash ? { not: null } : null },
         orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
-        select: { id: true, title: true, width: true, height: true, dpi: true, version: true, placement: { select: { code: true, label: true } } },
+        select: { id: true, title: true, width: true, height: true, x: true, y: true, size: true,
+          dpi: true, version: true, placement: { select: { code: true, label: true } } },
       }),
       trash ? [] : prisma.acquisitionPlacement.findMany({
         where: { archivedAt: null, campaign: { archivedAt: null } },
@@ -52,11 +53,23 @@ export default async function AcquisitionPage({ params, searchParams }: {
         select: { code: true, label: true, campaign: { select: { name: true } } },
       }),
     ]);
+    const thumbnails = designs.length ? await prisma.posterDesign.findMany({
+      where: { id: { in: designs.slice(0, 9).map(({ id }) => id) } },
+      select: { id: true, thumbnail: true },
+    }) : [];
+    const previews = new Map(thumbnails.map(({ id, thumbnail }) => [id, `data:image/jpeg;base64,${Buffer.from(thumbnail).toString('base64')}`]));
+    const cards = await Promise.all(designs.map(async ({ placement, ...design }) => ({
+      ...design,
+      code: placement.code,
+      placement: placement.label,
+      thumbnail: previews.get(design.id),
+      qrPreview: await QRCode.toDataURL(publicAcquisitionLink(placement.code), { margin: 4, scale: 2, errorCorrectionLevel: 'M' }),
+    })));
     return <div className="space-y-5 sm:space-y-6">
       <h1 className="text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-none tracking-tight">Posters</h1>
       {tabs}
       <PosterLibrary key={current} base={base} trash={trash}
-        designs={designs.map(({ placement, ...design }) => ({ ...design, code: placement.code, placement: placement.label }))}
+        designs={cards}
         locations={locations.map(({ code, label, campaign }) => ({ code, label, campaign: campaign.name }))} />
     </div>;
   }
