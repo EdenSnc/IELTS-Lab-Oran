@@ -3,8 +3,21 @@ import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin } from '@/lib/http/api';
-import { actionSchema } from '@/lib/acquisition/validation';
+import { actionSchema, codeSchema } from '@/lib/acquisition/validation';
 import prisma from '@/lib/prisma';
+
+export async function GET(request: Request) {
+  try {
+    await requirePrivilegedRequestUser(request, ['ADMIN', 'CONTENT_REVIEWER']);
+    const code = codeSchema.safeParse(new URL(request.url).searchParams.get('code'));
+    if (!code.success) return NextResponse.json({ error: 'INVALID_PLACEMENT' }, { status: 400 });
+    const placement = await prisma.acquisitionPlacement.findUnique({ where: { code: code.data }, select: { active: true } });
+    if (!placement) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
+    return NextResponse.json(placement, { headers: { 'Cache-Control': 'private, no-store' } });
+  } catch (error) {
+    return apiError(error, 'ACQUISITION_STATUS_FAILED');
+  }
+}
 
 export async function POST(request: Request) {
   try {

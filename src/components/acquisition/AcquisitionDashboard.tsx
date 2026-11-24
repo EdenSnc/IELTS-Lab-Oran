@@ -169,6 +169,7 @@ export default function AcquisitionDashboard({ locale, campaigns, canViewApplica
                       <div><dt className="text-xs text-gray-600">Applications</dt><dd className="text-xl font-bold tabular-nums">{placement.leadSubmissions ?? '—'}</dd></div>
                     </dl>
                     <div className="flex flex-wrap gap-2">
+                      <Link href={`/${locale}/admin/acquisition/poster/${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center rounded-lg bg-charcoal px-3 text-sm font-bold text-white hover:bg-crimson">Edit poster</Link>
                       <a href={placement.qrDataUrl} download={`ieltslab-${placement.code}.png`} className={actionStyle}>Download QR</a>
                       <button type="button" onClick={() => void copyLink(placement.url)} className={actionStyle}>Copy link</button>
                       {canViewApplications && placement.firstParty && (
