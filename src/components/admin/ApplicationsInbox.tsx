@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useRef, useState, type FormEvent } from 'react';
 import AvailabilityPicker from '@/components/AvailabilityPicker';
+import ConfirmAction, { type Confirmation } from './ConfirmAction';
 import { founderDetailsSchema, type FounderDetails } from '@/lib/admin/application-record';
 import { availabilityCopy, formatAvailabilityHour, weekdays, type AvailabilityWindow } from '@/lib/leads/availability';
 
@@ -83,6 +84,7 @@ export default function ApplicationsInbox({ rows, archived }: { rows: InboxItem[
   const [editing, setEditing] = useState<string>();
   const [status, setStatus] = useState('');
   const [undo, setUndo] = useState<Record<string, unknown>>();
+  const [confirmation, setConfirmation] = useState<Confirmation>();
 
   async function save(payload: Record<string, unknown>, reversal?: Record<string, unknown>) {
     if (saving.current) return;
@@ -95,7 +97,7 @@ export default function ApplicationsInbox({ rows, archived }: { rows: InboxItem[
       });
       if (!response.ok) throw new Error(response.status === 401 || response.status === 403
         ? 'Sign in and complete two-step verification, then retry.' : 'The application could not be saved. Refresh before retrying.');
-      setStatus(payload.archived === true ? 'Application archived.' : payload.archived === false ? 'Application restored.' : 'Application saved.');
+      setStatus(payload.archived === true ? 'Application moved to Trash.' : payload.archived === false ? 'Application restored.' : 'Application saved.');
       setEditing(undefined);
       setUndo(reversal);
       router.refresh();
@@ -115,7 +117,7 @@ export default function ApplicationsInbox({ rows, archived }: { rows: InboxItem[
         <p role="status" className="text-sm font-semibold text-crimson">{pending ? 'Saving…' : status}</p>
         {undo && <button type="button" className={buttonClass} disabled={pending} onClick={() => void save(undo)}>Undo</button>}
       </div>
-      {!rows.length && <p className="rounded-2xl border border-gray-200 bg-white p-5 text-gray-600">{archived ? 'No archived applications.' : 'Applications will appear here as they arrive.'}</p>}
+      {!rows.length && <p className="rounded-2xl border border-gray-200 bg-white p-5 text-gray-600">{archived ? 'Trash is empty.' : 'Applications will appear here as they arrive.'}</p>}
       {rows.map((row) => (
         <details key={row.id} className="rounded-2xl border border-gray-200 bg-white">
           <summary className="cursor-pointer px-4 py-4 sm:px-5">
@@ -141,9 +143,16 @@ export default function ApplicationsInbox({ rows, archived }: { rows: InboxItem[
             {row.details.notes && <p className="whitespace-pre-wrap break-words rounded-lg bg-[#f5f4f1] p-3">{row.details.notes}</p>}
             <div className="flex flex-wrap gap-2">
               {!archived && editing !== row.id && <button type="button" className={buttonClass} onClick={() => setEditing(row.id)}>Edit application</button>}
-              <button type="button" disabled={pending} className={buttonClass}
-                onClick={() => void save({ action: 'archive', id: row.id, archived: !row.archived }, { action: 'archive', id: row.id, archived: row.archived })}>
-                {row.archived ? 'Restore application' : 'Archive application'}
+              <button type="button" disabled={pending} className={`${buttonClass} ${row.archived ? '' : 'text-[#9c1e2c]'}`}
+                onClick={() => {
+                  const perform = () => void save({ action: 'archive', id: row.id, archived: !row.archived }, { action: 'archive', id: row.id, archived: row.archived });
+                  if (row.archived) perform();
+                  else setConfirmation({
+                    title: 'Delete application?', detail: `The application for “${row.details.name || row.details.phone}” will move to Trash.`,
+                    confirmLabel: 'Move to Trash', perform,
+                  });
+                }}>
+                {row.archived ? 'Restore application' : 'Delete application'}
               </button>
             </div>
             {!archived && editing === row.id && <ApplicationEditor key={row.id} details={row.details} pending={pending}
@@ -151,6 +160,7 @@ export default function ApplicationsInbox({ rows, archived }: { rows: InboxItem[
           </div>
         </details>
       ))}
+      <ConfirmAction action={confirmation} onDismiss={() => setConfirmation(undefined)} />
     </div>
   );
 }

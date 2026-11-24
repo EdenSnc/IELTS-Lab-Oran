@@ -6,6 +6,7 @@ import PosterLibrary from '@/components/acquisition/PosterLibrary';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import { publicAcquisitionLink } from '@/lib/acquisition/public-link';
 import { isFirstPartyDestination } from '@/lib/acquisition/validation';
+import { QUIET_MODULES } from '@/lib/acquisition/poster-artwork';
 import prisma from '@/lib/prisma';
 import { CANONICAL_ORIGIN } from '@/lib/seo';
 
@@ -44,7 +45,7 @@ export default async function AcquisitionPage({ params, searchParams }: {
       prisma.posterDesign.findMany({
         where: { deletedAt: trash ? { not: null } : null },
         orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
-        select: { id: true, title: true, width: true, height: true, x: true, y: true, size: true,
+        select: { id: true, title: true, width: true, height: true, x: true, y: true, size: true, qrBackground: true, roundQr: true,
           dpi: true, version: true, placement: { select: { code: true, label: true } } },
       }),
       trash ? [] : prisma.acquisitionPlacement.findMany({
@@ -58,13 +59,16 @@ export default async function AcquisitionPage({ params, searchParams }: {
       select: { id: true, thumbnail: true },
     }) : [];
     const previews = new Map(thumbnails.map(({ id, thumbnail }) => [id, `data:image/jpeg;base64,${Buffer.from(thumbnail).toString('base64')}`]));
-    const cards = await Promise.all(designs.map(async ({ placement, ...design }) => ({
-      ...design,
-      code: placement.code,
-      placement: placement.label,
-      thumbnail: previews.get(design.id),
-      qrPreview: await QRCode.toDataURL(publicAcquisitionLink(placement.code), { margin: 4, scale: 2, errorCorrectionLevel: 'M' }),
-    })));
+    const cards = await Promise.all(designs.map(async ({ placement, ...design }) => {
+      const url = publicAcquisitionLink(placement.code);
+      const options = { errorCorrectionLevel: 'M' } as const;
+      return {
+        ...design, code: placement.code, placement: placement.label,
+        thumbnail: previews.get(design.id),
+        cells: QRCode.create(url, options).modules.size + 2 * QUIET_MODULES,
+        qrPreview: await QRCode.toDataURL(url, { ...options, margin: QUIET_MODULES, scale: 3, color: { light: '#00000000' } }),
+      };
+    }));
     return <div className="space-y-5 sm:space-y-6">
       <h1 className="text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-none tracking-tight">Posters</h1>
       {tabs}

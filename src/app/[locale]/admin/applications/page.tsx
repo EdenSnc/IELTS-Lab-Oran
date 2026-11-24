@@ -79,7 +79,7 @@ export default async function ApplicationsPage({ params, searchParams }: {
           {([false, true] as const).map((view) => (
             <Link key={String(view)} aria-current={archived === view ? 'page' : undefined} href={link({ archived: view, code })}
               className={`inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold ${archived === view ? 'bg-charcoal text-white' : 'text-gray-700 hover:bg-gray-100'}`}>
-              {view ? 'Archived' : 'Current'}
+              {view ? 'Trash' : 'Current'}
             </Link>
           ))}
         </nav>

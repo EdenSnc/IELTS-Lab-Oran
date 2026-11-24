@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { qrSizeLimits, type PosterPlacement } from './poster-artwork';
+import { isLightQrColor, qrSizeLimits, type PosterPlacement } from './poster-artwork';
 
 export const MAX_SAVED_ARTWORK_BYTES = 4 * 1024 * 1024;
 export const posterIdSchema = z.uuid();
@@ -13,6 +13,8 @@ export const posterSaveSchema = z.object({
   x: z.number().int().min(0).max(8192),
   y: z.number().int().min(0).max(8192),
   size: z.number().int().min(1).max(8192),
+  qrBackground: z.string().refine((value) => value === 'artwork' || isLightQrColor(value)).optional(),
+  roundQr: z.boolean().optional(),
 }).strict();
 
 export const posterMutationSchema = z.object({

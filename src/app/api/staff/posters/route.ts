@@ -93,12 +93,13 @@ export async function POST(request: Request) {
           const previous = await tx.posterDesign.findUnique({
             where: { id }, select: {
               version: true, placementId: true, deletedAt: true, artwork: true,
-              title: true, x: true, y: true, size: true, dpi: true,
+              title: true, x: true, y: true, size: true, dpi: true, qrBackground: true, roundQr: true,
             },
           });
           if (previous?.placementId !== placement.id || previous.version !== 1 || previous.deletedAt
             || previous.title !== layout.title || previous.x !== layout.x || previous.y !== layout.y
             || previous.size !== layout.size || previous.dpi !== layout.dpi
+            || previous.qrBackground !== (layout.qrBackground ?? '#ffffff') || previous.roundQr !== (layout.roundQr ?? false)
             || !Buffer.from(previous.artwork).equals(Buffer.from(incoming.artwork))) {
             throw new AuthError('POSTER_CONFLICT', 409);
           }

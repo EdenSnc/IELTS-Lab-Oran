@@ -3,7 +3,7 @@ import test from 'node:test';
 import sharp from 'sharp';
 import {
   checkPosterDimensions, initialPosterQr, inspectPoster, movePosterQr,
-  posterQrEdges, qrSizeLimits, resizePosterQr, withPngPrintDpi,
+  isEvenLightQrArea, isLightQrColor, posterQrBacking, posterQrEdges, qrSizeLimits, resizePosterQr, withPngPrintDpi,
 } from '../../src/lib/acquisition/poster-artwork';
 
 test('movement and resizing preserve the whole symbol and quiet zone inside the source', () => {
@@ -36,6 +36,25 @@ test('QR width increments by one pixel and renders crisp modules with the full q
     assert.ok(Math.min(...modules) >= 3);
     assert.ok(Math.max(...modules) - Math.min(...modules) <= 1);
   }
+});
+
+test('rounded backing keeps the entire QR quiet-zone square inside its curved corners', () => {
+  for (let size = 148; size <= 500; size++) {
+    const { radius, inset, codeSize } = posterQrBacking(size, 37, true);
+    assert.ok(codeSize >= 148);
+    assert.ok(Math.SQRT2 * (radius - inset) <= radius + 1e-9);
+    assert.equal(codeSize + 2 * inset, size);
+  }
+  assert.deepEqual(posterQrBacking(445, 37, false), { radius: 0, inset: 0, codeSize: 445 });
+});
+
+test('background color and transparency require a light, even area under black modules', () => {
+  assert.equal(isLightQrColor('#ffe8ee'), true);
+  assert.equal(isLightQrColor('#ba173b'), false);
+  assert.equal(isLightQrColor('pink'), false);
+  assert.equal(isEvenLightQrArea(new Uint8ClampedArray([255, 232, 238, 255, 255, 232, 238, 255])), true);
+  assert.equal(isEvenLightQrArea(new Uint8ClampedArray([255, 232, 238, 255, 156, 23, 59, 255])), false);
+  assert.equal(isEvenLightQrArea(new Uint8ClampedArray([255, 255, 255, 255, 220, 200, 218, 255])), false);
 });
 
 test('poster inspection validates type, size, truncation and advertised DPI', async () => {

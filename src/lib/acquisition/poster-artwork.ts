@@ -156,6 +156,42 @@ export function posterQrEdges(size: number, cells: number) {
     border + Math.round(index * (size - 2 * border) / symbol));
 }
 
+export function posterQrBacking(size: number, cells: number, rounded: boolean) {
+  // Leave the entire square quiet zone inside the rounded backing.
+  const radius = rounded ? Math.min(Math.round(size * 0.12), Math.max(0, size - 4 * cells - 1)) : 0;
+  const inset = Math.ceil(radius * (1 - Math.SQRT1_2));
+  return { radius, inset, codeSize: size - inset * 2 };
+}
+
+const linearSrgb = Array.from({ length: 256 }, (_, channel) => {
+  const value = channel / 255;
+  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+});
+
+function luminance(r: number, g: number, b: number) {
+  return 0.2126 * linearSrgb[r] + 0.7152 * linearSrgb[g] + 0.0722 * linearSrgb[b];
+}
+
+export function isLightQrColor(color: string) {
+  if (!/^#[\da-f]{6}$/i.test(color)) return false;
+  const value = Number.parseInt(color.slice(1), 16);
+  // Conservative print preset, measured with black modules on sRGB.
+  return luminance(value >> 16, (value >> 8) & 255, value & 255) >= 0.62;
+}
+
+export function isEvenLightQrArea(pixels: Uint8ClampedArray) {
+  if (!pixels.length) return false;
+  let darkest = 1;
+  let lightest = 0;
+  for (let i = 0; i < pixels.length; i += 4) {
+    const light = luminance(pixels[i], pixels[i + 1], pixels[i + 2]);
+    darkest = Math.min(darkest, light);
+    lightest = Math.max(lightest, light);
+    if (darkest < 0.62 || lightest - darkest > 0.12) return false;
+  }
+  return true;
+}
+
 export function initialPosterQr(art: Dimensions, cells: number): PosterPlacement {
   const { min, max } = qrSizeLimits(art, cells);
   if (max < min) throw new Error(`Use artwork at least ${min} pixels wide and tall for this QR code.`);

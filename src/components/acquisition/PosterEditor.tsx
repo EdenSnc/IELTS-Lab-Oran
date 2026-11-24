@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
 import {
-  checkPosterDimensions, initialPosterQr, inspectPoster, movePosterQr, posterQrEdges,
+  checkPosterDimensions, initialPosterQr, inspectPoster, isEvenLightQrArea, isLightQrColor, movePosterQr, posterQrBacking, posterQrEdges,
   qrSizeLimits, QUIET_MODULES, resizePosterQr, validDpi, withPngPrintDpi, type PosterPlacement,
 } from '@/lib/acquisition/poster-artwork';
 import { MAX_SAVED_ARTWORK_BYTES } from '@/lib/acquisition/poster-design';
@@ -11,8 +13,24 @@ import { MAX_SAVED_ARTWORK_BYTES } from '@/lib/acquisition/poster-design';
 type Artwork = { image: HTMLImageElement; url: string; file?: File; width: number; height: number };
 type Drag = { pointer: number; x: number; y: number; resize: boolean; start: PosterPlacement };
 type Placement = { code: string; label: string; active: boolean; preview: string; matrix: string[] };
-type Design = PosterPlacement & { id: string; title: string; dpi: number; version: number };
+type Design = PosterPlacement & { id: string; title: string; dpi: number; version: number; qrBackground: string; roundQr: boolean };
 const inputClass = 'min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-base';
+
+function sampleArtwork(art: Artwork, x: number, y: number, size: number) {
+  const side = Math.min(size, 256);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = side;
+  const context = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+  if (!context) throw new Error('Artwork sampling is unavailable in this browser.');
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, side, side);
+  context.drawImage(art.image, x, y, size, size, 0, 0, side, side);
+  return context.getImageData(0, 0, side, side).data;
+}
+
+function posterSettings(title: string, dpi: number, qr: PosterPlacement, qrBackground: string, roundQr: boolean) {
+  return { title: title.trim(), dpi, x: qr.x, y: qr.y, size: qr.size, qrBackground, roundQr };
+}
 
 function PixelField({ label, value, min, max, onCommit }: {
   label: string; value: number; min: number; max: number; onCommit: (value: number) => void;
@@ -39,11 +57,20 @@ function canvasPng(canvas: HTMLCanvasElement) {
 }
 
 export default function PosterEditor({ placement, locale, design }: { placement: Placement; locale: string; design: Design | null }) {
+  const router = useRouter();
   const [art, setArt] = useState<Artwork>();
   const [qr, setQr] = useState<PosterPlacement>();
   const [dpi, setDpi] = useState(design?.dpi ?? 300);
   const [title, setTitle] = useState(design?.title ?? placement.label);
   const [version, setVersion] = useState(design?.version);
+  const [qrBackground, setQrBackground] = useState(design?.qrBackground ?? '#ffffff');
+  const [backingColor, setBackingColor] = useState(design?.qrBackground === 'artwork' ? '#ffffff' : design?.qrBackground ?? '#ffffff');
+  const [roundQr, setRoundQr] = useState(design?.roundQr ?? false);
+  const [picking, setPicking] = useState(false);
+  const [areaSafe, setAreaSafe] = useState<boolean>();
+  const [confirmation, setConfirmation] = useState<Confirmation>();
+  const [saved, setSaved] = useState(() => design
+    ? JSON.stringify(posterSettings(design.title, design.dpi, design, design.qrBackground, design.roundQr)) : '');
   const [loading, setLoading] = useState(Boolean(design));
   const [dragOver, setDragOver] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -60,6 +87,10 @@ export default function PosterEditor({ placement, locale, design }: { placement:
   const draftId = useRef(design?.id);
   const cells = placement.matrix.length + 2 * QUIET_MODULES;
   const listUrl = `/${locale}/admin/acquisition`;
+  const settings = qr && posterSettings(title, dpi, qr, qrBackground, roundQr);
+  const dirty = Boolean(art && settings && (art.file || JSON.stringify(settings) !== saved));
+  const transparent = qrBackground === 'artwork';
+  const backing = qr ? posterQrBacking(qr.size, cells, roundQr && !transparent) : undefined;
 
   useEffect(() => () => {
     loadId.current++;
@@ -123,8 +154,46 @@ export default function PosterEditor({ placement, locale, design }: { placement:
     return () => controller.abort();
   }, [design, loadPoster]);
 
+  useEffect(() => {
+    if (!art || !qr || !transparent) return;
+    const frame = requestAnimationFrame(() => {
+      try { setAreaSafe(isEvenLightQrArea(sampleArtwork(art, qr.x, qr.y, qr.size))); }
+      catch { setAreaSafe(false); }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [art, qr, transparent]);
+
+  useEffect(() => {
+    if (!picking) return;
+    function escape(event: globalThis.KeyboardEvent) {
+      if (event.key === 'Escape') { setPicking(false); setStatus('Color picking cancelled.'); }
+    }
+    window.addEventListener('keydown', escape);
+    return () => window.removeEventListener('keydown', escape);
+  }, [picking]);
+
+  function exit() {
+    const perform = () => router.push(listUrl);
+    if (!dirty) { perform(); return; }
+    setConfirmation({
+      title: 'Discard unsaved changes?', detail: 'Your last saved poster will stay in the library.',
+      confirmLabel: 'Discard changes', perform,
+    });
+  }
+
+  function selectColor(color: string) {
+    if (!isLightQrColor(color)) {
+      setError('Choose a lighter color for the black QR code.');
+      return;
+    }
+    setQrBackground(color);
+    setBackingColor(color);
+    setError('');
+    setStatus('QR color updated.');
+  }
+
   async function savePoster() {
-    if (!art || !qr || !title.trim() || loading || exportLock.current || saveLock.current) return;
+    if (!art || !settings || !title.trim() || loading || exportLock.current || saveLock.current) return;
     saveLock.current = true;
     setSaving(true);
     setError('');
@@ -133,7 +202,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
       const id = draftId.current ??= crypto.randomUUID();
       const form = new FormData();
       form.set('code', placement.code);
-      form.set('details', JSON.stringify({ id, version, title, dpi, ...qr }));
+      form.set('details', JSON.stringify({ id, version, ...settings }));
       if (art.file) form.set('artwork', art.file);
       const response = await fetch('/api/staff/posters', { method: 'POST', body: form });
       if (!response.ok) throw new Error(response.status === 409
@@ -144,6 +213,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
       const result = await response.json() as { id: string; version: number };
       setVersion(result.version);
       setTitle(title.trim());
+      setSaved(JSON.stringify(settings));
       const savedArtwork = { ...art, file: undefined };
       artRef.current = savedArtwork;
       setArt(savedArtwork);
@@ -192,7 +262,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
   }
 
   async function downloadPoster() {
-    if (!art || !qr || loading || exportLock.current || saveLock.current) return;
+    if (!art || !qr || !backing || loading || exportLock.current || saveLock.current) return;
     exportLock.current = true;
     setExporting(true);
     setStatus('');
@@ -202,6 +272,9 @@ export default function PosterEditor({ placement, locale, design }: { placement:
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 10_000);
     try {
+      if (transparent && !isEvenLightQrArea(sampleArtwork(art, qr.x, qr.y, qr.size))) {
+        throw new Error('Move the QR onto a light, plain area or choose a backing color before exporting.');
+      }
       const response = await fetch(`/api/staff/acquisition?code=${encodeURIComponent(placement.code)}`, {
         cache: 'no-store', signal: controller.signal,
       });
@@ -221,12 +294,17 @@ export default function PosterEditor({ placement, locale, design }: { placement:
       context.fillStyle = '#fff';
       context.fillRect(0, 0, art.width, art.height);
       context.drawImage(art.image, 0, 0);
-      context.fillRect(qr.x, qr.y, qr.size, qr.size);
+      if (!transparent) {
+        context.fillStyle = qrBackground;
+        context.beginPath();
+        context.roundRect(qr.x, qr.y, qr.size, qr.size, backing.radius);
+        context.fill();
+      }
       context.fillStyle = '#000';
-      const edges = posterQrEdges(qr.size, cells);
+      const edges = posterQrEdges(backing.codeSize, cells);
       for (const [row, line] of placement.matrix.entries()) {
         for (let col = 0; col < line.length; col++) {
-          if (line[col] === '1') context.fillRect(qr.x + edges[col], qr.y + edges[row], edges[col + 1] - edges[col], edges[row + 1] - edges[row]);
+          if (line[col] === '1') context.fillRect(qr.x + backing.inset + edges[col], qr.y + backing.inset + edges[row], edges[col + 1] - edges[col], edges[row + 1] - edges[row]);
         }
       }
       const png = withPngPrintDpi(await (await canvasPng(canvas)).arrayBuffer(), dpi);
@@ -257,10 +335,13 @@ export default function PosterEditor({ placement, locale, design }: { placement:
 
   return (
     <div className="space-y-4">
-      <Link href={listUrl} className="inline-flex min-h-11 items-center text-sm font-semibold text-[#8e1826]">← Poster library</Link>
+      <Link href={listUrl} onClick={(event) => {
+        if (dirty && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); exit(); }
+      }} className="inline-flex min-h-11 items-center text-sm font-semibold text-[#8e1826]">← Poster library</Link>
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div><h1 className="text-3xl font-extrabold tracking-tight">{version ? 'Edit poster' : 'New poster'}</h1><p className="mt-1 break-words text-sm text-gray-600">{placement.label}</p></div>
         <div className="flex flex-wrap items-center gap-2">
+        <button type="button" disabled={busy} onClick={exit} className="min-h-11 rounded-full px-4 text-sm font-semibold text-stone-600 hover:bg-stone-100">Cancel</button>
         <button type="button" className="min-h-11 rounded-full border border-stone-200 bg-white px-4 text-sm font-bold disabled:opacity-50"
           disabled={!art || !qr || busy} onClick={() => void downloadPoster()}>
           {exporting ? 'Preparing…' : 'Download PNG'}
@@ -288,12 +369,24 @@ export default function PosterEditor({ placement, locale, design }: { placement:
             <input aria-label="Poster artwork" type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" disabled={exporting || saving} className="sr-only"
               onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void loadPoster(file); }} />
           </label>
-          {art && qr ? (
+          {art && qr && backing ? (
             <div ref={preview} className="relative mx-auto mt-3 w-full overflow-hidden bg-white shadow-lg"
               style={{ maxWidth: `min(100%, ${65 * art.width / art.height}vh)` }} onClick={(event) => {
               if (event.target !== event.currentTarget && (event.target as HTMLElement).dataset.poster !== 'true') return;
               if (busy) return;
               const rect = event.currentTarget.getBoundingClientRect();
+              if (picking) {
+                const x = Math.min(art.width - 1, Math.max(0, Math.floor((event.clientX - rect.left) * art.width / rect.width)));
+                const y = Math.min(art.height - 1, Math.max(0, Math.floor((event.clientY - rect.top) * art.height / rect.height)));
+                setPicking(false);
+                try {
+                  const rgb = sampleArtwork(art, x, y, 1);
+                  const color = '#' + Array.from(rgb.slice(0, 3), (channel) => channel.toString(16).padStart(2, '0')).join('');
+                  selectColor(color);
+                  if (isLightQrColor(color)) navigator.vibrate?.(10);
+                } catch { setError('Could not read this color. Choose a light color manually.'); }
+                return;
+              }
               setQr(movePosterQr(art, qr, (event.clientX - rect.left) * art.width / rect.width - qr.size / 2,
                 (event.clientY - rect.top) * art.height / rect.height - qr.size / 2));
             }}>
@@ -301,13 +394,16 @@ export default function PosterEditor({ placement, locale, design }: { placement:
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={art.url} alt="Uploaded poster" data-poster="true" draggable={false} width={art.width} height={art.height}
                 className="block h-auto w-full cursor-crosshair select-none" />
-              <div className="absolute aspect-square bg-white ring-1 ring-crimson" style={{
+              <div className={`absolute aspect-square ring-1 ring-crimson ${picking ? 'pointer-events-none' : ''}`} style={{
                 left: `${qr.x / art.width * 100}%`, top: `${qr.y / art.height * 100}%`, width: `${qr.size / art.width * 100}%`,
+                backgroundColor: transparent ? undefined : qrBackground, borderRadius: `${backing.radius / qr.size * 100}%`,
               }}>
                 <button type="button" aria-label="Move QR code" onKeyDown={nudge} onPointerDown={(event) => startDrag(event, false)} {...dragHandlers}
                   className="block h-full w-full touch-none cursor-move select-none focus-visible:outline-2 focus-visible:outline-crimson">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={placement.preview} alt="" draggable={false} className="pointer-events-none h-full w-full object-contain" />
+                  <img src={placement.preview} alt="" draggable={false} className="pointer-events-none absolute aspect-square" style={{
+                    left: `${backing.inset / qr.size * 100}%`, top: `${backing.inset / qr.size * 100}%`, width: `${backing.codeSize / qr.size * 100}%`,
+                  }} />
                 </button>
                 <button type="button" aria-label="Resize QR code" onPointerDown={(event) => startDrag(event, true)} {...dragHandlers}
                   onKeyDown={(event) => {
@@ -338,6 +434,37 @@ export default function PosterEditor({ placement, locale, design }: { placement:
               <button type="button" aria-label="Decrease QR width by 1 pixel" disabled={busy} className="size-11 rounded-full border border-stone-200 text-xl" onClick={() => setQr(resizePosterQr(art, qr, cells, qr.size - 1))}>−</button>
               <button type="button" aria-label="Increase QR width by 1 pixel" disabled={busy} className="size-11 rounded-full border border-stone-200 text-xl" onClick={() => setQr(resizePosterQr(art, qr, cells, qr.size + 1))}>+</button>
             </div>
+            <fieldset className="min-w-0 space-y-2 rounded-2xl border border-stone-200 p-3">
+              <legend className="px-1 text-sm font-semibold">QR background</legend>
+              <select aria-label="QR background" value={transparent ? 'artwork' : 'color'} disabled={busy} className={inputClass} onChange={(event) => {
+                setQrBackground(event.target.value === 'artwork' ? 'artwork' : backingColor);
+                setPicking(false);
+                setError('');
+                setStatus('QR background updated.');
+              }}>
+                <option value="color">Solid color</option>
+                <option value="artwork">Use poster artwork</option>
+              </select>
+              {transparent ? <p role="status" className={`text-xs ${areaSafe === false ? 'text-[#9c1e2c]' : 'text-stone-700'}`}>
+                {areaSafe === false ? 'Move the QR fully onto a light, even area to export.' : areaSafe ? 'Light, even backing found.' : 'Checking the artwork…'}
+              </p> : <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="inline-flex items-center gap-2 text-sm">Color
+                    <input type="color" value={qrBackground} disabled={busy} onChange={(event) => selectColor(event.target.value)}
+                      className="size-11 rounded-lg border border-stone-200 bg-white p-1" />
+                  </label>
+                  <button type="button" disabled={busy} aria-pressed={picking} className="min-h-11 rounded-full border border-stone-200 px-3 text-sm font-semibold"
+                    onClick={() => { setPicking(!picking); setError(''); setStatus(picking ? 'Color picking cancelled.' : 'Tap the poster to sample a color.'); }}>
+                    {picking ? 'Cancel picking' : 'Pick from poster'}
+                  </button>
+                </div>
+                <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
+                  <input type="checkbox" disabled={busy} checked={roundQr} onChange={(event) => setRoundQr(event.target.checked)}
+                    className="size-5 accent-crimson" />
+                  Round backing corners
+                </label>
+              </>}
+            </fieldset>
             <PixelField label="Print DPI" value={dpi} min={72} max={1200} onCommit={(value) => {
               if (validDpi(value)) { setDpi(value); setError(''); }
               else setError('Enter a print resolution between 72 and 1200 DPI.');
@@ -351,6 +478,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
           </aside>
         )}
       </div>
+      <ConfirmAction action={confirmation} onDismiss={() => setConfirmation(undefined)} />
     </div>
   );
 }

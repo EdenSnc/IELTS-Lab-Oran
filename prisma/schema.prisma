@@ -100,6 +100,8 @@ model PosterDesign {
   y           Int
   size        Int
   dpi         Int
+  qrBackground String              @default("#ffffff") @db.VarChar(7)
+  roundQr      Boolean              @default(false)
   version     Int                  @default(1)
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt

@@ -35,7 +35,7 @@ export default async function PosterPage({ params, searchParams }: {
   if (!placement) notFound();
   const design = id ? await prisma.posterDesign.findFirst({
     where: { id, placementId: placement.id, deletedAt: null },
-    select: { id: true, version: true, title: true, dpi: true, x: true, y: true, size: true },
+    select: { id: true, version: true, title: true, dpi: true, x: true, y: true, size: true, roundQr: true, qrBackground: true },
   }) : null;
   if (id && !design) notFound();
 
@@ -44,7 +44,7 @@ export default async function PosterPage({ params, searchParams }: {
   const modules = QRCode.create(url, options).modules;
   const matrix = Array.from({ length: modules.size }, (_, row) =>
     Array.from({ length: modules.size }, (_, col) => modules.get(row, col) ? '1' : '0').join(''));
-  const preview = await QRCode.toDataURL(url, { ...options, scale: 8 });
+  const preview = await QRCode.toDataURL(url, { ...options, scale: 8, color: { light: '#00000000' } });
   return <PosterEditor key={id ?? placement.code} locale={locale} design={design} placement={{
     code: placement.code, label: placement.label,
     active: placement.active && !placement.archivedAt && !placement.campaign.archivedAt, matrix, preview,
