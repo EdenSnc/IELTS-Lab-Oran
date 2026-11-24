@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type Poin
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
 import {
   checkPosterDimensions, initialPosterQr, inspectPoster, isEvenLightQrArea, isLightQrColor, movePosterQr, posterQrBacking, posterQrEdges,
-  qrSizeLimits, QUIET_MODULES, resizePosterQr, validDpi, withPngPrintDpi, type PosterPlacement,
+  posterPrintLayout, PRINT_PAPERS, qrSizeLimits, QUIET_MODULES, resizePosterQr, validDpi, withPngPrintDpi, type PosterPlacement, type PrintPaper,
 } from '@/lib/acquisition/poster-artwork';
 import { MAX_SAVED_ARTWORK_BYTES } from '@/lib/acquisition/poster-design';
 
@@ -61,6 +61,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
   const [art, setArt] = useState<Artwork>();
   const [qr, setQr] = useState<PosterPlacement>();
   const [dpi, setDpi] = useState(design?.dpi ?? 300);
+  const [paper, setPaper] = useState<PrintPaper>('A5');
   const [title, setTitle] = useState(design?.title ?? placement.label);
   const [version, setVersion] = useState(design?.version);
   const [qrBackground, setQrBackground] = useState(design?.qrBackground ?? '#ffffff');
@@ -91,6 +92,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
   const dirty = Boolean(art && settings && (art.file || JSON.stringify(settings) !== saved));
   const transparent = qrBackground === 'artwork';
   const backing = qr ? posterQrBacking(qr.size, cells, roundQr && !transparent) : undefined;
+  const print = art && posterPrintLayout(art, paper, dpi);
 
   useEffect(() => () => {
     loadId.current++;
@@ -262,7 +264,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
   }
 
   async function downloadPoster() {
-    if (!art || !qr || !backing || loading || exportLock.current || saveLock.current) return;
+    if (!art || !qr || !print || loading || exportLock.current || saveLock.current) return;
     exportLock.current = true;
     setExporting(true);
     setStatus('');
@@ -287,33 +289,38 @@ export default function PosterEditor({ placement, locale, design }: { placement:
       setActive(currentActive === true);
       if (currentActive !== true) throw new Error('Resume this link in Tracking before exporting.');
 
-      canvas.width = art.width;
-      canvas.height = art.height;
+      const size = Math.floor(qr.size * print.scale);
+      if (size < 4 * cells) throw new Error('Increase the QR width for this paper size.');
+      const x = Math.round(print.left + qr.x * print.scale);
+      const y = Math.round(print.top + qr.y * print.scale);
+      const exported = posterQrBacking(size, cells, roundQr && !transparent);
+      canvas.width = print.width;
+      canvas.height = print.height;
       const context = canvas.getContext('2d', { alpha: false, colorSpace: 'srgb' });
       if (!context) throw new Error('This browser could not create a print image.');
       context.fillStyle = '#fff';
-      context.fillRect(0, 0, art.width, art.height);
-      context.drawImage(art.image, 0, 0);
+      context.fillRect(0, 0, print.width, print.height);
+      context.drawImage(art.image, print.left, print.top, art.width * print.scale, art.height * print.scale);
       if (!transparent) {
         context.fillStyle = qrBackground;
         context.beginPath();
-        context.roundRect(qr.x, qr.y, qr.size, qr.size, backing.radius);
+        context.roundRect(x, y, size, size, exported.radius);
         context.fill();
       }
       context.fillStyle = '#000';
-      const edges = posterQrEdges(backing.codeSize, cells);
+      const edges = posterQrEdges(exported.codeSize, cells);
       for (const [row, line] of placement.matrix.entries()) {
         for (let col = 0; col < line.length; col++) {
-          if (line[col] === '1') context.fillRect(qr.x + backing.inset + edges[col], qr.y + backing.inset + edges[row], edges[col + 1] - edges[col], edges[row + 1] - edges[row]);
+          if (line[col] === '1') context.fillRect(x + exported.inset + edges[col], y + exported.inset + edges[row], edges[col + 1] - edges[col], edges[row + 1] - edges[row]);
         }
       }
-      const png = withPngPrintDpi(await (await canvasPng(canvas)).arrayBuffer(), dpi);
+      const png = withPngPrintDpi(await (await canvasPng(canvas)).arrayBuffer(), print.dpi);
       if (token !== loadId.current) return;
       const url = URL.createObjectURL(png);
       const link = document.createElement('a');
       const stem = title.replace(/[^\p{L}\p{N}_ -]/gu, '').trim().slice(0, 80);
       link.href = url;
-      link.download = `${stem || 'IELTSLab-poster'}-${placement.code}-${dpi}dpi.png`;
+      link.download = `${stem || 'IELTSLab-poster'}-${placement.code}-${paper}-${print.dpi}dpi.png`;
       document.body.append(link);
       link.click();
       link.remove();
@@ -420,7 +427,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
           ) : <p className="mt-4 grid min-h-52 place-items-center rounded-xl border border-dashed border-gray-300 px-3 text-center text-sm text-gray-600">Drop a PNG or JPEG here, up to 4 MiB.</p>}
         </section>
 
-        {art && qr && (
+        {art && qr && print && (
           <aside className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4">
             <label className="grid gap-1 text-sm font-semibold">Poster name<input value={title} onChange={(event) => setTitle(event.target.value)}
               maxLength={100} disabled={busy} className={inputClass} /></label>
@@ -465,14 +472,19 @@ export default function PosterEditor({ placement, locale, design }: { placement:
                 </label>
               </>}
             </fieldset>
-            <PixelField label="Print DPI" value={dpi} min={72} max={1200} onCommit={(value) => {
+            <label className="grid gap-1 text-sm font-semibold">Print size
+              <select className={inputClass} value={paper} disabled={busy} onChange={(event) => setPaper(event.target.value as PrintPaper)}>
+                {Object.entries(PRINT_PAPERS).map(([name, [width, height]]) => <option key={name} value={name}>{name} · {width} × {height} mm</option>)}
+                <option value="original">Original artwork dimensions</option>
+              </select>
+            </label>
+            {paper === 'original' && <PixelField label="Print DPI" value={dpi} min={72} max={1200} onCommit={(value) => {
               if (validDpi(value)) { setDpi(value); setError(''); }
               else setError('Enter a print resolution between 72 and 1200 DPI.');
-            }} />
+            }} />}
             <div className="border-t border-gray-200 pt-3 text-sm text-gray-600">
-              <p>{art.width} × {art.height} pixels</p>
-              <p>{(art.width * 25.4 / dpi).toFixed(1)} × {(art.height * 25.4 / dpi).toFixed(1)} mm</p>
-              <p className="mt-1">QR with margin · {(qr.size * 25.4 / dpi).toFixed(1)} mm</p>
+              <p>{print.width} × {print.height} pixels · {print.dpi} dpi</p>
+              <p className="mt-1">QR with margin · {(Math.floor(qr.size * print.scale) * 25.4 / print.dpi).toFixed(1)} mm</p>
               <p className="mt-2 text-xs">One pixel per step. Four-module scan border.</p>
             </div>
           </aside>

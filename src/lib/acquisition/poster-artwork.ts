@@ -5,6 +5,18 @@ const MAX_SIDE = 8_192;
 const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
 
 type Dimensions = { width: number; height: number };
+export const PRINT_PAPERS = { A6: [105, 148], A5: [148, 210], A4: [210, 297], A3: [297, 420] } as const;
+export type PrintPaper = keyof typeof PRINT_PAPERS | 'original';
+export function posterPrintLayout(art: Dimensions, paper: PrintPaper, dpi: number) {
+  if (paper === 'original') return { ...art, dpi, scale: 1, left: 0, top: 0 };
+  const [short, long] = PRINT_PAPERS[paper];
+  const pixels = (mm: number) => Math.round(mm * 300 / 25.4);
+  const landscape = art.width > art.height;
+  const width = pixels(landscape ? long : short);
+  const height = pixels(landscape ? short : long);
+  const scale = Math.min(width / art.width, height / art.height);
+  return { width, height, dpi: 300, scale, left: (width - art.width * scale) / 2, top: (height - art.height * scale) / 2 };
+}
 type Artwork = Dimensions & { mime: 'image/png' | 'image/jpeg'; dpi?: number };
 export type PosterPlacement = { x: number; y: number; size: number };
 
