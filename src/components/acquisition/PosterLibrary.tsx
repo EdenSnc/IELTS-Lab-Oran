@@ -238,12 +238,12 @@ export default function PosterLibrary({ base, trash, designs, locations, campaig
               </select>
             </label>
             {campaign === 'new' && <label className="grid gap-1 text-sm font-semibold">Campaign name
-              <input name="campaignName" required minLength={2} maxLength={120} disabled={busy} placeholder="USTO-MB" className="min-h-11 min-w-0 rounded-xl border border-stone-200 px-3 text-base" />
+              <input name="campaignName" required minLength={2} maxLength={120} disabled={busy} placeholder="January 2027 IELTS intake" className="min-h-11 min-w-0 rounded-xl border border-stone-200 px-3 text-base" />
             </label>}
             <label className="grid gap-1 text-sm font-semibold">Poster spot
               <input name="label" required minLength={2} maxLength={120} disabled={busy} placeholder="USTO-MB 01 · Library entrance" className="min-h-11 min-w-0 rounded-xl border border-stone-200 px-3 text-base" />
             </label>
-            <p className="text-sm text-stone-600 sm:col-span-2">Use a separate QR for each spot you want to measure.</p>
+            <p className="text-sm text-stone-600 sm:col-span-2">Use a separate QR for each spot. For a later campaign, create a fresh QR even if you reuse the same spot.</p>
           </> : <>
             <label className="grid min-w-0 gap-1.5 text-sm font-semibold">Tracking location
               <select required value={code} onChange={(event) => setCode(event.target.value)} className="min-h-11 min-w-0 w-full rounded-xl border border-stone-200 bg-white px-3 text-base">

@@ -113,7 +113,7 @@ export default function AcquisitionDashboard({ locale, campaigns, campaignsOnly 
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-xl font-extrabold tracking-tight">{campaignsOnly ? 'Campaigns' : 'Poster spots and scans'}</h2>
-          {campaignsOnly && <p className="mt-1 text-sm text-stone-600">Group poster spots by campus, venue or promotion.</p>}
+          {campaignsOnly && <p className="mt-1 text-sm text-stone-600">Group spots by event or promotion. Reuse the same campuses in a later campaign with fresh QR links.</p>}
         </div>
         <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-gray-200" role="group" aria-label="Tracking status">
           {([false, true] as const).map((archived) => (
@@ -156,7 +156,7 @@ export default function AcquisitionDashboard({ locale, campaigns, campaignsOnly 
           event.preventDefault();
           void save({ action: 'campaign', name: field(event.currentTarget, 'name') }, event.currentTarget);
         }}>
-          <label className="grid gap-1 text-sm">Campaign name<input name="name" required minLength={2} maxLength={120} className={fieldStyle} /></label>
+          <label className="grid gap-1 text-sm">Campaign name<input name="name" placeholder="January 2027 IELTS intake" required minLength={2} maxLength={120} className={fieldStyle} /></label>
           <button disabled={busy} className={submitStyle}>Add campaign</button>
           <button type="button" disabled={busy} className={actionStyle} onClick={() => setCreating(false)}>Cancel</button>
         </form>}

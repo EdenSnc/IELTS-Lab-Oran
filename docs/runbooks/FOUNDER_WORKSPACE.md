@@ -30,9 +30,10 @@ The editor adjusts QR width by one pixel and reserves the four-module quiet zone
 It can sample a light backing color, round the backing around that square,
 or export over light, even poster artwork without a separate fill.
 
-A campaign groups poster spots by campus or promotion. Create one QR link per
-physical spot when you need separate measurements. Duplicate prints of a QR
-share one history. Rename a spot in Tracking to keep its code and history.
+A campaign groups poster spots for an event, promotion or intake period.
+The same campus can appear in multiple campaigns. Create one QR per physical
+spot per campaign when you need separate measurements. Duplicate prints of a
+QR share one history. Rename a spot in Tracking to keep its code and history.
 The scan list shows new QR opens in Oran time. It links to submissions carrying
 the individual scan token and retains the spot name at the time of the scan.
 Older daily aggregates have no individual timestamps.
