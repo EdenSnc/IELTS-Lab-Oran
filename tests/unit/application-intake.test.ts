@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { applicationSchema, boundedTallyAnswer } from '../../src/lib/leads/application';
+import { applicationSchema, boundedTallyAnswer, oranToday } from '../../src/lib/leads/application';
 import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '../../src/lib/leads/direct-intake';
 import { resolveVisitUtms } from '../../src/lib/acquisition/utm-client';
 
@@ -109,10 +109,28 @@ test('availability is ordered and overlapping or adjacent windows become one win
 });
 
 test('a retry key is optional for legacy clients and invalid keys are rejected', () => {
-  const contact = { phone: '0555000000', application: validApplication };
+  const contact = { phone: '0555000000', application: { ...validApplication, targetExamDate: oranToday() } };
   assert.equal(directLeadSchema.safeParse(contact).success, true);
   assert.equal(directLeadSchema.safeParse({ ...contact, submissionId: crypto.randomUUID() }).success, true);
   assert.equal(directLeadSchema.safeParse({ ...contact, submissionId: 'not-a-uuid' }).success, false);
+});
+
+test('live intake rejects past exam dates, invalid bands and hours after 20:00', () => {
+  const form = {
+    ...validApplication, schemaVersion: 3, targetExamDate: oranToday(), takenIelts: true, recentScore: '6.5',
+    availability: { mode: 'windows', windows: [{ day: 'fri', startHour: 19, endHour: 20 }] },
+  };
+  const parse = (application: object) => directLeadSchema.safeParse({ phone: '0555000000', application });
+  assert.equal(parse(form).success, true);
+  for (const [field, value] of [
+    ['targetExamDate', '2004-12-15'], ['recentScore', '1000'], ['recentScore', '6.7'],
+    ['availability', { mode: 'windows', windows: [{ day: 'fri', startHour: 19, endHour: 21 }] }],
+  ]) {
+    const result = parse({ ...form, [String(field)]: value });
+    assert.equal(result.success, false);
+    if (!result.success) assert.deepEqual(invalidLeadFields(result.error.issues), [field]);
+  }
+  assert.equal(applicationSchema.safeParse({ ...form, targetExamDate: '2004-12-15' }).success, true);
 });
 
 test('an explicit new campaign replaces old attribution rather than inheriting a poster code', () => {
@@ -122,4 +140,8 @@ test('an explicit new campaign replaces old attribution rather than inheriting a
   assert.equal(newVisit.utm_source, 'instagram');
   assert.equal(newVisit.utm_content, null);
   assert.equal(newVisit.utm_medium, null);
+  const scan = crypto.randomUUID();
+  assert.equal(resolveVisitUtms(new URLSearchParams(), { ...poster, il_scan: scan }).il_scan, scan);
+  assert.equal(resolveVisitUtms(new URLSearchParams('utm_source=instagram'), { ...poster, il_scan: scan }).il_scan, undefined);
+  assert.equal(resolveVisitUtms(new URLSearchParams(`utm_source=ieltslab&utm_content=code123456789&il_scan=${scan}`), {}).il_scan, scan);
 });

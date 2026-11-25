@@ -63,6 +63,7 @@ model AcquisitionCampaign {
   slug       String                 @unique @db.VarChar(80)
   createdAt  DateTime               @default(now())
   archivedAt DateTime?
+  keepQrAfterArchive Boolean @default(false)
   placements AcquisitionPlacement[]
 
   @@schema("app_private")
@@ -78,10 +79,12 @@ model AcquisitionPlacement {
   active      Boolean                 @default(true)
   createdAt   DateTime                @default(now())
   archivedAt  DateTime?
+  keepQrAfterArchive Boolean @default(false)
   campaign    AcquisitionCampaign     @relation(fields: [campaignId], references: [id], onDelete: Restrict)
   inspections AcquisitionInspection[]
   dailyCounts AcquisitionDailyCount[]
   posterDesigns PosterDesign[]
+  scans AcquisitionScan[]
 
   @@index([campaignId, createdAt])
   @@schema("app_private")
@@ -136,6 +139,19 @@ model AcquisitionDailyCount {
   @@schema("app_private")
 }
 
+model AcquisitionScan {
+  id          String @id @db.Uuid
+  placementId String @db.Uuid
+  scannedAt   DateTime @default(now())
+  placementLabel String @db.VarChar(120)
+  inquiryId   String? @unique @db.Uuid
+  placement   AcquisitionPlacement @relation(fields: [placementId], references: [id], onDelete: Restrict)
+  inquiry     Inquiry? @relation(fields: [inquiryId], references: [id], onDelete: SetNull)
+
+  @@index([placementId, scannedAt])
+  @@schema("app_private")
+}
+
 model LeadMagnetDownload {
   id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   prospectId      String     @db.Uuid
@@ -167,6 +183,7 @@ model Inquiry {
   founderDetails Json?
 
   prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  acquisitionScan AcquisitionScan?
 
   @@index([prospectId, createdAt])
   @@index([isRead, createdAt])

@@ -13,7 +13,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
   const home = `/${locale}/admin`;
   return (
     <div lang="en" dir="ltr" className="min-h-screen bg-[#f8f7f5] font-sans text-charcoal md:grid md:grid-cols-[13.25rem_minmax(0,1fr)] lg:grid-cols-[14.25rem_minmax(0,1fr)]">
-      <aside className="border-b border-stone-200 bg-white md:sticky md:top-0 md:flex md:h-dvh md:flex-col md:self-start md:border-b-0 md:border-r">
+      <aside className="border-b border-stone-200 bg-white md:fixed md:inset-y-0 md:left-0 md:z-20 md:flex md:w-[13.25rem] md:flex-col md:overflow-y-auto md:overscroll-contain md:border-b-0 md:border-r lg:w-[14.25rem]">
         <div className="flex items-center justify-between gap-3 px-4 py-2 md:px-5 md:pb-4 md:pt-6">
           <Link href={home} aria-label="Founder dashboard" className="inline-flex min-h-11 items-center rounded-lg focus-visible:outline-crimson">
             <TestBrand compact responsive={false} />
@@ -38,7 +38,7 @@ export default function AdminShell({ locale, children }: { locale: string; child
           <WorkspaceIcon name="account" className="size-[18px]" /> Account
         </Link>
       </aside>
-      <main id="main-content" tabIndex={-1} className="mx-auto min-w-0 w-full max-w-[84rem] px-4 py-6 outline-none sm:px-6 md:py-8 lg:px-10 lg:py-10">
+      <main id="main-content" tabIndex={-1} className="mx-auto min-w-0 w-full max-w-[84rem] px-4 py-6 outline-none sm:px-6 md:col-start-2 md:py-8 lg:px-10 lg:py-10">
         {children}
       </main>
     </div>

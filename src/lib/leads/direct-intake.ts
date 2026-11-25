@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { applicationSchema } from './application';
+import { applicationSchema, isIeltsBand, oranToday } from './application';
+import { latestAvailabilityEnd } from './availability';
 
 export function normalizeLeadPhone(value: string): string | null {
   let phone = value.normalize('NFKC').trim()
@@ -29,11 +30,23 @@ export const directLeadSchema = z.object({
   utmMedium: optionalText,
   utmCampaign: optionalText,
   utmContent: optionalText,
+  scanId: z.uuid().nullish(),
   formName: z.string().trim().min(1).max(200).default('Direct Submission'),
   submissionId: z.uuid().optional(),
   source: z.enum(['lead_magnet_pdf', 'workshop', 'cohort_waitlist', 'unknown']).default('unknown'),
   application: applicationSchema.optional(),
-}).strict();
+}).strict().superRefine(({ application }, context) => {
+  if (!application) return;
+  const examField = application.bookedExam ? 'bookedExamDate' : 'targetExamDate';
+  const examDate = application[examField];
+  if (examDate && examDate < oranToday()) context.addIssue({ code: 'custom', path: ['application', examField], message: 'Choose today or a future date.' });
+  if (application.takenIelts && !isIeltsBand(application.recentScore)) {
+    context.addIssue({ code: 'custom', path: ['application', 'recentScore'], message: 'Choose an IELTS band from 0 to 9.' });
+  }
+  if (application.availability?.mode === 'windows' && application.availability.windows.some(({ endHour }) => endHour > latestAvailabilityEnd)) {
+    context.addIssue({ code: 'custom', path: ['application', 'availability'], message: 'Availability must end by 20:00.' });
+  }
+});
 
 export function invalidLeadFields(issues: readonly { path: PropertyKey[] }[]) {
   return [...new Set(issues.map(({ path }) => String(path[path[0] === 'application' ? 1 : 0] ?? 'application')))];

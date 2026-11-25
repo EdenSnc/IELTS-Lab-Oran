@@ -5,13 +5,14 @@ import {
   availabilityCopy,
   formatAvailabilityHour,
   maxAvailabilityWindows,
+  latestAvailabilityEnd,
   mergeAvailabilityWindows,
   weekdays,
   type AvailabilityWindow,
 } from '@/lib/leads/availability';
 
-const hours = Array.from({ length: 15 }, (_, index) => 8 + index);
-const inputClass = 'min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-2 text-base text-charcoal';
+const hours = Array.from({ length: latestAvailabilityEnd - 7 }, (_, index) => 8 + index);
+const inputClass = 'min-h-11 w-full min-w-0 appearance-none rounded-xl border border-stone-200 bg-white px-3 pe-9 text-base font-semibold tabular-nums text-charcoal shadow-sm focus-visible:border-crimson focus-visible:outline-2 focus-visible:outline-crimson disabled:bg-stone-100 disabled:text-stone-400';
 
 export default function AvailabilityPicker({ locale, windows, onChange, onDraft }: {
   locale: keyof typeof availabilityCopy;
@@ -47,6 +48,7 @@ export default function AvailabilityPicker({ locale, windows, onChange, onDraft 
       {day && windows.length < maxAvailabilityWindows && (
         <div className="grid grid-cols-2 gap-2">
           <label className="grid min-w-0 gap-1 text-xs font-semibold">{t.from}
+            <span className="relative block">
             <select name="availabilityStart" dir="ltr" className={inputClass} value={start} onChange={(event) => {
               const value = event.target.value;
               setStart(value);
@@ -57,8 +59,11 @@ export default function AvailabilityPicker({ locale, windows, onChange, onDraft 
               <option value="">—</option>
               {hours.slice(0, -1).map((hour) => <option key={hour} value={hour}>{formatAvailabilityHour(hour)}</option>)}
             </select>
+            <span aria-hidden="true" className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-base text-stone-600">⌄</span>
+            </span>
           </label>
           <label className="grid min-w-0 gap-1 text-xs font-semibold">{t.to}
+            <span className="relative block">
             <select name="availabilityEnd" dir="ltr" className={inputClass} disabled={!start} value={end} onChange={(event) => {
               setEnd(event.target.value);
               onDraft(Boolean(start || event.target.value));
@@ -66,6 +71,8 @@ export default function AvailabilityPicker({ locale, windows, onChange, onDraft 
               <option value="">—</option>
               {hours.filter((hour) => hour > Number(start)).map((hour) => <option key={hour} value={hour}>{formatAvailabilityHour(hour)}</option>)}
             </select>
+            <span aria-hidden="true" className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-base text-stone-600">⌄</span>
+            </span>
           </label>
           <button type="button" disabled={!start || !end} onClick={addWindow}
             className="col-span-2 min-h-11 rounded-full border border-gray-300 bg-white px-3 text-sm font-semibold text-charcoal enabled:hover:border-crimson disabled:text-gray-400">

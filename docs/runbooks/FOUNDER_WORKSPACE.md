@@ -23,11 +23,19 @@ Posters are saved print designs linked to a tracking location. The library
 stores the original PNG or JPEG, placement and DPI. Moving a design to Trash
 or purging it leaves the location and its scan history intact. Deleting campaigns,
 tracking locations or applications moves records to Trash with a Restore action.
-Trashing a campaign or location pauses its printed links until restored.
+Trashing a campaign or location keeps its QR links at their current status.
+Pausing a printed link is a separate action with an explicit confirmation.
 Only empty campaigns and poster designs offer permanent deletion.
 The editor adjusts QR width by one pixel and reserves the four-module quiet zone.
 It can sample a light backing color, round the backing around that square,
 or export over light, even poster artwork without a separate fill.
+
+A campaign groups poster spots by campus or promotion. Create one QR link per
+physical spot when you need separate measurements. Duplicate prints of a QR
+share one history. Rename a spot in Tracking to keep its code and history.
+The scan list shows new QR opens in Oran time. It links to submissions carrying
+the individual scan token and retains the spot name at the time of the scan.
+Older daily aggregates have no individual timestamps.
 
 The workspace and its marketing/application APIs require ADMIN and MFA.
 Examiner and learner tools use their own permissions.

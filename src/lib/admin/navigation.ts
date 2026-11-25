@@ -30,22 +30,30 @@ export function adminReturnPath(value: unknown, locale?: string): string | undef
   if (!match || (locale && match[1] !== locale)) return;
 
   const safe = new URLSearchParams();
+  const validId = (id: string | null) => id && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id);
   if (pathname.endsWith('/applications')) {
     const incoming = new URLSearchParams(query);
     const code = incoming.get('placement');
     const page = incoming.get('page');
     const view = incoming.get('view');
+    const id = incoming.get('id');
     if (code && /^[A-Za-z0-9_-]{10,24}$/.test(code)) safe.set('placement', code);
     if (page && /^[1-9]\d{0,3}$/.test(page)) safe.set('page', page);
     if (view === 'archived') safe.set('view', view);
+    if (id && validId(id)) safe.set('id', id);
   }
   if (pathname.endsWith('/acquisition')) {
-    const view = new URLSearchParams(query).get('view');
-    if (view === 'tracking' || view === 'trash') safe.set('view', view);
+    const incoming = new URLSearchParams(query);
+    const view = incoming.get('view');
+    if (view === 'tracking' || view === 'trash' || view === 'campaigns') safe.set('view', view);
+    const campaign = incoming.get('campaign');
+    const createIn = incoming.get('new');
+    if (view === 'tracking' && campaign && validId(campaign)) safe.set('campaign', campaign);
+    if (!view && createIn && validId(createIn)) safe.set('new', createIn);
   }
   if (pathname.includes('/acquisition/poster/')) {
     const design = new URLSearchParams(query).get('design');
-    if (design && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(design)) safe.set('design', design);
+    if (design && validId(design)) safe.set('design', design);
   }
   return safe.size ? `${pathname}?${safe.toString()}` : pathname;
 }

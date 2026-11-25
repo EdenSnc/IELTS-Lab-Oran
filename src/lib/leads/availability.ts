@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 export const maxAvailabilityWindows = 21;
+export const latestAvailabilityEnd = 20;
 
 const windowSchema = z.object({
   day: z.enum(weekdays),

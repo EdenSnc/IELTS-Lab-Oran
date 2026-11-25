@@ -77,7 +77,7 @@ function ApplicationEditor({ details, pending, onSave, onCancel }: {
   );
 }
 
-export default function ApplicationsInbox({ rows, archived }: { rows: InboxItem[]; archived: boolean }) {
+export default function ApplicationsInbox({ rows, archived, expandedId }: { rows: InboxItem[]; archived: boolean; expandedId?: string }) {
   const router = useRouter();
   const saving = useRef(false);
   const [pending, setPending] = useState(false);
@@ -111,7 +111,7 @@ export default function ApplicationsInbox({ rows, archived }: { rows: InboxItem[
 
   return (
     <div className="space-y-4">
-      {!archived && editing !== 'new' && <button type="button" className={primaryClass} onClick={() => setEditing('new')}>+ Add application</button>}
+      {!expandedId && !archived && editing !== 'new' && <button type="button" className={primaryClass} onClick={() => setEditing('new')}>+ Add application</button>}
       {editing === 'new' && <ApplicationEditor key="new" details={empty} pending={pending} onCancel={() => setEditing(undefined)} onSave={(details) => void save({ action: 'create', details })} />}
       <div className="flex flex-wrap items-center gap-3">
         <p role="status" className="text-sm font-semibold text-crimson">{pending ? 'Saving…' : status}</p>
@@ -119,7 +119,7 @@ export default function ApplicationsInbox({ rows, archived }: { rows: InboxItem[
       </div>
       {!rows.length && <p className="rounded-2xl border border-gray-200 bg-white p-5 text-gray-600">{archived ? 'Trash is empty.' : 'Applications will appear here as they arrive.'}</p>}
       {rows.map((row) => (
-        <details key={row.id} className="rounded-2xl border border-gray-200 bg-white">
+        <details key={row.id} open={expandedId === row.id ? true : undefined} className="rounded-2xl border border-gray-200 bg-white">
           <summary className="cursor-pointer px-4 py-4 sm:px-5">
             <span className="font-bold">{row.details.name || row.details.phone}</span>
             <span className="ms-2 text-sm text-gray-600">{row.received}</span>

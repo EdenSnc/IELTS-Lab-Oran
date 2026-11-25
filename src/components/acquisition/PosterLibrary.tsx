@@ -9,18 +9,24 @@ import { checkPrintableLocation, createPosterPdf, downloadPosterFile, posterFile
 
 type Design = { id: string; title: string; version: number; width: number; height: number; x: number; y: number; size: number;
   dpi: number; code: string; placement: string; thumbnail?: string; qrPreview: string;
-  qrBackground: string; roundQr: boolean; cells: number; trackingUrl: string };
+  qrBackground: string; roundQr: boolean; cells: number; trackingUrl: string; campaignId: string };
 type Location = { code: string; label: string; campaign: string };
+type CampaignOption = { id: string; name: string };
 type Action = 'trash' | 'restore' | 'purge';
 const button = 'inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-colors disabled:opacity-50 motion-reduce:transition-none';
 const solid = button + ' bg-charcoal text-white hover:bg-[#8e1826]';
 const line = button + ' border border-stone-200 bg-white hover:border-crimson';
 
-export default function PosterLibrary({ base, trash, designs, locations }: {
+export default function PosterLibrary({ base, trash, designs, locations, campaigns, newIn }: {
   base: string; trash: boolean; designs: Design[]; locations: Location[];
+  campaigns: CampaignOption[]; newIn?: string;
 }) {
   const router = useRouter();
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(Boolean(newIn));
+  const [newQr, setNewQr] = useState(true);
+  const [campaign, setCampaign] = useState(newIn ?? (campaigns.length === 1 ? campaigns[0].id : campaigns.length ? '' : 'new'));
+  const [copyFrom, setCopyFrom] = useState<Design>();
+  const newPosterForm = useRef<HTMLFormElement>(null);
   const [code, setCode] = useState('');
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState('');
@@ -41,6 +47,37 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
   const selectedDesigns = designs.filter(({ id }) => selected.includes(id));
 
   useEffect(() => () => exportTask.current?.abort(), []);
+
+  async function openPoster(form: HTMLFormElement) {
+    if (lock.current) return;
+    if (!newQr) {
+      if (code) router.push(`${base}/poster/${encodeURIComponent(code)}`);
+      return;
+    }
+    const values = new FormData(form);
+    lock.current = true;
+    setBusy(true);
+    setProblems([]);
+    setMessage('Creating a tracking link…');
+    try {
+      const response = await fetch('/api/staff/acquisition', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'poster_location', label: values.get('label'), fromDesignId: copyFrom?.id,
+          campaign: campaign === 'new' ? { kind: 'new', name: values.get('campaignName') } : { kind: 'existing', id: campaign },
+        }),
+      });
+      const result = await response.json() as { code?: string; design?: string };
+      if (!response.ok || !result.code) throw new Error(response.status === 401 || response.status === 403
+        ? 'Sign in again to create a poster link.' : 'Could not create the link. Check the campaign and poster spot, then retry.');
+      router.push(`${base}/poster/${encodeURIComponent(result.code)}${result.design ? `?design=${encodeURIComponent(result.design)}` : ''}`);
+    } catch (problem) {
+      setMessage('');
+      setProblems([problem instanceof Error ? problem.message : 'Could not create the link.']);
+      setBusy(false);
+      lock.current = false;
+    }
+  }
 
   async function downloadSelected() {
     if (lock.current || !selectedDesigns.length) return;
@@ -146,7 +183,10 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
             setSelecting(!selecting);
             setSelected([]);
           }}>{selecting ? 'Done selecting' : 'Select posters'}</button>
-          <button className={solid} type="button" aria-expanded={creating} aria-controls="new-poster" onClick={() => setCreating(!creating)}>
+          <button className={solid} type="button" aria-expanded={creating} aria-controls="new-poster" onClick={() => {
+            setCopyFrom(undefined);
+            setCreating(!creating);
+          }}>
             <span aria-hidden="true" className="me-2 text-lg leading-none">+</span> New poster
           </button>
         </div>
@@ -179,19 +219,45 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
         </div>
       )}
       {!trash && creating && (
-        <form id="new-poster" className="flex flex-wrap items-end gap-3 rounded-2xl border border-stone-200 bg-white p-4" onSubmit={(event) => {
+        <form id="new-poster" ref={newPosterForm} className="rounded-2xl border border-stone-200 bg-white p-4" onSubmit={(event) => {
           event.preventDefault();
-          if (code) router.push(`${base}/poster/${encodeURIComponent(code)}`);
+          void openPoster(event.currentTarget);
         }}>
-          {locations.length ? <>
-            <label className="grid min-w-0 flex-1 gap-1.5 text-sm font-semibold sm:max-w-sm">Tracking location
+          <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="QR link">
+            <button type="button" aria-pressed={newQr} disabled={busy} className={newQr ? solid : line} onClick={() => setNewQr(true)}>Create a QR link</button>
+            {!copyFrom && locations.length > 0 && <button type="button" aria-pressed={!newQr} disabled={busy} className={!newQr ? solid : line} onClick={() => setNewQr(false)}>Use existing QR</button>}
+          </div>
+          {copyFrom && <p className="mb-3 break-words text-sm text-stone-700">Copying the artwork from <strong>{copyFrom.title}</strong> to a fresh QR link.</p>}
+          <div className="grid gap-3 sm:grid-cols-2 sm:items-end">
+          {newQr ? <>
+            <label className="grid gap-1 text-sm font-semibold">Campaign
+              <select required value={campaign} disabled={busy} onChange={(event) => setCampaign(event.target.value)} className="min-h-11 min-w-0 rounded-xl border border-stone-200 bg-white px-3 text-base">
+                <option value="">Select a campaign</option>
+                {campaigns.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
+                <option value="new">New campaign</option>
+              </select>
+            </label>
+            {campaign === 'new' && <label className="grid gap-1 text-sm font-semibold">Campaign name
+              <input name="campaignName" required minLength={2} maxLength={120} disabled={busy} placeholder="USTO-MB" className="min-h-11 min-w-0 rounded-xl border border-stone-200 px-3 text-base" />
+            </label>}
+            <label className="grid gap-1 text-sm font-semibold">Poster spot
+              <input name="label" required minLength={2} maxLength={120} disabled={busy} placeholder="USTO-MB 01 · Library entrance" className="min-h-11 min-w-0 rounded-xl border border-stone-200 px-3 text-base" />
+            </label>
+            <p className="text-sm text-stone-600 sm:col-span-2">Use a separate QR for each spot you want to measure.</p>
+          </> : <>
+            <label className="grid min-w-0 gap-1.5 text-sm font-semibold">Tracking location
               <select required value={code} onChange={(event) => setCode(event.target.value)} className="min-h-11 min-w-0 w-full rounded-xl border border-stone-200 bg-white px-3 text-base">
                 <option value="">Select a location</option>
                 {locations.map((location) => <option key={location.code} value={location.code}>{location.label} · {location.campaign}</option>)}
               </select>
             </label>
-            <button className={solid} disabled={!code}>Open editor</button>
-          </> : <Link className={line} href={`${base}?view=tracking`}>Add a tracking location</Link>}
+            <p className="text-sm text-stone-600">Designs using the same QR share scan totals.</p>
+          </>}
+          </div>
+          <button className={`${solid} mt-4`} disabled={busy || (newQr ? !campaign : !code)}>
+            {busy ? 'Opening editor…' : copyFrom ? 'Duplicate with new QR' : newQr ? 'Create link and open editor' : 'Open editor'}
+          </button>
+          <button className={`${line} ms-2 mt-4`} type="button" disabled={busy} onClick={() => { setCreating(false); setCopyFrom(undefined); }}>Cancel</button>
         </form>
       )}
       <div className="flex flex-wrap items-center gap-3 empty:hidden" role="status">
@@ -250,6 +316,16 @@ export default function PosterLibrary({ base, trash, designs, locations }: {
                 {trash
                   ? <button className={line} type="button" disabled={busy} onClick={() => void change(design, 'restore')}>Restore</button>
                   : <Link className={line} href={href}>Edit poster</Link>}
+                {!trash && !selecting && <button className={line} type="button" disabled={busy || exporting} onClick={() => {
+                  setCopyFrom(design);
+                  setNewQr(true);
+                  setCampaign(campaigns.find(({ id }) => id === design.campaignId)?.id ?? (campaigns.length ? '' : 'new'));
+                  setCreating(true);
+                  requestAnimationFrame(() => {
+                    newPosterForm.current?.scrollIntoView({ block: 'center' });
+                    newPosterForm.current?.querySelector<HTMLInputElement>('input[name="label"]')?.focus({ preventScroll: true });
+                  });
+                }}>Duplicate for new spot</button>}
                 <button className={button + ' text-[#9c1e2c] hover:bg-red-50'} type="button" disabled={busy || exporting} onClick={() => setConfirmation({
                   title: trash ? 'Permanently delete poster?' : 'Delete poster?',
                   detail: trash ? `“${design.title}” will be erased. Its printed QR link will keep working.`

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { z } from 'zod';
 import QRCode from 'qrcode';
 import AcquisitionDashboard from '@/components/acquisition/AcquisitionDashboard';
 import PosterLibrary from '@/components/acquisition/PosterLibrary';
@@ -23,36 +24,41 @@ export const metadata: Metadata = {
 
 export default async function AcquisitionPage({ params, searchParams }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; campaign?: string; new?: string }>;
 }) {
   const { locale } = await params;
   const base = `/${locale}/admin/acquisition`;
-  const { view } = await searchParams;
-  const current = view === 'tracking' || view === 'trash' ? view : 'library';
-  await requireStaffPageAal2(['ADMIN'], current === 'library' ? base : `${base}?view=${current}`);
+  const query = await searchParams;
+  const current = query.view === 'tracking' || query.view === 'campaigns' || query.view === 'trash' ? query.view : 'library';
+  const filter = z.uuid().safeParse(query.campaign).data;
+  const newIn = z.uuid().safeParse(query.new).data;
+  const resume = current === 'library' ? (newIn ? `${base}?new=${newIn}` : base)
+    : `${base}?view=${current}${current === 'tracking' && filter ? `&campaign=${filter}` : ''}`;
+  await requireStaffPageAal2(['ADMIN'], resume);
   const tabs = (
     <nav aria-label="Posters workspace" className="flex w-fit max-w-full flex-wrap gap-0.5 rounded-2xl border border-stone-200 bg-[#f0eeeb] p-1">
-      {([{ key: 'library', label: 'Library' }, { key: 'tracking', label: 'Tracking' }, { key: 'trash', label: 'Trash' }] as const).map(({ key, label }) => (
+      {([{ key: 'library', label: 'Library' }, { key: 'campaigns', label: 'Campaigns' }, { key: 'tracking', label: 'Tracking' }, { key: 'trash', label: 'Trash' }] as const).map(({ key, label }) => (
         <Link key={key} href={key === 'library' ? base : `${base}?view=${key}`} aria-current={key === current ? 'page' : undefined}
           className={`inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold ${key === current
             ? 'bg-white text-charcoal shadow-sm' : 'text-stone-600 hover:text-charcoal'}`}>{label}</Link>
       ))}
     </nav>
   );
-  if (current !== 'tracking') {
+  if (current === 'library' || current === 'trash') {
     const trash = current === 'trash';
-    const [designs, locations] = await Promise.all([
+    const [designs, locations, campaigns] = await Promise.all([
       prisma.posterDesign.findMany({
         where: { deletedAt: trash ? { not: null } : null },
         orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
         select: { id: true, title: true, width: true, height: true, x: true, y: true, size: true, qrBackground: true, roundQr: true,
-          dpi: true, version: true, placement: { select: { code: true, label: true } } },
+          dpi: true, version: true, placement: { select: { code: true, label: true, campaignId: true } } },
       }),
       trash ? [] : prisma.acquisitionPlacement.findMany({
         where: { archivedAt: null, campaign: { archivedAt: null } },
         orderBy: { label: 'asc' },
         select: { code: true, label: true, campaign: { select: { name: true } } },
       }),
+      trash ? [] : prisma.acquisitionCampaign.findMany({ where: { archivedAt: null }, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
     ]);
     const thumbnails = designs.length ? await prisma.posterDesign.findMany({
       where: { id: { in: designs.slice(0, 9).map(({ id }) => id) } },
@@ -63,7 +69,7 @@ export default async function AcquisitionPage({ params, searchParams }: {
       const url = publicAcquisitionLink(placement.code);
       const options = { errorCorrectionLevel: 'M' } as const;
       return {
-        ...design, code: placement.code, placement: placement.label, trackingUrl: url,
+        ...design, code: placement.code, placement: placement.label, campaignId: placement.campaignId, trackingUrl: url,
         thumbnail: previews.get(design.id),
         cells: QRCode.create(url, options).modules.size + 2 * QUIET_MODULES,
         qrPreview: await QRCode.toDataURL(url, { ...options, margin: QUIET_MODULES, scale: 3, color: { light: '#00000000' } }),
@@ -73,7 +79,7 @@ export default async function AcquisitionPage({ params, searchParams }: {
       <h1 className="text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-none tracking-tight">Posters</h1>
       {tabs}
       <PosterLibrary key={current} base={base} trash={trash}
-        designs={cards}
+        designs={cards} campaigns={campaigns} newIn={campaigns.some(({ id }) => id === newIn) ? newIn : undefined}
         locations={locations.map(({ code, label, campaign }) => ({ code, label, campaign: campaign.name }))} />
     </div>;
   }
@@ -91,12 +97,12 @@ export default async function AcquisitionPage({ params, searchParams }: {
   const placementIds = placements.map((placement) => placement.id);
   const codes = placements.filter((placement) => isFirstPartyDestination(placement.destination)).map((placement) => placement.code);
   const [leadCounts, requestCounts] = await Promise.all([
-    codes.length ? prisma.leadMagnetDownload.groupBy({
+    current === 'tracking' && codes.length ? prisma.leadMagnetDownload.groupBy({
       by: ['utmContent'],
       where: { utmSource: 'ieltslab', utmContent: { in: codes } },
       _count: { _all: true },
     }) : [],
-    placementIds.length ? prisma.acquisitionDailyCount.groupBy({
+    current === 'tracking' && placementIds.length ? prisma.acquisitionDailyCount.groupBy({
       by: ['placementId'],
       where: { placementId: { in: placementIds } },
       _sum: { requests: true },
@@ -121,7 +127,7 @@ export default async function AcquisitionPage({ params, searchParams }: {
         archived: Boolean(placement.archivedAt),
         firstParty: isFirstPartyDestination(placement.destination),
         url,
-        qrDataUrl: await QRCode.toDataURL(url, { margin: 4, width: 480, errorCorrectionLevel: 'M' }),
+        qrDataUrl: current === 'tracking' ? await QRCode.toDataURL(url, { margin: 4, width: 480, errorCorrectionLevel: 'M' }) : '',
         redirectRequests: requestsByPlacement.get(placement.id) ?? 0,
         leadSubmissions: isFirstPartyDestination(placement.destination) ? leadsByCode.get(placement.code) ?? 0 : null,
         lastInspection: placement.inspections[0] ? {
@@ -135,6 +141,7 @@ export default async function AcquisitionPage({ params, searchParams }: {
 
   return <div className="space-y-5 sm:space-y-6">
     <h1 className="text-[clamp(2rem,5vw,3.25rem)] font-extrabold leading-none tracking-tight">Posters</h1>
-    {tabs}<AcquisitionDashboard locale={locale} campaigns={cards} />
+    {tabs}<AcquisitionDashboard key={`${current}-${filter ?? ''}`} locale={locale} campaigns={cards}
+      campaignsOnly={current === 'campaigns'} initialCampaign={filter} />
   </div>;
 }

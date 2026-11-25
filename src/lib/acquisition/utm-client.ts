@@ -9,6 +9,7 @@ export type AttributionParams = {
   utm_campaign: string | null;
   utm_content: string | null;
   utm_term: string | null;
+  il_scan?: string;
 };
 
 function taggedVisit(query: URLSearchParams): Partial<AttributionParams> | null {
@@ -17,6 +18,8 @@ function taggedVisit(query: URLSearchParams): Partial<AttributionParams> | null 
     const value = query.get(key)?.trim();
     if (value) next[key] = value.slice(0, 200);
   }
+  const scan = query.get('il_scan');
+  if (next.utm_source === 'ieltslab' && next.utm_content && scan && /^[\da-f-]{36}$/i.test(scan)) next.il_scan = scan;
   return Object.keys(next).length ? next : null;
 }
 
@@ -28,6 +31,7 @@ export function resolveVisitUtms(query: URLSearchParams, previous: Partial<Attri
     utm_campaign: active.utm_campaign ?? null,
     utm_content: active.utm_content ?? null,
     utm_term: active.utm_term ?? null,
+    ...(active.il_scan ? { il_scan: active.il_scan } : {}),
   };
 }
 
@@ -42,6 +46,7 @@ function readStored(): Partial<AttributionParams> {
       const value = parsed[key];
       if (typeof value === 'string' && value.trim()) clean[key] = value.trim().slice(0, 200);
     }
+    if (typeof parsed.il_scan === 'string' && /^[\da-f-]{36}$/i.test(parsed.il_scan)) clean.il_scan = parsed.il_scan;
     return clean;
   } catch {
     return {};

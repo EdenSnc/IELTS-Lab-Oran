@@ -1,9 +1,9 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { AuthError, requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin } from '@/lib/http/api';
-import { actionSchema, codeSchema } from '@/lib/acquisition/validation';
+import { actionSchema, codeSchema, FORM_DESTINATION } from '@/lib/acquisition/validation';
 import prisma from '@/lib/prisma';
 
 export async function GET(request: Request) {
@@ -44,10 +44,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'INVALID_JSON' }, { status: 400 });
     }
     const input = actionSchema.parse(payload);
-    await prisma.$transaction(async (tx) => {
-      if (input.action === 'campaign') {
+    const result = await prisma.$transaction(async (tx) => {
+      async function createCampaign(name: string, slug?: string) {
+        const stem = name.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 64).replace(/^-|-$/g, '') || 'campaign';
         const created = await tx.acquisitionCampaign.create({
-          data: { name: input.name, slug: input.slug },
+          data: { name, slug: slug ?? `${stem}-${randomBytes(4).toString('hex')}` },
         });
         await tx.staffActionAudit.create({
           data: {
@@ -59,6 +60,10 @@ export async function POST(request: Request) {
             metadata: { slug: created.slug, name: created.name },
           },
         });
+        return created;
+      }
+      if (input.action === 'campaign') {
+        await createCampaign(input.name, input.slug);
       } else if (input.action === 'delete_campaign') {
         const campaign = await tx.acquisitionCampaign.findUniqueOrThrow({
           where: { id: input.campaignId },
@@ -78,22 +83,27 @@ export async function POST(request: Request) {
           where: { id: campaignId },
           data: input.action === 'update_campaign'
             ? { name: input.name }
-            : { archivedAt: input.archived ? new Date() : null },
+            : { archivedAt: input.archived ? new Date() : null, keepQrAfterArchive: input.archived },
         });
         await tx.staffActionAudit.create({ data: {
           actorUserId: actor.id, action: 'ACQUISITION_CAMPAIGN_UPDATED', targetType: 'AcquisitionCampaign',
           targetId: updated.id, reason: `Updated campaign ${updated.slug}`,
           metadata: { name: updated.name, archived: Boolean(updated.archivedAt) },
         } });
-      } else if (input.action === 'placement') {
-        const campaign = await tx.acquisitionCampaign.findUniqueOrThrow({ where: { id: input.campaignId }, select: { archivedAt: true } });
+      } else if (input.action === 'placement' || input.action === 'poster_location') {
+        const campaign = input.action === 'poster_location' && input.campaign.kind === 'new'
+          ? await createCampaign(input.campaign.name)
+          : await tx.acquisitionCampaign.findUniqueOrThrow({
+            where: { id: input.action === 'placement' ? input.campaignId : input.campaign.kind === 'existing' ? input.campaign.id : undefined },
+            select: { id: true, archivedAt: true },
+          });
         if (campaign.archivedAt) throw new AuthError('CAMPAIGN_ARCHIVED', 409);
         const created = await tx.acquisitionPlacement.create({
           data: {
-            campaignId: input.campaignId,
+            campaignId: campaign.id,
             label: input.label,
-            medium: input.medium,
-            destination: input.destination,
+            medium: input.action === 'placement' ? input.medium : 'poster',
+            destination: input.action === 'placement' ? input.destination : FORM_DESTINATION,
             code: randomBytes(9).toString('base64url'),
           },
         });
@@ -112,10 +122,30 @@ export async function POST(request: Request) {
             },
           },
         });
+        if (input.action === 'poster_location') {
+          if (!input.fromDesignId) return { code: created.code };
+          const design = randomUUID();
+          const copy = await tx.$executeRaw`
+            INSERT INTO app_private."PosterDesign" (
+              id, "placementId", title, artwork, thumbnail, mime, width, height, x, y, size, dpi, "qrBackground", "roundQr", "updatedAt"
+            )
+            SELECT ${design}::uuid, ${created.id}::uuid, ${input.label.slice(0, 100)}, artwork, thumbnail, mime, width, height, x, y,
+              size, dpi, "qrBackground", "roundQr", now()
+            FROM app_private."PosterDesign" WHERE id = ${input.fromDesignId}::uuid AND "deletedAt" IS NULL
+          `;
+          if (!copy) throw new AuthError('SOURCE_POSTER_NOT_FOUND', 404);
+          await tx.staffActionAudit.create({ data: {
+            actorUserId: actor.id, action: 'POSTER_DUPLICATED', targetType: 'PosterDesign', targetId: design,
+            reason: 'Copied artwork to a new tracking link', metadata: { fromDesignId: input.fromDesignId, code: created.code },
+          } });
+          return { code: created.code, design };
+        }
       } else if (input.action === 'update_placement' || input.action === 'archive_placement') {
+        const prior = input.action === 'update_placement' && input.label
+          ? await tx.acquisitionPlacement.findUnique({ where: { id: input.placementId }, select: { label: true } }) : null;
         const updated = await tx.acquisitionPlacement.update({
           where: { id: input.placementId },
-          data: input.action === 'archive_placement' ? { archivedAt: input.archived ? new Date() : null } : {
+          data: input.action === 'archive_placement' ? { archivedAt: input.archived ? new Date() : null, keepQrAfterArchive: input.archived } : {
             label: input.label,
             medium: input.medium,
             destination: input.destination,
@@ -133,6 +163,7 @@ export async function POST(request: Request) {
               destination: updated.destination,
               active: updated.active,
               archived: Boolean(updated.archivedAt),
+              ...(prior && prior.label !== updated.label ? { previousLabel: prior.label, label: updated.label } : {}),
             },
           },
         });
@@ -161,7 +192,7 @@ export async function POST(request: Request) {
         });
       }
     });
-    return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'private, no-store' } });
+    return NextResponse.json({ ok: true, ...result }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {

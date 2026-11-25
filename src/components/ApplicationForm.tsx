@@ -4,6 +4,7 @@ import { FormEvent, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { readActiveUtms } from '@/lib/acquisition/utm-client';
 import { availabilityCopy, availabilitySchema, type AvailabilityWindow } from '@/lib/leads/availability';
+import { ieltsBands, oranToday } from '@/lib/leads/application';
 import AvailabilityPicker from './AvailabilityPicker';
 import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '@/lib/leads/direct-intake';
 
@@ -201,6 +202,7 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
           phone: form.get('phone'), email: form.get('email'), fullName,
           formName: 'IELTS Lab Oran Application', source: 'cohort_waitlist',
           utmSource: utms.utm_source, utmMedium: utms.utm_medium, utmCampaign: utms.utm_campaign, utmContent: utms.utm_content,
+          scanId: utms.il_scan,
           application: {
             schemaVersion: 3,
             discoverySource: form.get('discoverySource'),
@@ -308,8 +310,8 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
           <fieldset data-step="2" className={step === 2 ? 'mt-8 grid gap-5' : 'hidden'}>
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[1]}</legend>
             <div className="grid gap-2"><span className="text-sm font-semibold text-black/70">{text.booked}</span><div className="grid grid-cols-2 gap-3">{([['yes', text.yes], ['no', text.no]] as const).map(([value, label]) => <label key={value} className={`cursor-pointer rounded-2xl border p-4 text-sm font-semibold transition ${bookedExam === value ? 'border-crimson bg-crimson/[0.055] text-[#b81428]' : 'border-black/10 hover:border-black/20'}`}><input className="sr-only" type="radio" name="bookedExam" value={value} checked={bookedExam === value} onChange={() => setBookedExam(value)} required />{label}</label>)}</div></div>
-            {bookedExam === 'yes' && <label className={labelClass}>{text.bookedDate}<input className={fieldClass} name="bookedExamDate" type="date" required /></label>}
-            {bookedExam === 'no' && <label className={labelClass}>{text.targetDate}<input className={fieldClass} name="targetExamDate" type="date" required /></label>}
+            {bookedExam === 'yes' && <label className={labelClass}>{text.bookedDate}<input className={fieldClass} name="bookedExamDate" type="date" min={oranToday()} required /></label>}
+            {bookedExam === 'no' && <label className={labelClass}>{text.targetDate}<input className={fieldClass} name="targetExamDate" type="date" min={oranToday()} required /></label>}
           </fieldset>
 
           <fieldset data-step="3" className={step === 3 ? 'mt-8 grid gap-5' : 'hidden'}>
@@ -324,7 +326,12 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
           <fieldset data-step="4" className={step === 4 ? 'mt-8 grid gap-5' : 'hidden'}>
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[3]}</legend>
             <label className={labelClass}>{text.taken}<select className={fieldClass} name="takenIelts" value={takenIelts} onChange={(event) => setTakenIelts(event.target.value as YesNo)} required><option value="" disabled>—</option><option value="yes">{text.yes}</option><option value="no">{text.no}</option></select></label>
-            {takenIelts === 'yes' && <label className={labelClass}>{text.recentScore}<input className={fieldClass} name="recentScore" maxLength={50} required /></label>}
+            {takenIelts === 'yes' && <label className={labelClass}>{text.recentScore}
+              <select className={fieldClass} name="recentScore" defaultValue="" required dir="ltr">
+                <option value="" disabled>0–9</option>
+                {ieltsBands.map((band) => <option key={band}>{band}</option>)}
+              </select>
+            </label>}
             <div className="grid gap-2"><span className="text-sm font-semibold text-black/70">{text.challenges}</span><div className="grid grid-cols-2 gap-2">{text.modules.map(([value, label]) => { const checked = challengingModules.includes(value); return <label key={value} className={`cursor-pointer rounded-2xl border p-3 text-center text-sm font-semibold transition ${checked ? 'border-crimson bg-crimson/[0.055] text-[#b81428]' : 'border-black/10 hover:border-black/20'}`}><input className="sr-only" type="checkbox" name="challengingModules" value={value} checked={checked} onChange={() => setChallengingModules((current) => checked ? current.filter((item) => item !== value) : [...current, value])} />{label}</label>; })}</div></div>
             <label className={labelClass}>{text.level}<select className={fieldClass} name="englishLevel" defaultValue="" required><option value="" disabled>—</option>{text.levels.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><span className="text-xs font-normal leading-5 text-gray-600">{text.levelHelp}</span></label>
             <label className={labelClass}>{text.urgency}<textarea className="min-h-28 w-full resize-y rounded-2xl border border-black/10 bg-black/[0.025] px-4 py-3 text-[15px] outline-none transition focus:border-crimson/45 focus:bg-white focus:ring-4 focus:ring-crimson/[0.07]" name="urgencyAndObstacles" minLength={10} maxLength={1500} placeholder={text.urgencyPlaceholder} required /></label>

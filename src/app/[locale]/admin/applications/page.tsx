@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { z } from 'zod';
 import { codeSchema } from '@/lib/acquisition/validation';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import { applicationSchema } from '@/lib/leads/application';
@@ -24,19 +25,20 @@ function readApplication(message: string) {
 
 export default async function ApplicationsPage({ params, searchParams }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ placement?: string; page?: string; view?: string }>;
+  searchParams: Promise<{ placement?: string; page?: string; view?: string; id?: string }>;
 }) {
   const { locale } = await params;
   const base = `/${locale}/admin/applications`;
   await requireStaffPageAal2(['ADMIN'], base);
   const query = await searchParams;
+  const id = z.uuid().safeParse(query.id).data;
   const code = codeSchema.safeParse(query.placement).data;
   const page = /^\d{1,4}$/.test(query.page ?? '') ? Math.max(1, Number(query.page)) : 1;
   const archived = query.view === 'archived';
-  const where = { archivedAt: archived ? { not: null } : null, ...(code ? { message: { contains: `"utmContent":"${code}"` } } : {}) };
+  const where = id ? { id } : { archivedAt: archived ? { not: null } : null, ...(code ? { message: { contains: `"utmContent":"${code}"` } } : {}) };
   const [rows, placements] = await Promise.all([
     prisma.inquiry.findMany({
-      where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: (page - 1) * pageSize, take: pageSize + 1,
+      where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: id ? 0 : (page - 1) * pageSize, take: pageSize + 1,
       select: { id: true, message: true, createdAt: true, archivedAt: true, founderDetails: true, prospect: { select: { name: true, email: true, phone: true } } },
     }),
     prisma.acquisitionPlacement.findMany({ select: { code: true, label: true } }),
@@ -52,7 +54,12 @@ export default async function ApplicationsPage({ params, searchParams }: {
       { label: 'English level', value: applicant.englishLevel },
     ] : [];
     const exam = applicant?.bookedExamDate ?? applicant?.targetExamDate;
-    if (exam) facts.push({ label: 'Exam date', value: exam });
+    if (exam) facts.push({ label: applicant?.bookedExam ? 'Booked exam date' : 'Target exam date', value: exam });
+    if (applicant?.recentScore) facts.push({ label: 'Previous IELTS band', value: applicant.recentScore });
+    if (applicant) {
+      facts.push({ label: 'Priority skills', value: applicant.challengingModules.join(', ') });
+      facts.push({ label: 'Found us via', value: applicant.discoverySource.replaceAll('_', ' ') });
+    }
     if (applicant?.universityAdmission != null) facts.push({ label: 'University admission', value: applicant.universityAdmission ? 'Yes' : 'No' });
     return {
       id, received: received.format(createdAt), archived: Boolean(archivedAt),
@@ -90,8 +97,9 @@ export default async function ApplicationsPage({ params, searchParams }: {
           <Link href={link({ archived })} className="inline-flex min-h-11 items-center font-semibold text-crimson underline">Clear filter</Link>
         </div>
       )}
-      <ApplicationsInbox rows={inbox} archived={archived} />
-      {(page > 1 || rows.length > pageSize) && (
+      {id && <Link href={base} className="inline-flex min-h-11 items-center text-sm font-semibold text-crimson underline">All applications</Link>}
+      <ApplicationsInbox rows={inbox} archived={id ? Boolean(inbox[0]?.archived) : archived} expandedId={id} />
+      {!id && (page > 1 || rows.length > pageSize) && (
         <nav className="flex flex-wrap gap-4 text-sm font-semibold text-crimson" aria-label="Application pages">
           {page > 1 && <Link className="inline-flex min-h-11 items-center underline" href={link({page:page-1, archived, code})}>Previous page</Link>}
           {rows.length > pageSize && <Link className="inline-flex min-h-11 items-center underline" href={link({page:page+1, archived, code})}>Next page</Link>}

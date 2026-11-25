@@ -32,6 +32,7 @@ interface LeadInput {
   utmCampaign: string | null;
   utmContent: string | null;
   externalEventId: string | null;
+  scanId?: string | null;
   application: unknown | null;
 }
 
@@ -149,6 +150,7 @@ function directLead(data: z.output<typeof directLeadSchema>): LeadInput {
     utmCampaign: data.utmCampaign ?? null,
     utmContent: data.utmContent ?? null,
     externalEventId: data.submissionId && data.application ? `website-application:${data.submissionId}` : null,
+    scanId: data.utmSource === 'ieltslab' ? data.scanId : null,
     application: data.application ? {
       ...data.application,
       attribution: {
@@ -260,12 +262,18 @@ export async function POST(request: Request) {
       });
 
       if (lead.application) {
-        await tx.inquiry.create({
+        const inquiry = await tx.inquiry.create({
           data: {
             prospectId: prospect.id,
             message: JSON.stringify(lead.application),
           },
         });
+        if (lead.scanId && lead.utmContent) {
+          await tx.acquisitionScan.updateMany({
+            where: { id: lead.scanId, placement: { code: lead.utmContent }, inquiryId: null },
+            data: { inquiryId: inquiry.id },
+          });
+        }
       }
     });
 

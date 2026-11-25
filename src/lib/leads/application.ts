@@ -3,6 +3,13 @@ import { availabilitySchema } from './availability';
 
 const nullableShortText = z.string().trim().max(200).nullish();
 const isoDate = z.string().date();
+export const ieltsBands = Array.from({ length: 19 }, (_, index) => (index / 2).toFixed(1));
+export function isIeltsBand(value: string | null | undefined) {
+  return typeof value === 'string' && /^(?:[0-8](?:\.[05])?|9(?:\.0)?)$/.test(value);
+}
+export function oranToday() {
+  return new Date(Date.now() + 3_600_000).toISOString().slice(0, 10);
+}
 
 export const applicationSchema = z.object({
   schemaVersion: z.union([z.literal(2), z.literal(3)]),

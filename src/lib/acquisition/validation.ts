@@ -42,11 +42,18 @@ export const actionSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('campaign'),
     name: label,
-    slug: campaignSlugSchema,
+    slug: campaignSlugSchema.optional(),
   }).strict(),
   z.object({ action: z.literal('update_campaign'), campaignId: z.uuid(), name: label }).strict(),
   z.object({ action: z.literal('archive_campaign'), campaignId: z.uuid(), archived: z.boolean() }).strict(),
   z.object({ action: z.literal('delete_campaign'), campaignId: z.uuid() }).strict(),
+  z.object({
+    action: z.literal('poster_location'), label, fromDesignId: z.uuid().optional(),
+    campaign: z.discriminatedUnion('kind', [
+      z.object({ kind: z.literal('existing'), id: z.uuid() }).strict(),
+      z.object({ kind: z.literal('new'), name: label }).strict(),
+    ]),
+  }).strict(),
   z.object({
     action: z.literal('placement'),
     campaignId: z.string().uuid(),
@@ -57,7 +64,7 @@ export const actionSchema = z.discriminatedUnion('action', [
   z.object({
     action: z.literal('update_placement'),
     placementId: z.string().uuid(),
-    destination: destinationSchema,
+    destination: destinationSchema.optional(),
     active: z.boolean().optional(),
     label: label.optional(),
     medium: medium.optional(),

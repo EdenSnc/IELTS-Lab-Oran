@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState, useTransition } from 'react';
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
+import PlacementScans from './PlacementScans';
 import { FORM_DESTINATION, INTERNAL_DESTINATIONS, LEGACY_AVAILABILITY_DESTINATION } from '@/lib/acquisition/validation';
 
 type Placement = {
@@ -30,7 +31,9 @@ const DESTINATION_OPTIONS = [
   { value: 'facebook', label: 'Official Facebook profile' },
 ];
 
-export default function AcquisitionDashboard({ locale, campaigns }: { locale: string; campaigns: Campaign[] }) {
+export default function AcquisitionDashboard({ locale, campaigns, campaignsOnly = false, initialCampaign = '' }: {
+  locale: string; campaigns: Campaign[]; campaignsOnly?: boolean; initialCampaign?: string;
+}) {
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
   const [saving, setSaving] = useState(false);
@@ -39,7 +42,10 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
   const [message, setMessage] = useState('');
   const [undo, setUndo] = useState<Record<string, unknown>>();
   const [archivedView, setArchivedView] = useState(false);
-  const [campaignFilter, setCampaignFilter] = useState('');
+  const [campaignFilter, setCampaignFilter] = useState(initialCampaign);
+  const [renaming, setRenaming] = useState('');
+  const [renamingSpot, setRenamingSpot] = useState('');
+  const [creating, setCreating] = useState(false);
   const [search, setSearch] = useState('');
   const [confirmation, setConfirmation] = useState<Confirmation>();
 
@@ -57,7 +63,10 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
       const result = await response.json() as { error?: string };
       if (!response.ok) throw new Error(result.error || 'Save failed');
       form?.reset();
-      setMessage(data.action === 'delete_campaign' ? 'Campaign permanently deleted.' : data.archived === true ? 'Moved to Trash.' : data.archived === false ? 'Restored.' : 'Saved.');
+      if (data.action === 'campaign') setCreating(false);
+      if (data.action === 'update_campaign') setRenaming('');
+      if (data.action === 'update_placement' && typeof data.label === 'string') setRenamingSpot('');
+      setMessage(data.action === 'campaign' ? 'Campaign created.' : data.action === 'delete_campaign' ? 'Campaign permanently deleted.' : data.archived === true ? 'Moved to Trash.' : data.archived === false ? 'Restored.' : 'Saved.');
       setUndo(reversal);
       startTransition(() => router.refresh());
     } catch (error) {
@@ -73,7 +82,7 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
   const field = (form: HTMLFormElement, name: string) => String(new FormData(form).get(name) ?? '');
 
   const selected = campaigns.filter((campaign) => (!campaignFilter || campaign.id === campaignFilter) &&
-    (archivedView ? campaign.archived || campaign.placements.some((placement) => placement.archived) : !campaign.archived));
+    (archivedView ? campaign.archived || (!campaignsOnly && campaign.placements.some((placement) => placement.archived)) : !campaign.archived));
   const term = search.trim().toLowerCase();
   const results = selected.map((campaign) => ({
     campaign,
@@ -102,7 +111,10 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <h2 className="text-xl font-extrabold tracking-tight">Campaigns and tracking links</h2>
+        <div>
+          <h2 className="text-xl font-extrabold tracking-tight">{campaignsOnly ? 'Campaigns' : 'Poster spots and scans'}</h2>
+          {campaignsOnly && <p className="mt-1 text-sm text-stone-600">Group poster spots by campus, venue or promotion.</p>}
+        </div>
         <div className="inline-flex rounded-full bg-white p-1 ring-1 ring-gray-200" role="group" aria-label="Tracking status">
           {([false, true] as const).map((archived) => (
             <button key={String(archived)} type="button" aria-pressed={archivedView === archived}
@@ -113,7 +125,7 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
           ))}
         </div>
       </header>
-      <dl className="grid grid-cols-3 gap-2">
+      {!campaignsOnly && <dl className="grid grid-cols-3 gap-2">
         {([
           [archivedView ? 'Locations in Trash' : 'Active links', archivedView ? all.length : activeCount],
           ['Link opens', totalScans],
@@ -124,9 +136,9 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
             <dd className="mt-1 text-2xl font-extrabold tabular-nums text-crimson">{value}</dd>
           </div>
         ))}
-      </dl>
+      </dl>}
 
-      <div className="grid gap-2 sm:grid-cols-[1fr_1fr]">
+      {!campaignsOnly && <div className="grid gap-2 sm:grid-cols-[1fr_1fr]">
         <label className="grid gap-1 text-sm font-semibold">Campaign
           <select value={campaignFilter} onChange={(event) => setCampaignFilter(event.target.value)} className={fieldStyle}>
             <option value="">All campaigns</option>
@@ -136,19 +148,19 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
         <label className="grid gap-1 text-sm font-semibold">Find a placement
           <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name or QR code" className={fieldStyle} />
         </label>
-      </div>
+      </div>}
 
-      {!archivedView && <details className="rounded-2xl border border-gray-200 bg-white px-4">
-        <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">New campaign</summary>
-        <form className="grid gap-3 border-t border-gray-100 py-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={(event) => {
+      {!archivedView && campaignsOnly && <div>
+        <button type="button" aria-expanded={creating} className={submitStyle} onClick={() => setCreating(!creating)}>New campaign</button>
+        {creating && <form className="mt-3 flex flex-wrap items-end gap-3 rounded-2xl border border-stone-200 bg-white p-4" onSubmit={(event) => {
           event.preventDefault();
-          void save({ action: 'campaign', name: field(event.currentTarget, 'name'), slug: field(event.currentTarget, 'slug') }, event.currentTarget);
+          void save({ action: 'campaign', name: field(event.currentTarget, 'name') }, event.currentTarget);
         }}>
           <label className="grid gap-1 text-sm">Campaign name<input name="name" required minLength={2} maxLength={120} className={fieldStyle} /></label>
-          <label className="grid gap-1 text-sm">Campaign identifier<input name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" maxLength={80} placeholder="oran-posters" className={fieldStyle} /></label>
           <button disabled={busy} className={submitStyle}>Add campaign</button>
-        </form>
-      </details>}
+          <button type="button" disabled={busy} className={actionStyle} onClick={() => setCreating(false)}>Cancel</button>
+        </form>}
+      </div>}
 
       <div className="flex flex-wrap items-center gap-3">
         <p role="status" className="text-sm font-semibold text-crimson">{saving ? 'Saving…' : refreshing ? 'Refreshing…' : message}</p>
@@ -157,22 +169,27 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
       {results.length === 0 && <p className="rounded-2xl border border-gray-200 bg-white p-5 text-gray-600">{term ? 'No campaigns or placements match your search.' : archivedView ? 'Trash is empty.' : 'No current campaigns. Add one or restore it from Trash.'}</p>}
       {results.map(({ campaign, visible }) => {
         return (
-          <section key={campaign.id} className="space-y-3">
+          <section key={campaign.id} className={campaignsOnly ? 'space-y-3 rounded-2xl border border-stone-200 bg-white p-4 sm:p-5' : 'space-y-3'}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="text-xl font-bold">{campaign.name}</h2>
-              <span className="text-sm text-gray-600">{visible.length} placements</span>
+              <span className="text-sm text-gray-600">{campaignsOnly ? campaign.placements.length : visible.length} spots</span>
             </div>
-            <details className="rounded-2xl border border-gray-200 bg-white px-4">
-              <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">Manage campaign</summary>
-              <div className="space-y-3 border-t border-gray-100 py-3">
-                {!campaign.archived && <form className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end" onSubmit={(event) => {
+            {campaignsOnly ? <div className="space-y-3">
+                {!campaign.archived && renaming === campaign.id && <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => {
                   event.preventDefault();
                   void save({ action: 'update_campaign', campaignId: campaign.id, name: field(event.currentTarget, 'name') }, undefined,
                     { action: 'update_campaign', campaignId: campaign.id, name: campaign.name });
                 }}>
                   <label className="grid gap-1 text-sm">Campaign name<input name="name" key={campaign.name} defaultValue={campaign.name} required minLength={2} maxLength={120} className={fieldStyle} /></label>
                   <button disabled={busy} className={actionStyle}>Save name</button>
+                  <button type="button" disabled={busy} className={actionStyle} onClick={() => setRenaming('')}>Cancel</button>
                 </form>}
+                <div className="flex flex-wrap gap-2">
+                {!campaign.archived && <>
+                  <Link className={actionStyle} href={`/${locale}/admin/acquisition?new=${campaign.id}`}>Add poster</Link>
+                  <Link className={actionStyle} href={`/${locale}/admin/acquisition?view=tracking&campaign=${campaign.id}`}>View spots</Link>
+                  {renaming !== campaign.id && <button type="button" disabled={busy} className={actionStyle} onClick={() => setRenaming(campaign.id)}>Rename</button>}
+                </>}
                 <button type="button" disabled={busy} className={`${actionStyle} ${campaign.archived ? '' : 'text-[#9c1e2c]'}`} onClick={() => {
                   const perform = () => void save(
                     { action: 'archive_campaign', campaignId: campaign.id, archived: !campaign.archived }, undefined,
@@ -182,7 +199,7 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                   else setConfirmation({
                     title: 'Delete campaign?', confirmLabel: 'Move to Trash',
                     detail: campaign.placements.length
-                      ? `“${campaign.name}” and its tracking locations will move to Trash. Its printed links will pause until you restore it.`
+                      ? `“${campaign.name}” will move to Trash. Its printed links keep their current status, and its scan history is retained.`
                       : `“${campaign.name}” will move to Trash. You can restore it at any time.`,
                     perform,
                   });
@@ -195,10 +212,10 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                     confirmLabel: 'Delete permanently', perform: () => void save({ action: 'delete_campaign', campaignId: campaign.id }),
                   })}>Delete permanently</button>
                 ))}
-              </div>
-            </details>
-            {!archivedView && <details className="rounded-2xl border border-gray-200 bg-white px-4">
-              <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">New placement</summary>
+                </div>
+              </div> : null}
+            {!campaignsOnly && !archivedView && <details className="rounded-2xl border border-gray-200 bg-white px-4">
+              <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">New tracking spot</summary>
               <form className="grid gap-3 border-t border-gray-100 py-3 md:grid-cols-[1fr_auto_1fr_auto] md:items-end" onSubmit={(event) => {
                 event.preventDefault();
                 void save({ action: 'placement', campaignId: campaign.id, label: field(event.currentTarget, 'label'), medium: field(event.currentTarget, 'medium'), destination: field(event.currentTarget, 'destination') }, event.currentTarget);
@@ -209,7 +226,7 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                 <button disabled={busy} className={submitStyle}>Add placement</button>
               </form>
             </details>}
-            <div className="grid gap-3 lg:grid-cols-2">
+            {!campaignsOnly && <div className="grid gap-3 lg:grid-cols-2">
               {visible.map((placement) => {
                 const destination = placement.destination === LEGACY_AVAILABILITY_DESTINATION ? FORM_DESTINATION : placement.destination;
                 const archived = placement.archived || campaign.archived;
@@ -229,12 +246,22 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                     </dl>
                     <div className="flex flex-wrap gap-2">
                       {!archived && <Link href={`/${locale}/admin/acquisition/poster/${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center rounded-xl bg-charcoal px-3 text-sm font-bold text-white hover:bg-crimson">New poster</Link>}
+                      {!archived && <button type="button" disabled={busy} className={actionStyle} onClick={() => setRenamingSpot(placement.id)}>Rename spot</button>}
                       {placement.active && !archived && <a href={placement.qrDataUrl} download={`ieltslab-${placement.code}.png`} className={actionStyle}>Download QR</a>}
                       <button type="button" onClick={() => void copyLink(placement.url)} className={actionStyle}>Copy link</button>
                       {placement.firstParty && (
                         <Link href={`/${locale}/admin/applications?placement=${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-crimson underline">View applications</Link>
                       )}
                     </div>
+                    {!archived && renamingSpot === placement.id && <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => {
+                      event.preventDefault();
+                      void save({ action: 'update_placement', placementId: placement.id, label: field(event.currentTarget, 'spotName') }, undefined,
+                        { action: 'update_placement', placementId: placement.id, label: placement.label });
+                    }}>
+                      <label className="grid min-w-0 flex-1 gap-1 text-sm">Spot name<input name="spotName" required minLength={2} maxLength={120} defaultValue={placement.label} className={fieldStyle} /></label>
+                      <button disabled={busy} className={actionStyle}>Save spot name</button>
+                      <button type="button" disabled={busy} className={actionStyle} onClick={() => setRenamingSpot('')}>Cancel</button>
+                    </form>}
                     <details className="border-t border-gray-200">
                       <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold">Manage placement</summary>
                       <a href={placement.url} className="break-all text-sm text-crimson underline">{placement.url}</a>
@@ -249,8 +276,12 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                         <label className="grid gap-1 text-sm">Destination<select name="destination" key={destination} defaultValue={destination} className={fieldStyle}>{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
                         <button disabled={busy} className={actionStyle}>Save placement</button>
                       </form>}
-                      {!archived && <button type="button" disabled={busy} className={`${actionStyle} mt-2`} onClick={() => void save({ action: 'update_placement', placementId: placement.id, destination, active: !placement.active }, undefined,
-                        { action: 'update_placement', placementId: placement.id, destination, active: placement.active })}>{placement.active ? 'Pause link' : 'Resume link'}</button>}
+                      {!archived && <button type="button" disabled={busy} className={`${actionStyle} mt-2`} onClick={() => {
+                        const perform = () => void save({ action: 'update_placement', placementId: placement.id, active: !placement.active }, undefined,
+                          { action: 'update_placement', placementId: placement.id, active: placement.active });
+                        if (!placement.active) perform();
+                        else setConfirmation({ title: 'Pause printed QR link?', detail: `“${placement.label}” will stop opening until you resume the link. Its scan history will be kept.`, confirmLabel: 'Pause link', perform });
+                      }}>{placement.active ? 'Pause link' : 'Resume link'}</button>}
                       {!campaign.archived && <button type="button" disabled={busy} className={`${actionStyle} mt-2 ms-2 ${placement.archived ? '' : 'text-[#9c1e2c]'}`} onClick={() => {
                         const perform = () => void save(
                           { action: 'archive_placement', placementId: placement.id, archived: !placement.archived }, undefined,
@@ -259,7 +290,7 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                         if (placement.archived) perform();
                         else setConfirmation({
                           title: 'Delete tracking location?', confirmLabel: 'Move to Trash',
-                          detail: `“${placement.label}” will move to Trash. Its QR link will pause. Its scan history is kept.`,
+                          detail: `“${placement.label}” will move to Trash. Its printed link keeps its current status, and its scan history is retained.`,
                           perform,
                         });
                       }}>{placement.archived ? 'Restore location' : 'Delete location'}</button>}
@@ -273,14 +304,15 @@ export default function AcquisitionDashboard({ locale, campaigns }: { locale: st
                         <button disabled={busy} className={actionStyle}>Save check</button>
                       </form>}
                     </details>
+                    <PlacementScans locale={locale} code={placement.code} label={placement.label} />
                   </article>
                 );
               })}
-            </div>
+            </div>}
           </section>
         );
       })}
-      <p className="text-xs leading-relaxed text-gray-600">Link opens can include repeat visits. Applications count website submissions carrying the placement code.</p>
+      {!campaignsOnly && <p className="text-xs leading-relaxed text-gray-600">Link opens can include repeat visits. Applications count website submissions carrying the placement code.</p>}
       <ConfirmAction action={confirmation} onDismiss={() => setConfirmation(undefined)} />
     </div>
   );
