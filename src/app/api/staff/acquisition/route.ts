@@ -1,8 +1,9 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { Prisma } from '@prisma/client';
 import { AuthError, requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin } from '@/lib/http/api';
+import { readBoundedText } from '@/lib/http/read-body';
 import { actionSchema, codeSchema, FORM_DESTINATION } from '@/lib/acquisition/validation';
 import prisma from '@/lib/prisma';
 
@@ -30,13 +31,7 @@ export async function POST(request: Request) {
     if (!request.headers.get('content-type')?.startsWith('application/json')) {
       return NextResponse.json({ error: 'INVALID_CONTENT_TYPE' }, { status: 415 });
     }
-    if (Number(request.headers.get('content-length') ?? 0) > 2048) {
-      return NextResponse.json({ error: 'BODY_TOO_LARGE' }, { status: 413 });
-    }
-    const raw = await request.text();
-    if (Buffer.byteLength(raw) > 2048) {
-      return NextResponse.json({ error: 'BODY_TOO_LARGE' }, { status: 413 });
-    }
+    const raw = await readBoundedText(request, 2048);
     let payload: unknown;
     try {
       payload = JSON.parse(raw);
@@ -91,6 +86,25 @@ export async function POST(request: Request) {
           metadata: { name: updated.name, archived: Boolean(updated.archivedAt) },
         } });
       } else if (input.action === 'placement' || input.action === 'poster_location') {
+        const requestId = input.action === 'poster_location' ? input.requestId : undefined;
+        const fingerprint = requestId ? createHash('sha256').update(JSON.stringify(input)).digest('hex') : undefined;
+        if (requestId) {
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${requestId}))`;
+          const existing = await tx.acquisitionPlacement.findUnique({ where: { id: requestId }, select: { code: true } });
+          if (existing) {
+            const audit = await tx.staffActionAudit.findFirst({
+              where: {
+                action: 'ACQUISITION_PLACEMENT_CREATED', targetType: 'AcquisitionPlacement', targetId: requestId,
+                metadata: { path: ['retryFingerprint'], equals: fingerprint },
+              },
+              select: { id: true },
+            });
+            if (!audit) throw new AuthError('POSTER_REQUEST_CONFLICT', 409);
+            const design = input.action === 'poster_location' && input.fromDesignId
+              ? await tx.posterDesign.findUnique({ where: { id: requestId, deletedAt: null }, select: { id: true } }) : null;
+            return { code: existing.code, design: design?.id };
+          }
+        }
         const campaign = input.action === 'poster_location' && input.campaign.kind === 'new'
           ? await createCampaign(input.campaign.name)
           : await tx.acquisitionCampaign.findUniqueOrThrow({
@@ -100,6 +114,7 @@ export async function POST(request: Request) {
         if (campaign.archivedAt) throw new AuthError('CAMPAIGN_ARCHIVED', 409);
         const created = await tx.acquisitionPlacement.create({
           data: {
+            ...(requestId ? { id: requestId } : {}),
             campaignId: campaign.id,
             label: input.label,
             medium: input.action === 'placement' ? input.medium : 'poster',
@@ -119,12 +134,13 @@ export async function POST(request: Request) {
               code: created.code,
               medium: created.medium,
               destination: created.destination,
+              ...(fingerprint ? { retryFingerprint: fingerprint } : {}),
             },
           },
         });
         if (input.action === 'poster_location') {
           if (!input.fromDesignId) return { code: created.code };
-          const design = randomUUID();
+          const design = requestId ?? randomUUID();
           const copy = await tx.$executeRaw`
             INSERT INTO app_private."PosterDesign" (
               id, "placementId", title, artwork, thumbnail, mime, width, height, x, y, size, dpi, "qrBackground", "roundQr", "updatedAt"

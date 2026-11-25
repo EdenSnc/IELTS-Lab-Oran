@@ -48,7 +48,7 @@ export const actionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('archive_campaign'), campaignId: z.uuid(), archived: z.boolean() }).strict(),
   z.object({ action: z.literal('delete_campaign'), campaignId: z.uuid() }).strict(),
   z.object({
-    action: z.literal('poster_location'), label, fromDesignId: z.uuid().optional(),
+    action: z.literal('poster_location'), label, fromDesignId: z.uuid().optional(), requestId: z.uuid().optional(),
     campaign: z.discriminatedUnion('kind', [
       z.object({ kind: z.literal('existing'), id: z.uuid() }).strict(),
       z.object({ kind: z.literal('new'), name: label }).strict(),

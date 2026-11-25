@@ -7,6 +7,8 @@ import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '@/lib/l
 import prisma from '@/lib/prisma';
 import { requireHumanRequest } from '@/lib/security/bot';
 import { checkSlidingWindowRateLimit, extractClientIp } from '@/lib/security/rate-limit';
+import { BodyTooLargeError, readBoundedText } from '@/lib/http/read-body';
+import { logSafeError } from '@/lib/observability/safe-log';
 
 const MAX_BODY_BYTES = 32_768;
 const tallyWebhookSchema = z.object({
@@ -175,14 +177,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Content-Type must be application/json.' }, { status: 415 });
   }
 
-  const contentLength = Number(request.headers.get('content-length') ?? 0);
-  if (contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: 'Request body is too large.' }, { status: 413 });
-  }
-
-  const rawBody = await request.text();
-  if (Buffer.byteLength(rawBody, 'utf8') > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: 'Request body is too large.' }, { status: 413 });
+  let rawBody: string;
+  try {
+    rawBody = await readBoundedText(request, MAX_BODY_BYTES);
+  } catch (error) {
+    return error instanceof BodyTooLargeError
+      ? NextResponse.json({ error: 'Request body is too large.' }, { status: 413 })
+      : NextResponse.json({ error: 'Could not read the request.' }, { status: 400 });
   }
 
   let payload: unknown;
@@ -295,7 +296,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, duplicate: true }, { headers: { 'Cache-Control': 'no-store' } });
     }
 
-    console.error('Lead submission failed:', error);
+    logSafeError('LEAD_SUBMISSION_FAILED', error);
     return NextResponse.json({ error: 'Unable to save lead.' }, { status: 500 });
   }
 }

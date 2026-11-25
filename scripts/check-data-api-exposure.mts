@@ -15,21 +15,17 @@ export async function checkDataApiExposure() {
     apikey: publishableKey,
     Authorization: `Bearer ${publishableKey}`,
   };
-  const [defaultSchemaResponse, privateSchemaResponse] = await Promise.all([
-    fetch(new URL('/rest/v1/User?select=id&limit=1', origin), {
-      headers: baseHeaders,
-      signal: AbortSignal.timeout(10_000),
-    }),
-    fetch(new URL('/rest/v1/User?select=id&limit=1', origin), {
-      headers: { ...baseHeaders, 'Accept-Profile': 'app_private' },
-      signal: AbortSignal.timeout(10_000),
-    }),
-  ]);
-  assertDataApiRefused(defaultSchemaResponse.status);
-  assertDataApiRefused(privateSchemaResponse.status);
-  console.log(
-    `Supabase Data API refused User on public (${defaultSchemaResponse.status}) and app_private (${privateSchemaResponse.status}).`,
-  );
+  const privateTables = ['User', 'Inquiry', 'Prospect', 'LeadMagnetDownload', 'SalesNote', 'PosterDesign', 'AcquisitionScan'];
+  await Promise.all(privateTables.map(async (table) => {
+    const target = new URL(`/rest/v1/${table}?select=id&limit=1`, origin);
+    const [publicSchema, privateSchema] = await Promise.all([
+      fetch(target, { headers: baseHeaders, signal: AbortSignal.timeout(10_000) }),
+      fetch(target, { headers: { ...baseHeaders, 'Accept-Profile': 'app_private' }, signal: AbortSignal.timeout(10_000) }),
+    ]);
+    assertDataApiRefused(publicSchema.status);
+    assertDataApiRefused(privateSchema.status);
+    console.log(`Supabase Data API refused ${table} on public (${publicSchema.status}) and app_private (${privateSchema.status}).`);
+  }));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

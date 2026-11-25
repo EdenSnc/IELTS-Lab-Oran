@@ -2,6 +2,7 @@ import sharp from 'sharp';
 import QRCode from 'qrcode';
 import { AuthError, requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin, noStoreJson } from '@/lib/http/api';
+import { readBoundedBody, readBoundedText } from '@/lib/http/read-body';
 import { checkPosterDimensions, inspectPoster, MAX_POSTER_PIXELS, QUIET_MODULES } from '@/lib/acquisition/poster-artwork';
 import { fitsPosterDesign, MAX_SAVED_ARTWORK_BYTES, posterIdSchema, posterMutationSchema, posterSaveSchema } from '@/lib/acquisition/poster-design';
 import { publicAcquisitionLink } from '@/lib/acquisition/public-link';
@@ -57,11 +58,12 @@ export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
     const actor = await requirePrivilegedRequestUser(request, ['ADMIN']);
-    if (!request.headers.get('content-type')?.startsWith('multipart/form-data;')
-      || Number(request.headers.get('content-length')) > MAX_SAVED_ARTWORK_BYTES + 8192) {
+    const contentType = request.headers.get('content-type');
+    if (!contentType?.startsWith('multipart/form-data;')) {
       return noStoreJson({ error: 'INVALID_POSTER_UPLOAD' }, 400);
     }
-    const form = await request.formData().catch(() => null);
+    const bytes = await readBoundedBody(request, MAX_SAVED_ARTWORK_BYTES + 8192);
+    const form = await new Response(bytes, { headers: { 'Content-Type': contentType } }).formData().catch(() => null);
     if (!form) return noStoreJson({ error: 'INVALID_POSTER_UPLOAD' }, 400);
     const raw = form.get('details');
     const code = codeSchema.parse(form.get('code'));
@@ -127,8 +129,7 @@ async function mutate(request: Request, permanent: boolean) {
   try {
     assertSameOrigin(request);
     const actor = await requirePrivilegedRequestUser(request, ['ADMIN']);
-    const raw = await request.text();
-    if (raw.length > 1024) return noStoreJson({ error: 'INVALID_REQUEST' }, 400);
+    const raw = await readBoundedText(request, 1024);
     let details: unknown;
     try { details = JSON.parse(raw); } catch { return noStoreJson({ error: 'INVALID_REQUEST' }, 400); }
     const { id, action, version } = posterMutationSchema.parse(details);

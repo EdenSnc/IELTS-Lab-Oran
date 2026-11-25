@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { founderApplicationAction } from '@/lib/admin/application-record';
 import { requirePrivilegedRequestUser } from '@/lib/auth/request-user';
 import { apiError, assertSameOrigin } from '@/lib/http/api';
+import { readBoundedText } from '@/lib/http/read-body';
 import prisma from '@/lib/prisma';
 
 export async function POST(request: Request) {
@@ -12,8 +13,7 @@ export async function POST(request: Request) {
     if (!request.headers.get('content-type')?.startsWith('application/json')) {
       return NextResponse.json({ error: 'INVALID_CONTENT_TYPE' }, { status: 415 });
     }
-    const raw = await request.text();
-    if (Buffer.byteLength(raw) > 8192) return NextResponse.json({ error: 'BODY_TOO_LARGE' }, { status: 413 });
+    const raw = await readBoundedText(request, 8192);
     let body: unknown;
     try { body = JSON.parse(raw); } catch {
       return NextResponse.json({ error: 'INVALID_JSON' }, { status: 400 });

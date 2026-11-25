@@ -1,7 +1,6 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import PublicTelemetry from '@/components/PublicTelemetry';
 import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
 import { Inter, Cairo } from 'next/font/google';
@@ -70,8 +69,7 @@ export default async function LocaleLayout({
           {children}
           <FloatingWidgetClient />
         </NextIntlClientProvider>
-        <Analytics />
-        <SpeedInsights />
+        <PublicTelemetry />
       </body>
     </html>
   );

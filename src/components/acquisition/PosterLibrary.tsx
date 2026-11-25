@@ -41,6 +41,7 @@ export default function PosterLibrary({ base, trash, designs, locations, campaig
   const [format, setFormat] = useState<PosterExportFormat>('pdf');
   const [exporting, setExporting] = useState(false);
   const lock = useRef(false);
+  const locationRequest = useRef<{ payload: string; id: string }>(undefined);
   const exportTask = useRef<AbortController>(null);
   const query = search.trim().toLowerCase();
   const visible = designs.filter((design) => `${design.title} ${design.placement}`.toLowerCase().includes(query));
@@ -60,12 +61,15 @@ export default function PosterLibrary({ base, trash, designs, locations, campaig
     setProblems([]);
     setMessage('Creating a tracking link…');
     try {
+      const payload = {
+        action: 'poster_location', label: values.get('label'), fromDesignId: copyFrom?.id,
+        campaign: campaign === 'new' ? { kind: 'new', name: values.get('campaignName') } : { kind: 'existing', id: campaign },
+      };
+      const serialized = JSON.stringify(payload);
+      if (locationRequest.current?.payload !== serialized) locationRequest.current = { payload: serialized, id: crypto.randomUUID() };
       const response = await fetch('/api/staff/acquisition', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'poster_location', label: values.get('label'), fromDesignId: copyFrom?.id,
-          campaign: campaign === 'new' ? { kind: 'new', name: values.get('campaignName') } : { kind: 'existing', id: campaign },
-        }),
+        body: JSON.stringify({ ...payload, requestId: locationRequest.current.id }),
       });
       const result = await response.json() as { code?: string; design?: string };
       if (!response.ok || !result.code) throw new Error(response.status === 401 || response.status === 403
@@ -185,6 +189,7 @@ export default function PosterLibrary({ base, trash, designs, locations, campaig
           }}>{selecting ? 'Done selecting' : 'Select posters'}</button>
           <button className={solid} type="button" aria-expanded={creating} aria-controls="new-poster" onClick={() => {
             setCopyFrom(undefined);
+            locationRequest.current = undefined;
             setCreating(!creating);
           }}>
             <span aria-hidden="true" className="me-2 text-lg leading-none">+</span> New poster
@@ -318,6 +323,7 @@ export default function PosterLibrary({ base, trash, designs, locations, campaig
                   : <Link className={line} href={href}>Edit poster</Link>}
                 {!trash && !selecting && <button className={line} type="button" disabled={busy || exporting} onClick={() => {
                   setCopyFrom(design);
+                  locationRequest.current = undefined;
                   setNewQr(true);
                   setCampaign(campaigns.find(({ id }) => id === design.campaignId)?.id ?? (campaigns.length ? '' : 'new'));
                   setCreating(true);

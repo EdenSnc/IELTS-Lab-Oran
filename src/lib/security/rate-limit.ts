@@ -1,4 +1,5 @@
 import 'server-only';
+import { isIP } from 'node:net';
 
 type Bucket = {
   timestamps: number[];
@@ -8,10 +9,13 @@ const MAX_BUCKETS = 4_096;
 const buckets = new Map<string, Bucket>();
 
 export function extractClientIp(request: Request): string {
-  const realIp = request.headers.get('x-real-ip')?.trim();
-  if (realIp) return realIp.slice(0, 64);
-  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  if (forwarded) return forwarded.slice(0, 64);
+  const names = process.env.VERCEL === '1'
+    ? ['x-vercel-forwarded-for', 'x-forwarded-for']
+    : ['x-real-ip', 'x-forwarded-for'];
+  for (const header of names) {
+    const ip = request.headers.get(header)?.split(',')[0]?.trim();
+    if (ip && isIP(ip)) return ip;
+  }
   return 'unknown';
 }
 

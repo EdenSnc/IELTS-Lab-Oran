@@ -26,16 +26,20 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
+    maximumRedirects: 0,
+    maximumResponseBody: 8 * 1024 * 1024,
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
         pathname: '/photo-1497215728101-856f4ea42174',
+        search: '?q=80&w=2070&auto=format&fit=crop',
       },
       {
         protocol: 'https',
         hostname: 'img.youtube.com',
         pathname: '/vi/r5eiUU3EpHE/maxresdefault.jpg',
+        search: '',
       },
     ],
   },

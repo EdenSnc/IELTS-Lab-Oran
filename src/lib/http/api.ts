@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { AuthError } from '@/lib/auth/request-user';
+import { BodyTooLargeError } from './read-body';
+import { logSafeError } from '@/lib/observability/safe-log';
 
 export function noStoreJson(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: { 'Cache-Control': 'private, no-store, max-age=0' } });
@@ -10,6 +12,7 @@ const SAFE_CLIENT_ERROR_CODE = /^[A-Z][A-Z0-9_]{1,63}$/;
 
 export function apiError(error: unknown, fallback = 'REQUEST_FAILED') {
   if (error instanceof AuthError) return noStoreJson({ error: error.code }, error.status);
+  if (error instanceof BodyTooLargeError) return noStoreJson({ error: 'BODY_TOO_LARGE' }, 413);
   if (
     error instanceof Error
     && error.name === 'PaymentServiceError'
@@ -34,7 +37,7 @@ export function apiError(error: unknown, fallback = 'REQUEST_FAILED') {
           : code.includes('CONFLICT') || code.includes('INVALID_SESSION_TRANSITION') || code === 'CANCELLATION_WINDOW_CLOSED' || code === 'APPOINTMENT_ALREADY_STARTED' ? 409
             : code.includes('NOT_CONFIGURED') || code.endsWith('_MAINTENANCE') ? 503
               : code.startsWith('INVALID_') ? 400 : 500;
-  if (status >= 500) console.error(fallback, { code: rawMessage });
+  if (status >= 500) logSafeError(fallback, error, { errorCode: code });
   return noStoreJson({ error: status >= 500 ? fallback : code }, status);
 }
 
