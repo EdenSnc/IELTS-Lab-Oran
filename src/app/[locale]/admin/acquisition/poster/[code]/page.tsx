@@ -30,7 +30,7 @@ export default async function PosterPage({ params, searchParams }: {
   await requireStaffPageAal2(['ADMIN'], id ? `${path}?design=${id}` : path);
   const placement = await prisma.acquisitionPlacement.findUnique({
     where: { code: parsed.data },
-    select: { id: true, code: true, label: true, active: true, archivedAt: true, campaign: { select: { archivedAt: true } } },
+    select: { id: true, code: true, label: true, destination: true, active: true, archivedAt: true, campaign: { select: { archivedAt: true } } },
   });
   if (!placement) notFound();
   const design = id ? await prisma.posterDesign.findFirst({
@@ -46,7 +46,7 @@ export default async function PosterPage({ params, searchParams }: {
     Array.from({ length: modules.size }, (_, col) => modules.get(row, col) ? '1' : '0').join(''));
   const preview = await QRCode.toDataURL(url, { ...options, scale: 8, color: { light: '#00000000' } });
   return <PosterEditor key={id ?? placement.code} locale={locale} design={design} placement={{
-    code: placement.code, label: placement.label,
+    id: placement.id, code: placement.code, label: placement.label, destination: placement.destination,
     active: placement.active && !placement.archivedAt && !placement.campaign.archivedAt, matrix, preview,
   }} />;
 }

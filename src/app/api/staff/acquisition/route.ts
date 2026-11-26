@@ -159,14 +159,22 @@ export async function POST(request: Request) {
       } else if (input.action === 'update_placement' || input.action === 'archive_placement') {
         const prior = input.action === 'update_placement' && input.label
           ? await tx.acquisitionPlacement.findUnique({ where: { id: input.placementId }, select: { label: true } }) : null;
-        const updated = await tx.acquisitionPlacement.update({
-          where: { id: input.placementId },
-          data: input.action === 'archive_placement' ? { archivedAt: input.archived ? new Date() : null, keepQrAfterArchive: input.archived } : {
+        const data = input.action === 'archive_placement' ? { archivedAt: input.archived ? new Date() : null, keepQrAfterArchive: input.archived } : {
             label: input.label,
             medium: input.medium,
             destination: input.destination,
             ...(typeof input.active === 'boolean' ? { active: input.active } : {}),
-          },
+          };
+        const updated = await tx.acquisitionPlacement.update({
+          where: { id: input.placementId, ...(input.action === 'update_placement' && input.expectedDestination !== undefined
+            ? { destination: input.expectedDestination } : {}) },
+          data,
+        }).catch((error: unknown) => {
+          if (input.action === 'update_placement' && input.expectedDestination !== undefined
+            && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+            throw new AuthError('DESTINATION_CHANGED', 409);
+          }
+          throw error;
         });
         await tx.staffActionAudit.create({
           data: {
@@ -177,6 +185,7 @@ export async function POST(request: Request) {
             reason: `Updated placement ${updated.code}`,
             metadata: {
               destination: updated.destination,
+              ...(input.action === 'update_placement' && input.expectedDestination !== undefined ? { previousDestination: input.expectedDestination } : {}),
               active: updated.active,
               archived: Boolean(updated.archivedAt),
               ...(prior && prior.label !== updated.label ? { previousLabel: prior.label, label: updated.label } : {}),

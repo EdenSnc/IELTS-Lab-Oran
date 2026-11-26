@@ -13,6 +13,9 @@ export const INTERNAL_DESTINATIONS = [
   '/en',
   '/fr',
   '/ar',
+  '/en#hero',
+  '/fr#hero',
+  '/ar#hero',
   '/en#intake',
   '/fr#intake',
   '/ar#intake',
@@ -25,8 +28,26 @@ export const INTERNAL_DESTINATIONS = [
 ] as const;
 
 export const internalDestinationSchema = z.string().regex(
-  /^\/(en|fr|ar)(?:\/waitlist|\/articles\/first-ielts-preparation-cohort-oran)?(?:#intake)?$/,
+  /^\/(en|fr|ar)(?:#hero|(?:\/waitlist|\/articles\/first-ielts-preparation-cohort-oran)?(?:#intake)?)$/,
 );
+
+const languages = { en: 'English', fr: 'French', ar: 'Arabic' } as const;
+export const DESTINATION_OPTIONS: { value: string; label: string }[] = [
+  ...INTERNAL_DESTINATIONS.filter((value) => value.length > 3).map((value) => {
+    const language = languages[value.slice(1, 3) as keyof typeof languages];
+    const section = value.includes('/articles/') ? 'Cohort announcement'
+      : value.includes('/waitlist') ? 'Waitlist'
+      : value.endsWith('#intake') ? 'Application form' : 'Homepage hero';
+    return { value, label: `${section} · ${language}` };
+  }),
+  { value: 'instagram', label: 'IELTS Lab Instagram' },
+  { value: 'facebook', label: 'IELTS Lab Facebook' },
+];
+
+export function destinationOptionValue(value: string) {
+  return value === LEGACY_AVAILABILITY_DESTINATION ? FORM_DESTINATION
+    : /^\/(en|fr|ar)$/.test(value) ? `${value}#hero` : value;
+}
 export const destinationSchema = z.union([
   internalDestinationSchema,
   z.enum(['instagram', 'facebook', LEGACY_AVAILABILITY_DESTINATION]),
@@ -65,6 +86,7 @@ export const actionSchema = z.discriminatedUnion('action', [
     action: z.literal('update_placement'),
     placementId: z.string().uuid(),
     destination: destinationSchema.optional(),
+    expectedDestination: destinationSchema.optional(),
     active: z.boolean().optional(),
     label: label.optional(),
     medium: medium.optional(),

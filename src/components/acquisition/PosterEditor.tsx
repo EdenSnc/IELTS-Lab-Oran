@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
+import PosterDestination from './PosterDestination';
 import { checkPrintableLocation, createPosterPdf, downloadPosterFile, posterFileStem, renderPrintPoster, samplePosterArtwork, zipPosterFiles, type PosterExportFormat } from '@/lib/acquisition/poster-export';
 import {
   checkPosterDimensions, initialPosterQr, inspectPoster, isEvenLightQrArea, isLightQrColor, movePosterQr, posterQrBacking,
@@ -13,7 +14,7 @@ import { MAX_SAVED_ARTWORK_BYTES } from '@/lib/acquisition/poster-design';
 
 type Artwork = { image: HTMLImageElement; url: string; file?: File; width: number; height: number };
 type Drag = { pointer: number; x: number; y: number; resize: boolean; start: PosterPlacement };
-type Placement = { code: string; label: string; active: boolean; preview: string; matrix: string[] };
+type Placement = { id?: string; destination?: string; code: string; label: string; active: boolean; preview: string; matrix: string[] };
 type Design = PosterPlacement & { id: string; title: string; dpi: number; version: number; qrBackground: string; roundQr: boolean };
 const inputClass = 'min-h-11 w-full min-w-0 rounded-lg border border-gray-300 bg-white px-3 text-base';
 const saveErrors: Record<string, string> = {
@@ -322,6 +323,7 @@ export default function PosterEditor({ placement, locale, design }: { placement:
           disabled={!art || !qr || !title.trim() || busy} onClick={() => void savePoster()}>{saving ? 'Saving…' : 'Save poster'}</button>
         </div>
       </header>
+      {placement.id && placement.destination && <PosterDestination placementId={placement.id} destination={placement.destination} />}
       {!active && <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">This QR link is paused. Resume it in Tracking before printing.</p>}
       {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-900">{error}</p>}
       <p role="status" className={`empty:hidden rounded-xl border px-3 py-2.5 text-sm font-medium ${

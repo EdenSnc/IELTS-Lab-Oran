@@ -13,7 +13,7 @@ export default async function Hero({ cohortStatus }: HeroProps) {
   ]);
 
   return (
-    <header className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-4 px-4 pb-10 pt-24 text-center md:min-h-[75vh] md:gap-6 md:px-12 md:pb-16 md:pt-32">
+    <header id="hero" className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-4 px-4 pb-10 pt-24 text-center md:min-h-[75vh] md:gap-6 md:px-12 md:pb-16 md:pt-32">
       {/* Top badges */}
       <div className="flex flex-col gap-2 items-center justify-center">
         <span className="inline-flex items-center rounded-full border border-crimson/25 bg-crimson/5 px-3.5 py-1 text-xs font-bold tracking-wide text-[#b81428]">

@@ -95,7 +95,7 @@ export default async function AcquisitionPage({ params, searchParams }: {
   });
   const placements = campaigns.flatMap((campaign) => campaign.placements);
   const placementIds = placements.map((placement) => placement.id);
-  const codes = placements.filter((placement) => isFirstPartyDestination(placement.destination)).map((placement) => placement.code);
+  const codes = placements.map((placement) => placement.code);
   const [leadCounts, requestCounts] = await Promise.all([
     current === 'tracking' && codes.length ? prisma.leadMagnetDownload.groupBy({
       by: ['utmContent'],
@@ -129,7 +129,7 @@ export default async function AcquisitionPage({ params, searchParams }: {
         url,
         qrDataUrl: current === 'tracking' ? await QRCode.toDataURL(url, { margin: 4, width: 480, errorCorrectionLevel: 'M' }) : '',
         redirectRequests: requestsByPlacement.get(placement.id) ?? 0,
-        leadSubmissions: isFirstPartyDestination(placement.destination) ? leadsByCode.get(placement.code) ?? 0 : null,
+        leadSubmissions: leadsByCode.get(placement.code) ?? (isFirstPartyDestination(placement.destination) ? 0 : null),
         lastInspection: placement.inspections[0] ? {
           status: placement.inspections[0].status,
           note: placement.inspections[0].note,

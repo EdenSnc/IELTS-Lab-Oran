@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRef, useState, useTransition } from 'react';
 import ConfirmAction, { type Confirmation } from '@/components/admin/ConfirmAction';
 import PlacementScans from './PlacementScans';
-import { FORM_DESTINATION, INTERNAL_DESTINATIONS, LEGACY_AVAILABILITY_DESTINATION } from '@/lib/acquisition/validation';
+import { DESTINATION_OPTIONS, destinationOptionValue, FORM_DESTINATION } from '@/lib/acquisition/validation';
 
 type Placement = {
   id: string;
@@ -24,12 +24,6 @@ type Placement = {
   lastInspection: { status: string; note: string | null; checkedAt: string } | null;
 };
 type Campaign = { id: string; name: string; slug: string; archived: boolean; placements: Placement[] };
-
-const DESTINATION_OPTIONS = [
-  ...INTERNAL_DESTINATIONS.map((path) => ({ value: path, label: path })),
-  { value: 'instagram', label: 'Official Instagram profile' },
-  { value: 'facebook', label: 'Official Facebook profile' },
-];
 
 export default function AcquisitionDashboard({ locale, campaigns, campaignsOnly = false, initialCampaign = '' }: {
   locale: string; campaigns: Campaign[]; campaignsOnly?: boolean; initialCampaign?: string;
@@ -228,7 +222,7 @@ export default function AcquisitionDashboard({ locale, campaigns, campaignsOnly 
             </details>}
             {!campaignsOnly && <div className="grid gap-3 lg:grid-cols-2">
               {visible.map((placement) => {
-                const destination = placement.destination === LEGACY_AVAILABILITY_DESTINATION ? FORM_DESTINATION : placement.destination;
+                const destination = destinationOptionValue(placement.destination);
                 const archived = placement.archived || campaign.archived;
                 return (
                   <article key={placement.id} className="min-w-0 space-y-3 rounded-2xl border border-gray-200 bg-white p-4">
@@ -249,7 +243,7 @@ export default function AcquisitionDashboard({ locale, campaigns, campaignsOnly 
                       {!archived && <button type="button" disabled={busy} className={actionStyle} onClick={() => setRenamingSpot(placement.id)}>Rename spot</button>}
                       {placement.active && !archived && <a href={placement.qrDataUrl} download={`ieltslab-${placement.code}.png`} className={actionStyle}>Download QR</a>}
                       <button type="button" onClick={() => void copyLink(placement.url)} className={actionStyle}>Copy link</button>
-                      {placement.firstParty && (
+                      {(placement.firstParty || placement.leadSubmissions !== null) && (
                         <Link href={`/${locale}/admin/applications?placement=${encodeURIComponent(placement.code)}`} className="inline-flex min-h-11 items-center px-1 text-sm font-semibold text-crimson underline">View applications</Link>
                       )}
                     </div>
@@ -269,11 +263,14 @@ export default function AcquisitionDashboard({ locale, campaigns, campaignsOnly 
                         event.preventDefault();
                         const form = event.currentTarget;
                         void save({ action: 'update_placement', placementId: placement.id, destination: field(form, 'destination'), label: field(form, 'label'), medium: field(form, 'medium') }, undefined,
-                          { action: 'update_placement', placementId: placement.id, destination, label: placement.label, medium: placement.medium });
+                          { action: 'update_placement', placementId: placement.id, destination: placement.destination, label: placement.label, medium: placement.medium });
                       }}>
                         <label className="grid gap-1 text-sm">Placement name<input name="label" key={placement.label} defaultValue={placement.label} required minLength={2} maxLength={120} className={fieldStyle} /></label>
                         <label className="grid gap-1 text-sm">Medium<select name="medium" key={placement.medium} defaultValue={placement.medium} className={fieldStyle}>{['poster', 'flyer', 'card', 'partner', 'social'].map((medium) => <option key={medium}>{medium}</option>)}</select></label>
-                        <label className="grid gap-1 text-sm">Destination<select name="destination" key={destination} defaultValue={destination} className={fieldStyle}>{DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></label>
+                        <label className="grid gap-1 text-sm">Destination<select name="destination" key={destination} defaultValue={destination} className={fieldStyle}>
+                          {!DESTINATION_OPTIONS.some(({ value }) => value === destination) && <option value={destination}>{destination}</option>}
+                          {DESTINATION_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select></label>
                         <button disabled={busy} className={actionStyle}>Save placement</button>
                       </form>}
                       {!archived && <button type="button" disabled={busy} className={`${actionStyle} mt-2`} onClick={() => {
