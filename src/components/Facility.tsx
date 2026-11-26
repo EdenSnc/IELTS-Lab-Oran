@@ -2,8 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import Image from 'next/image';
 import { Locale } from '@/lib/seo';
 
-const GOOGLE_MAPS_BIR_EL_DJIR_URL =
-  'https://www.google.com/maps/search/?api=1&query=Bir+El+Djir+31130+Oran+Algeria';
+import { VENUE_MAP_URL, VENUE_PLUS_CODE } from '@/lib/location';
 
 const POSTAL_LOCATION: Record<Locale, string> = {
   en: 'Bir El Djir, Oran 31130, Algeria',
@@ -40,10 +39,10 @@ export default async function Facility() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span>{POSTAL_LOCATION[safeLocale]}</span>
+            <span><bdi>{VENUE_PLUS_CODE}</bdi> · {POSTAL_LOCATION[safeLocale]}</span>
           </div>
           <a
-            href={GOOGLE_MAPS_BIR_EL_DJIR_URL}
+            href={VENUE_MAP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-xs font-bold text-charcoal shadow-md transition hover:bg-[#ffebee]"

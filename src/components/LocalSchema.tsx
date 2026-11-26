@@ -1,5 +1,6 @@
 import { ACADEMIC_MOCK_TEST_PRODUCT } from '@/lib/commerce/catalog';
 import { getFoundingCohortStatus } from '@/lib/cohort';
+import { VENUE_MAP_URL } from '@/lib/location';
 import {
   COHORT_ARTICLE_PATH,
   COHORT_DEADLINE_ISO,
@@ -66,9 +67,6 @@ const AREA_SERVED: Record<Locale, { city: string; country: string }> = {
   ar: { city: 'وهران', country: 'الجزائر' },
 };
 
-const GOOGLE_MAPS_BIR_EL_DJIR_URL =
-  'https://www.google.com/maps/search/?api=1&query=Bir+El+Djir+31130+Oran+Algeria';
-
 export default function LocalSchema({ locale = 'en' }: { locale?: Locale }) {
   const safeLocale: Locale = locale in DESCRIPTIONS ? locale : 'en';
   const organizationId = `${SITE_URL}/#organization`;
@@ -111,7 +109,7 @@ export default function LocalSchema({ locale = 'en' }: { locale?: Locale }) {
           '@id': instructorId,
         },
         address: postalAddress,
-        hasMap: GOOGLE_MAPS_BIR_EL_DJIR_URL,
+        hasMap: VENUE_MAP_URL,
         areaServed: [
           {
             '@type': 'City',

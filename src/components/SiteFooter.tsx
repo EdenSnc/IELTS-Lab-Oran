@@ -2,8 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
 import { Locale } from '@/lib/seo';
 
-const GOOGLE_MAPS_BIR_EL_DJIR_URL =
-  'https://www.google.com/maps/search/?api=1&query=Bir+El+Djir+31130+Oran+Algeria';
+import { VENUE_MAP_URL, VENUE_PLUS_CODE } from '@/lib/location';
 
 const FOOTER_COPY: Record<
   Locale,
@@ -103,11 +102,11 @@ export default async function SiteFooter({ locale: localeProp }: { locale?: Loca
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>{copy.addressLine}</span>
+                <span><bdi>{VENUE_PLUS_CODE}</bdi> · {copy.addressLine}</span>
               </p>
               <p>
                 <a
-                  href={GOOGLE_MAPS_BIR_EL_DJIR_URL}
+                  href={VENUE_MAP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-[#b81428] underline decoration-crimson/30 underline-offset-4 hover:decoration-crimson"

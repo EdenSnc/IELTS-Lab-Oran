@@ -12,6 +12,7 @@ import type { Locale } from '@/lib/seo';
 import ApplicationForm from './ApplicationForm';
 import TrustBadges from './TrustBadges';
 import type { CohortStatus } from '@/lib/cohort';
+import { VENUE_MAP_URL, VENUE_PLUS_CODE } from '@/lib/location';
 
 interface IntakeProps {
   cohortStatus: CohortStatus;
@@ -21,6 +22,7 @@ export default function Intake({ cohortStatus }: IntakeProps) {
   const t = useTranslations('Intake');
   const ct = useTranslations('Cohort');
   const bt = useTranslations('Bypass');
+  const location = useTranslations('Facility');
   const launch = cohortLaunch[useLocale() as Locale];
 
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '213780343103';
@@ -65,6 +67,10 @@ export default function Intake({ cohortStatus }: IntakeProps) {
                 </p>
               </>
             )}
+            <a href={VENUE_MAP_URL} target="_blank" rel="noopener noreferrer"
+              className="mt-3 inline-flex min-h-11 flex-wrap items-center gap-x-2 text-sm font-semibold text-white underline underline-offset-4">
+              {location('location')} · <bdi>{VENUE_PLUS_CODE}</bdi> <span aria-hidden="true">↗</span>
+            </a>
           </div>
 
           <div className="min-w-0 rounded-2xl border border-white/15 bg-white p-4 text-charcoal shadow-xl md:col-start-2 md:row-span-2 md:row-start-1 md:rounded-3xl md:p-8">

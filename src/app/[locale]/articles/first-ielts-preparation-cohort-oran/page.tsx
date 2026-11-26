@@ -4,6 +4,7 @@ import ArticleMobileCta from '@/components/ArticleMobileCta';
 import ArticleTrust, { ArticleBreadcrumb } from '@/components/ArticleTrust';
 import { Link } from '@/i18n/routing';
 import { getFoundingCohortStatus } from '@/lib/cohort';
+import { VENUE_MAP_URL, VENUE_PLUS_CODE } from '@/lib/location';
 import {
   COHORT_APPLICATION_DEADLINE,
   COHORT_ARTICLE_PATH,
@@ -511,6 +512,10 @@ export default async function FirstCohortArticle() {
             {body.logisticsParagraphs.map((p) => (
               <p key={p}>{p}</p>
             ))}
+            <a href={VENUE_MAP_URL} target="_blank" rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-2 font-semibold text-[#8e1826] underline underline-offset-4">
+              <bdi>{VENUE_PLUS_CODE} · Bir El Djir</bdi> <span aria-hidden="true">↗</span>
+            </a>
           </section>
 
           {/* Rules */}
