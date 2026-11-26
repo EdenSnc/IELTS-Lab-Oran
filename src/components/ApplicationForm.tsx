@@ -88,6 +88,11 @@ const copy = {
 
 const fieldClass = 'min-w-0 h-12 w-full rounded-2xl border border-black/10 bg-black/[0.025] px-3 text-base text-charcoal outline-none transition focus:border-crimson/45 focus:bg-white focus:ring-4 focus:ring-crimson/[0.07] md:px-4';
 const labelClass = 'grid min-w-0 gap-2 text-sm font-semibold text-black/70';
+const verificationFeedback = {
+  en: 'The site could not verify this submission. Try again or contact us on WhatsApp.',
+  fr: 'Le site n’a pas pu vérifier cet envoi. Réessayez ou contactez-nous sur WhatsApp.',
+  ar: 'تعذّر على الموقع التحقق من الطلب. أعد المحاولة أو تواصل معنا عبر واتساب.',
+};
 const fieldFeedback = {
   en: { phone: 'Enter a WhatsApp number such as 0555 00 00 00 or +213 555 00 00 00.', check: 'Check this answer', waitlist: 'I agree to be contacted about the next cohort and will review its timetable and fee before enrolling.' },
   fr: { phone: 'Entrez un numéro WhatsApp comme 0555 00 00 00 ou +213 555 00 00 00.', check: 'Réponse à vérifier', waitlist: 'J’accepte d’être contacté pour le prochain groupe et de vérifier ses horaires et son tarif avant de m’inscrire.' },
@@ -105,6 +110,7 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
   const [step, setStep] = useState(0);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string>();
+  const [verificationBlocked, setVerificationBlocked] = useState(false);
   const [complete, setComplete] = useState(false);
   const [bookedExam, setBookedExam] = useState<YesNo>('');
   const [purpose, setPurpose] = useState('');
@@ -194,6 +200,7 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
     submitting.current = true;
     setPending(true);
     setMessage(undefined);
+    setVerificationBlocked(false);
     let requestTimeout: number | undefined;
 
     try {
@@ -241,7 +248,10 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
       });
       const payload = await response.json() as { fields?: string[] };
       if (!response.ok) {
-        showFieldError(payload.fields ?? []);
+        if (response.status === 403) {
+          setMessage(verificationFeedback[locale] ?? verificationFeedback.en);
+          setVerificationBlocked(true);
+        } else showFieldError(payload.fields ?? []);
         return;
       }
 
@@ -295,7 +305,11 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
             <div className="mt-3 h-1 overflow-hidden rounded-full bg-black/[0.08]"><div className="h-full rounded-full bg-[#c4162c] transition-[width]" style={{ width: `${step * 20}%` }} /></div>
           </div>
 
-          {message && <p role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-5 text-red-800">{message}</p>}
+          {message && <div role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-5 text-red-800">
+            <p>{message}</p>
+            {verificationBlocked && <a className="mt-2 inline-flex min-h-11 items-center font-semibold underline"
+              href={`https://wa.me/${(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '213780343103').replace(/\D/gu, '')}`}>{text.whatsapp}</a>}
+          </div>}
 
           <fieldset data-step="1" className={step === 1 ? 'mt-8 grid gap-5' : 'hidden'}>
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[0]}</legend>
