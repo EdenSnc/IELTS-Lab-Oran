@@ -3,6 +3,7 @@ import test from 'node:test';
 import { applicationSchema, boundedTallyAnswer, oranToday } from '../../src/lib/leads/application';
 import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '../../src/lib/leads/direct-intake';
 import { resolveVisitUtms } from '../../src/lib/acquisition/utm-client';
+import { cohortBlockSchema, cohortBlockSnapshotSchema, formatCohortBlock } from '../../src/lib/leads/cohort-time-blocks';
 
 const validApplication = {
   schemaVersion: 2,
@@ -30,6 +31,17 @@ const validApplication = {
     referrerHost: 'google.com',
   },
 } as const;
+
+test('next-cohort intake keeps published timetable snapshots and rejects free-form availability', () => {
+  const block = { id: crypto.randomUUID(), days: ['tue', 'thu'], startMinutes: 1080, endMinutes: 1200 };
+  assert.equal(cohortBlockSnapshotSchema.safeParse(block).success, true);
+  assert.deepEqual(formatCohortBlock(block, 'en'), { days: 'Tuesday and Thursday', time: '18:00–20:00' });
+  assert.equal(cohortBlockSchema.safeParse({ days: ['mon'], startMinutes: 1080, endMinutes: 1260 }).success, false);
+  const form = { ...validApplication, schemaVersion: 4, timeBlockId: block.id, scheduledBlock: block };
+  assert.deepEqual(applicationSchema.parse(form).scheduledBlock, block);
+  assert.equal(applicationSchema.safeParse({ ...form, timeBlockId: null, scheduledBlock: null }).success, true);
+  assert.equal(applicationSchema.safeParse({ ...form, availability: { mode: 'flexible' } }).success, false);
+});
 
 test('application intake requires the conditional test date and previous score', () => {
   assert.equal(applicationSchema.safeParse(validApplication).success, true);

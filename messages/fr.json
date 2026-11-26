@@ -166,8 +166,8 @@
     "closedNote": "La session du 26 novembre est clôturée. Envoyez votre profil ci-dessous pour être contacté en priorité dès l'ouverture de la prochaine cohorte à Oran.",
     "statusLabReady": "Laboratoire prêt",
     "statusCurriculumSet": "Programme prêt",
-    "statusScheduling": "Horaires selon vos disponibilités",
-    "footerText": "Indiquez vos disponibilités dans votre candidature. Nous transmettrons le planning confirmé par WhatsApp."
+    "statusScheduling": "Créneaux publiés",
+    "footerText": "Choisissez un créneau dès la publication des horaires. Nous confirmerons votre groupe par WhatsApp."
   },
   "Bypass": {
     "label": "Vous ne pouvez pas attendre la cohorte ?",

@@ -173,6 +173,18 @@ model LeadMagnetDownload {
   @@schema("app_private")
 }
 
+model CohortTimeBlock {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  days         String[]
+  startMinutes Int
+  endMinutes   Int
+  published    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([published, createdAt])
+  @@schema("app_private")
+}
+
 model Inquiry {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   prospectId String   @db.Uuid

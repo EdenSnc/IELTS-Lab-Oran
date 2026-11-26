@@ -3,9 +3,8 @@
 import { FormEvent, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { readActiveUtms } from '@/lib/acquisition/utm-client';
-import { availabilityCopy, availabilitySchema, type AvailabilityWindow } from '@/lib/leads/availability';
 import { ieltsBands, oranToday } from '@/lib/leads/application';
-import AvailabilityPicker from './AvailabilityPicker';
+import { formatCohortBlock, type CohortBlock } from '@/lib/leads/cohort-time-blocks';
 import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '@/lib/leads/direct-intake';
 
 type Locale = 'en' | 'fr' | 'ar';
@@ -15,7 +14,7 @@ const copy = {
   en: {
     eyebrow: 'Official intake portal',
     title: 'IELTS Lab Oran Application',
-    intro: 'Tell us your IELTS goal and when you can attend in Oran.',
+    intro: 'Tell us your IELTS goal and choose a class time when the timetable is open.',
     reasons: [
       ['PCs, not paper', 'The official exam is digital. Train on the interface you will actually face.'],
       ['A clear band blueprint', 'Turn examiner criteria into practical, repeatable decisions.'],
@@ -53,7 +52,7 @@ const copy = {
   },
   fr: {
     eyebrow: 'Portail officiel de candidature', title: 'Candidature IELTS Lab Oran',
-    intro: 'Indiquez votre objectif IELTS et vos disponibilités à Oran.',
+    intro: 'Indiquez votre objectif IELTS et choisissez un créneau dès la publication des horaires.',
     reasons: [['Sur PC, pas sur papier', "L’examen officiel est numérique. Entraînez-vous sur l’interface réelle."], ['Une stratégie de score claire', 'Transformez les critères des examinateurs en décisions pratiques et répétables.'], ['Environ un mois', 'Travaillez les compétences prioritaires avant votre test.']],
     begin: 'Commencer', back: 'Retour', next: 'Suivant', submit: 'Envoyer la candidature', pending: 'Envoi…', step: 'Étape {current} sur {total}',
     sections: ['Identité et contact', 'Calendrier du test', 'Objectif et destination', 'Diagnostic', 'Engagement'],
@@ -71,7 +70,7 @@ const copy = {
     successTitle: 'Candidature envoyée avec succès.', success: 'Votre candidature est enregistrée (sans réservation automatique de place). Redirection vers WhatsApp pour finaliser le suivi.', handoff: 'Bonjour IELTS Lab Oran, je viens d’envoyer ma candidature. Je m’appelle {name}.', whatsapp: 'Ouvrir WhatsApp', error: 'Impossible d’envoyer la candidature. Vos réponses sont conservées pour réessayer.',
   },
   ar: {
-    eyebrow: 'بوابة الترشح الرسمية', title: 'طلب الالتحاق بـ IELTS Lab Oran', intro: 'اذكر هدفك من اختبار IELTS والأوقات التي يمكنك الحضور فيها في وهران.',
+    eyebrow: 'بوابة الترشح الرسمية', title: 'طلب الالتحاق بـ IELTS Lab Oran', intro: 'اذكر هدفك من اختبار IELTS واختر موعد الدروس بعد نشر الجدول.',
     reasons: [['التدريب على الكمبيوتر', 'الاختبار الرسمي رقمي، لذلك تتدرب على الواجهة التي ستواجهها فعلاً.'], ['خطة واضحة للنتيجة', 'نحوّل معايير المصححين إلى قرارات عملية قابلة للتكرار.'], ['نحو شهر', 'تدرّب على المهارات التي تحتاج إليها قبل الاختبار.']],
     begin: 'ابدأ الطلب', back: 'رجوع', next: 'التالي', submit: 'إرسال الطلب', pending: 'جارٍ الإرسال…', step: 'الخطوة {current} من {total}',
     sections: ['الهوية والاتصال', 'موعد الاختبار', 'الهدف والوجهة', 'التشخيص', 'الالتزام'],
@@ -93,6 +92,11 @@ const verificationFeedback = {
   fr: 'Le site n’a pas pu vérifier cet envoi. Réessayez ou contactez-nous sur WhatsApp.',
   ar: 'تعذّر على الموقع التحقق من الطلب. أعد المحاولة أو تواصل معنا عبر واتساب.',
 };
+const timetableCopy = {
+  en: { title: 'Class time', choose: 'Choose one class block in Oran time.', waiting: 'Class times will be announced. Join the waitlist for updates.', loading: 'Loading class times…', failed: 'Could not load class times.', retry: 'Retry', changed: 'The timetable changed. Review the current class times.', updated: 'The form has changed. Refresh this page before submitting.', refresh: 'Refresh the page', preference: 'We’ll confirm your group before enrolment.' },
+  fr: { title: 'Horaire du cours', choose: 'Choisissez un créneau, heure d’Oran.', waiting: 'Les horaires seront annoncés. Inscrivez-vous sur la liste d’attente pour être informé.', loading: 'Chargement des horaires…', failed: 'Impossible de charger les horaires.', retry: 'Réessayer', changed: 'Les horaires ont changé. Consultez les créneaux actuels.', updated: 'Le formulaire a changé. Actualisez cette page avant l’envoi.', refresh: 'Actualiser la page', preference: 'Nous confirmerons votre groupe avant l’inscription.' },
+  ar: { title: 'موعد الدروس', choose: 'اختر موعداً واحداً بتوقيت وهران.', waiting: 'سنعلن عن المواعيد قريباً. انضم إلى قائمة الانتظار لتصلك التحديثات.', loading: 'جارٍ تحميل المواعيد…', failed: 'تعذّر تحميل المواعيد.', retry: 'أعد المحاولة', changed: 'تغيّرت المواعيد. اطّلع على الخيارات الحالية.', updated: 'تغيّر النموذج. حدّث الصفحة قبل إرسال الطلب.', refresh: 'حدّث الصفحة', preference: 'سنؤكد مجموعتك قبل التسجيل.' },
+};
 const fieldFeedback = {
   en: { phone: 'Enter a WhatsApp number such as 0555 00 00 00 or +213 555 00 00 00.', check: 'Check this answer', waitlist: 'I agree to be contacted about the next cohort and will review its timetable and fee before enrolling.' },
   fr: { phone: 'Entrez un numéro WhatsApp comme 0555 00 00 00 ou +213 555 00 00 00.', check: 'Réponse à vérifier', waitlist: 'J’accepte d’être contacté pour le prochain groupe et de vérifier ses horaires et son tarif avant de m’inscrire.' },
@@ -103,7 +107,7 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
   const locale = useLocale() as Locale;
   const text = copy[locale] ?? copy.en;
   const feedback = fieldFeedback[locale] ?? fieldFeedback.en;
-  const schedule = availabilityCopy[locale] ?? availabilityCopy.en;
+  const timetable = timetableCopy[locale] ?? timetableCopy.en;
   const formRef = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
   const lastSubmission = useRef<{ body: string; id: string }>(undefined);
@@ -114,14 +118,27 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
   const [complete, setComplete] = useState(false);
   const [bookedExam, setBookedExam] = useState<YesNo>('');
   const [purpose, setPurpose] = useState('');
-  const [flexibleSchedule, setFlexibleSchedule] = useState(false);
-  const [windows, setWindows] = useState<AvailabilityWindow[]>([]);
-  const [scheduleDraft, setScheduleDraft] = useState(false);
+  const [blocks, setBlocks] = useState<CohortBlock[]>();
+  const [selectedBlock, setSelectedBlock] = useState('');
+  const [scheduleError, setScheduleError] = useState(false);
+  const [refreshNeeded, setRefreshNeeded] = useState(false);
   const [takenIelts, setTakenIelts] = useState<YesNo>('');
   const [challengingModules, setChallengingModules] = useState<string[]>([]);
   const [whatsappUrl, setWhatsappUrl] = useState<string>();
 
-  const availability = flexibleSchedule ? { mode: 'flexible' } : { mode: 'windows', windows };
+  async function loadTimetable() {
+    setBlocks(undefined);
+    setScheduleError(false);
+    try {
+      const response = await fetch('/api/cohort/time-blocks', { cache: 'no-store', signal: AbortSignal.timeout(10_000) });
+      if (!response.ok) throw new Error('COHORT_TIMETABLE_LOAD_FAILED');
+      const data = await response.json() as { blocks: CohortBlock[] };
+      setSelectedBlock((current) => data.blocks.some(({ id }) => id === current) ? current : '');
+      setBlocks(data.blocks);
+    } catch {
+      setScheduleError(true);
+    }
+  }
 
   function validateStep(currentStep: number) {
     const fieldset = formRef.current?.querySelector<HTMLElement>(`[data-step="${currentStep}"]`);
@@ -142,12 +159,8 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
       setMessage(text.requiredModules);
       return false;
     }
-    if (currentStep === 5 && !flexibleSchedule && scheduleDraft) {
-      setMessage(schedule.saveDraft);
-      return false;
-    }
-    if (currentStep === 5 && !availabilitySchema.safeParse(availability).success) {
-      setMessage(schedule.invalid);
+    if ((currentStep === 1 || currentStep === 5) && (!blocks || (blocks.length && !selectedBlock))) {
+      setMessage(blocks ? timetable.choose : scheduleError ? timetable.failed : timetable.loading);
       return false;
     }
     setMessage(undefined);
@@ -156,6 +169,7 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
 
   function advance() {
     if (!validateStep(step)) return;
+    if (step === 0) void loadTimetable();
     setStep(Math.min(5, step + 1));
   }
 
@@ -172,7 +186,7 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
       universityAdmission: [3, text.admission], targetCountry: [3, text.country],
       targetBand: [3, text.band], recentScore: [4, text.recentScore],
       challengingModules: [4, text.challenges], englishLevel: [4, text.level],
-      urgencyAndObstacles: [4, text.urgency], availability: [5, schedule.title],
+      urgencyAndObstacles: [4, text.urgency], timeBlockId: [1, timetable.title],
       commitmentAccepted: [5, text.sections[4]],
     };
     const key = fields.find((field) => Object.hasOwn(labels, field));
@@ -182,7 +196,7 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
     }
     const [fieldStep, label] = labels[key];
     setStep(fieldStep);
-    setMessage(key === 'phone' ? feedback.phone : key === 'availability' ? schedule.invalid : `${feedback.check} « ${label} »`);
+    setMessage(key === 'phone' ? feedback.phone : `${feedback.check} « ${label} »`);
     requestAnimationFrame(() => formRef.current?.querySelector<HTMLElement>(`[name="${key}"]`)?.focus());
   }
 
@@ -211,14 +225,14 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
           utmSource: utms.utm_source, utmMedium: utms.utm_medium, utmCampaign: utms.utm_campaign, utmContent: utms.utm_content,
           scanId: utms.il_scan,
           application: {
-            schemaVersion: 3,
+            schemaVersion: 4,
             discoverySource: form.get('discoverySource'),
             bookedExam: bookedExam === 'yes',
             bookedExamDate: bookedExam === 'yes' ? form.get('bookedExamDate') : null,
             targetExamDate: bookedExam === 'no' ? form.get('targetExamDate') : null,
             purpose: form.get('purpose'),
             universityAdmission: purpose === 'higher_education' ? form.get('universityAdmission') === 'yes' : null,
-            availability,
+            timeBlockId: selectedBlock || null,
             targetCountry: form.get('targetCountry'), targetBand: form.get('targetBand'),
             takenIelts: takenIelts === 'yes', recentScore: takenIelts === 'yes' ? form.get('recentScore') : null,
             challengingModules, englishLevel: form.get('englishLevel'), urgencyAndObstacles: form.get('urgencyAndObstacles'),
@@ -246,11 +260,18 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
         body: JSON.stringify({ ...parsed.data, submissionId: lastSubmission.current.id }),
         signal: controller.signal,
       });
-      const payload = await response.json() as { fields?: string[] };
+      const payload = await response.json() as { fields?: string[]; error?: string };
       if (!response.ok) {
         if (response.status === 403) {
           setMessage(verificationFeedback[locale] ?? verificationFeedback.en);
           setVerificationBlocked(true);
+        } else if (payload.error === 'COHORT_TIMETABLE_CHANGED') {
+          setStep(1);
+          setMessage(timetable.changed);
+          void loadTimetable();
+        } else if (payload.error === 'APPLICATION_FORM_UPDATED') {
+          setRefreshNeeded(true);
+          setMessage(timetable.updated);
         } else showFieldError(payload.fields ?? []);
         return;
       }
@@ -307,12 +328,34 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
 
           {message && <div role="alert" className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-5 text-red-800">
             <p>{message}</p>
+            {refreshNeeded && <button type="button" className="min-h-11 underline" onClick={() => window.location.reload()}>{timetable.refresh}</button>}
             {verificationBlocked && <a className="mt-2 inline-flex min-h-11 items-center font-semibold underline"
               href={`https://wa.me/${(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '213780343103').replace(/\D/gu, '')}`}>{text.whatsapp}</a>}
           </div>}
 
           <fieldset data-step="1" className={step === 1 ? 'mt-8 grid gap-5' : 'hidden'}>
             <legend className="text-2xl font-semibold tracking-tight">{text.sections[0]}</legend>
+            <section className="grid gap-2">
+              <h3 className="text-sm font-semibold">{timetable.title}</h3>
+              {scheduleError ? <div className="text-sm text-red-800" role="alert">
+                {timetable.failed} <button type="button" className="min-h-11 px-2 font-semibold underline" onClick={() => void loadTimetable()}>{timetable.retry}</button>
+              </div> : !blocks ? <p role="status" className="text-sm text-gray-700">{timetable.loading}</p>
+                : !blocks.length ? <p className="text-sm text-gray-700">{timetable.waiting}</p>
+                : <div role="radiogroup" aria-label={timetable.title} className="grid gap-2">
+                  <p className="text-sm text-gray-700">{timetable.choose}</p>
+                  {blocks.map((block) => {
+                    const slot = formatCohortBlock(block, locale);
+                    const selected = selectedBlock === block.id;
+                    return <label key={block.id} className={`flex min-h-14 items-center gap-3 rounded-xl border p-3 text-sm transition-colors motion-reduce:transition-none ${selected
+                      ? 'border-[#8e1826] bg-[#f7ecec]' : 'border-stone-200 bg-white hover:border-[#8e1826]'}`}>
+                      <input type="radio" name="timeBlockId" value={block.id} checked={selected}
+                        onChange={() => { setSelectedBlock(block.id); setMessage(undefined); }} className="size-5 shrink-0 accent-[#8e1826]" />
+                      <span><strong className="block">{slot.days}</strong><bdi className="tabular-nums">{slot.time}</bdi></span>
+                    </label>;
+                  })}
+                  <p className="text-xs text-stone-600">{timetable.preference}</p>
+                </div>}
+            </section>
             <label className={labelClass}>{text.fullName}<input className={fieldClass} name="fullName" autoComplete="name" minLength={2} maxLength={120} required /></label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className={labelClass}>{text.phone}<input className={fieldClass} name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="+213 555 00 00 00" minLength={8} maxLength={32} required /></label>
@@ -352,20 +395,14 @@ export default function ApplicationForm({ waitlist }: { waitlist: boolean }) {
           </fieldset>
 
           <fieldset data-step="5" className={step === 5 ? 'mt-8 grid gap-5' : 'hidden'}>
-            <legend className="text-2xl font-semibold tracking-tight">{schedule.title}</legend>
-            <p className="text-sm text-gray-700">{schedule.hint}</p>
-            <label className="flex items-start gap-3 text-sm font-semibold">
-              <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-crimson" checked={flexibleSchedule} onChange={(event) => { setFlexibleSchedule(event.target.checked); setScheduleDraft(false); }} />
-              {schedule.flexible}
-            </label>
-            {!flexibleSchedule && <AvailabilityPicker locale={locale} windows={windows} onChange={setWindows} onDraft={setScheduleDraft} />}
+            <legend className="text-2xl font-semibold tracking-tight">{text.sections[4]}</legend>
             <label className="flex cursor-pointer gap-4 rounded-2xl border border-black/10 bg-black/[0.025] p-5 text-sm font-medium leading-6 text-gray-800"><input className="mt-1 h-5 w-5 shrink-0 accent-crimson" type="checkbox" name="commitmentAccepted" value="yes" required /><span>{waitlist ? feedback.waitlist : text.commitment}</span></label>
             <p className="text-xs leading-5 text-gray-600">{text.privacy}</p>
           </fieldset>
 
           <div className="mt-auto grid grid-cols-2 gap-3 pt-7">
             <button type="button" disabled={pending} onClick={() => { setMessage(undefined); setStep((current) => Math.max(0, current - 1)); }} className="h-12 rounded-full border border-black/10 px-5 text-sm font-semibold text-charcoal transition hover:border-black/20 hover:bg-black/[0.025] disabled:opacity-50">{text.back}</button>
-            {step < 5 ? <button type="button" onClick={advance} className="h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson">{text.next}</button> : <button disabled={pending} className="h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson disabled:cursor-wait disabled:opacity-55">{pending ? text.pending : text.submit}</button>}
+            {step < 5 ? <button type="button" onClick={advance} className="h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson">{text.next}</button> : <button disabled={pending || !blocks || refreshNeeded} className="h-12 rounded-full bg-charcoal px-5 text-sm font-semibold text-white transition hover:bg-crimson disabled:cursor-wait disabled:opacity-55">{pending ? text.pending : text.submit}</button>}
           </div>
       </div>
     </form>

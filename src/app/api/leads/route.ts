@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { LeadSource, Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { boundedTallyAnswer } from '@/lib/leads/application';
+import { boundedTallyAnswer, type ApplicationData } from '@/lib/leads/application';
 import { directLeadSchema, invalidLeadFields, normalizeLeadPhone } from '@/lib/leads/direct-intake';
 import prisma from '@/lib/prisma';
 import { requireHumanRequest } from '@/lib/security/bot';
@@ -35,6 +35,7 @@ interface LeadInput {
   utmContent: string | null;
   externalEventId: string | null;
   scanId?: string | null;
+  schedule?: { id: string | null; legacy: boolean };
   application: unknown | null;
 }
 
@@ -153,6 +154,10 @@ function directLead(data: z.output<typeof directLeadSchema>): LeadInput {
     utmContent: data.utmContent ?? null,
     externalEventId: data.submissionId && data.application ? `website-application:${data.submissionId}` : null,
     scanId: data.utmSource === 'ieltslab' ? data.scanId : null,
+    schedule: data.application ? {
+      id: data.application.schemaVersion === 4 ? data.application.timeBlockId ?? null : null,
+      legacy: data.application.schemaVersion !== 4,
+    } : undefined,
     application: data.application ? {
       ...data.application,
       attribution: {
@@ -237,6 +242,7 @@ export async function POST(request: Request) {
 
   try {
     await prisma.$transaction(async (tx) => {
+      let application = lead.application;
       // A concurrent application for the same number must reuse the contact.
       // Keep any established name and email when another enquiry arrives.
       const [prospect] = await tx.$queryRaw<Array<{ id: string }>>`
@@ -262,11 +268,24 @@ export async function POST(request: Request) {
         },
       });
 
-      if (lead.application) {
+      if (lead.schedule && application) {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock_shared(hashtext('ieltslab-cohort-timetable'))`;
+        const block = await tx.cohortTimeBlock.findFirst({
+          where: { published: true, ...(lead.schedule.id ? { id: lead.schedule.id } : {}) },
+          select: { id: true, days: true, startMinutes: true, endMinutes: true },
+        });
+        if (Boolean(block) !== Boolean(lead.schedule.id)) {
+          throw new Error(lead.schedule.legacy ? 'APPLICATION_FORM_UPDATED' : 'COHORT_TIMETABLE_CHANGED');
+        }
+        application = { ...(application as ApplicationData), schemaVersion: 4, availability: undefined,
+          timeBlockId: lead.schedule.id, scheduledBlock: block };
+      }
+
+      if (application) {
         const inquiry = await tx.inquiry.create({
           data: {
             prospectId: prospect.id,
-            message: JSON.stringify(lead.application),
+            message: JSON.stringify(application),
           },
         });
         if (lead.scanId && lead.utmContent) {
@@ -294,6 +313,9 @@ export async function POST(request: Request) {
         }
       }
       return NextResponse.json({ success: true, duplicate: true }, { headers: { 'Cache-Control': 'no-store' } });
+    }
+    if (error instanceof Error && ['COHORT_TIMETABLE_CHANGED', 'APPLICATION_FORM_UPDATED'].includes(error.message)) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
     }
 
     logSafeError('LEAD_SUBMISSION_FAILED', error);

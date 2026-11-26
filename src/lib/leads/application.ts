@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { availabilitySchema } from './availability';
+import { cohortBlockSnapshotSchema } from './cohort-time-blocks';
 
 const nullableShortText = z.string().trim().max(200).nullish();
 const isoDate = z.string().date();
@@ -12,7 +13,7 @@ export function oranToday() {
 }
 
 export const applicationSchema = z.object({
-  schemaVersion: z.union([z.literal(2), z.literal(3)]),
+  schemaVersion: z.union([z.literal(2), z.literal(3), z.literal(4)]),
   discoverySource: z.enum(['google_search', 'google_maps', 'poster', 'social_media', 'workshop', 'friend', 'other']),
   bookedExam: z.boolean(),
   bookedExamDate: isoDate.nullish(),
@@ -20,6 +21,8 @@ export const applicationSchema = z.object({
   purpose: z.enum(['higher_education', 'immigration', 'career', 'other']),
   universityAdmission: z.boolean().nullish(),
   availability: availabilitySchema.optional(),
+  timeBlockId: z.uuid().nullish(),
+  scheduledBlock: cohortBlockSnapshotSchema.nullish(),
   targetCountry: z.string().trim().min(2).max(100),
   targetBand: z.enum(['5.5', '6.0', '6.5', '7.0', '7.5', '8.0', '8.5-9.0']),
   takenIelts: z.boolean(),
@@ -47,6 +50,9 @@ export const applicationSchema = z.object({
   }
   if (application.schemaVersion === 3 && !application.availability) {
     context.addIssue({ code: 'custom', path: ['availability'], message: 'Weekly availability is required.' });
+  }
+  if (application.schemaVersion === 4 && application.availability) {
+    context.addIssue({ code: 'custom', path: ['availability'], message: 'Choose a published class time.' });
   }
   if (application.bookedExam && !application.bookedExamDate) {
     context.addIssue({

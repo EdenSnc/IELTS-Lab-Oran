@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { z } from 'zod';
+import CohortScheduleAdmin from '@/components/admin/CohortScheduleAdmin';
+import { formatCohortBlock } from '@/lib/leads/cohort-time-blocks';
 import { codeSchema } from '@/lib/acquisition/validation';
 import { requireStaffPageAal2 } from '@/lib/auth/staff-page';
 import { applicationSchema } from '@/lib/leads/application';
@@ -36,12 +38,16 @@ export default async function ApplicationsPage({ params, searchParams }: {
   const page = /^\d{1,4}$/.test(query.page ?? '') ? Math.max(1, Number(query.page)) : 1;
   const archived = query.view === 'archived';
   const where = id ? { id } : { archivedAt: archived ? { not: null } : null, ...(code ? { message: { contains: `"utmContent":"${code}"` } } : {}) };
-  const [rows, placements] = await Promise.all([
+  const [rows, placements, blocks] = await Promise.all([
     prisma.inquiry.findMany({
       where, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: id ? 0 : (page - 1) * pageSize, take: pageSize + 1,
       select: { id: true, message: true, createdAt: true, archivedAt: true, founderDetails: true, prospect: { select: { name: true, email: true, phone: true } } },
     }),
     prisma.acquisitionPlacement.findMany({ select: { code: true, label: true } }),
+    id || archived ? [] : prisma.cohortTimeBlock.findMany({
+      orderBy: [{ published: 'desc' }, { createdAt: 'desc' }],
+      select: { id: true, days: true, startMinutes: true, endMinutes: true, published: true },
+    }),
   ]);
   const labelByCode = new Map(placements.map((placement) => [placement.code, placement.label]));
   const inbox: InboxItem[] = rows.slice(0, pageSize).map(({ id, message, createdAt, archivedAt, founderDetails, prospect }) => {
@@ -60,6 +66,10 @@ export default async function ApplicationsPage({ params, searchParams }: {
       facts.push({ label: 'Priority skills', value: applicant.challengingModules.join(', ') });
       facts.push({ label: 'Found us via', value: applicant.discoverySource.replaceAll('_', ' ') });
     }
+    if (applicant?.scheduledBlock) {
+      const slot = formatCohortBlock(applicant.scheduledBlock, 'en');
+      facts.push({ label: 'Selected class time (Oran)', value: `${slot.days} · ${slot.time}` });
+    } else if (applicant?.schemaVersion === 4) facts.push({ label: 'Class time', value: 'Awaiting timetable' });
     if (applicant?.universityAdmission != null) facts.push({ label: 'University admission', value: applicant.universityAdmission ? 'Yes' : 'No' });
     return {
       id, received: received.format(createdAt), archived: Boolean(archivedAt),
@@ -91,6 +101,7 @@ export default async function ApplicationsPage({ params, searchParams }: {
           ))}
         </nav>
       </header>
+      {!id && !archived && <CohortScheduleAdmin blocks={blocks} />}
       {code && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm">
           <span>Poster <strong>{labelByCode.get(code) ?? code}</strong></span>

@@ -166,8 +166,8 @@
     "closedNote": "The 26 November intake window has closed. Submit your profile below to be contacted first when the next Oran cohort dates open.",
     "statusLabReady": "Lab Ready",
     "statusCurriculumSet": "Curriculum Set",
-    "statusScheduling": "Timetable based on availability",
-    "footerText": "Include your availability in your application. We will share the confirmed timetable via WhatsApp."
+    "statusScheduling": "Published class times",
+    "footerText": "Choose a class time when the timetable is published. We’ll confirm your group via WhatsApp."
   },
   "Bypass": {
     "label": "Can't wait for the cohort?",

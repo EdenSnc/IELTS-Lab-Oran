@@ -40,3 +40,35 @@ Older daily aggregates have no individual timestamps.
 
 The workspace and its marketing/application APIs require ADMIN and MFA.
 Examiner and learner tools use their own permissions.
+
+## Next camp and online teaching
+
+For new camps, publish only recurring class blocks the founder can actually
+teach. Applicants select one offered block in Oran time. Until the timetable
+is published, accept waitlist applications. A time choice is a preference
+and enrolment still needs confirmation. Use factual availability: unpublished
+or withdrawn times are unavailable. Use “Full” only for an actual seat limit.
+Keep the selected schedule in the application so later timetable changes
+preserve the original answer.
+Publish or withdraw blocks in Founder Dashboard → Applications → Next-camp
+timetable. Each block covers one group with the same hours on its selected
+weekdays. Withdraw old blocks before opening a new timetable.
+
+The founder wants an affordable online IELTS course with small live groups and
+hourly contract teachers. This is a teaching offer that can pilot with verified
+lesson and practice material while the Cambridge extraction continues. Keep
+the broader exam-library launch gate tied to extraction completeness. Start
+with one paid group at a confirmed time. Use existing live-class tools first,
+with IELTSLab for enrolment, materials, homework and feedback. Pay for teaching,
+preparation and marking explicitly and measure those hours before scaling.
+
+Planning scenario: six groups × eight learners × 5,000 DZD = 240,000 DZD gross
+for one cycle. The 5,000 DZD is a modelling assumption carried over from the
+introductory price. It is not a committed online fee. If all 32 hours per group
+are instructor-led and the three teachers each take two groups, that is 192
+instructor hours, including 128 contractor hours and 64 founder hours.
+Subtract instructor time, admin, software, processing and support before
+interpreting the margin. Engline Academy in Millenium, Oran is a reference for
+online English groups, teacher selection and session links via Google Meet.
+Its site mentions a coach with IELTS experience. A dedicated IELTS offer and
+its unit economics have not been verified.

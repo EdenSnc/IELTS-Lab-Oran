@@ -9,6 +9,7 @@ export const PUBLIC_API_ROUTES = {
   '/api/internal/grading/writing': 'QStash consumer verifies the signed raw request body.',
   '/api/internal/payments/reconcile': 'QStash consumer verifies the signed raw request body.',
   '/api/leads': 'Public intake validates BotID or the Tally webhook signature.',
+  '/api/cohort/time-blocks': 'Reads published class times only, with no enrolment or personal data.',
   '/api/payments/webhooks/chargily': 'Chargily webhook verifies the signed raw request body.',
   '/api/speaking/webhooks/livekit': 'LiveKit webhook verifies the provider authorization signature.',
   '/api/test-assets/[assetId]': 'Public-demo assets are explicitly linked; private assets require attempt ownership.',
