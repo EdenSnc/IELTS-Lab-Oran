@@ -45,6 +45,7 @@ export default async function ApplicationsPage({ params, searchParams }: {
     }),
     prisma.acquisitionPlacement.findMany({ select: { code: true, label: true } }),
     id || archived ? [] : prisma.cohortTimeBlock.findMany({
+      where: { supersededAt: null },
       orderBy: [{ published: 'desc' }, { createdAt: 'desc' }],
       select: { id: true, days: true, startMinutes: true, endMinutes: true, published: true },
     }),

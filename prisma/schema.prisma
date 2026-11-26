@@ -179,6 +179,7 @@ model CohortTimeBlock {
   startMinutes Int
   endMinutes   Int
   published    Boolean  @default(true)
+  supersededAt DateTime?
   createdAt    DateTime @default(now())
 
   @@index([published, createdAt])

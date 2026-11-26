@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useRef, useState, type FormEvent } from 'react';
 import { availabilityCopy, weekdays } from '@/lib/leads/availability';
-import { cohortBlockSchema, formatCohortBlock } from '@/lib/leads/cohort-time-blocks';
+import { cohortBlockSchema, formatCohortBlock, formatCohortClock } from '@/lib/leads/cohort-time-blocks';
 
 type Block = { id: string; days: string[]; startMinutes: number; endMinutes: number; published: boolean };
 const control = 'min-h-11 rounded-xl border border-stone-200 bg-white px-3 text-sm font-medium';
@@ -15,6 +15,8 @@ export default function CohortScheduleAdmin({ blocks }: { blocks: Block[] }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [editingId, setEditingId] = useState<string>();
+  const editing = blocks.find(({ id }) => id === editingId);
   async function save(body: object, feedback: string, form?: HTMLFormElement) {
     if (lock.current) return;
     lock.current = true;
@@ -25,10 +27,15 @@ export default function CohortScheduleAdmin({ blocks }: { blocks: Block[] }) {
       const response = await fetch('/api/staff/cohort-time-blocks', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
-      if (!response.ok) throw new Error(response.status === 409 ? 'Withdraw a published block before adding another.'
-        : response.status === 401 || response.status === 403 ? 'Sign in again to edit class times.'
-          : 'The timetable could not be saved. Try again.');
+      if (!response.ok) {
+        const problem = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(problem?.error === 'COHORT_TIMETABLE_LIMIT' ? 'Withdraw a published block before adding another.'
+          : response.status === 409 ? 'This block changed elsewhere. Reopen the timetable and try again.'
+          : response.status === 401 || response.status === 403 ? 'Sign in again to edit class times.'
+            : 'The timetable could not be saved. Try again.');
+      }
       form?.reset();
+      if (form) setEditingId(undefined);
       setMessage(feedback);
       router.refresh();
     } catch (reason) {
@@ -50,7 +57,12 @@ export default function CohortScheduleAdmin({ blocks }: { blocks: Block[] }) {
       days: fields.getAll('days'), startMinutes: readTime('start'), endMinutes: readTime('end'),
     });
     if (!parsed.success) { setError('Choose at least one day and a time between 08:00 and 20:00.'); return; }
-    void save({ action: 'add', block: parsed.data }, 'Class time published.', form);
+    if (editing) {
+      void save({ action: 'edit', id: editing.id, block: parsed.data }, 'Class time updated.', form);
+      return;
+    }
+    const publish = ((event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null)?.value === 'publish';
+    void save({ action: 'add', block: parsed.data, published: publish }, publish ? 'Class time published.' : 'Draft saved.', form);
   }
 
   return <details className="rounded-2xl border border-stone-200 bg-white px-4">
@@ -62,27 +74,40 @@ export default function CohortScheduleAdmin({ blocks }: { blocks: Block[] }) {
           const slot = formatCohortBlock(block, 'en');
           return <li key={block.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
             <div className="min-w-0"><p className="break-words text-sm font-semibold">{slot.days} · {slot.time}</p>
-              <p className="text-xs text-stone-600">{block.published ? 'Published' : 'Unavailable'}</p></div>
-            <button type="button" disabled={busy} className={action} onClick={() => void save({
-              action: 'publish', id: block.id, published: !block.published,
-            }, block.published ? 'Class time withdrawn.' : 'Class time published.')}>{block.published ? 'Withdraw' : 'Publish again'}</button>
+              <p className="text-xs text-stone-600">{block.published ? 'Published' : 'Unpublished'}</p></div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" disabled={busy} className={action} onClick={() => {
+                setEditingId(block.id);
+                setError('');
+                setMessage('');
+              }}>Edit time</button>
+              <button type="button" disabled={busy} className={action} onClick={() => void save({
+                action: 'publish', id: block.id, published: !block.published,
+              }, block.published ? 'Class time withdrawn.' : 'Class time published.')}>{block.published ? 'Withdraw' : 'Publish'}</button>
+            </div>
           </li>;
         })}
       </ul>}
-      <form onSubmit={add} className="grid gap-3 rounded-xl bg-stone-50 p-3 sm:p-4">
+      <form key={editing?.id ?? 'new'} onSubmit={add} className="grid gap-3 rounded-xl bg-stone-50 p-3 sm:p-4">
+        {editing && <p className="text-sm font-semibold">Edit class time</p>}
         <fieldset className="min-w-0">
           <legend className="mb-2 text-sm font-semibold">Days for this group</legend>
           <div className="flex flex-wrap gap-2">
             {weekdays.map((day, index) => <label key={day} className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 text-sm">
-              <input type="checkbox" name="days" value={day} className="size-4 accent-[#8e1826]" /> {availabilityCopy.en.shortDays[index]}
+              <input type="checkbox" name="days" value={day} defaultChecked={editing?.days.includes(day)} className="size-4 accent-[#8e1826]" /> {availabilityCopy.en.shortDays[index]}
             </label>)}
           </div>
         </fieldset>
         <div className="grid grid-cols-2 gap-2 sm:max-w-sm">
-          <label className="grid min-w-0 gap-1 text-sm font-semibold">Start<input name="start" type="time" min="08:00" max="19:59" className={`${control} min-w-0`} required /></label>
-          <label className="grid min-w-0 gap-1 text-sm font-semibold">End<input name="end" type="time" min="08:01" max="20:00" className={`${control} min-w-0`} required /></label>
+          <label className="grid min-w-0 gap-1 text-sm font-semibold">Start<input name="start" type="time" min="08:00" max="19:59" defaultValue={editing ? formatCohortClock(editing.startMinutes) : undefined} className={`${control} min-w-0`} required /></label>
+          <label className="grid min-w-0 gap-1 text-sm font-semibold">End<input name="end" type="time" min="08:01" max="20:00" defaultValue={editing ? formatCohortClock(editing.endMinutes) : undefined} className={`${control} min-w-0`} required /></label>
         </div>
-        <button disabled={busy} className="min-h-11 w-fit rounded-full bg-charcoal px-4 text-sm font-semibold text-white disabled:opacity-50">Publish time block</button>
+        <div className="flex flex-wrap gap-2">
+          <button type="submit" value="draft" disabled={busy} className="min-h-11 rounded-full bg-charcoal px-4 text-sm font-semibold text-white disabled:opacity-50">{editing ? 'Save changes' : 'Save draft'}</button>
+          {editing
+            ? <button type="button" disabled={busy} className={action} onClick={() => { setEditingId(undefined); setError(''); }}>Cancel</button>
+            : <button type="submit" value="publish" disabled={busy} className={action}>Publish time block</button>}
+        </div>
       </form>
       <p role="status" className="empty:hidden text-sm font-semibold text-emerald-800">{busy ? 'Saving…' : message}</p>
       {error && <p role="alert" className="text-sm font-semibold text-red-800">{error}</p>}

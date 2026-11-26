@@ -53,6 +53,14 @@ preserve the original answer.
 Publish or withdraw blocks in Founder Dashboard → Applications → Next-camp
 timetable. Each block covers one group with the same hours on its selected
 weekdays. Withdraw old blocks before opening a new timetable.
+Editing a block replaces its ID. In-progress applications refresh their
+choice, and submitted applications keep their original schedule snapshot.
+
+Founder eligibility for the current partner-school venue, in Oran time:
+Tuesday 08:00–12:00, Wednesday and Thursday 08:00–16:00. Friday and Saturday
+are unavailable. Sunday and Monday are off because of university and travel.
+These are private venue windows. Edit a draft down to the actual class hours
+before publishing it to applicants.
 
 The founder wants an affordable online IELTS course with small live groups and
 hourly contract teachers. This is a teaching offer that can pilot with verified
@@ -72,3 +80,17 @@ interpreting the margin. Engline Academy in Millenium, Oran is a reference for
 online English groups, teacher selection and session links via Google Meet.
 Its site mentions a coach with IELTS experience. A dedicated IELTS offer and
 its unit economics have not been verified.
+
+Use eight paying learners per online group in this planning model. For a
+truly embedded one-group pilot, investigate Jitsi as a Service (JaaS) first.
+Its developer tier lists 25 monthly active devices, so learners should use
+their usual device when testing. Confirm billing and usage conditions before
+opening a paid cohort. Use authenticated room pages, server-issued meeting
+tokens, separate teacher and learner roles, and a no-recording default.
+An IELTSLab lesson page with an external Meet link is a fallback. Personal
+Meet calls with three or more participants have a 60-minute limit unless the
+host account has an applicable subscription. Check account and regional
+eligibility before relying on Google AI Pro's longer group meetings.
+The existing LiveKit integration serves Speaking. Its free allowance of
+5,000 participant minutes is about 9 hours with eight learners and a teacher.
+One 32-hour group at full attendance uses 17,280 participant minutes.
